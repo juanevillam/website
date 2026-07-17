@@ -1,0 +1,214 @@
+/* ============================================================
+   juanevillam.com — foundation
+   Monolith brand: neutral greys only, never pure #FFF / #000.
+   Dark is primary; light is the exact inversion of the brand pair.
+   One easing, one motion grammar, whole site.
+   ============================================================ */
+
+:root {
+  /* color — dark (primary) */
+  --ground: #0d0d0d;
+  --ink: #f5f5f5;
+  --ink-2: #a3a3a3;
+  --ink-3: #737373;
+  --surface: #161616;
+  --hairline: #262626;
+
+  /* type */
+  --font-sans:
+    system-ui, -apple-system, 'SF Pro Text', 'Segoe UI Variable Text',
+    'Segoe UI', sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --track-display: -0.045em;
+  --track-heading: -0.03em;
+  --track-label: 0.08em;
+
+  /* tempo — the site runs at 100 BPM. One beat = 600ms; every duration on
+     the page is a subdivision or multiple of it (quarter, triplet, dotted…),
+     so all motion sits on one clock — quantized, like the synth tracks the
+     timing is stolen from. Never hardcode a duration: derive it. */
+  --beat: 600ms;
+
+  /* motion — the one grammar */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: calc(var(--beat) / 4); /* 150ms — a sixteenth at 100 BPM */
+  --dur-enter: var(--beat); /* entrances land on the beat */
+
+  /* proportion — the Monolith ratio, 1 : 4 : 9 (the squares of 1, 2, 3).
+     The spacing scale IS the ratio; the canonical column seam splits the
+     container 4 : 9. One ratio, everywhere, on purpose. */
+  --space-1: 1rem;
+  --space-4: 4rem;
+  --space-9: 9rem;
+  /* Where the 4-part column ends inside the container (4 / 13 of its width) —
+     sections lay out on it, and the Grid draws it. */
+  --seam: calc(100% * 4 / 13);
+
+  /* layout */
+  --space-section: clamp(6rem, 14vh, var(--space-9));
+  --measure: 65ch;
+  --content-max: 68.75rem; /* 1100px */
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --ground: #f5f5f5;
+  --ink: #0d0d0d;
+  --ink-2: #525252;
+  --ink-3: #8c8c8c;
+  --surface: #ededed;
+  --hairline: #dedede;
+  color-scheme: light;
+}
+
+/* ---------- reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--ink-3);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--dur-micro) var(--ease);
+}
+
+a:hover {
+  text-decoration-color: var(--ink);
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- type scale ---------- */
+
+.display {
+  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  font-weight: 800;
+  letter-spacing: var(--track-display);
+  line-height: 1;
+}
+
+.heading {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: var(--track-heading);
+  line-height: 1.15;
+}
+
+.body {
+  color: var(--ink-2);
+  max-width: var(--measure);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------- motion primitives ---------- */
+
+/* Scroll entrance: elements marked data-reveal rise in once, on intersect. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity var(--dur-enter) var(--ease),
+    transform var(--dur-enter) var(--ease);
+}
+
+[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Load entrance for above-the-fold content (hero). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Theme switch — the Tenet inversion sweep. The new (inverted) frame wipes
+   left-to-right over the old one; ahead of the front is one palette, behind it
+   the inversion. Runs only on user-initiated switches (View Transitions API,
+   progressive: unsupported browsers swap instantly). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: inversion-wipe 480ms var(--ease) both;
+}
+
+@keyframes inversion-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

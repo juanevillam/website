@@ -1,0 +1,142 @@
+---
+import BrandMark from './BrandMark.astro';
+import {
+  locales,
+  localeLabels,
+  useTranslations,
+  type Locale,
+} from '../i18n/ui';
+
+type Props = {
+  locale: Locale;
+};
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
+
+// Language control mirrors the theme toggle: one button showing the current
+// locale; pressing it cycles to the next one (en → es → zh → en).
+const nextLocale = locales[(locales.indexOf(locale) + 1) % locales.length];
+---
+
+<header class="site-header">
+  <a href={pathForLocale(locale)} class="mark-link" aria-label="juanevillam">
+    <BrandMark size={26} />
+  </a>
+
+  <nav class="controls label" aria-label="language and theme">
+    <a
+      href={pathForLocale(nextLocale)}
+      class="lang"
+      aria-label={`${localeLabels[locale]} → ${localeLabels[nextLocale]}`}
+    >
+      {localeLabels[locale]}
+    </a>
+    <button
+      id="theme-toggle"
+      class="label"
+      type="button"
+      data-label-light={t('theme.light')}
+      data-label-dark={t('theme.dark')}
+      data-label-system={t('theme.system')}
+    >
+      {t('theme.system')}
+    </button>
+  </nav>
+</header>
+
+<script is:inline>
+  // Parser-blocking on purpose: the SSR label is always "system", so a saved
+  // light/dark pref must be painted onto the button before first render or
+  // it visibly swaps (flicker on every navigation).
+  (() => {
+    const button = document.getElementById('theme-toggle');
+    const pref = localStorage.getItem('theme') || 'system';
+    const label =
+      button.dataset['label' + pref.charAt(0).toUpperCase() + pref.slice(1)];
+    if (label) button.textContent = label;
+  })();
+</script>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem) 1.75rem;
+    /* Scrim so the fixed controls never collide with scrolled content. */
+    background: linear-gradient(to bottom, var(--ground) 55%, transparent);
+  }
+
+  .mark-link {
+    color: var(--ink);
+    text-decoration: none;
+    transition: opacity var(--dur-micro) var(--ease);
+  }
+
+  .mark-link:hover {
+    opacity: 0.7;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .lang {
+    text-decoration: none;
+    color: var(--ink-3);
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .lang:hover {
+    color: var(--ink);
+  }
+
+  #theme-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--ink-3);
+    transition: color var(--dur-micro) var(--ease);
+    min-width: 4.5rem;
+    text-align: right;
+  }
+
+  #theme-toggle:hover {
+    color: var(--ink);
+  }
+</style>
+
+<script>
+  const button = document.getElementById('theme-toggle');
+  if (button) {
+    const order = ['system', 'light', 'dark'] as const;
+    const render = () => {
+      const pref = localStorage.getItem('theme') || 'system';
+      button.textContent = button.dataset[
+        `label${pref.charAt(0).toUpperCase()}${pref.slice(1)}` as
+          | 'labelLight'
+          | 'labelDark'
+          | 'labelSystem'
+      ] as string;
+    };
+    button.addEventListener('click', () => {
+      const pref = (localStorage.getItem('theme') ||
+        'system') as (typeof order)[number];
+      const next = order[(order.indexOf(pref) + 1) % order.length];
+      localStorage.setItem('theme', next);
+      (
+        window as Window & { __applyTheme?: () => void }
+      ).__applyTheme?.();
+      render();
+    });
+    render();
+  }
+</script>

@@ -1,0 +1,105 @@
+---
+import { locales, useTranslations, type Locale } from '../i18n/ui';
+import SiteHeader from '../components/SiteHeader.astro';
+import '../styles/global.css';
+
+type Props = {
+  locale: Locale;
+};
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t('meta.title')}</title>
+    <meta name="description" content={t('meta.description')} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(pathForLocale(locale), Astro.site)} />
+    {
+      locales.map(l => (
+        <link
+          rel="alternate"
+          hreflang={l}
+          href={new URL(pathForLocale(l), Astro.site)}
+        />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={new URL('/', Astro.site)}
+    />
+    <meta property="og:title" content={t('meta.title')} />
+    <meta property="og:description" content={t('meta.description')} />
+    <meta property="og:type" content="website" />
+
+    <script is:inline>
+      // Theme, pre-paint: tri-state light/dark/system (dark-first brand).
+      // Runs before first render so there is never a flash of wrong theme.
+      (() => {
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const apply = () => {
+          const pref = localStorage.getItem('theme') || 'system';
+          const effective =
+            pref === 'system' ? (media.matches ? 'dark' : 'light') : pref;
+          document.documentElement.dataset.theme = effective;
+        };
+        apply();
+        media.addEventListener('change', apply);
+        window.addEventListener('storage', apply);
+        // Re-apply on demand from the toggle without a custom event bus.
+        // User-initiated switches play the inversion sweep (the light theme
+        // IS the dark palette inverted — the transition says so): a View
+        // Transitions wipe where supported, instant swap elsewhere.
+        window.__applyTheme = () => {
+          const reduced = window.matchMedia(
+            '(prefers-reduced-motion: reduce)'
+          ).matches;
+          if (document.startViewTransition && !reduced)
+            document.startViewTransition(apply);
+          else apply();
+        };
+
+        // Entrance animations play once per session — a lang switch is a
+        // full navigation, and the hero re-rising on every one reads as a
+        // glitch, not a greeting. A deliberate RELOAD is different: it means
+        // "show me again", so it always replays the entrance.
+        var nav = performance.getEntriesByType('navigation')[0];
+        var isReload = nav && nav.type === 'reload';
+        if (!isReload && sessionStorage.getItem('entered')) {
+          document.documentElement.setAttribute('data-entered', '');
+        }
+        sessionStorage.setItem('entered', '1');
+      })();
+    </script>
+  </head>
+  <body>
+    <SiteHeader locale={locale} />
+    <main>
+      <slot />
+    </main>
+
+    <script>
+      // Scroll entrances: reveal once, then let the element live untouched.
+      const io = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-in');
+              io.unobserve(entry.target);
+            }
+          }
+        },
+        { threshold: 0.2 }
+      );
+      document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+    </script>
+  </body>
+</html>
