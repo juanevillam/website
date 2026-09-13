@@ -52,23 +52,27 @@ const NAV = [
     popovertarget="site-settings"
     aria-label={t('settings.label')}
   >
-    <!-- Gear in the mark family's construction: 48 grid, stroke 3.25,
-         round caps, no fill — a ring with eight teeth. -->
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 48 48"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="3.25"
-      stroke-linecap="round"
-      aria-hidden="true"
-    >
-      <circle cx="24" cy="24" r="9" />
-      <circle cx="24" cy="24" r="2" />
-      <path
-        d="M24 15V10M24 33v5M33 24h5M15 24H10M30.36 17.64l3.54-3.54M17.64 17.64l-3.54-3.54M30.36 30.36l3.54 3.54M17.64 30.36l-3.54 3.54"
-      />
+    <!-- SF-style gearshape.fill: solid toothed body with a punched hub —
+         the filled silhouette iOS bars use, not an outline. -->
+    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+      <g fill="currentColor">
+        <path
+          fill-rule="nonzero"
+          d="M39 24a15 15 0 1 1-30 0 15 15 0 1 1 30 0zm-8.5 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 1 0 13 0z"
+        />
+        {
+          [0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+            <rect
+              x="20.5"
+              y="2"
+              width="7"
+              height="10"
+              rx="3"
+              transform={`rotate(${angle} 24 24)`}
+            />
+          ))
+        }
+      </g>
     </svg>
   </button>
 </header>

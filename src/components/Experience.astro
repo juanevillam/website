@@ -46,36 +46,41 @@ const JOBS: Job[] = [
 ];
 ---
 
-<section id="experience" class="experience">
-  <div class="inner">
-    <p class="label" data-reveal>{t('experience.label')}</p>
-    <h2 class="heading" data-reveal>{t('experience.heading')}</h2>
-    <p class="body lede" data-reveal>{t('experience.lede')}</p>
+{
+  JOBS.map((job, i) => (
+    <section class="panel" id={`work-${job.name.toLowerCase()}`}>
+      <div class="inner">
+        {i === 0 && (
+          <header class="section-head" data-reveal>
+            <p class="label">{t('experience.label')}</p>
+            <h2 class="heading">{t('experience.heading')}</h2>
+            <p class="body lede">{t('experience.lede')}</p>
+          </header>
+        )}
 
-    {
-      JOBS.map(job => (
         <article class="job" data-reveal>
           <p class="label role">{t(job.role)}</p>
           <h3 class="name">{job.name}</h3>
           <p class="label when">{t(job.when)}</p>
           <p class="body job-body">{t(job.body)}</p>
           <a class="label visit" href={job.href}>
-            {t('experience.visit')} {job.domain} ↗
+            {`${t('experience.visit')} ${job.domain} ↗`}
           </a>
         </article>
-      ))
-    }
-  </div>
-</section>
+      </div>
+    </section>
+  ))
+}
 
 <style>
-  .experience {
-    padding: var(--space-section) clamp(1.25rem, 4vw, 2.5rem);
-  }
-
   .inner {
+    width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
+  }
+
+  .section-head {
+    margin-bottom: var(--space-4);
   }
 
   .heading {
@@ -89,9 +94,6 @@ const JOBS: Job[] = [
   }
 
   .job {
-    margin-top: var(--space-4);
-    padding-top: 3rem;
-    border-top: 1px solid var(--hairline);
     /* Name and meta on the left, the story on the right, split on the
        Monolith seam (4 : 9) — the ratio holds even without drawn lines. */
     display: grid;

@@ -21,13 +21,13 @@ const t = useTranslations(locale);
       <text class="trace-text wordmark-text" x="0" y="0">juanevillam</text>
     </svg>
   </h1>
-
-  <p class="body thesis">{t('hero.thesis')}</p>
 </section>
 
 <style>
   .hero {
     min-height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -75,7 +75,7 @@ const t = useTranslations(locale);
     font-size: 100px;
     letter-spacing: 8px;
     text-transform: uppercase;
-    --letter-step: calc(var(--beat) * 0.075);
+    --letter-step: calc(var(--beat) * 0.04);
   }
 
   .wordmark {
@@ -88,16 +88,9 @@ const t = useTranslations(locale);
     font-size: 100px;
     font-weight: 800;
     letter-spacing: -4.5px;
-    /* The name writes slower than the eyebrow — it's the headline act. */
-    --letter-step: calc(var(--beat) * 0.2);
-  }
-
-  /* The thesis closes the sequence, after the wordmark's last letter lands. */
-  .thesis {
-    margin-top: 1.75rem;
-    font-size: clamp(1.125rem, 2.2vw, 1.5rem);
-    line-height: 1.45;
-    animation: rise var(--dur-enter) var(--ease) calc(var(--beat) * 3) both;
+    /* The name writes slower than the eyebrow — it's the headline act.
+       An eighth per letter: the whole entrance lands inside two beats. */
+    --letter-step: calc(var(--beat) * 0.075);
   }
 
   /* ---------- conventions: repeat visits + reduced motion ---------- */
@@ -106,12 +99,6 @@ const t = useTranslations(locale);
   :global(html[data-entered]) .trace-text :global(tspan) {
     animation: none;
     fill-opacity: 1;
-  }
-
-  :global(html[data-entered]) .thesis {
-    animation: none;
-    opacity: 1;
-    transform: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
