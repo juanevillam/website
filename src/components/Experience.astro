@@ -1,129 +1,89 @@
 ---
-import { type UIKey } from '../i18n/ui';
 import T from './T.astro';
 
-// Crol and ContoPay merged into ONE panel — two mini landings side by
-// side, each with its own logo, accent, tagline (from the live landing),
-// visit pill and scroll video. No names in text: the logo is the name.
-type Brand = {
-  id: 'crol' | 'contopay';
-  name: string;
-  role: UIKey;
-  heading: UIKey;
-  body: UIKey;
-  href: string;
-  domain: string;
-};
-
-const BRANDS: Brand[] = [
-  {
-    id: 'crol',
-    name: 'Crol',
-    role: 'experience.crol.role',
-    heading: 'experience.crol.heading',
-    body: 'experience.crol.body',
-    href: 'https://www.crol.mx',
-    domain: 'crol.mx',
-  },
-  {
-    id: 'contopay',
-    name: 'ContoPay',
-    role: 'experience.contopay.role',
-    heading: 'experience.contopay.heading',
-    body: 'experience.contopay.body',
-    href: 'https://www.contopay.lat',
-    domain: 'contopay.lat',
-  },
-];
+// The work page is Crol's mini landing (ContoPay is a secondary Crol
+// product and rides inside its story). The panel takes Crol's own skin —
+// near-black ground, neon lime accent, Mulish — over the site's custom
+// properties, same mechanism as the Sálvalo page.
 ---
 
-<section class="panel" id="work-duo">
+<section id="work-crol" class="panel">
   <div class="inner">
-    {
-      BRANDS.map(brand => (
-        <article class={`brand brand-${brand.id}`}>
-          <span class="logo" data-reveal>
-            <img
-              class="on-dark"
-              src={`/media/brand/${brand.id}-on-dark.png`}
-              alt={brand.name}
-            />
-            <img
-              class="on-light"
-              src={`/media/brand/${brand.id}-on-light.png`}
-              alt={brand.name}
-            />
-          </span>
-          <p class="label brand-label" data-reveal>
-            <T k={brand.role} />
-          </p>
-          <h2 class="brand-heading" data-reveal>
-            <T k={brand.heading} />
-          </h2>
-          <p class="body lede" data-reveal>
-            <T k={brand.body} />
-          </p>
-          <a class="label visit" href={brand.href} data-reveal>
-            <T k="experience.visit" />
-            {` ${brand.domain} ↗`}
-          </a>
-          <video
-            class="shot"
-            src={`/media/screens/${brand.id}.webm`}
-            poster={`/media/screens/${brand.id}.jpg`}
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-            width="1280"
-            height="800"
-            data-reveal
-          />
-        </article>
-      ))
-    }
+    <div class="copy">
+      <span class="logo" data-reveal>
+        <img class="on-dark" src="/media/brand/crol-on-dark.png" alt="Crol" />
+        <img
+          class="on-light"
+          src="/media/brand/crol-on-light.png"
+          alt="Crol"
+        />
+      </span>
+      <p class="label brand-label" data-reveal><T k="experience.crol.role" /></p>
+      <h2 class="heading brand-heading" data-reveal>
+        <T k="experience.crol.heading" />
+      </h2>
+      <p class="body lede" data-reveal><T k="experience.crol.body" /></p>
+      <a class="label visit" href="https://www.crol.mx" data-reveal>
+        <T k="experience.visit" />
+        {' crol.mx ↗'}
+      </a>
+    </div>
+
+    <video
+      class="shot"
+      src="/media/screens/crol.webm"
+      poster="/media/screens/crol.jpg"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      width="1280"
+      height="800"
+      data-reveal></video>
   </div>
 </section>
 
 <style>
+  /* Crol skin — brand tokens over the site's own custom properties. */
+  #work-crol {
+    --ink: #ffffff;
+    --ink-2: #a9b5b4;
+    --ink-3: #6e807e;
+    --surface: #132624;
+    --hairline: #233734;
+    --brand-accent: #00e100;
+    --font-brand: 'Mulish', var(--font-sans);
+    background: #0a1413;
+  }
+
+  :global(html[data-theme='light']) #work-crol {
+    --ink: #132624;
+    --ink-2: #3a4f4d;
+    --ink-3: #6e807e;
+    --surface: #ffffff;
+    --hairline: #e2e8e7;
+    --brand-accent: #00a300;
+    background: #f7f9f9;
+  }
+
   .inner {
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: clamp(2rem, 5vw, 4rem);
-    align-items: start;
-  }
-
-  /* Per-brand accents over the shared skeleton — each half of the panel
-     borrows its company's own color and face. */
-  .brand-crol {
-    --brand-accent: #00e100;
-    --font-brand: 'Mulish', var(--font-sans);
-  }
-
-  :global(html[data-theme='light']) .brand-crol {
-    --brand-accent: #00a300;
-  }
-
-  .brand-contopay {
-    --brand-accent: #20bced;
-    --font-brand: var(--font-sans);
-  }
-
-  :global(html[data-theme='light']) .brand-contopay {
-    --brand-accent: #154f91;
+    align-items: center;
   }
 
   .logo {
     display: block;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .logo img {
-    height: 1.875rem;
+    height: 2rem;
     width: auto;
   }
 
@@ -145,23 +105,21 @@ const BRANDS: Brand[] = [
   }
 
   .brand-heading {
-    margin-top: 0.625rem;
+    margin-top: 0.75rem;
     font-family: var(--font-brand);
-    font-size: clamp(1.375rem, 2.4vw, 1.875rem);
-    font-weight: 700;
-    letter-spacing: var(--track-heading);
-    line-height: 1.2;
+    font-weight: 800;
   }
 
   .lede {
-    margin-top: 1rem;
-    font-size: 1rem;
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
+    max-width: 44rem;
     font-family: var(--font-brand);
   }
 
   .visit {
     display: inline-block;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
     padding: 0.625rem 1.375rem;
     border: 1px solid var(--hairline);
     border-radius: 999px;
@@ -181,7 +139,6 @@ const BRANDS: Brand[] = [
   .shot {
     width: 100%;
     height: auto;
-    margin-top: 1.75rem;
     border: 1px solid var(--hairline);
     border-radius: 0.75rem;
     background: var(--surface);
@@ -190,7 +147,12 @@ const BRANDS: Brand[] = [
   @media (max-width: 1023px) {
     .inner {
       grid-template-columns: 1fr;
-      gap: 4rem;
+    }
+
+    .shot {
+      max-height: 40svh;
+      width: auto;
+      max-width: 100%;
     }
   }
 </style>
