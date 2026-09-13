@@ -93,6 +93,8 @@ html[data-lang='zh'] .t[lang='zh'] {
    than the viewport still scrolls freely inside itself (spec behavior). */
 html {
   scroll-snap-type: y mandatory;
+  /* Nav anchors glide between panels; reduced motion jumps instead. */
+  scroll-behavior: smooth;
 }
 
 body {
@@ -236,6 +238,10 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   @view-transition {
     navigation: none;
   }

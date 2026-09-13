@@ -1,158 +1,109 @@
 ---
 import T from './T.astro';
 
-// The work page is Crol's mini landing (ContoPay is a secondary Crol
-// product and rides inside its story). The panel takes Crol's own skin —
-// near-black ground, neon lime accent, Mulish — over the site's custom
-// properties, same mechanism as the Sálvalo page.
+// The Crol ERP section (ContoPay is a secondary Crol product and rides
+// inside its story): a Monolith panel holding a window into the brand —
+// their near-black ground, neon lime CTA, Mulish — with a snap slider of
+// the landing's key parts.
 ---
 
-<section id="work-crol" class="panel">
+<section class="panel" id="work-crol">
   <div class="inner">
-    <div class="copy">
-      <span class="logo" data-reveal>
-        <img class="on-dark" src="/media/brand/crol-on-dark.png" alt="Crol" />
-        <img
-          class="on-light"
-          src="/media/brand/crol-on-light.png"
-          alt="Crol"
-        />
-      </span>
-      <p class="label brand-label" data-reveal><T k="experience.crol.role" /></p>
-      <h2 class="heading brand-heading" data-reveal>
-        <T k="experience.crol.heading" />
-      </h2>
-      <p class="body lede" data-reveal><T k="experience.crol.body" /></p>
-      <a class="label visit" href="https://www.crol.mx" data-reveal>
+    <h2 class="heading name" data-reveal>Crol ERP</h2>
+
+    <div class="window" data-reveal>
+      <p class="tagline"><T k="experience.crol.heading" /></p>
+      <p class="sub"><T k="experience.crol.body" /></p>
+      <a class="cta" href="https://www.crol.mx">
         <T k="experience.visit" />
         {' crol.mx ↗'}
       </a>
-    </div>
 
-    <video
-      class="shot"
-      src="/media/screens/crol.webm"
-      poster="/media/screens/crol.jpg"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="metadata"
-      width="1280"
-      height="800"
-      data-reveal></video>
+      <div class="slides" tabindex="-1">
+        {
+          [1, 2, 3].map(n => (
+            <img
+              src={`/media/screens/crol-${n}.jpg`}
+              alt={`Crol landing, part ${n}`}
+              loading="lazy"
+              decoding="async"
+              width="1280"
+              height="800"
+            />
+          ))
+        }
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
-  /* Crol skin — brand tokens over the site's own custom properties. */
-  #work-crol {
-    --ink: #ffffff;
-    --ink-2: #a9b5b4;
-    --ink-3: #6e807e;
-    --surface: #132624;
-    --hairline: #233734;
-    --brand-accent: #00e100;
-    --font-brand: 'Mulish', var(--font-sans);
-    background: #0a1413;
-  }
-
-  :global(html[data-theme='light']) #work-crol {
-    --ink: #132624;
-    --ink-2: #3a4f4d;
-    --ink-3: #6e807e;
-    --surface: #ffffff;
-    --hairline: #e2e8e7;
-    --brand-accent: #00a300;
-    background: #f7f9f9;
-  }
-
   .inner {
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: clamp(2rem, 5vw, 4rem);
-    align-items: center;
   }
 
-  .logo {
-    display: block;
-    margin-bottom: 1.5rem;
+  .name {
+    font-size: clamp(2.5rem, 6vw, 4rem);
   }
 
-  .logo img {
-    height: 2rem;
-    width: auto;
+  /* A fragment of the Crol landing, embedded. */
+  .window {
+    margin-top: 1.75rem;
+    padding: clamp(1.5rem, 3.5vw, 2.75rem);
+    border-radius: 1.25rem;
+    background: #0a1413;
+    font-family: 'Mulish', var(--font-sans);
   }
 
-  .on-light {
-    display: none;
-  }
-
-  :global(html[data-theme='light']) .on-dark {
-    display: none;
-  }
-
-  :global(html[data-theme='light']) .on-light {
-    display: block;
-  }
-
-  .brand-label {
-    color: var(--brand-accent);
-    font-family: var(--font-brand);
-  }
-
-  .brand-heading {
-    margin-top: 0.75rem;
-    font-family: var(--font-brand);
+  .tagline {
+    color: #ffffff;
+    font-size: clamp(1.375rem, 2.6vw, 1.875rem);
     font-weight: 800;
+    line-height: 1.25;
+    max-width: 26em;
   }
 
-  .lede {
-    margin-top: 1.5rem;
-    font-size: 1.125rem;
-    max-width: 44rem;
-    font-family: var(--font-brand);
+  .sub {
+    margin-top: 0.75rem;
+    color: #a9b5b4;
+    font-size: 1.0625rem;
+    max-width: 40em;
   }
 
-  .visit {
+  .cta {
     display: inline-block;
-    margin-top: 2rem;
-    padding: 0.625rem 1.375rem;
-    border: 1px solid var(--hairline);
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 999px;
+    background: #00e100;
+    color: #132624;
+    font-size: 0.9375rem;
+    font-weight: 800;
     text-decoration: none;
-    color: var(--ink-2);
-    font-family: var(--font-brand);
-    transition:
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease);
+    transition: background var(--dur-micro) var(--ease);
   }
 
-  .visit:hover {
-    color: var(--brand-accent);
-    border-color: var(--brand-accent);
+  .cta:hover {
+    background: #00c400;
   }
 
-  .shot {
-    width: 100%;
+  .slides {
+    margin-top: 1.75rem;
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
+  }
+
+  .slides img {
+    flex: 0 0 min(85%, 34rem);
+    width: min(85%, 34rem);
     height: auto;
-    border: 1px solid var(--hairline);
-    border-radius: 0.75rem;
-    background: var(--surface);
-  }
-
-  @media (max-width: 1023px) {
-    .inner {
-      grid-template-columns: 1fr;
-    }
-
-    .shot {
-      max-height: 40svh;
-      width: auto;
-      max-width: 100%;
-    }
+    scroll-snap-align: center;
+    border-radius: 0.625rem;
+    border: 1px solid #233734;
   }
 </style>
