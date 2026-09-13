@@ -7,6 +7,13 @@ export const localeLabels: Record<Locale, string> = {
   zh: '中文',
 };
 
+/** Native names, the way Apple lists languages — never translated. */
+export const localeNames: Record<Locale, string> = {
+  en: 'English',
+  es: 'Español',
+  zh: '中文',
+};
+
 /**
  * en is the canonical tree; es/zh mirror its shape. Copy here is DRAFT —
  * every line ships as an option for Juan to react to, never final.
@@ -23,9 +30,12 @@ const en = {
   'hero.eyebrow': 'software developer',
   'hero.thesis':
     'I build software the way I play games: going for the platinum.',
+  'settings.label': 'settings',
+  'settings.appearance': 'appearance',
+  'settings.language': 'language',
   'theme.light': 'light',
   'theme.dark': 'dark',
-  'theme.system': 'system',
+  'theme.system': 'automatic',
   'projects.label': 'projects',
   'projects.heading': 'Three apps, one monorepo.',
   'projects.topper.status': 'social · ranked lists',
@@ -92,9 +102,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.eyebrow': 'desarrollador de software',
     'hero.thesis':
       'Hago software igual que juego videojuegos: voy por el platino.',
+    'settings.label': 'ajustes',
+    'settings.appearance': 'apariencia',
+    'settings.language': 'idioma',
     'theme.light': 'claro',
     'theme.dark': 'oscuro',
-    'theme.system': 'sistema',
+    'theme.system': 'automático',
     'projects.label': 'proyectos',
     'projects.heading': 'Tres apps, un monorepo.',
     'projects.topper.status': 'social · listas rankeadas',
@@ -154,9 +167,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'nav.work': '工作',
     'hero.eyebrow': '软件开发者',
     'hero.thesis': '我做软件就像打游戏：奔着白金去。',
+    'settings.label': '设置',
+    'settings.appearance': '外观',
+    'settings.language': '语言',
     'theme.light': '浅色',
     'theme.dark': '深色',
-    'theme.system': '跟随系统',
+    'theme.system': '自动',
     'projects.label': '项目',
     'projects.heading': '三个应用，一个 monorepo。',
     'projects.topper.status': '社交 · 排名列表',
