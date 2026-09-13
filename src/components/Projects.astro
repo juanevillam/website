@@ -17,7 +17,6 @@ type Project = {
   name: string;
   status: UIKey;
   entries: Entry[];
-  media: { src: string; alt: string }[];
 };
 
 const PROJECTS: Project[] = [
@@ -32,26 +31,18 @@ const PROJECTS: Project[] = [
       { k: 'projects.topper.k3', d: 'projects.topper.d3' },
       { k: 'projects.topper.k4', d: 'projects.topper.d4' },
     ],
-    media: [
-      'ios-dark-home',
-      'ios-dark-top-detail',
-      'ios-dark-profile',
-      'ios-dark-trophies',
-    ].map(name => ({ src: `/media/topper/${name}.png`, alt: '' })),
   },
   {
     id: 'shaper',
     name: 'Sound Shaper',
     status: 'projects.shaper.status',
     entries: [{ k: 'projects.topper.k0', d: 'projects.shaper.desc' }],
-    media: [],
   },
   {
     id: 'starter',
     name: 'Expo UI Starter',
     status: 'projects.starter.status',
     entries: [{ k: 'projects.topper.k0', d: 'projects.starter.desc' }],
-    media: [],
   },
 ];
 ---
@@ -68,9 +59,6 @@ const PROJECTS: Project[] = [
             <AppMark app={project.id} size={34} class="mark" />
             <h3 class="name">{project.name}</h3>
             <p class="label status">{t(project.status)}</p>
-            {project.media.length === 0 && (
-              <p class="label media-soon">{t('projects.media.soon')}</p>
-            )}
           </div>
 
           <dl class="entries">
@@ -81,21 +69,6 @@ const PROJECTS: Project[] = [
               </>
             ))}
           </dl>
-
-          {project.media.length > 0 && (
-            <div class="media" tabindex="-1">
-              {project.media.map(shot => (
-                <img
-                  src={shot.src}
-                  alt={shot.alt}
-                  loading="lazy"
-                  decoding="async"
-                  width="1290"
-                  height="2796"
-                />
-              ))}
-            </div>
-          )}
         </article>
       ))
     }
@@ -149,14 +122,6 @@ const PROJECTS: Project[] = [
     margin-top: 0.875rem;
   }
 
-  .media-soon {
-    display: inline-block;
-    margin-top: 1.5rem;
-    padding: 0.375rem 0.875rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-  }
-
   .entries {
     grid-column: 2;
   }
@@ -176,27 +141,6 @@ const PROJECTS: Project[] = [
 
   .entry-body + .entry-key {
     margin-top: 1.75rem;
-  }
-
-  .media {
-    grid-column: 1 / -1;
-    margin-top: 2.5rem;
-    display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-    /* Screenshots scroll inside the strip; the page never scrolls sideways. */
-    scroll-snap-type: x proximity;
-    padding-bottom: 0.5rem;
-  }
-
-  .media img {
-    width: clamp(11rem, 22vw, 15rem);
-    height: auto;
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    border: 1px solid var(--hairline);
-    border-radius: 1.25rem;
-    background: var(--surface);
   }
 
   @media (max-width: 820px) {
