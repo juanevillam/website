@@ -1,19 +1,44 @@
 ---
 import T from './T.astro';
 
-// Skeleton of the Sálvalo mini landing — the brand skin (palette, Poppins,
-// logo) arrives with the theming engine; the structure and copy live here.
+// Skeleton of the Sálvalo mini landing — the brand skin (palette, Poppins)
+// arrives with the theming engine; the structure and copy live here.
 ---
 
 <section id="salvalo" class="panel">
   <div class="inner">
-    <p class="label" data-reveal><T k="salvalo.label" /></p>
-    <h2 class="heading" data-reveal><T k="salvalo.heading" /></h2>
-    <p class="body lede" data-reveal><T k="salvalo.body" /></p>
-    <a class="label visit" href="https://salvalo.app" data-reveal>
-      <T k="experience.visit" />
-      {' salvalo.app ↗'}
-    </a>
+    <div class="copy">
+      <span class="logo" data-reveal>
+        <img
+          class="on-dark"
+          src="/media/brand/salvalo-on-dark.svg"
+          alt="Sálvalo logo"
+        />
+        <img
+          class="on-light"
+          src="/media/brand/salvalo-on-light.svg"
+          alt="Sálvalo logo"
+        />
+      </span>
+      <p class="label" data-reveal><T k="salvalo.label" /></p>
+      <h2 class="heading" data-reveal><T k="salvalo.heading" /></h2>
+      <p class="body lede" data-reveal><T k="salvalo.body" /></p>
+      <a class="label visit" href="https://salvalo.app" data-reveal>
+        <T k="experience.visit" />
+        {' salvalo.app ↗'}
+      </a>
+    </div>
+
+    <img
+      class="shot"
+      src="/media/screens/salvalo.jpg"
+      alt="Sálvalo landing page"
+      loading="lazy"
+      decoding="async"
+      width="1440"
+      height="900"
+      data-reveal
+    />
   </div>
 </section>
 
@@ -22,6 +47,32 @@ import T from './T.astro';
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .logo {
+    display: block;
+    margin-bottom: 1.5rem;
+  }
+
+  .logo img {
+    height: 2.25rem;
+    width: auto;
+  }
+
+  .on-light {
+    display: none;
+  }
+
+  :global(html[data-theme='light']) .on-dark {
+    display: none;
+  }
+
+  :global(html[data-theme='light']) .on-light {
+    display: block;
   }
 
   .heading {
@@ -50,5 +101,25 @@ import T from './T.astro';
   .visit:hover {
     color: var(--ink);
     border-color: var(--ink-3);
+  }
+
+  .shot {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--hairline);
+    border-radius: 0.75rem;
+    background: var(--surface);
+  }
+
+  @media (max-width: 1023px) {
+    .inner {
+      grid-template-columns: 1fr;
+    }
+
+    .shot {
+      max-height: 40svh;
+      width: auto;
+      max-width: 100%;
+    }
   }
 </style>

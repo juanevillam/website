@@ -2,12 +2,13 @@
 import { type UIKey } from '../i18n/ui';
 import T from './T.astro';
 
-// Each company is its own full-height panel in the Salvalo shape — the
-// mini-landing sequence: Crol, then ContoPay, then Maktub (freelance).
+// Each company is its own full-height panel in the Salvalo shape — logo,
+// one label, name, one lede, the visit pill, and a still of its landing.
+// Sequence: Crol, then ContoPay, then Maktub (freelance).
 type Job = {
+  id: 'crol' | 'contopay' | 'maktub';
   name: string;
   role: UIKey;
-  when: UIKey;
   body: UIKey;
   href: string;
   domain: string;
@@ -15,25 +16,25 @@ type Job = {
 
 const JOBS: Job[] = [
   {
+    id: 'crol',
     name: 'Crol',
     role: 'experience.crol.role',
-    when: 'experience.crol.when',
     body: 'experience.crol.body',
     href: 'https://www.crol.mx',
     domain: 'crol.mx',
   },
   {
+    id: 'contopay',
     name: 'ContoPay',
     role: 'experience.contopay.role',
-    when: 'experience.contopay.when',
     body: 'experience.contopay.body',
     href: 'https://www.contopay.lat',
     domain: 'contopay.lat',
   },
   {
+    id: 'maktub',
     name: 'Maktub',
     role: 'experience.maktub.role',
-    when: 'experience.maktub.when',
     body: 'experience.maktub.body',
     href: 'https://maktubartfund.com',
     domain: 'maktubartfund.com',
@@ -43,24 +44,46 @@ const JOBS: Job[] = [
 
 {
   JOBS.map(job => (
-    <section class="panel" id={`work-${job.name.toLowerCase()}`}>
+    <section class="panel" id={`work-${job.id}`}>
       <div class="inner">
-        <p class="label role" data-reveal>
-          <T k={job.role} />
-        </p>
-        <h2 class="heading name" data-reveal>
-          {job.name}
-        </h2>
-        <p class="label when" data-reveal>
-          <T k={job.when} />
-        </p>
-        <p class="body lede" data-reveal>
-          <T k={job.body} />
-        </p>
-        <a class="label visit" href={job.href} data-reveal>
-          <T k="experience.visit" />
-          {` ${job.domain} ↗`}
-        </a>
+        <div class="copy">
+          <span class="logo" data-reveal>
+            <img
+              class="on-dark"
+              src={`/media/brand/${job.id}-on-dark.png`}
+              alt={`${job.name} logo`}
+            />
+            <img
+              class="on-light"
+              src={`/media/brand/${job.id}-on-light.png`}
+              alt={`${job.name} logo`}
+            />
+          </span>
+          <p class="label role" data-reveal>
+            <T k={job.role} />
+          </p>
+          <h2 class="heading name" data-reveal>
+            {job.name}
+          </h2>
+          <p class="body lede" data-reveal>
+            <T k={job.body} />
+          </p>
+          <a class="label visit" href={job.href} data-reveal>
+            <T k="experience.visit" />
+            {` ${job.domain} ↗`}
+          </a>
+        </div>
+
+        <img
+          class="shot"
+          src={`/media/screens/${job.id}.jpg`}
+          alt={`${job.name} landing page`}
+          loading="lazy"
+          decoding="async"
+          width="1440"
+          height="900"
+          data-reveal
+        />
       </div>
     </section>
   ))
@@ -71,6 +94,34 @@ const JOBS: Job[] = [
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .logo {
+    display: block;
+    margin-bottom: 1.5rem;
+  }
+
+  .logo img {
+    height: 2rem;
+    width: auto;
+  }
+
+  /* Logo ink follows the theme: the on-dark art shows on the dark ground,
+     the on-light art on the light one. No-JS default is dark. */
+  .on-light {
+    display: none;
+  }
+
+  :global(html[data-theme='light']) .on-dark {
+    display: none;
+  }
+
+  :global(html[data-theme='light']) .on-light {
+    display: block;
   }
 
   .role {
@@ -82,10 +133,6 @@ const JOBS: Job[] = [
     font-size: clamp(2.5rem, 6vw, 4rem);
   }
 
-  .when {
-    margin-top: 0.875rem;
-  }
-
   .lede {
     margin-top: 1.5rem;
     font-size: 1.125rem;
@@ -94,7 +141,6 @@ const JOBS: Job[] = [
 
   .visit {
     display: inline-block;
-    align-self: flex-start;
     margin-top: 2rem;
     padding: 0.625rem 1.375rem;
     border: 1px solid var(--hairline);
@@ -109,5 +155,25 @@ const JOBS: Job[] = [
   .visit:hover {
     color: var(--ink);
     border-color: var(--ink-3);
+  }
+
+  .shot {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--hairline);
+    border-radius: 0.75rem;
+    background: var(--surface);
+  }
+
+  @media (max-width: 1023px) {
+    .inner {
+      grid-template-columns: 1fr;
+    }
+
+    .shot {
+      max-height: 40svh;
+      width: auto;
+      max-width: 100%;
+    }
   }
 </style>
