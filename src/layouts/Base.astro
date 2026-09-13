@@ -71,9 +71,16 @@ const pathForLocale = (l: Locale) =>
           const reduced = window.matchMedia(
             '(prefers-reduced-motion: reduce)'
           ).matches;
-          if (document.startViewTransition && !reduced)
-            document.startViewTransition(apply);
-          else apply();
+          if (document.startViewTransition && !reduced) {
+            // data-theme-wipe scopes the inversion sweep to THIS transition;
+            // without it a page navigation would play the wipe too.
+            document.documentElement.setAttribute('data-theme-wipe', '');
+            document
+              .startViewTransition(apply)
+              .finished.finally(() =>
+                document.documentElement.removeAttribute('data-theme-wipe')
+              );
+          } else apply();
         };
 
         // Entrance animations play once per session — a lang switch is a
