@@ -72,6 +72,13 @@
   margin: 0;
 }
 
+/* The site pages, not free-scrolls — every section is a full-height panel
+   the viewport snaps to, the way an app screens its content. A panel taller
+   than the viewport still scrolls freely inside itself (spec behavior). */
+html {
+  scroll-snap-type: y mandatory;
+}
+
 body {
   background: var(--ground);
   color: var(--ink);
@@ -80,6 +87,18 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* One full-viewport snap section; content centers itself, the fixed header
+   gets cleared by the top padding. */
+.panel {
+  min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
 }
 
 img,

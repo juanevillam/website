@@ -12,23 +12,20 @@ const t = useTranslations(locale);
 // logo) arrives with the theming engine; the structure and copy live here.
 ---
 
-<section id="salvalo" class="salvalo">
+<section id="salvalo" class="panel">
   <div class="inner">
     <p class="label" data-reveal>{t('salvalo.label')}</p>
     <h2 class="heading" data-reveal>{t('salvalo.heading')}</h2>
     <p class="body lede" data-reveal>{t('salvalo.body')}</p>
     <a class="label visit" href="https://salvalo.app" data-reveal>
-      {t('experience.visit')} salvalo.app ↗
+      {`${t('experience.visit')} salvalo.app ↗`}
     </a>
   </div>
 </section>
 
 <style>
-  .salvalo {
-    padding: var(--space-section) clamp(1.25rem, 4vw, 2.5rem);
-  }
-
   .inner {
+    width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
   }
