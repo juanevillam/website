@@ -2,14 +2,14 @@
 import BrandMark from './BrandMark.astro';
 import {
   locales,
-  localeLabels,
+  localeNames,
   useTranslations,
   type Locale,
 } from '../i18n/ui';
 
 type Props = {
   locale: Locale;
-  /** Locale-less page path ('' for home) — the lang cycle stays on it. */
+  /** Locale-less page path ('' for home) — the language picker stays on it. */
   path?: string;
 };
 
@@ -17,10 +17,6 @@ const { locale, path = '' } = Astro.props;
 const t = useTranslations(locale);
 const hrefFor = (l: Locale, p: string = path) =>
   l === 'en' ? `/${p}` : `/${l}/${p}`;
-
-// Language control mirrors the theme toggle: one button showing the current
-// locale; pressing it cycles to the next one (en → es → zh → en).
-const nextLocale = locales[(locales.indexOf(locale) + 1) % locales.length];
 
 // The site's sections are PAGES, not anchors — one link per section.
 const NAV = [
@@ -49,39 +45,59 @@ const NAV = [
     }
   </nav>
 
-  <nav class="controls label" aria-label="language and theme">
-    <a
-      href={hrefFor(nextLocale)}
-      class="lang"
-      aria-label={`${localeLabels[locale]} → ${localeLabels[nextLocale]}`}
+  <!-- One glyph on the bar, and it is the gear — same rule as the apps. -->
+  <button
+    class="gear"
+    type="button"
+    popovertarget="site-settings"
+    aria-label={t('settings.label')}
+  >
+    <!-- Gear in the mark family's construction: 48 grid, stroke 3.25,
+         round caps, no fill — a ring with eight teeth. -->
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 48 48"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3.25"
+      stroke-linecap="round"
+      aria-hidden="true"
     >
-      {localeLabels[locale]}
-    </a>
-    <button
-      id="theme-toggle"
-      class="label"
-      type="button"
-      data-label-light={t('theme.light')}
-      data-label-dark={t('theme.dark')}
-      data-label-system={t('theme.system')}
-    >
-      {t('theme.system')}
-    </button>
-  </nav>
+      <circle cx="24" cy="24" r="9" />
+      <circle cx="24" cy="24" r="2" />
+      <path
+        d="M24 15V10M24 33v5M33 24h5M15 24H10M30.36 17.64l3.54-3.54M17.64 17.64l-3.54-3.54M30.36 30.36l3.54 3.54M17.64 30.36l-3.54 3.54"
+      />
+    </svg>
+  </button>
 </header>
 
-<script is:inline>
-  // Parser-blocking on purpose: the SSR label is always "system", so a saved
-  // light/dark pref must be painted onto the button before first render or
-  // it visibly swaps (flicker on every navigation).
-  (() => {
-    const button = document.getElementById('theme-toggle');
-    const pref = localStorage.getItem('theme') || 'system';
-    const label =
-      button.dataset['label' + pref.charAt(0).toUpperCase() + pref.slice(1)];
-    if (label) button.textContent = label;
-  })();
-</script>
+<!-- Native settings surface: the Popover API gives top layer, Esc and
+     light-dismiss for free; the pickers are real <select>s, so the OS
+     renders the menus. Opens with no JS at all (declarative popover). -->
+<div id="site-settings" class="settings label" popover>
+  <div class="row">
+    <label for="setting-appearance">{t('settings.appearance')}</label>
+    <select id="setting-appearance">
+      <option value="system">{t('theme.system')}</option>
+      <option value="light">{t('theme.light')}</option>
+      <option value="dark">{t('theme.dark')}</option>
+    </select>
+  </div>
+  <div class="row">
+    <label for="setting-language">{t('settings.language')}</label>
+    <select id="setting-language">
+      {
+        locales.map(l => (
+          <option value={hrefFor(l)} selected={l === locale}>
+            {localeNames[l]}
+          </option>
+        ))
+      }
+    </select>
+  </div>
+</div>
 
 <style>
   .site-header {
@@ -126,60 +142,84 @@ const NAV = [
     color: var(--ink);
   }
 
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-  }
-
-  /* Both controls share one fixed box: labels differ per locale and per
-     state, and a hit target that grows and shrinks under the pointer is
-     the bug, not a detail. */
-  .lang,
-  #theme-toggle {
-    width: 4.5rem;
-    padding: 0.375rem 0;
-    text-align: right;
-    text-decoration: none;
+  .gear {
+    background: none;
+    border: none;
+    padding: 0.375rem;
+    cursor: pointer;
     color: var(--ink-3);
     transition: color var(--dur-micro) var(--ease);
   }
 
-  #theme-toggle {
-    background: none;
+  .gear:hover {
+    color: var(--ink);
+  }
+
+  .settings {
+    /* Anchored under the gear, off the popover's centered default. */
+    inset: auto;
+    top: 4.25rem;
+    right: clamp(1.25rem, 4vw, 2.5rem);
+    min-width: 15rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    border-radius: 0.875rem;
+  }
+
+  .settings:popover-open {
+    animation: rise var(--dur-micro) var(--ease) both;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 0.75rem 0;
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .row label {
+    color: var(--ink-3);
+  }
+
+  /* Real selects, native menus — inherit the label face, nothing else
+     restyled. */
+  .row select {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--ink);
+    background: transparent;
     border: none;
+    padding: 0.25rem 0;
     cursor: pointer;
   }
 
-  .lang:hover,
-  #theme-toggle:hover {
-    color: var(--ink);
+  @media (prefers-reduced-motion: reduce) {
+    .settings:popover-open {
+      animation: none;
+    }
   }
 </style>
 
 <script>
-  const button = document.getElementById('theme-toggle');
-  if (button) {
-    const order = ['system', 'light', 'dark'] as const;
-    const render = () => {
-      const pref = localStorage.getItem('theme') || 'system';
-      button.textContent = button.dataset[
-        `label${pref.charAt(0).toUpperCase()}${pref.slice(1)}` as
-          | 'labelLight'
-          | 'labelDark'
-          | 'labelSystem'
-      ] as string;
-    };
-    button.addEventListener('click', () => {
-      const pref = (localStorage.getItem('theme') ||
-        'system') as (typeof order)[number];
-      const next = order[(order.indexOf(pref) + 1) % order.length];
-      localStorage.setItem('theme', next);
-      (
-        window as Window & { __applyTheme?: () => void }
-      ).__applyTheme?.();
-      render();
-    });
-    render();
-  }
+  const appearance = document.getElementById(
+    'setting-appearance'
+  ) as HTMLSelectElement;
+  appearance.value = localStorage.getItem('theme') || 'system';
+  appearance.addEventListener('change', () => {
+    localStorage.setItem('theme', appearance.value);
+    (window as Window & { __applyTheme?: () => void }).__applyTheme?.();
+  });
+
+  const language = document.getElementById(
+    'setting-language'
+  ) as HTMLSelectElement;
+  language.addEventListener('change', () => location.assign(language.value));
 </script>
