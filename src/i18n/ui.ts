@@ -65,22 +65,19 @@ const en = {
   'experience.lede':
     "I've been shipping real products since I turned 18 — for two companies, in production, used every day.",
   'experience.contopay.role': 'payments',
-  'experience.contopay.when': 'since 2022 · payments',
+  'experience.contopay.heading':
+    'Sell, charge and invoice instantly from your phone.',
   'experience.contopay.body':
-    "I lead design and architecture on ContoPay's three products — web, mobile, and the landing — and I built most of them myself. A teammate owns the backend and the AI features; the rest is me.",
+    'Take card payments, track your income and invoice, all from your phone. ContoPay brings your whole operation into one platform built to run your business with clarity.',
   'experience.crol.role': 'erp',
-  'experience.crol.when': 'parent company · ERP',
+  'experience.crol.heading': 'AI is already part of your ERP.',
   'experience.crol.body':
-    "Crol is ContoPay's parent — bigger, older, more products. There I work with a larger team: moving legacy apps onto modern stacks, and building new ones from scratch.",
-  'experience.maktub.role': 'art fund',
-  'experience.maktub.when': 'art fund',
-  'experience.maktub.body':
-    'Maktub is an art fund. As a freelancer I built its whole web presence — the brand system, the motion language and the Astro site — working directly with the founders.',
+    'The cloud ERP with artificial intelligence: ask your company anything over WhatsApp — sales, collections, inventory, banks — or connect Crol ERP to Claude, ChatGPT or Copilot and generate financial statements and taxes in seconds.',
   'experience.visit': 'visit',
   'salvalo.label': 'startup',
-  'salvalo.heading': 'Saving food in Venezuela.',
+  'salvalo.heading': 'Reserve surprise packs from your favorite shops.',
   'salvalo.body':
-    'Sálvalo rescues food that would otherwise go to waste: shops sell surprise packs at a fraction of the price, people save money and meals get saved. I build it — web, mobile and the landing.',
+    'The usual, at closing price. Reserve it in the app and rescue it.',
 };
 
 export type UIKey = keyof typeof en;
@@ -135,22 +132,19 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.lede':
       'Llevo lanzando productos reales desde que cumplí 18 — para dos empresas, en producción, usados todos los días.',
     'experience.contopay.role': 'pagos',
-    'experience.contopay.when': 'desde 2022 · pagos',
+    'experience.contopay.heading':
+      'Vende, cobra y factura al instante desde tu celular.',
     'experience.contopay.body':
-      'Lidero el diseño y la arquitectura de los tres productos de ContoPay — web, móvil y el landing — y construí la mayoría yo mismo. Un compañero lleva el backend y las funciones de IA; el resto soy yo.',
+      'Cobra con tarjeta, controla tus ingresos y factura, todo desde el celular. ContoPay integra tu operación completa en una sola plataforma diseñada para que administres tu negocio con claridad.',
     'experience.crol.role': 'erp',
-    'experience.crol.when': 'empresa matriz · ERP',
+    'experience.crol.heading': 'La IA ya forma parte de tu ERP.',
     'experience.crol.body':
-      'Crol es la matriz de ContoPay — más grande, más antigua, más productos. Ahí trabajo con un equipo más amplio: migrando apps legadas a stacks modernos y construyendo nuevas desde cero.',
-    'experience.maktub.role': 'fondo de arte',
-    'experience.maktub.when': 'fondo de arte',
-    'experience.maktub.body':
-      'Maktub es un fondo de arte. Como freelance construí toda su presencia web — el sistema de marca, el lenguaje de movimiento y el sitio en Astro — trabajando directo con los fundadores.',
+      'El ERP en la nube con inteligencia artificial: pregúntale a tu empresa por WhatsApp — ventas, cobranza, inventarios, bancos — o conecta Crol ERP a Claude, ChatGPT o Copilot y genera estados financieros e impuestos en segundos.',
     'experience.visit': 'visitar',
     'salvalo.label': 'startup',
-    'salvalo.heading': 'Salvando comida en Venezuela.',
+    'salvalo.heading': 'Reserva packs sorpresa de tus comercios favoritos.',
     'salvalo.body':
-      'Sálvalo rescata comida que iba a desperdiciarse: los comercios venden packs sorpresa a una fracción del precio, la gente ahorra y la comida se salva. La construyo yo — web, móvil y el landing.',
+      'Lo de siempre, a precio de cierre. Resérvalo en la app y rescátalo.',
   },
   zh: {
     'meta.title': 'juanevillam — 开发者',
@@ -199,22 +193,17 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.lede':
       '从满 18 岁起，我就在做真正上线的产品 — 服务两家公司，在生产环境里，每天都有人用。',
     'experience.contopay.role': '支付',
-    'experience.contopay.when': '自 2022 · 支付',
+    'experience.contopay.heading': '用手机即刻销售、收款、开票。',
     'experience.contopay.body':
-      'ContoPay 的三个产品 — 网页、移动端和落地页 — 由我主导设计与架构，大部分是我亲手做的。一位同事负责后端和 AI 功能；其余都是我。',
+      '刷卡收款、掌握收入、随时开票，全在手机上完成。ContoPay 把你的整个经营装进一个平台，让你清清楚楚地管理生意。',
     'experience.crol.role': 'ERP',
-    'experience.crol.when': '母公司 · ERP',
+    'experience.crol.heading': 'AI 已经是你 ERP 的一部分。',
     'experience.crol.body':
-      'Crol 是 ContoPay 的母公司 — 更大、更老、产品更多。在那里我和更大的团队协作：把遗留应用迁移到现代技术栈，并从零构建新产品。',
-    'experience.maktub.role': '艺术基金',
-    'experience.maktub.when': '艺术基金',
-    'experience.maktub.body':
-      'Maktub 是一个艺术基金。作为自由职业者，我做了它的整个网页形象 — 品牌系统、动效语言和 Astro 网站 — 直接与创始人合作。',
+      '带人工智能的云端 ERP：在 WhatsApp 上直接询问你的公司经营 — 销售、收款、库存、银行 — 或把 Crol ERP 连接到 Claude、ChatGPT 或 Copilot，几秒生成财务报表和税务。',
     'experience.visit': '访问',
     'salvalo.label': '创业项目',
-    'salvalo.heading': '在委内瑞拉拯救食物。',
-    'salvalo.body':
-      'Sálvalo 拯救本要被浪费的食物：商家以远低于原价的价格出售惊喜包，人们省了钱，食物免于浪费。我参与构建它 — 网页、移动端和落地页。',
+    'salvalo.heading': '在你喜欢的商家预订惊喜包。',
+    'salvalo.body': '还是熟悉的美味，以打烊价出售。在应用里预订，把它救回来。',
   },
 };
 

@@ -2,23 +2,25 @@
 import { type UIKey } from '../i18n/ui';
 import T from './T.astro';
 
-// Each company is its own full-height panel in the Salvalo shape — logo,
-// one label, name, one lede, the visit pill, and a still of its landing.
-// Sequence: Crol, then ContoPay, then Maktub (freelance).
-type Job = {
-  id: 'crol' | 'contopay' | 'maktub';
+// Crol and ContoPay merged into ONE panel — two mini landings side by
+// side, each with its own logo, accent, tagline (from the live landing),
+// visit pill and scroll video. No names in text: the logo is the name.
+type Brand = {
+  id: 'crol' | 'contopay';
   name: string;
   role: UIKey;
+  heading: UIKey;
   body: UIKey;
   href: string;
   domain: string;
 };
 
-const JOBS: Job[] = [
+const BRANDS: Brand[] = [
   {
     id: 'crol',
     name: 'Crol',
     role: 'experience.crol.role',
+    heading: 'experience.crol.heading',
     body: 'experience.crol.body',
     href: 'https://www.crol.mx',
     domain: 'crol.mx',
@@ -27,67 +29,62 @@ const JOBS: Job[] = [
     id: 'contopay',
     name: 'ContoPay',
     role: 'experience.contopay.role',
+    heading: 'experience.contopay.heading',
     body: 'experience.contopay.body',
     href: 'https://www.contopay.lat',
     domain: 'contopay.lat',
   },
-  {
-    id: 'maktub',
-    name: 'Maktub',
-    role: 'experience.maktub.role',
-    body: 'experience.maktub.body',
-    href: 'https://maktubartfund.com',
-    domain: 'maktubartfund.com',
-  },
 ];
 ---
 
-{
-  JOBS.map(job => (
-    <section class="panel" id={`work-${job.id}`}>
-      <div class="inner">
-        <div class="copy">
+<section class="panel" id="work-duo">
+  <div class="inner">
+    {
+      BRANDS.map(brand => (
+        <article class={`brand brand-${brand.id}`}>
           <span class="logo" data-reveal>
             <img
               class="on-dark"
-              src={`/media/brand/${job.id}-on-dark.png`}
-              alt={`${job.name} logo`}
+              src={`/media/brand/${brand.id}-on-dark.png`}
+              alt={brand.name}
             />
             <img
               class="on-light"
-              src={`/media/brand/${job.id}-on-light.png`}
-              alt={`${job.name} logo`}
+              src={`/media/brand/${brand.id}-on-light.png`}
+              alt={brand.name}
             />
           </span>
-          <p class="label role" data-reveal>
-            <T k={job.role} />
+          <p class="label brand-label" data-reveal>
+            <T k={brand.role} />
           </p>
-          <h2 class="heading name" data-reveal>
-            {job.name}
+          <h2 class="brand-heading" data-reveal>
+            <T k={brand.heading} />
           </h2>
           <p class="body lede" data-reveal>
-            <T k={job.body} />
+            <T k={brand.body} />
           </p>
-          <a class="label visit" href={job.href} data-reveal>
+          <a class="label visit" href={brand.href} data-reveal>
             <T k="experience.visit" />
-            {` ${job.domain} ↗`}
+            {` ${brand.domain} ↗`}
           </a>
-        </div>
-
-        <img
-          class="shot"
-          src={`/media/screens/${job.id}.jpg`}
-          alt={`${job.name} landing page`}
-          loading="lazy"
-          decoding="async"
-          width="1440"
-          height="900"
-          data-reveal
-        />
-      </div>
-    </section>
-  ))
-}
+          <video
+            class="shot"
+            src={`/media/screens/${brand.id}.webm`}
+            poster={`/media/screens/${brand.id}.jpg`}
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            width="1280"
+            height="800"
+            data-reveal
+          />
+        </article>
+      ))
+    }
+  </div>
+</section>
 
 <style>
   .inner {
@@ -95,23 +92,41 @@ const JOBS: Job[] = [
     max-width: var(--content-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(2rem, 5vw, 4rem);
-    align-items: center;
+    align-items: start;
+  }
+
+  /* Per-brand accents over the shared skeleton — each half of the panel
+     borrows its company's own color and face. */
+  .brand-crol {
+    --brand-accent: #00e100;
+    --font-brand: 'Mulish', var(--font-sans);
+  }
+
+  :global(html[data-theme='light']) .brand-crol {
+    --brand-accent: #00a300;
+  }
+
+  .brand-contopay {
+    --brand-accent: #20bced;
+    --font-brand: var(--font-sans);
+  }
+
+  :global(html[data-theme='light']) .brand-contopay {
+    --brand-accent: #154f91;
   }
 
   .logo {
     display: block;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
   .logo img {
-    height: 2rem;
+    height: 1.875rem;
     width: auto;
   }
 
-  /* Logo ink follows the theme: the on-dark art shows on the dark ground,
-     the on-light art on the light one. No-JS default is dark. */
   .on-light {
     display: none;
   }
@@ -124,42 +139,49 @@ const JOBS: Job[] = [
     display: block;
   }
 
-  .role {
-    color: var(--ink-3);
+  .brand-label {
+    color: var(--brand-accent);
+    font-family: var(--font-brand);
   }
 
-  .name {
-    margin-top: 0.75rem;
-    font-size: clamp(2.5rem, 6vw, 4rem);
+  .brand-heading {
+    margin-top: 0.625rem;
+    font-family: var(--font-brand);
+    font-size: clamp(1.375rem, 2.4vw, 1.875rem);
+    font-weight: 700;
+    letter-spacing: var(--track-heading);
+    line-height: 1.2;
   }
 
   .lede {
-    margin-top: 1.5rem;
-    font-size: 1.125rem;
-    max-width: 44rem;
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-family: var(--font-brand);
   }
 
   .visit {
     display: inline-block;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     padding: 0.625rem 1.375rem;
     border: 1px solid var(--hairline);
     border-radius: 999px;
     text-decoration: none;
     color: var(--ink-2);
+    font-family: var(--font-brand);
     transition:
       color var(--dur-micro) var(--ease),
       border-color var(--dur-micro) var(--ease);
   }
 
   .visit:hover {
-    color: var(--ink);
-    border-color: var(--ink-3);
+    color: var(--brand-accent);
+    border-color: var(--brand-accent);
   }
 
   .shot {
     width: 100%;
     height: auto;
+    margin-top: 1.75rem;
     border: 1px solid var(--hairline);
     border-radius: 0.75rem;
     background: var(--surface);
@@ -168,12 +190,7 @@ const JOBS: Job[] = [
   @media (max-width: 1023px) {
     .inner {
       grid-template-columns: 1fr;
-    }
-
-    .shot {
-      max-height: 40svh;
-      width: auto;
-      max-width: 100%;
+      gap: 4rem;
     }
   }
 </style>

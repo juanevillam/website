@@ -20,6 +20,14 @@ const { path = '', titleKey = 'meta.title' } = Astro.props;
     <title>{ui.en[titleKey]}</title>
     <meta name="description" content={ui.en['meta.description']} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Brand faces for the mini landings: Sálvalo speaks Poppins, Crol
+         speaks Mulish. Free faces, served by Google Fonts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Mulish:wght@600;800&family=Poppins:wght@400;600;700&display=swap"
+    />
     <link rel="canonical" href={new URL(`/${path}`, Astro.site)} />
     <meta property="og:title" content={ui.en[titleKey]} />
     <meta property="og:description" content={ui.en['meta.description']} />
@@ -85,6 +93,30 @@ const { path = '', titleKey = 'meta.title' } = Astro.props;
         { threshold: 0.2 }
       );
       document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+      // Landing videos: play only while on screen (autoplay policies vary,
+      // and an off-screen loop is wasted work). Reduced motion holds the
+      // poster frame instead.
+      const videos =
+        document.querySelectorAll<HTMLVideoElement>('video[autoplay]');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        videos.forEach(v => {
+          v.removeAttribute('autoplay');
+          v.pause();
+        });
+      } else if (videos.length > 0) {
+        const vio = new IntersectionObserver(
+          entries => {
+            for (const entry of entries) {
+              const video = entry.target as HTMLVideoElement;
+              if (entry.isIntersecting) video.play().catch(() => {});
+              else video.pause();
+            }
+          },
+          { threshold: 0.25 }
+        );
+        videos.forEach(v => vio.observe(v));
+      }
     </script>
   </body>
 </html>
