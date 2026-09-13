@@ -13,10 +13,13 @@ export const localeLabels: Record<Locale, string> = {
  */
 const en = {
   'meta.title': 'juanevillam — software developer',
-  'meta.title.projects': 'juanevillam — projects',
-  'meta.title.experience': 'juanevillam — experience',
+  'meta.title.salvalo': 'juanevillam — Sálvalo',
+  'meta.title.work': 'juanevillam — work',
   'meta.description':
     'Software developer. I build native mobile apps and web products.',
+  'nav.home': 'home',
+  'nav.salvalo': 'sálvalo',
+  'nav.work': 'work',
   'hero.eyebrow': 'software developer',
   'hero.thesis':
     'I build software the way I play games: going for the platinum.',
@@ -62,7 +65,15 @@ const en = {
   'experience.crol.when': 'parent company · ERP',
   'experience.crol.body':
     "Crol is ContoPay's parent — bigger, older, more products. There I work with a larger team: moving legacy apps onto modern stacks, and building new ones from scratch.",
+  'experience.maktub.role': 'freelance · brand and web',
+  'experience.maktub.when': 'art fund',
+  'experience.maktub.body':
+    'Maktub is an art fund. As a freelancer I built its whole web presence — the brand system, the motion language and the Astro site — working directly with the founders.',
   'experience.visit': 'visit',
+  'salvalo.label': 'startup',
+  'salvalo.heading': 'Saving food in Venezuela.',
+  'salvalo.body':
+    'Sálvalo rescues food that would otherwise go to waste: shops sell surprise packs at a fraction of the price, people save money and meals get saved. I build it — web, mobile and the landing.',
 };
 
 export type UIKey = keyof typeof en;
@@ -71,10 +82,13 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   en,
   es: {
     'meta.title': 'juanevillam — desarrollador de software',
-    'meta.title.projects': 'juanevillam — proyectos',
-    'meta.title.experience': 'juanevillam — experiencia',
+    'meta.title.salvalo': 'juanevillam — Sálvalo',
+    'meta.title.work': 'juanevillam — trabajo',
     'meta.description':
       'Desarrollador de software. Hago apps móviles nativas y productos web.',
+    'nav.home': 'inicio',
+    'nav.salvalo': 'sálvalo',
+    'nav.work': 'trabajo',
     'hero.eyebrow': 'desarrollador de software',
     'hero.thesis':
       'Hago software igual que juego videojuegos: voy por el platino.',
@@ -120,13 +134,24 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.crol.when': 'empresa matriz · ERP',
     'experience.crol.body':
       'Crol es la matriz de ContoPay — más grande, más antigua, más productos. Ahí trabajo con un equipo más amplio: migrando apps legadas a stacks modernos y construyendo nuevas desde cero.',
+    'experience.maktub.role': 'freelance · marca y web',
+    'experience.maktub.when': 'fondo de arte',
+    'experience.maktub.body':
+      'Maktub es un fondo de arte. Como freelance construí toda su presencia web — el sistema de marca, el lenguaje de movimiento y el sitio en Astro — trabajando directo con los fundadores.',
     'experience.visit': 'visitar',
+    'salvalo.label': 'startup',
+    'salvalo.heading': 'Salvando comida en Venezuela.',
+    'salvalo.body':
+      'Sálvalo rescata comida que iba a desperdiciarse: los comercios venden packs sorpresa a una fracción del precio, la gente ahorra y la comida se salva. La construyo yo — web, móvil y el landing.',
   },
   zh: {
     'meta.title': 'juanevillam — 软件开发者',
-    'meta.title.projects': 'juanevillam — 项目',
-    'meta.title.experience': 'juanevillam — 经历',
+    'meta.title.salvalo': 'juanevillam — Sálvalo',
+    'meta.title.work': 'juanevillam — 工作',
     'meta.description': '软件开发者。我做原生移动应用和网页产品。',
+    'nav.home': '首页',
+    'nav.salvalo': 'sálvalo',
+    'nav.work': '工作',
     'hero.eyebrow': '软件开发者',
     'hero.thesis': '我做软件就像打游戏：奔着白金去。',
     'theme.light': '浅色',
@@ -171,7 +196,15 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.crol.when': '母公司 · ERP',
     'experience.crol.body':
       'Crol 是 ContoPay 的母公司 — 更大、更老、产品更多。在那里我和更大的团队协作：把遗留应用迁移到现代技术栈，并从零构建新产品。',
+    'experience.maktub.role': '自由职业 · 品牌与网页',
+    'experience.maktub.when': '艺术基金',
+    'experience.maktub.body':
+      'Maktub 是一个艺术基金。作为自由职业者，我做了它的整个网页形象 — 品牌系统、动效语言和 Astro 网站 — 直接与创始人合作。',
     'experience.visit': '访问',
+    'salvalo.label': '创业项目',
+    'salvalo.heading': '在委内瑞拉拯救食物。',
+    'salvalo.body':
+      'Sálvalo 拯救本要被浪费的食物：商家以远低于原价的价格出售惊喜包，人们省了钱，食物免于浪费。我参与构建它 — 网页、移动端和落地页。',
   },
 };
 
