@@ -64,11 +64,6 @@ const en = {
   'experience.heading': 'The day job.',
   'experience.lede':
     "I've been shipping real products since I turned 18 — for two companies, in production, used every day.",
-  'experience.contopay.role': 'payments',
-  'experience.contopay.heading':
-    'Sell, charge and invoice instantly from your phone.',
-  'experience.contopay.body':
-    'Take card payments, track your income and invoice, all from your phone. ContoPay brings your whole operation into one platform built to run your business with clarity.',
   'experience.crol.role': 'erp',
   'experience.crol.heading': 'AI is already part of your ERP.',
   'experience.crol.body':
@@ -131,11 +126,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.heading': 'El trabajo de verdad.',
     'experience.lede':
       'Llevo lanzando productos reales desde que cumplí 18 — para dos empresas, en producción, usados todos los días.',
-    'experience.contopay.role': 'pagos',
-    'experience.contopay.heading':
-      'Vende, cobra y factura al instante desde tu celular.',
-    'experience.contopay.body':
-      'Cobra con tarjeta, controla tus ingresos y factura, todo desde el celular. ContoPay integra tu operación completa en una sola plataforma diseñada para que administres tu negocio con claridad.',
     'experience.crol.role': 'erp',
     'experience.crol.heading': 'La IA ya forma parte de tu ERP.',
     'experience.crol.body':
@@ -192,10 +182,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'experience.heading': '正职工作。',
     'experience.lede':
       '从满 18 岁起，我就在做真正上线的产品 — 服务两家公司，在生产环境里，每天都有人用。',
-    'experience.contopay.role': '支付',
-    'experience.contopay.heading': '用手机即刻销售、收款、开票。',
-    'experience.contopay.body':
-      '刷卡收款、掌握收入、随时开票，全在手机上完成。ContoPay 把你的整个经营装进一个平台，让你清清楚楚地管理生意。',
     'experience.crol.role': 'ERP',
     'experience.crol.heading': 'AI 已经是你 ERP 的一部分。',
     'experience.crol.body':
