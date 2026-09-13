@@ -31,7 +31,7 @@ const NAV = [
     <BrandMark size={26} />
   </a>
 
-  <nav class="nav label" aria-label="sections">
+  <nav class="nav" aria-label="sections">
     {
       NAV.map(item => (
         <a
@@ -76,7 +76,7 @@ const NAV = [
 <!-- Native settings surface: the Popover API gives top layer, Esc and
      light-dismiss for free; the pickers are real <select>s, so the OS
      renders the menus. Opens with no JS at all (declarative popover). -->
-<div id="site-settings" class="settings label" popover>
+<div id="site-settings" class="settings" popover>
   <div class="row">
     <label for="setting-appearance">{t('settings.appearance')}</label>
     <select id="setting-appearance">
@@ -122,10 +122,14 @@ const NAV = [
     opacity: 0.7;
   }
 
+  /* Chrome speaks SF Pro — Apple never sets navigation in mono; the mono
+     label voice stays inside the content. */
   .nav {
     display: flex;
     align-items: center;
     gap: clamp(1rem, 3vw, 1.75rem);
+    font-size: 0.875rem;
+    font-weight: 500;
   }
 
   .nav-link {
@@ -166,6 +170,9 @@ const NAV = [
     color: var(--ink);
     border: 1px solid var(--hairline);
     border-radius: 0.875rem;
+    /* SF Pro at iOS's menu-row step. */
+    font-size: 0.9375rem;
+    line-height: 1.35;
   }
 
   .settings:popover-open {
