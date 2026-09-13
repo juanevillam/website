@@ -1,8 +1,10 @@
 ---
 import T from './T.astro';
 
-// Skeleton of the Sálvalo mini landing — the brand skin (palette, Poppins)
-// arrives with the theming engine; the structure and copy live here.
+// The Sálvalo mini landing: the panel takes the brand's own skin — navy
+// ground (the landing's band gradient), green accent, Poppins — over the
+// same custom properties the rest of the site reads, so every child
+// component recolors itself. Copy mirrors the live landing.
 ---
 
 <section id="salvalo" class="panel">
@@ -11,17 +13,19 @@ import T from './T.astro';
       <span class="logo" data-reveal>
         <img
           class="on-dark"
-          src="/media/brand/salvalo-on-dark.svg"
-          alt="Sálvalo logo"
+          src="/media/brand/salvalo-on-dark.png"
+          alt="Sálvalo"
         />
         <img
           class="on-light"
-          src="/media/brand/salvalo-on-light.svg"
-          alt="Sálvalo logo"
+          src="/media/brand/salvalo-on-light.png"
+          alt="Sálvalo"
         />
       </span>
-      <p class="label" data-reveal><T k="salvalo.label" /></p>
-      <h2 class="heading" data-reveal><T k="salvalo.heading" /></h2>
+      <p class="label brand-label" data-reveal><T k="salvalo.label" /></p>
+      <h2 class="heading brand-heading" data-reveal>
+        <T k="salvalo.heading" />
+      </h2>
       <p class="body lede" data-reveal><T k="salvalo.body" /></p>
       <a class="label visit" href="https://salvalo.app" data-reveal>
         <T k="experience.visit" />
@@ -29,20 +33,44 @@ import T from './T.astro';
       </a>
     </div>
 
-    <img
+    <video
       class="shot"
-      src="/media/screens/salvalo.jpg"
-      alt="Sálvalo landing page"
-      loading="lazy"
-      decoding="async"
-      width="1440"
-      height="900"
-      data-reveal
-    />
+      src="/media/screens/salvalo.webm"
+      poster="/media/screens/salvalo.jpg"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      width="1280"
+      height="800"
+      data-reveal></video>
   </div>
 </section>
 
 <style>
+  /* Sálvalo skin — brand tokens over the site's own custom properties. */
+  #salvalo {
+    --ink: #f5f6f7;
+    --ink-2: #d6d9db;
+    --ink-3: #8fa3b0;
+    --surface: #27435b;
+    --hairline: rgba(245, 246, 247, 0.16);
+    --brand-accent: #53da8f;
+    --font-brand: 'Poppins', var(--font-sans);
+    background: linear-gradient(180deg, #2c4a64 0%, #1e374c 48%, #162a3a 100%);
+  }
+
+  :global(html[data-theme='light']) #salvalo {
+    --ink: #27435b;
+    --ink-2: #5b6b7a;
+    --ink-3: #7d8c99;
+    --surface: #ffffff;
+    --hairline: rgba(39, 67, 91, 0.12);
+    --brand-accent: #0e8f4e;
+    background: linear-gradient(180deg, #f6f9f7 0%, #f1f7f3 48%, #e9f3ed 100%);
+  }
+
   .inner {
     width: 100%;
     max-width: var(--content-max);
@@ -59,7 +87,7 @@ import T from './T.astro';
   }
 
   .logo img {
-    height: 2.25rem;
+    height: 2.5rem;
     width: auto;
   }
 
@@ -75,14 +103,23 @@ import T from './T.astro';
     display: block;
   }
 
-  .heading {
+  .brand-label {
+    color: var(--brand-accent);
+    font-family: var(--font-brand);
+  }
+
+  .brand-heading {
     margin-top: 0.75rem;
+    font-family: var(--font-brand);
+    font-weight: 700;
   }
 
   .lede {
     margin-top: 1.5rem;
     font-size: 1.125rem;
     max-width: 44rem;
+    font-family: var(--font-brand);
+    font-weight: 400;
   }
 
   .visit {
@@ -93,14 +130,15 @@ import T from './T.astro';
     border-radius: 999px;
     text-decoration: none;
     color: var(--ink-2);
+    font-family: var(--font-brand);
     transition:
       color var(--dur-micro) var(--ease),
       border-color var(--dur-micro) var(--ease);
   }
 
   .visit:hover {
-    color: var(--ink);
-    border-color: var(--ink-3);
+    color: var(--brand-accent);
+    border-color: var(--brand-accent);
   }
 
   .shot {
