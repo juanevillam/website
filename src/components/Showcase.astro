@@ -20,7 +20,12 @@ export type MediaItem = {
 type Props = {
   id: string;
   name: string;
-  desc: UIKey;
+  /** The what / why / how story, one short body each. */
+  what: UIKey;
+  why: UIKey;
+  how: UIKey;
+  /** Show the name beside the logo (for icon tiles, which don't carry it). */
+  titled?: boolean;
   /** Brand accent for the visit pill's hover. */
   accent?: string;
   href?: string;
@@ -28,7 +33,24 @@ type Props = {
   media?: MediaItem[];
 };
 
-const { id, name, desc, accent, href, domain, media = [] } = Astro.props;
+const {
+  id,
+  name,
+  what,
+  why,
+  how,
+  titled = false,
+  accent,
+  href,
+  domain,
+  media = [],
+} = Astro.props;
+
+const ENTRIES = [
+  { label: 'label.what', body: what },
+  { label: 'label.why', body: why },
+  { label: 'label.how', body: how },
+] as const;
 ---
 
 <section
@@ -39,9 +61,23 @@ const { id, name, desc, accent, href, domain, media = [] } = Astro.props;
   <div class="inner">
     <div class="logo" data-reveal>
       <slot name="logo" />
+      {titled && <span class="app-name">{name}</span>}
     </div>
 
-    <p class="body lede" data-reveal><T k={desc} /></p>
+    <dl class="entries">
+      {
+        ENTRIES.map(entry => (
+          <div class="entry" data-reveal>
+            <dt class="label entry-key">
+              <T k={entry.label} />
+            </dt>
+            <dd class="body entry-body">
+              <T k={entry.body} />
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
 
     {
       href && (
@@ -92,16 +128,44 @@ const { id, name, desc, accent, href, domain, media = [] } = Astro.props;
     margin: 0 auto;
   }
 
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
   .logo :global(img) {
     height: 2.5rem;
     width: auto;
     display: block;
   }
 
-  .lede {
-    margin-top: 1.5rem;
-    font-size: 1.125rem;
+  /* The app's name beside its icon, the way the welcome screens title it —
+     SF Pro Display at Large Title weight. */
+  .app-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: var(--track-heading);
+    line-height: 1;
+  }
+
+  .entries {
+    margin-top: 1.75rem;
     max-width: 44rem;
+  }
+
+  .entry + .entry {
+    margin-top: 1.25rem;
+  }
+
+  .entry-key {
+    color: var(--ink-3);
+  }
+
+  .entry-body {
+    margin-top: 0.25rem;
+    font-size: 1.0625rem;
+    line-height: 1.6;
   }
 
   .visit {
