@@ -1,22 +1,15 @@
 ---
-import { useTranslations, type Locale, type UIKey } from '../i18n/ui';
+import { type UIKey } from '../i18n/ui';
 import AppMark from './AppMark.astro';
+import T from './T.astro';
 
-type Props = {
-  locale: Locale;
-};
-
-const { locale } = Astro.props;
-const t = useTranslations(locale);
-
-// Each entry pairs a mono label (k…) with its story (desc / d…) — the first
-// pair is the app itself, the rest are the details worth bragging about.
-type Entry = { k: UIKey; d: UIKey };
+// Each app is its own full-height panel, in the Salvalo shape: mark,
+// status label, name, one lede. Sequence: Topper, Sound Shaper, Starter.
 type Project = {
   id: 'topper' | 'shaper' | 'starter';
   name: string;
   status: UIKey;
-  entries: Entry[];
+  desc: UIKey;
 };
 
 const PROJECTS: Project[] = [
@@ -24,56 +17,37 @@ const PROJECTS: Project[] = [
     id: 'topper',
     name: 'Topper',
     status: 'projects.topper.status',
-    entries: [
-      { k: 'projects.topper.k0', d: 'projects.topper.desc' },
-      { k: 'projects.topper.k1', d: 'projects.topper.d1' },
-      { k: 'projects.topper.k2', d: 'projects.topper.d2' },
-      { k: 'projects.topper.k3', d: 'projects.topper.d3' },
-      { k: 'projects.topper.k4', d: 'projects.topper.d4' },
-    ],
+    desc: 'projects.topper.desc',
   },
   {
     id: 'shaper',
     name: 'Sound Shaper',
     status: 'projects.shaper.status',
-    entries: [{ k: 'projects.topper.k0', d: 'projects.shaper.desc' }],
+    desc: 'projects.shaper.desc',
   },
   {
     id: 'starter',
     name: 'Expo UI Starter',
     status: 'projects.starter.status',
-    entries: [{ k: 'projects.topper.k0', d: 'projects.starter.desc' }],
+    desc: 'projects.starter.desc',
   },
 ];
 ---
 
 {
-  PROJECTS.map((project, i) => (
+  PROJECTS.map(project => (
     <section class="panel" id={`project-${project.id}`}>
       <div class="inner">
-        {i === 0 && (
-          <header class="section-head" data-reveal>
-            <p class="label">{t('projects.label')}</p>
-            <h2 class="heading">{t('projects.heading')}</h2>
-          </header>
-        )}
-
-        <article class="project" data-reveal>
-          <div class="ident">
-            <AppMark app={project.id} size={34} class="mark" />
-            <h3 class="name">{project.name}</h3>
-            <p class="label status">{t(project.status)}</p>
-          </div>
-
-          <dl class="entries">
-            {project.entries.map(entry => (
-              <>
-                <dt class="label entry-key">{t(entry.k)}</dt>
-                <dd class="body entry-body">{t(entry.d)}</dd>
-              </>
-            ))}
-          </dl>
-        </article>
+        <AppMark app={project.id} size={34} class="mark" />
+        <p class="label status" data-reveal>
+          <T k={project.status} />
+        </p>
+        <h2 class="heading name" data-reveal>
+          {project.name}
+        </h2>
+        <p class="body lede" data-reveal>
+          <T k={project.desc} />
+        </p>
       </div>
     </section>
   ))
@@ -86,77 +60,23 @@ const PROJECTS: Project[] = [
     margin: 0 auto;
   }
 
-  .section-head {
-    margin-bottom: var(--space-4);
-  }
-
-  .heading {
-    margin-top: 0.75rem;
-  }
-
-  .project {
-    /* Identity on the left, the story on the right — the Monolith seam,
-       same split the Experience section lays out on. */
-    display: grid;
-    grid-template-columns: var(--seam) minmax(0, 1fr);
-    gap: 0.5rem clamp(2rem, 6vw, 5rem);
-    align-items: start;
-  }
-
-  .ident {
-    grid-column: 1;
-  }
-
   .mark {
     color: var(--ink-2);
-  }
-
-  .name {
-    font-size: clamp(2.25rem, 5vw, 3.5rem);
-    font-weight: 800;
-    letter-spacing: var(--track-display);
-    line-height: 1;
-    margin-top: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .status {
     color: var(--ink-3);
-    margin-top: 0.875rem;
   }
 
-  .entries {
-    grid-column: 2;
+  .name {
+    margin-top: 0.75rem;
+    font-size: clamp(2.5rem, 6vw, 4rem);
   }
 
-  .entry-key {
-    color: var(--ink-3);
-  }
-
-  .entry-key + .entry-body {
-    margin-top: 0.5rem;
-  }
-
-  .entry-body {
-    font-size: 1.0625rem;
-    line-height: 1.7;
-  }
-
-  .entry-body + .entry-key {
-    margin-top: 1.75rem;
-  }
-
-  @media (max-width: 820px) {
-    .project {
-      grid-template-columns: 1fr;
-    }
-
-    .ident,
-    .entries {
-      grid-column: 1;
-    }
-
-    .entries {
-      margin-top: 1.5rem;
-    }
+  .lede {
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
+    max-width: 44rem;
   }
 </style>

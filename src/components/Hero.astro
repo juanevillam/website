@@ -1,26 +1,10 @@
 ---
-import { useTranslations, type Locale } from '../i18n/ui';
-
-type Props = {
-  locale: Locale;
-};
-
-const { locale } = Astro.props;
-const t = useTranslations(locale);
+import T from './T.astro';
 ---
 
 <section class="hero">
-  <p class="label eyebrow">
-    <svg class="trace" data-trace>
-      <text class="trace-text eyebrow-text" x="0" y="0">{t('hero.eyebrow')}</text>
-    </svg>
-  </p>
-
-  <h1 class="display wordmark">
-    <svg class="trace" data-trace>
-      <text class="trace-text wordmark-text" x="0" y="0">juanevillam</text>
-    </svg>
-  </h1>
+  <p class="label eyebrow" data-reveal><T k="hero.eyebrow" /></p>
+  <h1 class="display" data-reveal>juanevillam</h1>
 </section>
 
 <style>
@@ -34,122 +18,13 @@ const t = useTranslations(locale);
     justify-content: center;
     text-align: center;
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
-    position: relative;
-  }
-
-  /* ---------- the write-in — the site's ONE motif ----------
-     Text is written letter by letter, left to right, on the 100 BPM clock.
-     Each element sets its own per-letter stagger; the letters themselves
-     simply arrive — no strokes, no outlines, crisp at any zoom. */
-
-  .trace {
-    overflow: visible;
-    display: inline-block;
-  }
-
-  /* Invisible until the per-letter split runs (prevents a filled flash). */
-  .trace-text {
-    fill: currentColor;
-    fill-opacity: 0;
-  }
-
-  .trace-text :global(tspan) {
-    fill: currentColor;
-    fill-opacity: 0;
-    animation: letter-in calc(var(--beat) * 0.5) var(--ease)
-      calc(var(--i) * var(--letter-step)) both;
-  }
-
-  @keyframes letter-in {
-    to {
-      fill-opacity: 1;
-    }
   }
 
   .eyebrow {
     color: var(--ink-3);
   }
 
-  .eyebrow-text {
-    font-family: var(--font-mono);
-    font-size: 100px;
-    letter-spacing: 8px;
-    text-transform: uppercase;
-    --letter-step: calc(var(--beat) * 0.04);
-  }
-
-  .wordmark {
-    margin-top: 1.5rem;
-    line-height: 1;
-  }
-
-  .wordmark-text {
-    font-family: var(--font-sans);
-    font-size: 100px;
-    font-weight: 800;
-    letter-spacing: -4.5px;
-    /* The name writes slower than the eyebrow — it's the headline act.
-       An eighth per letter: the whole entrance lands inside two beats. */
-    --letter-step: calc(var(--beat) * 0.075);
-  }
-
-  /* ---------- conventions: repeat visits + reduced motion ---------- */
-
-  :global(html[data-entered]) .trace-text,
-  :global(html[data-entered]) .trace-text :global(tspan) {
-    animation: none;
-    fill-opacity: 1;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .trace-text,
-    .trace-text :global(tspan) {
-      animation: none;
-      fill-opacity: 1;
-    }
+  h1 {
+    margin-top: 1.25rem;
   }
 </style>
-
-<script>
-  // 1. Split each trace text into per-letter tspans (--i drives the L→R
-  //    stagger). Runtime split so it works for every i18n string.
-  // 2. Size each SVG to its own text: inner font-size is a fixed 100, so
-  //    viewBox = measured bbox and width/height = bbox/100 em — glyphs render
-  //    at the container's CSS font-size and scale as vectors.
-  const svgs = document.querySelectorAll<SVGSVGElement>('svg[data-trace]');
-
-  svgs.forEach(svg => {
-    const text = svg.querySelector<SVGTextElement>('text');
-    if (!text) return;
-    const raw = (text.textContent ?? '').trim();
-    text.textContent = '';
-    [...raw].forEach((ch, i) => {
-      const tspan = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'tspan'
-      );
-      tspan.textContent = ch === ' ' ? ' ' : ch;
-      tspan.style.setProperty('--i', String(i));
-      text.appendChild(tspan);
-    });
-  });
-
-  const size = () => {
-    svgs.forEach(svg => {
-      const text = svg.querySelector<SVGTextElement>('text');
-      if (!text) return;
-      const pad = 4; // room for the stroke
-      const bb = text.getBBox();
-      const x = bb.x - pad;
-      const y = bb.y - pad;
-      const w = bb.width + pad * 2;
-      const h = bb.height + pad * 2;
-      svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
-      svg.style.width = `${w / 100}em`;
-      svg.style.height = `${h / 100}em`;
-    });
-  };
-
-  size();
-  document.fonts?.ready.then(size);
-</script>

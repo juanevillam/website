@@ -1,22 +1,14 @@
 ---
 import BrandMark from './BrandMark.astro';
-import {
-  locales,
-  localeNames,
-  useTranslations,
-  type Locale,
-} from '../i18n/ui';
+import T from './T.astro';
+import { locales, localeNames, ui } from '../i18n/ui';
 
 type Props = {
-  locale: Locale;
-  /** Locale-less page path ('' for home) — the language picker stays on it. */
+  /** Page path ('' for home) for the active-link state. */
   path?: string;
 };
 
-const { locale, path = '' } = Astro.props;
-const t = useTranslations(locale);
-const hrefFor = (l: Locale, p: string = path) =>
-  l === 'en' ? `/${p}` : `/${l}/${p}`;
+const { path = '' } = Astro.props;
 
 // The site's sections are PAGES, not anchors — one link per section.
 const NAV = [
@@ -24,10 +16,23 @@ const NAV = [
   { path: 'salvalo/', label: 'nav.salvalo' },
   { path: 'work/', label: 'nav.work' },
 ] as const;
+
+// The appearance <option>s can't hold per-locale spans, so their labels are
+// re-applied by script from this map when the language changes.
+const appearanceLabels = Object.fromEntries(
+  locales.map(l => [
+    l,
+    {
+      system: ui[l]['theme.system'],
+      light: ui[l]['theme.light'],
+      dark: ui[l]['theme.dark'],
+    },
+  ])
+);
 ---
 
 <header class="site-header">
-  <a href={hrefFor(locale, '')} class="mark-link" aria-label="juanevillam">
+  <a href="/" class="mark-link" aria-label="juanevillam">
     <BrandMark size={26} />
   </a>
 
@@ -35,11 +40,11 @@ const NAV = [
     {
       NAV.map(item => (
         <a
-          href={hrefFor(locale, item.path)}
+          href={`/${item.path}`}
           class="nav-link"
           aria-current={path === item.path ? 'page' : undefined}
         >
-          {t(item.label)}
+          <T k={item.label} />
         </a>
       ))
     }
@@ -50,7 +55,7 @@ const NAV = [
     class="gear"
     type="button"
     popovertarget="site-settings"
-    aria-label={t('settings.label')}
+    aria-label="Settings"
   >
     <!-- SF-style gearshape.fill: solid toothed body with a punched hub —
          the filled silhouette iOS bars use, not an outline. -->
@@ -79,22 +84,25 @@ const NAV = [
 
 <!-- Native settings surface: the Popover API gives top layer, Esc and
      light-dismiss for free; the pickers are real <select>s, so the OS
-     renders the menus. Opens with no JS at all (declarative popover). -->
+     renders the menus. Both apply in place — the menu stays open. -->
 <div id="site-settings" class="settings" popover>
   <div class="row">
-    <label for="setting-appearance">{t('settings.appearance')}</label>
-    <select id="setting-appearance">
-      <option value="system">{t('theme.system')}</option>
-      <option value="light">{t('theme.light')}</option>
-      <option value="dark">{t('theme.dark')}</option>
+    <label for="setting-appearance"><T k="settings.appearance" /></label>
+    <select
+      id="setting-appearance"
+      data-labels={JSON.stringify(appearanceLabels)}
+    >
+      <option value="system">{ui.en['theme.system']}</option>
+      <option value="light">{ui.en['theme.light']}</option>
+      <option value="dark">{ui.en['theme.dark']}</option>
     </select>
   </div>
   <div class="row">
-    <label for="setting-language">{t('settings.language')}</label>
+    <label for="setting-language"><T k="settings.language" /></label>
     <select id="setting-language">
       {
         locales.map(l => (
-          <option value={hrefFor(l)} selected={l === locale}>
+          <option value={l} selected={l === 'en'}>
             {localeNames[l]}
           </option>
         ))
@@ -223,14 +231,34 @@ const NAV = [
   const appearance = document.getElementById(
     'setting-appearance'
   ) as HTMLSelectElement;
+  const language = document.getElementById(
+    'setting-language'
+  ) as HTMLSelectElement;
+
+  const appearanceLabels = JSON.parse(appearance.dataset.labels as string);
+  const relabel = (lang: string) => {
+    for (const option of appearance.options) {
+      option.textContent = appearanceLabels[lang][option.value];
+    }
+  };
+
+  const lang = localStorage.getItem('lang') || 'en';
+  language.value = lang;
+  relabel(lang);
+
   appearance.value = localStorage.getItem('theme') || 'system';
   appearance.addEventListener('change', () => {
     localStorage.setItem('theme', appearance.value);
     (window as Window & { __applyTheme?: () => void }).__applyTheme?.();
   });
 
-  const language = document.getElementById(
-    'setting-language'
-  ) as HTMLSelectElement;
-  language.addEventListener('change', () => location.assign(language.value));
+  // Language applies in place: swap html[data-lang] and every .t span
+  // follows — no navigation, and the menu stays open like the theme's.
+  language.addEventListener('change', () => {
+    const next = language.value;
+    localStorage.setItem('lang', next);
+    document.documentElement.lang = next;
+    document.documentElement.dataset.lang = next;
+    relabel(next);
+  });
 </script>

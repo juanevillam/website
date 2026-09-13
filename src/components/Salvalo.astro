@@ -1,12 +1,5 @@
 ---
-import { useTranslations, type Locale } from '../i18n/ui';
-
-type Props = {
-  locale: Locale;
-};
-
-const { locale } = Astro.props;
-const t = useTranslations(locale);
+import T from './T.astro';
 
 // Skeleton of the Sálvalo mini landing — the brand skin (palette, Poppins,
 // logo) arrives with the theming engine; the structure and copy live here.
@@ -14,11 +7,12 @@ const t = useTranslations(locale);
 
 <section id="salvalo" class="panel">
   <div class="inner">
-    <p class="label" data-reveal>{t('salvalo.label')}</p>
-    <h2 class="heading" data-reveal>{t('salvalo.heading')}</h2>
-    <p class="body lede" data-reveal>{t('salvalo.body')}</p>
+    <p class="label" data-reveal><T k="salvalo.label" /></p>
+    <h2 class="heading" data-reveal><T k="salvalo.heading" /></h2>
+    <p class="body lede" data-reveal><T k="salvalo.body" /></p>
     <a class="label visit" href="https://salvalo.app" data-reveal>
-      {`${t('experience.visit')} salvalo.app ↗`}
+      <T k="experience.visit" />
+      {' salvalo.app ↗'}
     </a>
   </div>
 </section>

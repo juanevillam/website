@@ -1,0 +1,16 @@
+---
+import { locales, ui, type UIKey } from '../i18n/ui';
+
+/**
+ * One translated string, all three locales in the DOM — CSS shows the one
+ * html[data-lang] names (en when unset), so switching language re-renders
+ * in place with no navigation, no flash, and no JS on the render path.
+ */
+type Props = {
+  k: UIKey;
+};
+
+const { k } = Astro.props;
+---
+
+{locales.map(l => <span class="t" lang={l}>{ui[l][k]}</span>)}

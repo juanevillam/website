@@ -72,6 +72,22 @@
   margin: 0;
 }
 
+/* ---------- language ----------
+   Every translated string ships all three locales as .t spans; the active
+   language is picked by CSS off html[data-lang], set pre-paint from
+   localStorage. No locale URLs — the page re-renders in place, like the
+   apps do from Settings. Without JS, English shows. */
+.t {
+  display: none;
+}
+
+html:not([data-lang]) .t[lang='en'],
+html[data-lang='en'] .t[lang='en'],
+html[data-lang='es'] .t[lang='es'],
+html[data-lang='zh'] .t[lang='zh'] {
+  display: inline;
+}
+
 /* The site pages, not free-scrolls — every section is a full-height panel
    the viewport snaps to, the way an app screens its content. A panel taller
    than the viewport still scrolls freely inside itself (spec behavior). */

@@ -1,57 +1,34 @@
 ---
-import {
-  locales,
-  useTranslations,
-  type Locale,
-  type UIKey,
-} from '../i18n/ui';
+import { ui, type UIKey } from '../i18n/ui';
 import SiteHeader from '../components/SiteHeader.astro';
 import '../styles/global.css';
 
 type Props = {
-  locale: Locale;
-  /** Locale-less page path ('' for home, 'projects/', 'experience/'). */
+  /** Page path ('' for home, 'salvalo/', 'work/'). */
   path?: string;
   titleKey?: UIKey;
 };
 
-const { locale, path = '', titleKey = 'meta.title' } = Astro.props;
-const t = useTranslations(locale);
-
-const pathForLocale = (l: Locale) =>
-  l === 'en' ? `/${path}` : `/${l}/${path}`;
+const { path = '', titleKey = 'meta.title' } = Astro.props;
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{t(titleKey)}</title>
-    <meta name="description" content={t('meta.description')} />
+    <title>{ui.en[titleKey]}</title>
+    <meta name="description" content={ui.en['meta.description']} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={new URL(pathForLocale(locale), Astro.site)} />
-    {
-      locales.map(l => (
-        <link
-          rel="alternate"
-          hreflang={l}
-          href={new URL(pathForLocale(l), Astro.site)}
-        />
-      ))
-    }
-    <link
-      rel="alternate"
-      hreflang="x-default"
-      href={new URL(`/${path}`, Astro.site)}
-    />
-    <meta property="og:title" content={t(titleKey)} />
-    <meta property="og:description" content={t('meta.description')} />
+    <link rel="canonical" href={new URL(`/${path}`, Astro.site)} />
+    <meta property="og:title" content={ui.en[titleKey]} />
+    <meta property="og:description" content={ui.en['meta.description']} />
     <meta property="og:type" content="website" />
 
     <script is:inline>
-      // Theme, pre-paint: tri-state light/dark/system (dark-first brand).
-      // Runs before first render so there is never a flash of wrong theme.
+      // Theme and language, pre-paint — both are in-place preferences, no
+      // locale URLs. Runs before first render so there is never a flash of
+      // the wrong theme or the wrong language.
       (() => {
         const media = window.matchMedia('(prefers-color-scheme: dark)');
         const apply = () => {
@@ -63,7 +40,6 @@ const pathForLocale = (l: Locale) =>
         apply();
         media.addEventListener('change', apply);
         window.addEventListener('storage', apply);
-        // Re-apply on demand from the toggle without a custom event bus.
         // User-initiated switches play the inversion sweep (the light theme
         // IS the dark palette inverted — the transition says so): a View
         // Transitions wipe where supported, instant swap elsewhere.
@@ -83,21 +59,14 @@ const pathForLocale = (l: Locale) =>
           } else apply();
         };
 
-        // Entrance animations play once per session — a lang switch is a
-        // full navigation, and the hero re-rising on every one reads as a
-        // glitch, not a greeting. A deliberate RELOAD is different: it means
-        // "show me again", so it always replays the entrance.
-        var nav = performance.getEntriesByType('navigation')[0];
-        var isReload = nav && nav.type === 'reload';
-        if (!isReload && sessionStorage.getItem('entered')) {
-          document.documentElement.setAttribute('data-entered', '');
-        }
-        sessionStorage.setItem('entered', '1');
+        const lang = localStorage.getItem('lang') || 'en';
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.lang = lang;
       })();
     </script>
   </head>
   <body>
-    <SiteHeader locale={locale} path={path} />
+    <SiteHeader path={path} />
     <main>
       <slot />
     </main>
