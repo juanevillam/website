@@ -1,0 +1,108 @@
+---
+/**
+ * The app's icon tile, rendered the way the WELCOME screens render it —
+ * a direct port of `packages/mobile-ui/src/BrandTile.tsx`, dark scheme
+ * (the site is dark-only): superellipse silhouette (|x|ⁿ+|y|ⁿ=1, n=4.5,
+ * fitted against a real iOS 26 icon), the measured vertical shine, the
+ * blurred contact shadow, and the flat #F5F5F5 stroke mark on top.
+ * Constants are BrandTile's; when that file retunes, retune this.
+ */
+type Props = {
+  app: 'topper' | 'shaper';
+  size?: number;
+};
+
+const { app, size = 76 } = Astro.props;
+
+const SQUIRCLE_N = 4.5;
+const SQUIRCLE_STEPS = 256;
+const squirclePath = (s: number) => {
+  const r = s / 2;
+  const exp = 2 / SQUIRCLE_N;
+  const points: string[] = [];
+  for (let i = 0; i <= SQUIRCLE_STEPS; i += 1) {
+    const t = (i / SQUIRCLE_STEPS) * 2 * Math.PI;
+    const cos = Math.cos(t);
+    const sin = Math.sin(t);
+    const x = r + Math.sign(cos) * r * Math.abs(cos) ** exp;
+    const y = r + Math.sign(sin) * r * Math.abs(sin) ** exp;
+    points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
+  }
+  return `M${points.join('L')}Z`;
+};
+
+// BrandTile's measured dark values.
+const GRADIENT: [string, string][] = [
+  ['0', '#727272'],
+  ['0.008', '#5A5A59'],
+  ['0.016', '#414141'],
+  ['0.2', '#2C2D2D'],
+  ['0.5', '#222222'],
+  ['0.8', '#181817'],
+  ['0.984', '#1E1D1E'],
+  ['0.992', '#2E2E2D'],
+  ['1', '#3E3E3E'],
+];
+const INK = '#F5F5F5';
+const SHADOW = { opacity: 0.5, blur: 0.045, dy: 0.05 };
+const SHADOW_PAD = 0.18;
+
+const pad = Math.round(size * SHADOW_PAD);
+const canvas = size + pad * 2;
+const path = squirclePath(size);
+
+// The mark on its 48-unit grid, scaled into the tile. Topper's crown is
+// bbox-centred via the same -1.25 offset its BrandMark viewBox carries.
+const glyph = size * 0.58;
+const scale = glyph / 48;
+const gx = pad + (size - glyph) / 2;
+const gy = pad + (size - glyph) / 2 + (app === 'topper' ? 1.25 * scale : 0);
+const gradientId = `tile-${app}`;
+const shadowId = `tile-shadow-${app}`;
+---
+
+<svg
+  width={canvas}
+  height={canvas}
+  viewBox={`0 0 ${canvas} ${canvas}`}
+  style={`margin: ${-pad}px;`}
+  aria-hidden="true"
+>
+  <defs>
+    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+      {GRADIENT.map(([offset, color]) => (
+        <stop offset={offset} stop-color={color} />
+      ))}
+    </linearGradient>
+    <filter id={shadowId} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation={size * SHADOW.blur}></feGaussianBlur>
+    </filter>
+  </defs>
+  <path
+    d={path}
+    fill="#000000"
+    opacity={SHADOW.opacity}
+    filter={`url(#${shadowId})`}
+    transform={`translate(${pad}, ${pad + size * SHADOW.dy})`}></path>
+  <path d={path} fill={`url(#${gradientId})`} transform={`translate(${pad}, ${pad})`}
+  ></path>
+  <g
+    transform={`translate(${gx}, ${gy}) scale(${scale})`}
+    fill="none"
+    stroke={INK}
+    stroke-width="3.25"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    {
+      app === 'topper' ? (
+        <>
+          <path d="M10 28V15.5l8.5 7L24 11l5.5 11.5 8.5-7V28z" />
+          <path d="M10 34.5h28" />
+        </>
+      ) : (
+        <path d="M10 16.5v15M17 11.5v25M24 16v16M31 8v32M38 14v20" />
+      )
+    }
+  </g>
+</svg>
