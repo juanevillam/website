@@ -1,9 +1,9 @@
 ---
-// The app glyphs of the brand family — crown (Topper) and bento (Expo
-// Starter). Same locked construction as the jv monogram: 48-unit grid,
-// stroke 3.25, round caps/joins, no fill, flat.
+// The app glyphs of the brand family — crown (Topper), equalizer (Sound
+// Shaper) and bento (Expo Starter). Same locked construction as the jv
+// monogram: 48-unit grid, stroke 3.25, round caps/joins, no fill, flat.
 type Props = {
-  app: 'topper' | 'starter';
+  app: 'topper' | 'shaper' | 'starter';
   size?: number;
   class?: string;
 };
@@ -30,6 +30,9 @@ const viewBox = app === 'topper' ? '0 -1.25 48 48' : '0 0 48 48';
         <path d="M10 28V15.5l8.5 7L24 11l5.5 11.5 8.5-7V28z" />
         <path d="M10 34.5h28" />
       </>
+    ) : app === 'shaper' ? (
+      /* Matches apps/sound-shaper BrandMark.tsx — five bars on the midline. */
+      <path d="M10 16.5v15M17 11.5v25M24 16v16M31 8v32M38 14v20" />
     ) : (
       <>
         <rect x="9" y="9" width="13.5" height="13.5" rx="3" />
