@@ -22,7 +22,7 @@ const en = {
   'theme.dark': 'dark',
   'theme.system': 'system',
   'projects.label': 'projects',
-  'projects.heading': 'Two apps, one monorepo.',
+  'projects.heading': 'Three apps, one monorepo.',
   'projects.topper.status': 'social · ranked lists',
   'projects.topper.desc':
     'My flagship app. Ranked lists — tops — of anything: movies, food, games, whatever you rate. You crown a winner, people fight back with crowns and comments, you follow them and earn PlayStation-style trophies along the way. Built solo: design, code and backend.',
@@ -39,6 +39,9 @@ const en = {
   'projects.topper.k2': 'speed',
   'projects.topper.k3': 'trophies',
   'projects.topper.k4': 'languages',
+  'projects.shaper.status': 'audio · your library',
+  'projects.shaper.desc':
+    "My personal audio player. Upload the sounds you already have — music, ringtones, voice memos — and shape them: slow them down, speed them up, bend the pitch. The audio engine carries my own phase-vocoder patch, so Preserve Pitch holds up on real music. Mark a sound's best seconds as clips and jump right back to them.",
   'projects.starter.status': '@expo/ui showcase',
   'projects.starter.desc':
     'Every @expo/ui component running native on both platforms — Jetpack Compose on Android, SwiftUI on iOS. 47 showcase screens covering the whole catalog: pickers, sheets, menus, navigation, the lot. This is where I prove UI before it ships in Topper.',
@@ -75,7 +78,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'theme.dark': 'oscuro',
     'theme.system': 'sistema',
     'projects.label': 'proyectos',
-    'projects.heading': 'Dos apps, un monorepo.',
+    'projects.heading': 'Tres apps, un monorepo.',
     'projects.topper.status': 'social · listas rankeadas',
     'projects.topper.desc':
       'Mi app insignia. Listas rankeadas — tops — de lo que sea: películas, comida, juegos, lo que califiques. Coronas al ganador, la gente contraataca con coronas y comentarios, los sigues y vas ganando trofeos estilo PlayStation en el camino. Hecha en solitario: diseño, código y backend.',
@@ -92,6 +95,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'projects.topper.k2': 'velocidad',
     'projects.topper.k3': 'trofeos',
     'projects.topper.k4': 'idiomas',
+    'projects.shaper.status': 'audio · tu biblioteca',
+    'projects.shaper.desc':
+      'Mi reproductor de audio personal. Sube los sonidos que ya tienes — música, tonos, notas de voz — y dales forma: bájales la velocidad, acelérala, dobla el tono. El motor de audio lleva mi propio parche de phase vocoder, así que Preservar tono aguanta con música de verdad. Marca los mejores segundos de un sonido como clips y vuelve a ellos al instante.',
     'projects.starter.status': 'vitrina de @expo/ui',
     'projects.starter.desc':
       'Cada componente de @expo/ui corriendo nativo en ambas plataformas: Jetpack Compose en Android, SwiftUI en iOS. 47 pantallas que cubren todo el catálogo: pickers, sheets, menús, navegación, todo. Aquí pruebo la UI antes de que llegue a Topper.',
@@ -121,7 +127,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'theme.dark': '深色',
     'theme.system': '跟随系统',
     'projects.label': '项目',
-    'projects.heading': '两个应用，一个 monorepo。',
+    'projects.heading': '三个应用，一个 monorepo。',
     'projects.topper.status': '社交 · 排名列表',
     'projects.topper.desc':
       '我的旗舰应用。给任何东西排名 — 电影、美食、游戏，凡是你想评价的 — 建立你的 tops。你为第一名加冕，别人用皇冠和评论来反击，你关注他们，一路赢取 PlayStation 风格的奖杯。独立完成：设计、代码、后端。',
@@ -138,6 +144,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'projects.topper.k2': '速度',
     'projects.topper.k3': '奖杯',
     'projects.topper.k4': '语言',
+    'projects.shaper.status': '音频 · 你的曲库',
+    'projects.shaper.desc':
+      '我的个人音频播放器。上传你已有的声音 — 音乐、铃声、语音备忘录 — 然后随意塑形：放慢、加速、弯曲音调。音频引擎里带着我自己写的 phase vocoder 补丁，"保持音调"在真正的音乐上也站得住。把一段声音最精彩的几秒标记为 clip，随时一键跳回。',
     'projects.starter.status': '@expo/ui 展示',
     'projects.starter.desc':
       '@expo/ui 的每个组件都在双平台原生运行：Android 上是 Jetpack Compose，iOS 上是 SwiftUI。47 个展示页覆盖完整目录：选择器、底部面板、菜单、导航，全都有。UI 先在这里验证，再进入 Topper。',
