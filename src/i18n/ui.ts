@@ -13,6 +13,8 @@ export const localeLabels: Record<Locale, string> = {
  */
 const en = {
   'meta.title': 'juanevillam — software developer',
+  'meta.title.projects': 'juanevillam — projects',
+  'meta.title.experience': 'juanevillam — experience',
   'meta.description':
     'Software developer. I build native mobile apps and web products.',
   'hero.eyebrow': 'software developer',
@@ -69,6 +71,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   en,
   es: {
     'meta.title': 'juanevillam — desarrollador de software',
+    'meta.title.projects': 'juanevillam — proyectos',
+    'meta.title.experience': 'juanevillam — experiencia',
     'meta.description':
       'Desarrollador de software. Hago apps móviles nativas y productos web.',
     'hero.eyebrow': 'desarrollador de software',
@@ -120,6 +124,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   },
   zh: {
     'meta.title': 'juanevillam — 软件开发者',
+    'meta.title.projects': 'juanevillam — 项目',
+    'meta.title.experience': 'juanevillam — 经历',
     'meta.description': '软件开发者。我做原生移动应用和网页产品。',
     'hero.eyebrow': '软件开发者',
     'hero.thesis': '我做软件就像打游戏：奔着白金去。',

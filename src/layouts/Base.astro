@@ -1,16 +1,25 @@
 ---
-import { locales, useTranslations, type Locale } from '../i18n/ui';
+import {
+  locales,
+  useTranslations,
+  type Locale,
+  type UIKey,
+} from '../i18n/ui';
 import SiteHeader from '../components/SiteHeader.astro';
 import '../styles/global.css';
 
 type Props = {
   locale: Locale;
+  /** Locale-less page path ('' for home, 'projects/', 'experience/'). */
+  path?: string;
+  titleKey?: UIKey;
 };
 
-const { locale } = Astro.props;
+const { locale, path = '', titleKey = 'meta.title' } = Astro.props;
 const t = useTranslations(locale);
 
-const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
+const pathForLocale = (l: Locale) =>
+  l === 'en' ? `/${path}` : `/${l}/${path}`;
 ---
 
 <!doctype html>
@@ -18,7 +27,7 @@ const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{t('meta.title')}</title>
+    <title>{t(titleKey)}</title>
     <meta name="description" content={t('meta.description')} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={new URL(pathForLocale(locale), Astro.site)} />
@@ -34,9 +43,9 @@ const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
     <link
       rel="alternate"
       hreflang="x-default"
-      href={new URL('/', Astro.site)}
+      href={new URL(`/${path}`, Astro.site)}
     />
-    <meta property="og:title" content={t('meta.title')} />
+    <meta property="og:title" content={t(titleKey)} />
     <meta property="og:description" content={t('meta.description')} />
     <meta property="og:type" content="website" />
 
@@ -81,7 +90,7 @@ const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
     </script>
   </head>
   <body>
-    <SiteHeader locale={locale} />
+    <SiteHeader locale={locale} path={path} />
     <main>
       <slot />
     </main>

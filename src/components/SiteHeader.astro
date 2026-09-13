@@ -9,25 +9,48 @@ import {
 
 type Props = {
   locale: Locale;
+  /** Locale-less page path ('' for home) — the lang cycle stays on it. */
+  path?: string;
 };
 
-const { locale } = Astro.props;
+const { locale, path = '' } = Astro.props;
 const t = useTranslations(locale);
-const pathForLocale = (l: Locale) => (l === 'en' ? '/' : `/${l}/`);
+const hrefFor = (l: Locale, p: string = path) =>
+  l === 'en' ? `/${p}` : `/${l}/${p}`;
 
 // Language control mirrors the theme toggle: one button showing the current
 // locale; pressing it cycles to the next one (en → es → zh → en).
 const nextLocale = locales[(locales.indexOf(locale) + 1) % locales.length];
+
+// The site's sections are PAGES, not anchors — one link per section.
+const NAV = [
+  { path: 'projects/', label: 'projects.label' },
+  { path: 'experience/', label: 'experience.label' },
+] as const;
 ---
 
 <header class="site-header">
-  <a href={pathForLocale(locale)} class="mark-link" aria-label="juanevillam">
+  <a href={hrefFor(locale, '')} class="mark-link" aria-label="juanevillam">
     <BrandMark size={26} />
   </a>
 
+  <nav class="nav label" aria-label="sections">
+    {
+      NAV.map(item => (
+        <a
+          href={hrefFor(locale, item.path)}
+          class="nav-link"
+          aria-current={path === item.path ? 'page' : undefined}
+        >
+          {t(item.label)}
+        </a>
+      ))
+    }
+  </nav>
+
   <nav class="controls label" aria-label="language and theme">
     <a
-      href={pathForLocale(nextLocale)}
+      href={hrefFor(nextLocale)}
       class="lang"
       aria-label={`${localeLabels[locale]} → ${localeLabels[nextLocale]}`}
     >
@@ -80,6 +103,26 @@ const nextLocale = locales[(locales.indexOf(locale) + 1) % locales.length];
 
   .mark-link:hover {
     opacity: 0.7;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: var(--ink-3);
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .nav-link:hover {
+    color: var(--ink);
+  }
+
+  .nav-link[aria-current='page'] {
+    color: var(--ink);
   }
 
   .controls {
