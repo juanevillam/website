@@ -1,163 +1,110 @@
 ---
 import T from './T.astro';
 
-// The Sálvalo mini landing: the panel takes the brand's own skin — navy
-// ground (the landing's band gradient), green accent, Poppins — over the
-// same custom properties the rest of the site reads, so every child
-// component recolors itself. Copy mirrors the live landing.
+// The Sálvalo section: a Monolith panel holding a WINDOW into the brand —
+// a card that looks like a piece of the Sálvalo landing living inside
+// this site (their navy band, Poppins, their green CTA), with a snap
+// slider of the landing's key parts. The page around it stays Monolith.
 ---
 
-<section id="salvalo" class="panel">
+<section class="panel" id="salvalo">
   <div class="inner">
-    <div class="copy">
-      <span class="logo" data-reveal>
-        <img
-          class="on-dark"
-          src="/media/brand/salvalo-on-dark.png"
-          alt="Sálvalo"
-        />
-        <img
-          class="on-light"
-          src="/media/brand/salvalo-on-light.png"
-          alt="Sálvalo"
-        />
-      </span>
-      <p class="label brand-label" data-reveal><T k="salvalo.label" /></p>
-      <h2 class="heading brand-heading" data-reveal>
-        <T k="salvalo.heading" />
-      </h2>
-      <p class="body lede" data-reveal><T k="salvalo.body" /></p>
-      <a class="label visit" href="https://salvalo.app" data-reveal>
+    <h2 class="heading name" data-reveal>Sálvalo</h2>
+
+    <div class="window" data-reveal>
+      <p class="tagline"><T k="salvalo.heading" /></p>
+      <p class="sub"><T k="salvalo.body" /></p>
+      <a class="cta" href="https://salvalo.app">
         <T k="experience.visit" />
         {' salvalo.app ↗'}
       </a>
-    </div>
 
-    <video
-      class="shot"
-      src="/media/screens/salvalo.webm"
-      poster="/media/screens/salvalo.jpg"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="metadata"
-      width="1280"
-      height="800"
-      data-reveal></video>
+      <div class="slides" tabindex="-1">
+        {
+          [1, 2, 3].map(n => (
+            <img
+              src={`/media/screens/salvalo-${n}.jpg`}
+              alt={`Sálvalo landing, part ${n}`}
+              loading="lazy"
+              decoding="async"
+              width="1280"
+              height="800"
+            />
+          ))
+        }
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
-  /* Sálvalo skin — brand tokens over the site's own custom properties. */
-  #salvalo {
-    --ink: #f5f6f7;
-    --ink-2: #d6d9db;
-    --ink-3: #8fa3b0;
-    --surface: #27435b;
-    --hairline: rgba(245, 246, 247, 0.16);
-    --brand-accent: #53da8f;
-    --font-brand: 'Poppins', var(--font-sans);
-    background: linear-gradient(180deg, #2c4a64 0%, #1e374c 48%, #162a3a 100%);
-  }
-
-  :global(html[data-theme='light']) #salvalo {
-    --ink: #27435b;
-    --ink-2: #5b6b7a;
-    --ink-3: #7d8c99;
-    --surface: #ffffff;
-    --hairline: rgba(39, 67, 91, 0.12);
-    --brand-accent: #0e8f4e;
-    background: linear-gradient(180deg, #f6f9f7 0%, #f1f7f3 48%, #e9f3ed 100%);
-  }
-
   .inner {
     width: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: clamp(2rem, 5vw, 4rem);
-    align-items: center;
   }
 
-  .logo {
-    display: block;
-    margin-bottom: 1.5rem;
+  .name {
+    font-size: clamp(2.5rem, 6vw, 4rem);
   }
 
-  .logo img {
-    height: 2.5rem;
-    width: auto;
+  /* A fragment of the Sálvalo landing, embedded: their band gradient,
+     their face, their button — whatever the site's theme is. */
+  .window {
+    margin-top: 1.75rem;
+    padding: clamp(1.5rem, 3.5vw, 2.75rem);
+    border-radius: 1.25rem;
+    background: linear-gradient(180deg, #2c4a64 0%, #1e374c 48%, #162a3a 100%);
+    font-family: 'Poppins', var(--font-sans);
   }
 
-  .on-light {
-    display: none;
-  }
-
-  :global(html[data-theme='light']) .on-dark {
-    display: none;
-  }
-
-  :global(html[data-theme='light']) .on-light {
-    display: block;
-  }
-
-  .brand-label {
-    color: var(--brand-accent);
-    font-family: var(--font-brand);
-  }
-
-  .brand-heading {
-    margin-top: 0.75rem;
-    font-family: var(--font-brand);
+  .tagline {
+    color: #f5f6f7;
+    font-size: clamp(1.375rem, 2.6vw, 1.875rem);
     font-weight: 700;
+    line-height: 1.25;
+    max-width: 26em;
   }
 
-  .lede {
-    margin-top: 1.5rem;
-    font-size: 1.125rem;
-    max-width: 44rem;
-    font-family: var(--font-brand);
-    font-weight: 400;
+  .sub {
+    margin-top: 0.75rem;
+    color: #d6d9db;
+    font-size: 1.0625rem;
+    max-width: 40em;
   }
 
-  .visit {
+  .cta {
     display: inline-block;
-    margin-top: 2rem;
-    padding: 0.625rem 1.375rem;
-    border: 1px solid var(--hairline);
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 999px;
+    background: #53da8f;
+    color: #162a3a;
+    font-size: 0.9375rem;
+    font-weight: 600;
     text-decoration: none;
-    color: var(--ink-2);
-    font-family: var(--font-brand);
-    transition:
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease);
+    transition: background var(--dur-micro) var(--ease);
   }
 
-  .visit:hover {
-    color: var(--brand-accent);
-    border-color: var(--brand-accent);
+  .cta:hover {
+    background: #84e2b2;
   }
 
-  .shot {
-    width: 100%;
+  .slides {
+    margin-top: 1.75rem;
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
+  }
+
+  .slides img {
+    flex: 0 0 min(85%, 34rem);
+    width: min(85%, 34rem);
     height: auto;
-    border: 1px solid var(--hairline);
-    border-radius: 0.75rem;
-    background: var(--surface);
-  }
-
-  @media (max-width: 1023px) {
-    .inner {
-      grid-template-columns: 1fr;
-    }
-
-    .shot {
-      max-height: 40svh;
-      width: auto;
-      max-width: 100%;
-    }
+    scroll-snap-align: center;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(245, 246, 247, 0.16);
   }
 </style>

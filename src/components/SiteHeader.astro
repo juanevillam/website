@@ -3,18 +3,11 @@ import BrandMark from './BrandMark.astro';
 import T from './T.astro';
 import { locales, localeNames, ui } from '../i18n/ui';
 
-type Props = {
-  /** Page path ('' for home) for the active-link state. */
-  path?: string;
-};
-
-const { path = '' } = Astro.props;
-
-// The site's sections are PAGES, not anchors — one link per section.
+// One page again — the nav jumps between its snap panels.
 const NAV = [
-  { path: '', label: 'nav.home' },
-  { path: 'salvalo/', label: 'nav.salvalo' },
-  { path: 'work/', label: 'nav.work' },
+  { href: '#portfolio', label: 'nav.home' },
+  { href: '#salvalo', label: 'nav.salvalo' },
+  { href: '#work-crol', label: 'nav.work' },
 ] as const;
 
 // The appearance <option>s can't hold per-locale spans, so their labels are
@@ -39,11 +32,7 @@ const appearanceLabels = Object.fromEntries(
   <nav class="nav" aria-label="sections">
     {
       NAV.map(item => (
-        <a
-          href={`/${item.path}`}
-          class="nav-link"
-          aria-current={path === item.path ? 'page' : undefined}
-        >
+        <a href={item.href} class="nav-link">
           <T k={item.label} />
         </a>
       ))

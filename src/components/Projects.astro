@@ -1,47 +1,25 @@
 ---
 import { type UIKey } from '../i18n/ui';
-import AppMark from './AppMark.astro';
 import T from './T.astro';
 
-// Each app is its own full-height panel, in the Salvalo shape: mark,
-// status label, name, one lede. Sequence: Topper, Sound Shaper, Starter.
+// The two lead apps, one full-height panel each. Sound Shaper opens the
+// page. No logos or tag labels for now — Juan is picking the marks.
 type Project = {
-  id: 'topper' | 'shaper' | 'starter';
+  id: string;
   name: string;
-  status: UIKey;
   desc: UIKey;
 };
 
 const PROJECTS: Project[] = [
-  {
-    id: 'topper',
-    name: 'Topper',
-    status: 'projects.topper.status',
-    desc: 'projects.topper.desc',
-  },
-  {
-    id: 'shaper',
-    name: 'Sound Shaper',
-    status: 'projects.shaper.status',
-    desc: 'projects.shaper.desc',
-  },
-  {
-    id: 'starter',
-    name: 'Expo UI Starter',
-    status: 'projects.starter.status',
-    desc: 'projects.starter.desc',
-  },
+  { id: 'portfolio', name: 'Sound Shaper', desc: 'projects.shaper.desc' },
+  { id: 'project-topper', name: 'Topper', desc: 'projects.topper.desc' },
 ];
 ---
 
 {
   PROJECTS.map(project => (
-    <section class="panel" id={`project-${project.id}`}>
+    <section class="panel" id={project.id}>
       <div class="inner">
-        <AppMark app={project.id} size={34} class="mark" />
-        <p class="label status" data-reveal>
-          <T k={project.status} />
-        </p>
         <h2 class="heading name" data-reveal>
           {project.name}
         </h2>
@@ -60,17 +38,7 @@ const PROJECTS: Project[] = [
     margin: 0 auto;
   }
 
-  .mark {
-    color: var(--ink-2);
-    margin-bottom: 1.5rem;
-  }
-
-  .status {
-    color: var(--ink-3);
-  }
-
   .name {
-    margin-top: 0.75rem;
     font-size: clamp(2.5rem, 6vw, 4rem);
   }
 

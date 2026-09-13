@@ -20,8 +20,6 @@ export const localeNames: Record<Locale, string> = {
  */
 const en = {
   'meta.title': 'juanevillam — developer',
-  'meta.title.salvalo': 'juanevillam — Sálvalo',
-  'meta.title.work': 'juanevillam — work',
   'meta.description': 'Developer. I build native mobile apps and web products.',
   'nav.home': 'Portfolio',
   'nav.salvalo': 'Salvalo',
@@ -35,6 +33,8 @@ const en = {
   'theme.system': 'Automatic',
   'projects.label': 'projects',
   'projects.heading': 'Three apps, one monorepo.',
+  'projects.maktub.desc':
+    'Maktub is an art fund raising capital for emerging artists. I built its whole web presence as a freelancer — the brand system, the motion language and the Astro site.',
   'projects.topper.status': 'social',
   'projects.topper.desc':
     'My flagship app. Ranked lists — tops — of anything: movies, food, games, whatever you rate. You crown a winner, people fight back with crowns and comments, you follow them and earn PlayStation-style trophies along the way. Built solo: design, code and backend.',
@@ -81,8 +81,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   en,
   es: {
     'meta.title': 'juanevillam — desarrollador',
-    'meta.title.salvalo': 'juanevillam — Sálvalo',
-    'meta.title.work': 'juanevillam — trabajo',
     'meta.description':
       'Desarrollador. Hago apps móviles nativas y productos web.',
     'nav.home': 'Portafolio',
@@ -98,6 +96,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'projects.label': 'proyectos',
     'projects.heading': 'Tres apps, un monorepo.',
     'projects.topper.status': 'social',
+    'projects.maktub.desc':
+      'Maktub es un fondo de arte que levanta capital para artistas emergentes. Construí toda su presencia web como freelance — el sistema de marca, el lenguaje de movimiento y el sitio en Astro.',
     'projects.topper.desc':
       'Mi app insignia. Listas rankeadas — tops — de lo que sea: películas, comida, juegos, lo que califiques. Coronas al ganador, la gente contraataca con coronas y comentarios, los sigues y vas ganando trofeos estilo PlayStation en el camino. Hecha en solitario: diseño, código y backend.',
     'projects.topper.d1':
@@ -138,8 +138,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   },
   zh: {
     'meta.title': 'juanevillam — 开发者',
-    'meta.title.salvalo': 'juanevillam — Sálvalo',
-    'meta.title.work': 'juanevillam — 工作',
     'meta.description': '开发者。我做原生移动应用和网页产品。',
     'nav.home': '作品集',
     'nav.salvalo': 'Salvalo',
@@ -154,6 +152,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'projects.label': '项目',
     'projects.heading': '三个应用，一个 monorepo。',
     'projects.topper.status': '社交',
+    'projects.maktub.desc':
+      'Maktub 是一个为新锐艺术家募资的艺术基金。我作为自由职业者构建了它的整个网页形象 — 品牌系统、动效语言和 Astro 网站。',
     'projects.topper.desc':
       '我的旗舰应用。给任何东西排名 — 电影、美食、游戏，凡是你想评价的 — 建立你的 tops。你为第一名加冕，别人用皇冠和评论来反击，你关注他们，一路赢取 PlayStation 风格的奖杯。独立完成：设计、代码、后端。',
     'projects.topper.d1':

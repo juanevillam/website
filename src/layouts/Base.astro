@@ -1,15 +1,7 @@
 ---
-import { ui, type UIKey } from '../i18n/ui';
+import { ui } from '../i18n/ui';
 import SiteHeader from '../components/SiteHeader.astro';
 import '../styles/global.css';
-
-type Props = {
-  /** Page path ('' for home, 'salvalo/', 'work/'). */
-  path?: string;
-  titleKey?: UIKey;
-};
-
-const { path = '', titleKey = 'meta.title' } = Astro.props;
 ---
 
 <!doctype html>
@@ -17,7 +9,7 @@ const { path = '', titleKey = 'meta.title' } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{ui.en[titleKey]}</title>
+    <title>{ui.en['meta.title']}</title>
     <meta name="description" content={ui.en['meta.description']} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Brand faces for the mini landings: Sálvalo speaks Poppins, Crol
@@ -28,8 +20,8 @@ const { path = '', titleKey = 'meta.title' } = Astro.props;
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Mulish:wght@600;800&family=Poppins:wght@400;600;700&display=swap"
     />
-    <link rel="canonical" href={new URL(`/${path}`, Astro.site)} />
-    <meta property="og:title" content={ui.en[titleKey]} />
+    <link rel="canonical" href={new URL('/', Astro.site)} />
+    <meta property="og:title" content={ui.en['meta.title']} />
     <meta property="og:description" content={ui.en['meta.description']} />
     <meta property="og:type" content="website" />
 
@@ -74,7 +66,7 @@ const { path = '', titleKey = 'meta.title' } = Astro.props;
     </script>
   </head>
   <body>
-    <SiteHeader path={path} />
+    <SiteHeader />
     <main>
       <slot />
     </main>
