@@ -19,15 +19,14 @@ export const localeNames: Record<Locale, string> = {
  * every line ships as an option for Juan to react to, never final.
  */
 const en = {
-  'meta.title': 'juanevillam — software developer',
+  'meta.title': 'juanevillam — developer',
   'meta.title.salvalo': 'juanevillam — Sálvalo',
   'meta.title.work': 'juanevillam — work',
-  'meta.description':
-    'Software developer. I build native mobile apps and web products.',
+  'meta.description': 'Developer. I build native mobile apps and web products.',
   'nav.home': 'home',
   'nav.salvalo': 'sálvalo',
   'nav.work': 'work',
-  'hero.eyebrow': 'software developer',
+  'hero.eyebrow': 'developer',
   'hero.thesis':
     'I build software the way I play games: going for the platinum.',
   'settings.label': 'settings',
@@ -91,15 +90,15 @@ export type UIKey = keyof typeof en;
 export const ui: Record<Locale, Record<UIKey, string>> = {
   en,
   es: {
-    'meta.title': 'juanevillam — desarrollador de software',
+    'meta.title': 'juanevillam — desarrollador',
     'meta.title.salvalo': 'juanevillam — Sálvalo',
     'meta.title.work': 'juanevillam — trabajo',
     'meta.description':
-      'Desarrollador de software. Hago apps móviles nativas y productos web.',
+      'Desarrollador. Hago apps móviles nativas y productos web.',
     'nav.home': 'inicio',
     'nav.salvalo': 'sálvalo',
     'nav.work': 'trabajo',
-    'hero.eyebrow': 'desarrollador de software',
+    'hero.eyebrow': 'desarrollador',
     'hero.thesis':
       'Hago software igual que juego videojuegos: voy por el platino.',
     'settings.label': 'ajustes',
@@ -158,14 +157,14 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Sálvalo rescata comida que iba a desperdiciarse: los comercios venden packs sorpresa a una fracción del precio, la gente ahorra y la comida se salva. La construyo yo — web, móvil y el landing.',
   },
   zh: {
-    'meta.title': 'juanevillam — 软件开发者',
+    'meta.title': 'juanevillam — 开发者',
     'meta.title.salvalo': 'juanevillam — Sálvalo',
     'meta.title.work': 'juanevillam — 工作',
-    'meta.description': '软件开发者。我做原生移动应用和网页产品。',
+    'meta.description': '开发者。我做原生移动应用和网页产品。',
     'nav.home': '首页',
     'nav.salvalo': 'sálvalo',
     'nav.work': '工作',
-    'hero.eyebrow': '软件开发者',
+    'hero.eyebrow': '开发者',
     'hero.thesis': '我做软件就像打游戏：奔着白金去。',
     'settings.label': '设置',
     'settings.appearance': '外观',
