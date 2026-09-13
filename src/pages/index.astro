@@ -1,14 +1,75 @@
 ---
 import Base from '../layouts/Base.astro';
-import Projects from '../components/Projects.astro';
-import Salvalo from '../components/Salvalo.astro';
-import Experience from '../components/Experience.astro';
-import Secondary from '../components/Secondary.astro';
+import Hero from '../components/Hero.astro';
+import Showcase, { type MediaItem } from '../components/Showcase.astro';
+import AppTile from '../components/AppTile.astro';
+
+// Media manifests — any mix of portrait app shots, wide web stills and
+// muted videos; the slider normalizes them to one height.
+const TOPPER_MEDIA: MediaItem[] = [
+  'ios-dark-home',
+  'ios-dark-top-detail',
+  'ios-dark-profile',
+  'ios-dark-trophies',
+].map(name => ({
+  type: 'image',
+  src: `/media/topper/${name}.png`,
+  width: 1290,
+  height: 2796,
+}));
+
+const SALVALO_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
+  type: 'image',
+  src: `/media/screens/salvalo-${n}.jpg`,
+  width: 1280,
+  height: 800,
+}));
+
+const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
+  type: 'image',
+  src: `/media/screens/crol-${n}.jpg`,
+  width: 1280,
+  height: 800,
+}));
 ---
 
 <Base>
-  <Projects />
-  <Salvalo />
-  <Experience />
-  <Secondary />
+  <Hero />
+
+  <Showcase id="shaper" name="Sound Shaper" desc="shaper.desc">
+    <AppTile app="shaper" slot="logo" />
+  </Showcase>
+
+  <Showcase id="topper" name="Topper" desc="topper.desc" media={TOPPER_MEDIA}>
+    <AppTile app="topper" slot="logo" />
+  </Showcase>
+
+  <Showcase
+    id="salvalo"
+    name="Sálvalo"
+    desc="salvalo.desc"
+    accent="#53DA8F"
+    href="https://salvalo.app"
+    domain="salvalo.app"
+    media={SALVALO_MEDIA}
+  >
+    <img
+      slot="logo"
+      src="/media/brand/salvalo.png"
+      alt="Sálvalo"
+      height="40"
+    />
+  </Showcase>
+
+  <Showcase
+    id="crol"
+    name="Crol ERP"
+    desc="crol.desc"
+    accent="#00E100"
+    href="https://www.crol.mx"
+    domain="crol.mx"
+    media={CROL_MEDIA}
+  >
+    <img slot="logo" src="/media/brand/crol.png" alt="Crol ERP" height="40" />
+  </Showcase>
 </Base>

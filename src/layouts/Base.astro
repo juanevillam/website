@@ -12,53 +12,16 @@ import '../styles/global.css';
     <title>{ui.en['meta.title']}</title>
     <meta name="description" content={ui.en['meta.description']} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- Brand faces for the mini landings: Sálvalo speaks Poppins, Crol
-         speaks Mulish. Free faces, served by Google Fonts. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Mulish:wght@600;800&family=Poppins:wght@400;600;700&display=swap"
-    />
     <link rel="canonical" href={new URL('/', Astro.site)} />
     <meta property="og:title" content={ui.en['meta.title']} />
     <meta property="og:description" content={ui.en['meta.description']} />
     <meta property="og:type" content="website" />
 
     <script is:inline>
-      // Theme and language, pre-paint — both are in-place preferences, no
-      // locale URLs. Runs before first render so there is never a flash of
-      // the wrong theme or the wrong language.
+      // Language, pre-paint — an in-place preference, no locale URLs. The
+      // site itself is dark-only. Runs before first render so there is
+      // never a flash of the wrong language.
       (() => {
-        const media = window.matchMedia('(prefers-color-scheme: dark)');
-        const apply = () => {
-          const pref = localStorage.getItem('theme') || 'system';
-          const effective =
-            pref === 'system' ? (media.matches ? 'dark' : 'light') : pref;
-          document.documentElement.dataset.theme = effective;
-        };
-        apply();
-        media.addEventListener('change', apply);
-        window.addEventListener('storage', apply);
-        // User-initiated switches play the inversion sweep (the light theme
-        // IS the dark palette inverted — the transition says so): a View
-        // Transitions wipe where supported, instant swap elsewhere.
-        window.__applyTheme = () => {
-          const reduced = window.matchMedia(
-            '(prefers-reduced-motion: reduce)'
-          ).matches;
-          if (document.startViewTransition && !reduced) {
-            // data-theme-wipe scopes the inversion sweep to THIS transition;
-            // without it a page navigation would play the wipe too.
-            document.documentElement.setAttribute('data-theme-wipe', '');
-            document
-              .startViewTransition(apply)
-              .finished.finally(() =>
-                document.documentElement.removeAttribute('data-theme-wipe')
-              );
-          } else apply();
-        };
-
         const lang = localStorage.getItem('lang') || 'en';
         document.documentElement.lang = lang;
         document.documentElement.dataset.lang = lang;
@@ -86,7 +49,7 @@ import '../styles/global.css';
       );
       document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 
-      // Landing videos: play only while on screen (autoplay policies vary,
+      // Media videos: play only while on screen (autoplay policies vary,
       // and an off-screen loop is wasted work). Reduced motion holds the
       // poster frame instead.
       const videos =

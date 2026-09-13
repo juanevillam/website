@@ -1,27 +1,6 @@
 ---
 import BrandMark from './BrandMark.astro';
-import T from './T.astro';
-import { locales, localeNames, ui } from '../i18n/ui';
-
-// One page again — the nav jumps between its snap panels.
-const NAV = [
-  { href: '#portfolio', label: 'nav.home' },
-  { href: '#salvalo', label: 'nav.salvalo' },
-  { href: '#work-crol', label: 'nav.work' },
-] as const;
-
-// The appearance <option>s can't hold per-locale spans, so their labels are
-// re-applied by script from this map when the language changes.
-const appearanceLabels = Object.fromEntries(
-  locales.map(l => [
-    l,
-    {
-      system: ui[l]['theme.system'],
-      light: ui[l]['theme.light'],
-      dark: ui[l]['theme.dark'],
-    },
-  ])
-);
+import { locales, localeNames } from '../i18n/ui';
 ---
 
 <header class="site-header">
@@ -29,76 +8,18 @@ const appearanceLabels = Object.fromEntries(
     <BrandMark size={26} />
   </a>
 
-  <nav class="nav" aria-label="sections">
+  <!-- One control: the language. A real <select>, so the OS renders the
+       menu; switching re-renders in place (html[data-lang]). -->
+  <select id="lang-picker" aria-label="Language">
     {
-      NAV.map(item => (
-        <a href={item.href} class="nav-link">
-          <T k={item.label} />
-        </a>
+      locales.map(l => (
+        <option value={l} selected={l === 'en'}>
+          {localeNames[l]}
+        </option>
       ))
     }
-  </nav>
-
-  <!-- One glyph on the bar, and it is the gear — same rule as the apps. -->
-  <button
-    class="gear"
-    type="button"
-    popovertarget="site-settings"
-    aria-label="Settings"
-  >
-    <!-- SF-style gearshape.fill: solid toothed body with a punched hub —
-         the filled silhouette iOS bars use, not an outline. -->
-    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-      <g fill="currentColor">
-        <path
-          fill-rule="nonzero"
-          d="M39 24a15 15 0 1 1-30 0 15 15 0 1 1 30 0zm-8.5 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 1 0 13 0z"
-        />
-        {
-          [0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
-            <rect
-              x="20.5"
-              y="2"
-              width="7"
-              height="10"
-              rx="3"
-              transform={`rotate(${angle} 24 24)`}
-            />
-          ))
-        }
-      </g>
-    </svg>
-  </button>
+  </select>
 </header>
-
-<!-- Native settings surface: the Popover API gives top layer, Esc and
-     light-dismiss for free; the pickers are real <select>s, so the OS
-     renders the menus. Both apply in place — the menu stays open. -->
-<div id="site-settings" class="settings" popover>
-  <div class="row">
-    <label for="setting-appearance"><T k="settings.appearance" /></label>
-    <select
-      id="setting-appearance"
-      data-labels={JSON.stringify(appearanceLabels)}
-    >
-      <option value="system">{ui.en['theme.system']}</option>
-      <option value="light">{ui.en['theme.light']}</option>
-      <option value="dark">{ui.en['theme.dark']}</option>
-    </select>
-  </div>
-  <div class="row">
-    <label for="setting-language"><T k="settings.language" /></label>
-    <select id="setting-language">
-      {
-        locales.map(l => (
-          <option value={l} selected={l === 'en'}>
-            {localeNames[l]}
-          </option>
-        ))
-      }
-    </select>
-  </div>
-</div>
 
 <style>
   .site-header {
@@ -123,131 +44,30 @@ const appearanceLabels = Object.fromEntries(
     opacity: 0.7;
   }
 
-  /* Chrome speaks SF Pro — Apple never sets navigation in mono; the mono
-     label voice stays inside the content. */
-  .nav {
-    display: flex;
-    align-items: center;
-    gap: clamp(1rem, 3vw, 1.75rem);
+  #lang-picker {
+    font-family: var(--font-sans);
     font-size: 0.875rem;
     font-weight: 500;
-  }
-
-  .nav-link {
-    text-decoration: none;
     color: var(--ink-3);
-    transition: color var(--dur-micro) var(--ease);
-  }
-
-  .nav-link:hover {
-    color: var(--ink);
-  }
-
-  .nav-link[aria-current='page'] {
-    color: var(--ink);
-  }
-
-  .gear {
-    background: none;
-    border: none;
-    padding: 0.375rem;
-    cursor: pointer;
-    color: var(--ink-3);
-    transition: color var(--dur-micro) var(--ease);
-  }
-
-  .gear:hover {
-    color: var(--ink);
-  }
-
-  .settings {
-    /* Anchored under the gear, off the popover's centered default. */
-    inset: auto;
-    top: 4.25rem;
-    right: clamp(1.25rem, 4vw, 2.5rem);
-    min-width: 15rem;
-    padding: 0.5rem 1.25rem;
-    background: var(--surface);
-    color: var(--ink);
-    border: 1px solid var(--hairline);
-    border-radius: 0.875rem;
-    /* SF Pro at iOS's menu-row step. */
-    font-size: 0.9375rem;
-    line-height: 1.35;
-  }
-
-  .settings:popover-open {
-    animation: rise var(--dur-micro) var(--ease) both;
-  }
-
-  .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    padding: 0.75rem 0;
-  }
-
-  .row + .row {
-    border-top: 1px solid var(--hairline);
-  }
-
-  .row label {
-    color: var(--ink-3);
-  }
-
-  /* Real selects, native menus — inherit the label face, nothing else
-     restyled. */
-  .row select {
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    color: var(--ink);
     background: transparent;
     border: none;
-    padding: 0.25rem 0;
+    padding: 0.375rem 0;
     cursor: pointer;
+    transition: color var(--dur-micro) var(--ease);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .settings:popover-open {
-      animation: none;
-    }
+  #lang-picker:hover {
+    color: var(--ink);
   }
 </style>
 
 <script>
-  const appearance = document.getElementById(
-    'setting-appearance'
-  ) as HTMLSelectElement;
-  const language = document.getElementById(
-    'setting-language'
-  ) as HTMLSelectElement;
-
-  const appearanceLabels = JSON.parse(appearance.dataset.labels as string);
-  const relabel = (lang: string) => {
-    for (const option of appearance.options) {
-      option.textContent = appearanceLabels[lang][option.value];
-    }
-  };
-
-  const lang = localStorage.getItem('lang') || 'en';
-  language.value = lang;
-  relabel(lang);
-
-  appearance.value = localStorage.getItem('theme') || 'system';
-  appearance.addEventListener('change', () => {
-    localStorage.setItem('theme', appearance.value);
-    (window as Window & { __applyTheme?: () => void }).__applyTheme?.();
-  });
-
-  // Language applies in place: swap html[data-lang] and every .t span
-  // follows — no navigation, and the menu stays open like the theme's.
-  language.addEventListener('change', () => {
-    const next = language.value;
+  const picker = document.getElementById('lang-picker') as HTMLSelectElement;
+  picker.value = localStorage.getItem('lang') || 'en';
+  picker.addEventListener('change', () => {
+    const next = picker.value;
     localStorage.setItem('lang', next);
     document.documentElement.lang = next;
     document.documentElement.dataset.lang = next;
-    relabel(next);
   });
 </script>
