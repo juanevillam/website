@@ -24,8 +24,9 @@ const nextLocale = locales[(locales.indexOf(locale) + 1) % locales.length];
 
 // The site's sections are PAGES, not anchors — one link per section.
 const NAV = [
-  { path: 'projects/', label: 'projects.label' },
-  { path: 'experience/', label: 'experience.label' },
+  { path: '', label: 'nav.home' },
+  { path: 'salvalo/', label: 'nav.salvalo' },
+  { path: 'work/', label: 'nav.work' },
 ] as const;
 ---
 
@@ -131,27 +132,26 @@ const NAV = [
     gap: 1.25rem;
   }
 
-  .lang {
+  /* Both controls share one fixed box: labels differ per locale and per
+     state, and a hit target that grows and shrinks under the pointer is
+     the bug, not a detail. */
+  .lang,
+  #theme-toggle {
+    width: 4.5rem;
+    padding: 0.375rem 0;
+    text-align: right;
     text-decoration: none;
     color: var(--ink-3);
     transition: color var(--dur-micro) var(--ease);
   }
 
-  .lang:hover {
-    color: var(--ink);
-  }
-
   #theme-toggle {
     background: none;
     border: none;
-    padding: 0;
     cursor: pointer;
-    color: var(--ink-3);
-    transition: color var(--dur-micro) var(--ease);
-    min-width: 4.5rem;
-    text-align: right;
   }
 
+  .lang:hover,
   #theme-toggle:hover {
     color: var(--ink);
   }
