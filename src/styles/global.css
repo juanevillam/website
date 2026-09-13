@@ -170,17 +170,24 @@ a:hover {
   }
 }
 
+/* Page navigations crossfade instead of hard-swapping (cross-document View
+   Transitions — the lang cycle and the nav both ride it). Browsers without
+   support keep the instant swap. */
+@view-transition {
+  navigation: auto;
+}
+
 /* Theme switch — the Tenet inversion sweep. The new (inverted) frame wipes
    left-to-right over the old one; ahead of the front is one palette, behind it
-   the inversion. Runs only on user-initiated switches (View Transitions API,
-   progressive: unsupported browsers swap instantly). */
-::view-transition-old(root),
-::view-transition-new(root) {
+   the inversion. Gated on data-theme-wipe (set only around the toggle's own
+   startViewTransition) so page navigations keep their crossfade. */
+:root[data-theme-wipe]::view-transition-old(root),
+:root[data-theme-wipe]::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-::view-transition-new(root) {
+:root[data-theme-wipe]::view-transition-new(root) {
   animation: inversion-wipe 480ms var(--ease) both;
 }
 
@@ -194,6 +201,10 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+
   ::view-transition-new(root) {
     animation: none;
   }
