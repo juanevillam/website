@@ -12,7 +12,7 @@ type Props = {
   size?: number;
 };
 
-const { app, size = 76 } = Astro.props;
+const { app, size = 52 } = Astro.props;
 
 const SQUIRCLE_N = 4.5;
 const SQUIRCLE_STEPS = 256;
@@ -51,9 +51,11 @@ const pad = Math.round(size * SHADOW_PAD);
 const canvas = size + pad * 2;
 const path = squirclePath(size);
 
-// The mark on its 48-unit grid, scaled into the tile. Topper's crown is
-// bbox-centred via the same -1.25 offset its BrandMark viewBox carries.
-const glyph = size * 0.58;
+// The mark on its 48-unit grid, scaled into the tile. The welcome screens
+// run the glyph at ~0.94 of the tile (82/77, 96/90) — the 48-grid marks
+// carry their own breathing room. Topper's crown is bbox-centred via the
+// same -1.25 offset its BrandMark viewBox carries.
+const glyph = size * 0.94;
 const scale = glyph / 48;
 const gx = pad + (size - glyph) / 2;
 const gy = pad + (size - glyph) / 2 + (app === 'topper' ? 1.25 * scale : 0);
