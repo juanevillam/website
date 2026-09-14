@@ -20,10 +20,8 @@ export type MediaItem = {
 type Props = {
   id: string;
   name: string;
-  /** The what / why / how story, one short body each. */
-  what: UIKey;
-  why: UIKey;
-  how: UIKey;
+  /** One merged description — the deep story belongs to the vids. */
+  desc: UIKey;
   /** Show the name beside the logo (for icon tiles, which don't carry it). */
   titled?: boolean;
   /** Brand accent for the visit pill's hover. */
@@ -36,21 +34,13 @@ type Props = {
 const {
   id,
   name,
-  what,
-  why,
-  how,
+  desc,
   titled = false,
   accent,
   href,
   domain,
   media = [],
 } = Astro.props;
-
-const ENTRIES = [
-  { label: 'label.what', body: what },
-  { label: 'label.why', body: why },
-  { label: 'label.how', body: how },
-] as const;
 ---
 
 <section
@@ -64,20 +54,7 @@ const ENTRIES = [
       {titled && <span class="app-name">{name}</span>}
     </div>
 
-    <dl class="entries">
-      {
-        ENTRIES.map(entry => (
-          <div class="entry" data-reveal>
-            <dt class="label entry-key">
-              <T k={entry.label} />
-            </dt>
-            <dd class="body entry-body">
-              <T k={entry.body} />
-            </dd>
-          </div>
-        ))
-      }
-    </dl>
+    <p class="body lede" data-reveal><T k={desc} /></p>
 
     {
       href && (
@@ -149,23 +126,10 @@ const ENTRIES = [
     line-height: 1;
   }
 
-  .entries {
-    margin-top: 1.75rem;
+  .lede {
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
     max-width: 44rem;
-  }
-
-  .entry + .entry {
-    margin-top: 1.25rem;
-  }
-
-  .entry-key {
-    color: var(--ink-3);
-  }
-
-  .entry-body {
-    margin-top: 0.25rem;
-    font-size: 1.0625rem;
-    line-height: 1.6;
   }
 
   .visit {
