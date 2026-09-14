@@ -36,20 +36,6 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
 <Base>
   <Hero />
 
-  <Showcase id="shaper" name="Sound Shaper" desc="shaper.desc" titled>
-    <AppTile app="shaper" slot="logo" />
-  </Showcase>
-
-  <Showcase
-    id="topper"
-    name="Topper"
-    desc="topper.desc"
-    titled
-    media={TOPPER_MEDIA}
-  >
-    <AppTile app="topper" slot="logo" />
-  </Showcase>
-
   <Showcase
     id="salvalo"
     name="Sálvalo"
@@ -65,6 +51,20 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
       alt="Sálvalo"
       height="40"
     />
+  </Showcase>
+
+  <Showcase id="shaper" name="Sound Shaper" desc="shaper.desc" titled>
+    <AppTile app="shaper" slot="logo" />
+  </Showcase>
+
+  <Showcase
+    id="topper"
+    name="Topper"
+    desc="topper.desc"
+    titled
+    media={TOPPER_MEDIA}
+  >
+    <AppTile app="topper" slot="logo" />
   </Showcase>
 
   <Showcase
