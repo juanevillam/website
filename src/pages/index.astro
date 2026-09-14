@@ -4,8 +4,9 @@ import Hero from '../components/Hero.astro';
 import Showcase, { type MediaItem } from '../components/Showcase.astro';
 import AppTile from '../components/AppTile.astro';
 
-// Media manifests — any mix of portrait app shots, wide web stills and
-// muted videos; the slider normalizes them to one height.
+// Media manifests — iPhone screenshots only (Juan shoots them all); the
+// landing webs need no previews, the visit pills already go there.
+// Sliders show iPhone-shaped placeholders until the real shots land.
 const TOPPER_MEDIA: MediaItem[] = [
   'ios-dark-home',
   'ios-dark-top-detail',
@@ -16,20 +17,6 @@ const TOPPER_MEDIA: MediaItem[] = [
   src: `/media/topper/${name}.png`,
   width: 1290,
   height: 2796,
-}));
-
-const SALVALO_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
-  type: 'image',
-  src: `/media/screens/salvalo-${n}.jpg`,
-  width: 1280,
-  height: 800,
-}));
-
-const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
-  type: 'image',
-  src: `/media/screens/crol-${n}.jpg`,
-  width: 1280,
-  height: 800,
 }));
 ---
 
@@ -43,7 +30,7 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
     accent="#53DA8F"
     href="https://salvalo.app"
     domain="salvalo.app"
-    media={SALVALO_MEDIA}
+    placeholders={3}
   >
     <img
       slot="logo"
@@ -54,7 +41,13 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
     />
   </Showcase>
 
-  <Showcase id="shaper" name="Sound Shaper" desc="shaper.desc" titled>
+  <Showcase
+    id="shaper"
+    name="Sound Shaper"
+    desc="shaper.desc"
+    titled
+    placeholders={3}
+  >
     <AppTile app="shaper" slot="logo" />
   </Showcase>
 
@@ -75,7 +68,7 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
     accent="#00E100"
     href="https://www.crol.mx"
     domain="crol.mx"
-    media={CROL_MEDIA}
+    placeholders={3}
   >
     <img slot="logo" src="/media/brand/crol.png" alt="Crol ERP" height="40" />
   </Showcase>

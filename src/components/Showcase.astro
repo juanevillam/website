@@ -29,6 +29,8 @@ type Props = {
   href?: string;
   domain?: string;
   media?: MediaItem[];
+  /** iPhone-shaped placeholder slots shown until the real shots land. */
+  placeholders?: number;
 };
 
 const {
@@ -40,6 +42,7 @@ const {
   href,
   domain,
   media = [],
+  placeholders = 0,
 } = Astro.props;
 ---
 
@@ -62,6 +65,16 @@ const {
           <T k="visit" />
           {` ${domain} ↗`}
         </a>
+      )
+    }
+
+    {
+      media.length === 0 && placeholders > 0 && (
+        <div class="slides" tabindex="-1" data-reveal>
+          {Array.from({ length: placeholders }).map(() => (
+            <div class="placeholder" />
+          ))}
+        </div>
       )
     }
 
@@ -162,7 +175,7 @@ const {
     padding-bottom: 0.5rem;
   }
 
-  .slides :is(img, video) {
+  .slides :is(img, video, .placeholder) {
     height: clamp(15rem, 40svh, 23rem);
     width: auto;
     flex: 0 0 auto;
@@ -170,5 +183,10 @@ const {
     border-radius: 0.75rem;
     border: 1px solid var(--hairline);
     background: var(--surface);
+  }
+
+  /* An iPhone-shaped slot waiting for its screenshot. */
+  .placeholder {
+    aspect-ratio: 1290 / 2796;
   }
 </style>
