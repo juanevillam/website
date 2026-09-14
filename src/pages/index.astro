@@ -36,23 +36,14 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
 <Base>
   <Hero />
 
-  <Showcase
-    id="shaper"
-    name="Sound Shaper"
-    what="shaper.what"
-    why="shaper.why"
-    how="shaper.how"
-    titled
-  >
+  <Showcase id="shaper" name="Sound Shaper" desc="shaper.desc" titled>
     <AppTile app="shaper" slot="logo" />
   </Showcase>
 
   <Showcase
     id="topper"
     name="Topper"
-    what="topper.what"
-    why="topper.why"
-    how="topper.how"
+    desc="topper.desc"
     titled
     media={TOPPER_MEDIA}
   >
@@ -62,9 +53,7 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
   <Showcase
     id="salvalo"
     name="Sálvalo"
-    what="salvalo.what"
-    why="salvalo.why"
-    how="salvalo.how"
+    desc="salvalo.desc"
     accent="#53DA8F"
     href="https://salvalo.app"
     domain="salvalo.app"
@@ -81,9 +70,7 @@ const CROL_MEDIA: MediaItem[] = [1, 2, 3].map(n => ({
   <Showcase
     id="crol"
     name="Crol ERP"
-    what="crol.what"
-    why="crol.why"
-    how="crol.how"
+    desc="crol.desc"
     accent="#00E100"
     href="https://www.crol.mx"
     domain="crol.mx"
