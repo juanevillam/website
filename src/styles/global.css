@@ -103,9 +103,9 @@ body {
   scroll-snap-stop: always;
   display: flex;
   flex-direction: column;
-  /* Content sits high in the panel, just under the header, not centered. */
+  /* Content sits high in the panel — above center, below the header. */
   justify-content: flex-start;
-  padding: 7.5rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+  padding: clamp(9rem, 20svh, 13rem) clamp(1.25rem, 4vw, 2.5rem) 3rem;
 }
 
 img,
