@@ -40,9 +40,20 @@ type Props = {
   slides: StorySlide[];
   /** Show the App Store / Google Play slots (apps, not web products). */
   stores?: boolean;
+  /** Legal and support pages, linked from the opener — the stores
+   *  require them reachable from outside the app. */
+  links?: { key: UIKey; href: string }[];
 };
 
-const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
+const {
+  id,
+  name,
+  introKey,
+  introAudio,
+  slides,
+  stores = false,
+  links = [],
+} = Astro.props;
 
 // The deck: step 0 is the opener, then one step per screenshot.
 const stepCount = slides.length + 1;
@@ -76,6 +87,18 @@ const stepCount = slides.length + 1;
         {stores && <StoreBadges />}
 
         <ListenPill audio={introAudio} story={id} />
+
+        {
+          links.length > 0 && (
+            <nav class="intro-links" data-reveal>
+              {links.map(link => (
+                <a href={link.href}>
+                  <T k={link.key} />
+                </a>
+              ))}
+            </nav>
+          )
+        }
       </div>
     </div>
 
@@ -187,6 +210,8 @@ const stepCount = slides.length + 1;
 
   /* ---------- slide 0: the opener ---------- */
 
+  /* The opener stands like the hero: everything on the center axis,
+     nothing implying a column that isn't there. */
   .intro-scene {
     position: absolute;
     inset: 0;
@@ -197,9 +222,32 @@ const stepCount = slides.length + 1;
     will-change: opacity;
   }
 
-  /* Same lift as the captions: content reads above center. */
   .intro-scene .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    /* Same lift as the captions: content reads above center. */
     margin-bottom: 4rem;
+  }
+
+  .intro-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1.75rem;
+    margin-top: 2.5rem;
+  }
+
+  .intro-links a {
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+    text-decoration-color: transparent;
+  }
+
+  .intro-links a:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink-3);
   }
 
   /* ---------- the shared lockup ---------- */
@@ -583,7 +631,10 @@ const stepCount = slides.length + 1;
         if (reduceMotion) q = q < 0.5 ? 0 : 1;
         else q = q * q * (3 - 2 * q); // smoothstep — eased, not floaty
         const scale = 1 + (small.height / big.height - 1) * q;
-        const x = big.left - stageRect.left + (small.left - big.left) * q;
+        // Big end: centered in its anchor (the opener is center-axis).
+        // Small end: flush left with the caption column.
+        const bigX = big.left + (big.width - s.lockup.offsetWidth) / 2;
+        const x = bigX - stageRect.left + (small.left - bigX) * q;
         const y = big.top - stageRect.top + (small.top - big.top) * q;
         s.lockup.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +

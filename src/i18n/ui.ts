@@ -23,6 +23,9 @@ const en = {
   soon: 'Coming Soon',
   listen: 'Listen',
   pause: 'Pause',
+  'legal.terms': 'Terms and Conditions',
+  'legal.privacy': 'Privacy Policy',
+  'legal.support': 'Support',
 
   'hero.tagline': "This is my work. I'll tell you the story myself.",
 
@@ -49,6 +52,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     soon: 'Próximamente',
     listen: 'Escuchar',
     pause: 'Pausar',
+    'legal.terms': 'Términos y condiciones',
+    'legal.privacy': 'Política de privacidad',
+    'legal.support': 'Soporte',
 
     'hero.tagline': 'Esta es mi obra. Te la cuento yo mismo.',
 
@@ -70,6 +76,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     soon: '即将推出',
     listen: '收听',
     pause: '暂停',
+    'legal.terms': '条款与条件',
+    'legal.privacy': '隐私政策',
+    'legal.support': '支持',
 
     'hero.tagline': '这是我的作品。我亲自讲给你听。',
 
