@@ -8,6 +8,13 @@ export const localeNames: Record<Locale, string> = {
   zh: '中文',
 };
 
+/** What the header shows at rest: the ISO code, as a label. */
+export const localeCodes: Record<Locale, string> = {
+  en: 'EN',
+  es: 'ES',
+  zh: 'ZH',
+};
+
 /**
  * en is the canonical tree; es/zh mirror its shape. Copy here is DRAFT —
  * every line ships as an option for Juan to react to, never final.

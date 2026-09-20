@@ -157,10 +157,9 @@ const stepCount = slides.length + 1;
           <div class="actions-anchor-small" aria-hidden="true"></div>
         </div>
 
-        <!-- The filmstrip: every shot in one row, translated by scroll. -->
+        <!-- Every shot in one stack; the scroll cross-fades them. -->
         <div class="shots">
-          <div class="strip">
-            {
+          {
               slides.map(slide => (
                 <div class="slot">
                   <div class="shot-wrap">
@@ -185,7 +184,6 @@ const stepCount = slides.length + 1;
                 </div>
               ))
             }
-          </div>
         </div>
       </div>
     </div>
@@ -223,8 +221,10 @@ const stepCount = slides.length + 1;
     position: relative;
     height: calc(var(--steps) * 100svh);
 
-    /* The inset under the fixed header, and the panel's bottom. */
-    --stage-top: 7rem;
+    /* The inset under the fixed header, and the panel's bottom. The
+       top scales with the viewport so the content sits a beat lower on
+       a tall screen instead of hugging the header. */
+    --stage-top: calc(6rem + 5svh);
     --stage-bottom: 2rem;
     /* The step between any two blocks: pitch → row, caption → row,
        row → foot. One value, everywhere. */
@@ -236,14 +236,14 @@ const stepCount = slides.length + 1;
 
   @media (max-width: 64rem) {
     .story {
-      --stage-top: 6rem;
+      --stage-top: calc(5rem + 5svh);
       --gap-block: 2rem;
     }
   }
 
   @media (max-width: 48rem) {
     .story {
-      --stage-top: 5.25rem;
+      --stage-top: calc(4rem + 4svh);
       --stage-bottom: 1.25rem;
       --gap-block: 1.5rem;
       --text-col: 100%;
@@ -432,20 +432,19 @@ const stepCount = slides.length + 1;
   /* The words start at the phone's own top edge, which is also where
      the opener's lockup sits — so the shared lockup barely travels
      between the two (it was a 171px trip when this was centred). */
-  /* Every cap is absolutely placed inside this box, so the box holds
-     the TALLEST one — that is what keeps the action row below it from
-     moving as the slides change. `align-self` must not be set here:
-     in a flex column it is the cross axis, and `start` collapsed the
-     column to its text's width. */
+  /* Every cap sits in the SAME grid cell, so the box is exactly as tall
+     as the tallest one at any width — no guessed min-height to keep in
+     sync, and the action row below never moves between slides.
+     `align-self` must not be set here: in a flex column it is the cross
+     axis, and `start` collapsed the column to its text's width. */
   .caption {
     position: relative;
     z-index: 1;
-    min-height: 21rem;
+    display: grid;
   }
 
   .cap {
-    position: absolute;
-    inset: 0 0 auto;
+    grid-area: 1 / 1;
     /* Clear the small lockup parked above the captions. */
     padding-top: 3.5rem;
     opacity: 0;
@@ -480,6 +479,10 @@ const stepCount = slides.length + 1;
   /* The words take the comfortable inset under the header; the phone
      does not need it, so the pane reclaims that space and the shot
      runs as tall as the panel allows. */
+  /* Every shot stacks in one cell and the scroll cross-fades them.
+     Nothing travels, so nothing can be caught half-clipped — which is
+     what the sliding strip kept doing, and what the edge masks and
+     occluders existed to hide. */
   .shots {
     position: relative;
     height: auto;
@@ -488,32 +491,23 @@ const stepCount = slides.length + 1;
        and still clears the header. */
     margin: calc(var(--stage-top) * -0.5) 0 calc(var(--stage-bottom) * -1);
     min-height: 0;
-    overflow: hidden;
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      #000 9%,
-      #000 91%,
-      transparent
-    );
-  }
-
-  .strip {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    will-change: transform;
+    display: grid;
   }
 
   .slot {
-    flex: 0 0 100%;
-    height: 100%;
+    grid-area: 1 / 1;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Air for the glow and the contact shadow, so the pane never
-       crops either. */
+    /* Air for the glow and the contact shadow. */
     padding: 1.25rem 0;
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+
+  .slot:first-child {
+    opacity: 1;
   }
 
   .shot-wrap {
@@ -593,7 +587,12 @@ const stepCount = slides.length + 1;
     height: 4.75rem;
   }
 
+  /* Shares the caps' cell rather than taking a row of its own — as a
+     second row it pushed the lockup below the body copy. */
   .lockup-anchor-small {
+    grid-area: 1 / 1;
+    align-self: start;
+    justify-self: start;
     height: 2rem;
   }
 
@@ -637,7 +636,6 @@ const stepCount = slides.length + 1;
 
     .caption {
       order: 0;
-      min-height: 9.5rem;
     }
 
     .actions-anchor-small {
@@ -714,8 +712,7 @@ const stepCount = slides.length + 1;
     stage: HTMLElement | null;
     intro: HTMLElement | null;
     float: HTMLElement | null;
-    strip: HTMLElement | null;
-    shotsBox: HTMLElement | null;
+    slots: HTMLElement[];
     caps: HTMLElement[];
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
@@ -777,8 +774,7 @@ const stepCount = slides.length + 1;
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
       float: root.querySelector<HTMLElement>('.float'),
-      strip: root.querySelector<HTMLElement>('.strip'),
-      shotsBox: root.querySelector<HTMLElement>('.shots'),
+      slots: [...root.querySelectorAll<HTMLElement>('.slot')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
@@ -849,11 +845,18 @@ const stepCount = slides.length + 1;
         );
       }
 
-      // The filmstrip: 1:1 with the scroll past the opener.
-      if (s.strip && s.shotsBox) {
-        const w = s.shotsBox.clientWidth;
-        const pos = clamp(p - 1, 0, s.steps.length - 2);
-        s.strip.style.transform = `translateX(${(-pos * w).toFixed(1)}px)`;
+      // The shots: a cross-fade with a small scale settle, no travel.
+      // The first one holds while the opener is still up, so the stack
+      // is never blank.
+      for (let i = 0; i < s.slots.length; i++) {
+        const t = clamp(p, 1, s.steps.length - 1) - (i + 1);
+        const at = Math.abs(t);
+        if (reduceMotion) {
+          s.slots[i].style.opacity = Math.round(clamp(p, 1, 99)) === i + 1 ? '1' : '0';
+          continue;
+        }
+        s.slots[i].style.opacity = String(clamp(1 - at * 1.6, 0, 1));
+        s.slots[i].style.transform = `scale(${(1 - Math.min(at, 1) * 0.04).toFixed(4)})`;
       }
 
       // Captions: crossfade with a short eased drift as their shot
@@ -920,5 +923,19 @@ const stepCount = slides.length + 1;
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
+
+  // The FLIP anchors sit inside `[data-reveal]` blocks, which enter 20px
+  // low — measure during that and the row parks 20px off its anchor for
+  // good, since nothing re-measures until the next scroll. Re-render
+  // when a reveal settles.
+  document.addEventListener(
+    'transitionend',
+    event => {
+      const target = event.target as HTMLElement;
+      if (target?.hasAttribute?.('data-reveal')) render(true);
+    },
+    { passive: true }
+  );
+
   render(true);
 </script>
