@@ -27,19 +27,19 @@ const en = {
   'hero.tagline': "This is my work. I'll tell you the story myself.",
 
   'shaper.intro':
-    'I wanted to hear my music my way — slower, warmer, cut down to the seconds I love. No app did all of it, so I built Sound Shaper.',
+    'YouTube Music kept feeding me ads, and I was always hunting slowed and sped-up versions of my songs. So I built my own player: free, and it plays and shapes sound without internet.',
   'shaper.s1.title': 'Library',
   'shaper.s1.body':
-    'Every MP3 you add becomes a tile with its artwork. One tap and it plays.',
+    'Add your MP3s and you have your own library to listen to, shape, or clip. It works fully offline and hooks into the system — Dynamic Island, widgets, the Lock Screen.',
   'shaper.s2.title': 'Player',
   'shaper.s2.body':
-    "The artwork becomes the room's light. Everything on this screen comes from the cover itself.",
+    'Play your music the way you already know how, in a beautiful, clean interface.',
   'shaper.s3.title': 'Shape',
   'shaper.s3.body':
-    'A five-band equalizer, playback speed, and a switch that keeps the original pitch at any speed. This screen is why the app exists.',
+    'Shape your sound the way you want: the presets, or a five-band equalizer set your way, playback speed, and the original pitch kept at any speed.',
   'shaper.s4.title': 'Clips',
   'shaper.s4.body':
-    'Cut the exact seconds you care about. The whole track below, the zoom above, two handles, done.',
+    'Make clips of your favorite parts and play them whenever you want.',
 };
 
 export type UIKey = keyof typeof en;
@@ -57,19 +57,19 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.tagline': 'Esta es mi obra. Te la cuento yo mismo.',
 
     'shaper.intro':
-      'Quería escuchar mi música a mi manera: más lenta, más cálida, cortada a los segundos que me encantan. Ninguna app lo hacía todo, así que hice Sound Shaper.',
+      'YouTube Music me llenaba de anuncios, y yo vivía buscando versiones slowed y sped up de mis canciones. Así que me hice mi propio reproductor: gratis, y reproduce y moldea el sonido sin internet.',
     'shaper.s1.title': 'Biblioteca',
     'shaper.s1.body':
-      'Cada MP3 que agregas se convierte en un mosaico con su ilustración. Un toque y suena.',
+      'Subes tus MP3 y ya tienes tu propia biblioteca para escuchar, moldear o hacer clips. Funciona sin conexión y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo.',
     'shaper.s2.title': 'Reproductor',
     'shaper.s2.body':
-      'La ilustración se convierte en la luz del cuarto. Todo lo que ves en esta pantalla sale de la propia portada.',
-    'shaper.s3.title': 'Shape',
+      'Reproduce tu música como ya sabes hacerlo, en una interfaz bonita y limpia.',
+    'shaper.s3.title': 'Moldear',
     'shaper.s3.body':
-      'Ecualizador de cinco bandas, velocidad de reproducción y un ajuste que conserva el tono a cualquier velocidad. Esta pantalla es la razón de que exista la app.',
+      'Dale la forma que quieras a tu sonido: con los presets, o ajustando tú mismo el ecualizador de cinco bandas, la velocidad de reproducción y el tono original a cualquier velocidad.',
     'shaper.s4.title': 'Clips',
     'shaper.s4.body':
-      'Corta los segundos exactos que te importan. La canción entera abajo, el zoom arriba, dos bordes y listo.',
+      'Crea clips de tus partes favoritas y reprodúcelos cuando quieras.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -82,17 +82,16 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.tagline': '这是我的作品。我亲自讲给你听。',
 
     'shaper.intro':
-      '我想按自己的方式听音乐：慢一点，暖一点，只留下我爱的那几秒。没有一个应用能做到全部，所以我做了 Sound Shaper。',
+      'YouTube Music 的广告太多，而我总在找歌曲的 slowed 和 sped up 版本。所以我给自己做了一个播放器：完全免费，播放和塑形都不用网络。',
     'shaper.s1.title': '资料库',
-    'shaper.s1.body': '每一首加入的 MP3 都会带着插图出现。轻点一下就能播放。',
+    'shaper.s1.body':
+      '加入你的 MP3，就有了自己的资料库，可以听、可以塑形、可以做片段。完全离线可用，还接入系统：灵动岛、小组件、锁定屏幕。',
     'shaper.s2.title': '播放器',
-    'shaper.s2.body':
-      '插图变成了整个房间的光。这个屏幕上的一切都来自封面本身。',
-    'shaper.s3.title': 'Shape',
+    'shaper.s2.body': '用你早已熟悉的方式播放音乐，界面漂亮而干净。',
+    'shaper.s3.title': '塑形',
     'shaper.s3.body':
-      '五段均衡器、播放速度，以及在任何速度下都保持原调的开关。这个屏幕就是这个应用存在的理由。',
-    'shaper.s4.title': 'Clips',
-    'shaper.s4.body':
-      '剪出你在乎的那几秒。整首歌在下面，放大在上面，两个手柄，完成。',
+      '随心塑造你的声音：用预设，或亲手调五段均衡器、播放速度，任何速度下都保持原调。',
+    'shaper.s4.title': '片段',
+    'shaper.s4.body': '把最喜欢的部分做成片段，想什么时候听就什么时候听。',
   },
 };
