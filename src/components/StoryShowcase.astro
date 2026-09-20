@@ -339,6 +339,10 @@ const stepCount = slides.length + 1;
     inset: 0;
     z-index: 2;
     opacity: var(--float-in, 0);
+    /* It covers the whole stage, including the opener beneath it — so
+       the layer is DEAF and only the captions take events back. Without
+       this it silently eats every hover and click on the opener. */
+    pointer-events: none;
     will-change: opacity;
   }
 
