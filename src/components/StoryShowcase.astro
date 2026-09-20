@@ -5,20 +5,21 @@ import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
 
 /**
- * One app = ONE horizontal deck. The first slide is the opener — tile,
- * the name at display size, three lines, the listen pill — and the
- * screenshots follow, all in the same lateral slider.
+ * One app = one continuous scene, no snapping anywhere.
  *
- * The page scrolls down; the SCENE travels sideways. Every layer is
- * COUPLED to the scroll rather than triggered by it — position is a
- * function of scroll, the grammar of Rockstar's GTA VI site. The
- * backdrop (the slide itself, blurred) zooms through as you pass, the
- * shot rides the scroll faster than the backdrop (parallax = depth),
- * the title arrives at a third speed. Invisible 100svh steps carry the
- * snapping, so a flick still lands exactly one slide.
+ * The opener is full-bleed: lockup, the pitch, a hairline, the action
+ * row. As you scroll on, the scene DOCKS — it morphs into a floating
+ * window (rounded, hairlined, elevated a step off the ground) and the
+ * screenshots run inside it as a FILMSTRIP, translated continuously by
+ * the scroll itself. Scrub the page and the strip scrubs with it; there
+ * are no steps to land on, only positions.
  *
- * Captions double as narration transcripts; each slide can carry a
- * voice clip and the deck advances itself when one ends.
+ * Captions crossfade with a short vertical drift as their shot centers.
+ * The icon + name are ONE lockup that FLIPs from the opener header into
+ * the window's caption corner and parks there.
+ *
+ * Narration: a single shared Audio element reads the slide nearest to
+ * center and advances the scroll itself when a clip ends.
  */
 export type StorySlide = {
   src: string;
@@ -61,7 +62,7 @@ const {
   linkGroups = [],
 } = Astro.props;
 
-// The deck: step 0 is the opener, then one step per screenshot.
+// The scroll rail: one viewport for the opener, one per screenshot.
 const stepCount = slides.length + 1;
 ---
 
@@ -71,8 +72,8 @@ const stepCount = slides.length + 1;
   data-story={id}
   style={`--steps: ${stepCount}`}
 >
-  <!-- The scroll rail: one invisible step per slide. Each carries the snap
-       point and, once recorded, that slide's narration clip. -->
+  <!-- Invisible scroll rail — gives the story its length and carries
+       each step's narration clip. No snapping: positions, not pages. -->
   <div class="steps" aria-hidden="true">
     <div class="step" data-index="0" data-audio={introAudio} />
     {
@@ -83,8 +84,7 @@ const stepCount = slides.length + 1;
   </div>
 
   <div class="stage">
-    <!-- Slide 0: the opener. The icon + name live in the shared lockup
-         below; the anchor just reserves their place in this layout. -->
+    <!-- The opener, full-bleed on the ground. -->
     <div class="intro-scene">
       <div class="inner">
         <div class="lockup-anchor-big" aria-hidden="true"></div>
@@ -131,69 +131,64 @@ const stepCount = slides.length + 1;
       </div>
     </div>
 
-    <div class="inner stage-grid">
-      <div class="caption">
-        <div class="lockup-anchor-small" aria-hidden="true"></div>
-        {
-          slides.map(slide => (
-            <div class="cap">
-              {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-              {slide.paras?.map(k => (
-                <p class="body">
-                  <T k={k} />
-                </p>
-              ))}
-            </div>
-          ))
-        }
-      </div>
+    <!-- The floating window the scene docks into. -->
+    <div class="float">
+      <div class="float-grid">
+        <div class="caption">
+          <div class="lockup-anchor-small" aria-hidden="true"></div>
+          {
+            slides.map(slide => (
+              <div class="cap">
+                {slide.title && <h3 class="slide-title">{slide.title}</h3>}
+                {slide.paras?.map(k => (
+                  <p class="body">
+                    <T k={k} />
+                  </p>
+                ))}
+              </div>
+            ))
+          }
+        </div>
 
-      <div class="shots">
-        {
-          slides.map(slide => (
-            <div class="shot-wrap">
-              <img
-                class="halo"
-                src={slide.src}
-                alt=""
-                aria-hidden="true"
-                loading="lazy"
-                decoding="async"
-              />
-              <img
-                class="shot"
-                src={slide.src}
-                alt={`${name} screenshot`}
-                width={slide.width}
-                height={slide.height}
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          ))
-        }
+        <!-- The filmstrip: every shot in one row, translated by scroll. -->
+        <div class="shots">
+          <div class="strip">
+            {
+              slides.map(slide => (
+                <div class="slot">
+                  <div class="shot-wrap">
+                    <img
+                      class="halo"
+                      src={slide.src}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <img
+                      class="shot"
+                      src={slide.src}
+                      alt={`${name} screenshot`}
+                      width={slide.width}
+                      height={slide.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- The shared lockup: icon + name in a row, once per story. Big on
-         the opener, it shrinks into the caption corner as slide 1 rides
-         in and stays there for every screenshot — the render loop
-         interpolates between the two anchors' rects. -->
+         the opener, it shrinks into the window's caption corner as the
+         scene docks — the render loop FLIPs it between the two anchors. -->
     <div class="lockup">
       <slot name="logo" />
       <span class="lockup-name">{name}</span>
-    </div>
-
-    <div class="dots">
-      {
-        Array.from({ length: stepCount }).map((_, i) => (
-          <button
-            class="dot"
-            data-index={i}
-            aria-label={`${name} ${i + 1} / ${stepCount}`}
-          />
-        ))
-      }
     </div>
   </div>
 </section>
@@ -205,7 +200,7 @@ const stepCount = slides.length + 1;
     margin: 0 auto;
   }
 
-  /* ---------- the deck ---------- */
+  /* ---------- the scene ---------- */
 
   .story {
     position: relative;
@@ -220,8 +215,6 @@ const stepCount = slides.length + 1;
 
   .step {
     height: 100svh;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
   }
 
   .stage {
@@ -229,18 +222,10 @@ const stepCount = slides.length + 1;
     top: 0;
     height: 100svh;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    /* Trimmed to what the header and the dots actually need — every
-       spare point goes to the screenshot. */
-    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 1.5rem;
   }
 
-  /* ---------- slide 0: the opener ---------- */
+  /* ---------- the opener ---------- */
 
-  /* The opener: lockup up top, then two columns — the pitch on the
-     left, everything actionable (stores, listen, legal) on the right. */
   .intro-scene {
     position: absolute;
     inset: 0;
@@ -252,13 +237,29 @@ const stepCount = slides.length + 1;
   }
 
   .intro-scene .inner {
-    /* Same lift as the captions: content reads above center. */
-    margin-bottom: 4rem;
+    margin-bottom: 3rem;
   }
 
-  /* Full-width rows: the pitch reads long, then one action row. */
   .intro-grid {
     margin-top: 2rem;
+  }
+
+  /* The pitch: problem over solution, reading left — twice the width
+     of the window's caption column, no wider. */
+  .pitch {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    max-width: calc(100% * 6 / 13 * 0.81 * 2);
+  }
+
+  .pitch-block .body {
+    margin-top: 0.5rem;
+  }
+
+  /* Long rows on purpose — the measure cap is for columns. */
+  .pitch .body {
+    max-width: none;
   }
 
   /* The action row closes the opener under a hairline, the width of
@@ -274,73 +275,13 @@ const stepCount = slides.length + 1;
     max-width: calc(100% * 6 / 13 * 0.81 * 2);
   }
 
-  /* The badges and the pill carry their own top margins for other
-     homes; inside the action row the row sets the rhythm. */
   .intro-actions :global(.stores),
   .intro-actions :global(.listen) {
     margin-top: 0;
   }
 
-  /* Long rows on purpose — the measure cap is for columns. */
-  .pitch .body {
-    max-width: none;
-  }
-
-  /* ---------- the shared lockup ---------- */
-
-  /* Icon + name in one row, drawn ONCE per story. The two anchors below
-     reserve its place in each layout; the render loop translates and
-     scales the lockup between their rects (origin top left), so the
-     opener's big lockup IS the small one over the captions — a shared
-     element, not two copies. */
-  .lockup {
-    position: absolute;
-    top: 0;
-    left: 0;
-    /* Part of the text layer: above the occluder slab, like the words. */
-    z-index: 4;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    height: 4.75rem;
-    white-space: nowrap;
-    transform-origin: top left;
-    pointer-events: none;
-    will-change: transform;
-  }
-
-  .lockup-name {
-    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
-    font-weight: 800;
-    letter-spacing: var(--track-display);
-    line-height: 0.95;
-  }
-
-  /* The anchors: same box the lockup occupies at each end of the ride. */
-  .lockup-anchor-big {
-    height: 4.75rem;
-  }
-
-  .lockup-anchor-small {
-    height: 2.25rem;
-  }
-
-  /* The pitch: problem over solution, reading left — twice the width
-     of a slide's caption column, no wider. */
-  .pitch {
-    display: flex;
-    flex-direction: column;
-    gap: 1.75rem;
-    max-width: calc(100% * 6 / 13 * 0.81 * 2);
-  }
-
-  .pitch-block .body {
-    margin-top: 0.5rem;
-  }
-
   /* The link accordions: Legal and Help, quiet until asked. Their
-     panels OVERLAY (absolute) instead of pushing — zero layout shift
-     opening or closing, in either axis. */
+     panels OVERLAY (absolute) instead of pushing — zero layout shift. */
   .intro-links {
     display: flex;
     align-items: center;
@@ -395,37 +336,33 @@ const stepCount = slides.length + 1;
     text-decoration-color: var(--ink-3);
   }
 
+  /* ---------- the floating window ---------- */
 
-  /* The two control rows read as one group: air above, tight between. */
-  .intro-scene :global(.stores) {
-    margin-top: 2rem;
+  /* Driven by --f (0 = full-bleed and invisible chrome, 1 = docked):
+     the window pulls in from the stage edges, grows its corner and its
+     hairline, and lifts one surface step off the ground. */
+  .float {
+    position: absolute;
+    z-index: 2;
+    top: calc(var(--f, 0) * 6rem);
+    bottom: calc(var(--f, 0) * 4.5rem);
+    left: calc(var(--f, 0) * clamp(1.5rem, 6vw, 5rem));
+    right: calc(var(--f, 0) * clamp(1.5rem, 6vw, 5rem));
+    border-radius: calc(var(--f, 0) * 1.5rem);
+    background: rgba(22, 22, 22, calc(var(--f, 0) * 0.92));
+    border: 1px solid rgba(38, 38, 38, var(--f, 0));
+    overflow: hidden;
+    opacity: var(--float-in, 0);
+    will-change: opacity;
   }
 
-  .intro-scene :global(.listen) {
-    margin-top: 1rem;
-  }
-
-  /* ---------- the screenshot slides ---------- */
-
-  /* Caption on the 4 side of the Monolith seam, the shot on the 9. */
-  .stage-grid {
-    position: relative;
-    /* The slider is the TOP layer visually — but the mouse must reach
-       the opener's links through it, so the layer itself is deaf and
-       only the captions re-enable pointer events. */
-    z-index: 3;
-    pointer-events: none;
+  .float-grid {
+    position: absolute;
+    inset: 0;
     display: grid;
-    /* The words' column: 6/13 pulled in twice by 10% (0.81), so the
-       shot keeps its room. The opener's pitch is exactly DOUBLE this. */
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    /* One explicit row: it IS the stage's free height, so the shots can
-       take height: 100% of something real (an auto row makes that
-       percentage unresolvable and the shot overflows under the header). */
-    grid-template-rows: minmax(0, 1fr);
     gap: var(--space-4);
-    min-height: 0;
-    flex: 1;
+    padding: 2.5rem clamp(1.5rem, 4vw, 3rem);
   }
 
   .caption {
@@ -433,9 +370,6 @@ const stepCount = slides.length + 1;
     z-index: 1;
     align-self: center;
     min-height: 16rem;
-    /* Lift the words above the geometric center — the phone holds the
-       middle, the text reads a beat higher. */
-    margin-bottom: 6rem;
   }
 
   .cap {
@@ -451,7 +385,7 @@ const stepCount = slides.length + 1;
   /* The slide title IS the opener's name size — one ladder, and one
      1.25rem step everywhere: lockup → title → description. */
   .slide-title {
-    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: 800;
     letter-spacing: var(--track-display);
     line-height: 0.95;
@@ -465,26 +399,35 @@ const stepCount = slides.length + 1;
     margin-top: 0.875rem;
   }
 
+  /* ---------- the filmstrip ---------- */
+
   .shots {
     position: relative;
     height: 100%;
     min-height: 0;
+    overflow: visible;
   }
 
-  /* The render loop moves the WRAP; the shot and its halo ride inside. */
-  .shot-wrap {
+  .strip {
     position: absolute;
-    top: 0;
-    left: 50%;
-    height: 100%;
-    opacity: 0;
-    transform: translate(-50%, 0);
-    will-change: opacity, transform;
+    inset: 0;
+    display: flex;
+    will-change: transform;
   }
 
-  /* The gradient the image generates, cast from its own border — the
-     same picture behind itself, slightly larger and blurred, so the
-     halo hugs the phone's silhouette and the ground stays ground. */
+  .slot {
+    flex: 0 0 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shot-wrap {
+    position: relative;
+    height: 100%;
+  }
+
   .halo {
     position: absolute;
     inset: 0;
@@ -502,63 +445,57 @@ const stepCount = slides.length + 1;
     height: 100%;
     width: auto;
     /* The global `img { max-width: 100% }` squishes an auto-width image
-       inside a shrink-to-fit absolute wrapper — the phone must keep its
-       native 1179:2556 ratio, whatever the column does. */
+       inside a shrink-to-fit wrapper — the phone keeps its native
+       1179:2556 ratio, whatever the column does. */
     max-width: none;
 
     /* The corner is the PHONE'S, not the App Store's — 55pt on a 393pt
-       screen, i.e. 14% of the width / 6.46% of the height, measured so a
-       full-height sheet's own display-concentric corners don't leave black
-       notches (the full derivation lived in Showcase.astro's history).
-       The BOTTOM corners crop a beat tighter (+~2px at render size) —
-       the 14% clip still let a sliver of the sheet shots' dead corners
-       through. The hairline is Apple's dark-appearance treatment. No
-       bezel, no fill. */
+       screen (14% / 6.46%), bottom corners cropped a beat tighter so a
+       full-height sheet's dead corners never show. The hairline is
+       Apple's dark-appearance treatment. No bezel, no fill. */
     border-radius: 14% 14% 15.9% 15.9% / 6.46% 6.46% 7.35% 7.35%;
     border: 1px solid var(--hairline);
   }
 
-  .dots {
-    position: relative;
-    z-index: 5;
+  /* ---------- the shared lockup ---------- */
+
+  .lockup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
     display: flex;
-    justify-content: center;
-    gap: 0.875rem;
-    /* Real air between the scene and the indicators. */
-    padding-top: 3rem;
+    align-items: center;
+    gap: 1.25rem;
+    height: 4.75rem;
+    white-space: nowrap;
+    transform-origin: top left;
+    pointer-events: none;
+    will-change: transform;
   }
 
-  .dot {
-    width: 0.4375rem;
-    height: 0.4375rem;
-    padding: 0;
-    border: none;
-    border-radius: 999px;
-    background: var(--ink-3);
-    opacity: 0.45;
-    cursor: pointer;
-    transition:
-      opacity var(--dur-micro) var(--ease),
-      background var(--dur-micro) var(--ease);
+  .lockup-name {
+    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
+    font-weight: 800;
+    letter-spacing: var(--track-display);
+    line-height: 0.95;
   }
 
-  .dot[data-active] {
-    background: var(--ink);
-    opacity: 1;
+  /* The anchors: same box the lockup occupies at each end of the ride. */
+  .lockup-anchor-big {
+    height: 4.75rem;
+  }
+
+  .lockup-anchor-small {
+    height: 2rem;
   }
 
   @media (max-width: 48rem) {
-    .stage,
-    .intro-scene {
-      padding-top: 4.5rem;
-      padding-bottom: 2rem;
-    }
-
-    /* One column: the shot leads, the caption reads under it. */
-    .stage-grid {
+    .float-grid {
       grid-template-columns: 1fr;
       grid-template-rows: minmax(0, 1fr) auto;
       gap: 1.25rem;
+      padding: 1.5rem 1.25rem;
     }
 
     .shots {
@@ -566,21 +503,13 @@ const stepCount = slides.length + 1;
     }
 
     .caption {
-      min-height: 12rem;
-      /* Below the shot on mobile — no lift to apply. */
-      margin-bottom: 0;
-    }
-
-    /* One column on mobile: there's no side column to hide under. */
-    .caption::before {
-      display: none;
+      min-height: 13rem;
     }
 
     .slide-title {
-      font-size: clamp(1.875rem, 8vw, 2.5rem);
+      font-size: clamp(1.75rem, 7vw, 2.25rem);
     }
 
-    /* A narrow screen can't seat a 4rem name beside the tile. */
     .lockup {
       gap: 1rem;
     }
@@ -588,24 +517,16 @@ const stepCount = slides.length + 1;
     .lockup-name {
       font-size: 2rem;
     }
-
   }
 </style>
 
 <script>
-  // ---------- the cinema controller ----------
-  // One module for every story on the page. Two jobs:
-  //
-  // RENDER — every moving layer is a pure function of scroll, recomputed
-  // in one rAF pass: for step i, t = p - i where p is how many viewports
-  // deep the story is. Step 0 is the opener; screenshots are steps 1..n.
-  // The page scrolls down, the scene travels SIDEWAYS: a slide enters
-  // from the right and leaves to the left, shot faster than its caption —
-  // the depth IS the difference. No triggers, no state machines.
-  //
-  // NARRATION — a single shared Audio element (unlocked by the pill's
-  // tap, then free to swap sources) reads the active slide and advances
-  // the deck when a clip ends. Manual scroll simply re-targets it.
+  // ---------- the continuous controller ----------
+  // Everything is a pure function of the scroll position p (how many
+  // viewports deep the story is): the opener fades, the floating window
+  // docks (--f), the filmstrip translates 1:1 with p, the captions
+  // crossfade around their shot, the lockup FLIPs between its anchors.
+  // No steps, no snapping, no state machines — scrub and it scrubs.
 
   const reduceMotion = window.matchMedia(
     '(prefers-reduced-motion: reduce)'
@@ -614,15 +535,7 @@ const stepCount = slides.length + 1;
   const clamp = (v: number, min: number, max: number) =>
     Math.min(max, Math.max(min, v));
 
-  // Entry vectors, cycling per slide: right, below, above — never from
-  // the left. The text column's side is where slides EXIT (they dive
-  // under it); every horizontal entrance comes in like the first one,
-  // from the screen's right edge.
-  const DIRS: [number, number][] = [
-    [1, 0],
-    [0, 1],
-    [0, -1],
-  ];
+  const smooth = (v: number) => v * v * (3 - 2 * v);
 
   const voice = new Audio();
   voice.preload = 'auto';
@@ -632,13 +545,13 @@ const stepCount = slides.length + 1;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
-    caption: HTMLElement | null;
+    float: HTMLElement | null;
+    strip: HTMLElement | null;
+    shotsBox: HTMLElement | null;
+    caps: HTMLElement[];
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
-    shots: HTMLElement[];
-    caps: HTMLElement[];
-    dots: HTMLElement[];
     pill: HTMLElement | null;
     current: number;
   };
@@ -658,8 +571,12 @@ const stepCount = slides.length + 1;
   };
 
   const scrollToStep = (story: Story, index: number) => {
-    story.steps[index]?.scrollIntoView({
-      block: 'start',
+    const top =
+      story.root.getBoundingClientRect().top +
+      window.scrollY +
+      index * window.innerHeight;
+    window.scrollTo({
+      top,
       behavior: reduceMotion ? 'auto' : 'smooth',
     });
   };
@@ -688,24 +605,20 @@ const stepCount = slides.length + 1;
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
-      caption: root.querySelector<HTMLElement>('.caption'),
+      float: root.querySelector<HTMLElement>('.float'),
+      strip: root.querySelector<HTMLElement>('.strip'),
+      shotsBox: root.querySelector<HTMLElement>('.shots'),
+      caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
-      shots: [...root.querySelectorAll<HTMLElement>('.shot-wrap')],
-      caps: [...root.querySelectorAll<HTMLElement>('.cap')],
-      dots: [...root.querySelectorAll<HTMLElement>('.dot')],
       pill: document.querySelector<HTMLElement>(
         `[data-narrate-story="${root.dataset.story}"]`
       ),
       current: -1,
     };
 
-    story.dots.forEach((dot, i) =>
-      dot.addEventListener('click', () => scrollToStep(story, i))
-    );
-
-    // The pill lives on slide 0, so arming starts the deck right where
+    // The pill lives on the opener, so arming starts the story where
     // the person is standing: the opener's own clip, then onward.
     story.pill?.addEventListener('click', () => {
       if (armed === story) {
@@ -726,7 +639,6 @@ const stepCount = slides.length + 1;
 
   const render = (force = false) => {
     const vh = window.innerHeight;
-    const vw = window.innerWidth;
 
     if (heroInner) {
       const hp = clamp(window.scrollY / vh, 0, 1);
@@ -739,25 +651,67 @@ const stepCount = slides.length + 1;
     for (const s of stories) {
       const rect = s.root.getBoundingClientRect();
       // The forced pass places every layer once at load, so nothing is
-      // ever seen untransformed when a story first scrolls in.
+      // ever seen unstyled when a story first scrolls in.
       if (!force && (rect.bottom < 0 || rect.top > vh)) continue;
 
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
+      const f = reduceMotion
+        ? p >= 0.5
+          ? 1
+          : 0
+        : smooth(clamp(p, 0, 1));
 
-      // The lockup rides from the opener's anchor to the caption's on
-      // the first step and parks there — icon and name never redraw,
-      // they just travel (FLIP between the two anchors' rects).
+      // The opener fades as the window docks.
+      if (s.intro) {
+        s.intro.style.opacity = String(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1));
+        s.intro.style.pointerEvents = p < 0.5 ? 'auto' : 'none';
+      }
+
+      // The window: chrome morphs with --f, visibility with --float-in
+      // (it waits until the opener is mostly gone, then arrives).
+      if (s.float) {
+        s.float.style.setProperty('--f', f.toFixed(4));
+        s.float.style.setProperty(
+          '--float-in',
+          reduceMotion
+            ? p >= 0.5
+              ? '1'
+              : '0'
+            : String(clamp((p - 0.35) * 2.4, 0, 1))
+        );
+      }
+
+      // The filmstrip: 1:1 with the scroll past the opener.
+      if (s.strip && s.shotsBox) {
+        const w = s.shotsBox.clientWidth;
+        const pos = clamp(p - 1, 0, s.steps.length - 2);
+        s.strip.style.transform = `translateX(${(-pos * w).toFixed(1)}px)`;
+      }
+
+      // Captions: crossfade with a short eased drift as their shot
+      // centers in the window.
+      for (let i = 0; i < s.caps.length; i++) {
+        const t = p - (i + 1);
+        const at = Math.abs(t);
+        if (reduceMotion) {
+          s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
+          continue;
+        }
+        const te = clamp(t * 1.6, -1, 1);
+        s.caps[i].style.opacity = String(clamp(1 - at * 2.6, 0, 1));
+        s.caps[i].style.transform = `translateY(${(-te * 22).toFixed(1)}px)`;
+        s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
+      }
+
+      // The lockup FLIPs from the opener header to the window's caption
+      // corner and parks there — one element, never redrawn.
       if (s.lockup && s.stage && s.anchorBig && s.anchorSmall) {
         const stageRect = s.stage.getBoundingClientRect();
         const big = s.anchorBig.getBoundingClientRect();
         const small = s.anchorSmall.getBoundingClientRect();
-        let q = clamp(p, 0, 1);
-        if (reduceMotion) q = q < 0.5 ? 0 : 1;
-        else q = q * q * (3 - 2 * q); // smoothstep — eased, not floaty
+        const q = reduceMotion ? (p >= 0.5 ? 1 : 0) : smooth(clamp(p, 0, 1));
         const scale = 1 + (small.height / big.height - 1) * q;
-        // Both ends read flush left: the opener header and the caption
-        // column share the same edge.
         const x = big.left - stageRect.left + (small.left - big.left) * q;
         const y = big.top - stageRect.top + (small.top - big.top) * q;
         s.lockup.style.transform =
@@ -765,67 +719,8 @@ const stepCount = slides.length + 1;
           `scale(${scale.toFixed(4)})`;
       }
 
-      for (let i = 0; i < s.steps.length; i++) {
-        const t = p - i;
-        const at = Math.abs(t);
-        // The opener is layer 0; screenshot slides sit one step later.
-        const shot = s.shots[i - 1];
-        const cap = s.caps[i - 1];
-
-        if (reduceMotion) {
-          const on = i === active ? '1' : '0';
-          if (i === 0 && s.intro) s.intro.style.opacity = on;
-          if (shot) shot.style.opacity = on;
-          if (cap) cap.style.opacity = on;
-          continue;
-        }
-
-        // Each slide owns a DIRECTION, cycling right / below / above /
-        // left. Vertical movers ride the full stage, edge to edge, no
-        // fade. Horizontal movers take a SHORT path — in from the
-        // screen's right edge, out under the caption column — fading as
-        // they tuck under the words (the caption layer sits above them).
-        // The words themselves never travel: a near-instant crossfade.
-        if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 6, 0, 1));
-          s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
-        }
-
-        if (shot) {
-          const [dx, dy] = DIRS[(i - 1) % DIRS.length];
-          // The move finishes in 2/3 of a step — then the slide rests.
-          const ts = clamp(t * 1.5, -1, 1);
-          // Horizontal movers enter solid from the screen's edge and
-          // DISSOLVE on the way out — gone before they reach the words,
-          // so nothing ever gets visibly cut. Vertical movers ride the
-          // full stage.
-          shot.style.opacity =
-            dx !== 0
-              ? String(clamp(1 - Math.max(t * dx, 0) * 2.4, 0, 1))
-              : at < 1.05
-                ? '1'
-                : '0';
-          shot.style.transform =
-            `translate(calc(-50% + ${(-ts * 0.45 * vw * dx).toFixed(1)}px), ` +
-            `${(-ts * 1.15 * vh * dy).toFixed(1)}px)`;
-        }
-
-        if (cap) {
-          // The words drift with the scene — a short vertical ride, an
-          // eased arrival, a tight fade. Motion plus crossfade reads as
-          // intent; a bare opacity swap read as a glitch.
-          const te = clamp(t * 1.6, -1, 1);
-          cap.style.opacity = String(clamp(1 - at * 4, 0, 1));
-          cap.style.transform = `translateY(${(-te * 28).toFixed(1)}px)`;
-          cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
-        }
-      }
-
       if (active !== s.current) {
         s.current = active;
-        s.dots.forEach((dot, i) =>
-          dot.toggleAttribute('data-active', i === active)
-        );
         if (armed === s) playStep(s, active);
       }
     }
