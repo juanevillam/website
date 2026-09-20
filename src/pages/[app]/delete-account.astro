@@ -1,0 +1,53 @@
+---
+import Prose from '../../layouts/Prose.astro';
+import {
+  CONTACT_EMAIL,
+  LEGAL_UPDATED,
+  legalPaths,
+  type LegalApp,
+} from '../../lib/legal';
+
+export const getStaticPaths = legalPaths;
+
+type Props = { app: LegalApp };
+const { app } = Astro.props;
+---
+
+<Prose title="Delete Your Account" app={app.name} updated={LEGAL_UPDATED}>
+  <p>
+    Deleting your {app.name} account permanently removes the account itself,
+    your {app.content}, and every file you uploaded. This can't be undone.
+  </p>
+
+  <h2>From inside the app</h2>
+  <ul>
+    <li>Open <strong>Settings</strong>.</li>
+    <li>Open your account.</li>
+    <li>
+      Tap <strong>Delete Account</strong> and confirm. You may be asked to
+      sign in again first — deleting an account requires a recent sign-in.
+    </li>
+  </ul>
+  <p>
+    The deletion runs immediately: the app removes your uploaded media, your
+    data, and then the account itself.
+  </p>
+
+  <h2>If you can't access the app</h2>
+  <p>
+    Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> from the
+    address your account uses, asking for the account to be deleted. I'll
+    confirm and complete it within 30 days.
+  </p>
+
+  <h2>What is deleted</h2>
+  <ul>
+    <li>Your account (sign-in identity, email, name, photo).</li>
+    <li>Everything you created in the app — your {app.content}.</li>
+    <li>Your uploaded media.</li>
+  </ul>
+  <p>
+    Details on what the app stores are in the
+    <a href={`/${app.slug}/privacy-policy`}>privacy policy</a>.
+  </p>
+</Prose>

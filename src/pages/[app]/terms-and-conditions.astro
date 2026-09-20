@@ -1,0 +1,65 @@
+---
+import Prose from '../../layouts/Prose.astro';
+import {
+  AUTHOR_FULL_NAME,
+  CONTACT_EMAIL,
+  LEGAL_UPDATED,
+  legalPaths,
+  type LegalApp,
+} from '../../lib/legal';
+
+export const getStaticPaths = legalPaths;
+
+type Props = { app: LegalApp };
+const { app } = Astro.props;
+const social = app.content === 'tops';
+---
+
+<Prose title="Terms and Conditions" app={app.name} updated={LEGAL_UPDATED}>
+  <p>
+    {app.name} is built and operated by {AUTHOR_FULL_NAME}. By creating an
+    account or using the app you agree to these terms.
+  </p>
+
+  <h2>Your content</h2>
+  <p>
+    What you {social ? 'create' : 'upload'} is yours. You give the app only
+    the permission it needs to store your {app.content} and show them back to
+    you{social ? ' and to other people using the app' : ''}. Only
+    {social ? 'create or upload' : 'upload'} content you have the right to
+    use{
+      !social &&
+        ' — the audio files you add must be yours to keep and listen to'
+    }.
+  </p>
+
+  <h2>Acceptable use</h2>
+  <p>
+    Don't use the app to store or share content that is illegal, infringes
+    someone else's rights, or harms other people. Accounts that do may be
+    suspended or removed{social ? ', along with the content' : ''}.
+  </p>
+
+  <h2>The service</h2>
+  <p>
+    The app is provided free of charge, as is, without warranties of any
+    kind. I work to keep it reliable, but I can't guarantee uninterrupted
+    service, and features may change or be discontinued. You can delete your
+    account and all its data at any time — see the
+    <a href={`/${app.slug}/delete-account`}>account deletion page</a>.
+  </p>
+
+  <h2>Liability</h2>
+  <p>
+    To the extent the law allows, I'm not liable for indirect damages or for
+    loss of content caused by circumstances outside my control. Keep copies
+    of anything you can't afford to lose.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about these terms:
+    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If these terms
+    change, the date above changes with it.
+  </p>
+</Prose>

@@ -1,0 +1,40 @@
+---
+import Prose from '../../layouts/Prose.astro';
+import {
+  CONTACT_EMAIL,
+  LEGAL_UPDATED,
+  legalPaths,
+  type LegalApp,
+} from '../../lib/legal';
+
+export const getStaticPaths = legalPaths;
+
+type Props = { app: LegalApp };
+const { app } = Astro.props;
+---
+
+<Prose title="Support" app={app.name} updated={LEGAL_UPDATED}>
+  <p>
+    Something in {app.name} not working, or something you wish it did? Write
+    me directly — I build and maintain the app myself, and I read everything.
+  </p>
+
+  <h2>Email</h2>
+  <p>
+    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+  </p>
+  <p>It helps if you include:</p>
+  <ul>
+    <li>your device and iOS or Android version,</li>
+    <li>the app version (Settings → About),</li>
+    <li>what you did, what you expected, and what happened instead.</li>
+  </ul>
+
+  <h2>Your account and data</h2>
+  <p>
+    To remove your account and everything in it, follow the
+    <a href={`/${app.slug}/delete-account`}>account deletion page</a>. The
+    <a href={`/${app.slug}/privacy-policy`}>privacy policy</a> says what the
+    app stores and where.
+  </p>
+</Prose>

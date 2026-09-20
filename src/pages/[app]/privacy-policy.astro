@@ -1,0 +1,96 @@
+---
+import Prose from '../../layouts/Prose.astro';
+import {
+  AUTHOR_FULL_NAME,
+  CONTACT_EMAIL,
+  LEGAL_UPDATED,
+  legalPaths,
+  type LegalApp,
+} from '../../lib/legal';
+
+export const getStaticPaths = legalPaths;
+
+type Props = { app: LegalApp };
+const { app } = Astro.props;
+const social = app.content === 'tops';
+---
+
+<Prose title="Privacy Policy" app={app.name} updated={LEGAL_UPDATED}>
+  <p>
+    {app.name} is built and operated by {AUTHOR_FULL_NAME} ("I", "me"). This
+    policy says what data the app handles, where it lives, and how you remove
+    it. The short version: the app collects the minimum it needs to work,
+    shows no ads, runs no third-party analytics, and never sells data.
+  </p>
+
+  <h2>What the app collects</h2>
+  <ul>
+    <li>
+      <strong>Account.</strong> When you sign in, the app stores your email
+      address, display name, and profile photo as provided by the sign-in
+      method you choose (Google, or email and password).
+    </li>
+    {
+      social ? (
+        <li>
+          <strong>Content you create.</strong> Your profile (username, name,
+          photo), your tops and their items, images and emoji you attach,
+          descriptions, comments, reactions, and who you follow or block.
+          Profiles and tops are visible to other people using the app.
+        </li>
+      ) : (
+        <li>
+          <strong>Content you add.</strong> The MP3 files you upload, their
+          artwork, titles and subtitles, and the shapes and clips you save.
+          Your library is private to your account — nothing in {app.name} is
+          shown to other people.
+        </li>
+      )
+    }
+  </ul>
+
+  <h2>Where it lives</h2>
+  <ul>
+    <li>
+      <strong>Google Firebase</strong> — authentication and the app's
+      database.
+    </li>
+    <li>
+      <strong>Cloudinary</strong> — the media you upload (stored under an
+      identifier tied to your account, so only your account can replace or
+      delete it).
+    </li>
+    {
+      !social && (
+        <li>
+          <strong>Your device</strong> — {app.name} mirrors your library
+          locally so playback and shaping work without internet.
+        </li>
+      )
+    }
+  </ul>
+
+  <h2>What it's used for</h2>
+  <p>
+    Solely to run the app: signing you in, storing your {app.content}, and
+    syncing them to your device{social ? ' and to the people you share with' : ''}.
+    There is no advertising, no analytics SDK, no tracking across apps, and no
+    sale or sharing of personal data with third parties beyond the two
+    services above.
+  </p>
+
+  <h2>Deleting your data</h2>
+  <p>
+    You can delete your account from inside the app (Settings → your account →
+    Delete Account). That permanently removes your account, your {app.content},
+    and your uploaded media. There's also a
+    <a href={`/${app.slug}/delete-account`}>step-by-step page</a>, and you can
+    email me instead if you can't access the app.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about this policy: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+    If this policy changes, the date above changes with it.
+  </p>
+</Prose>
