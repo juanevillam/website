@@ -30,7 +30,7 @@ const en = {
   'hero.tagline': "This is my work. I'll tell you the story myself.",
 
   'shaper.intro':
-    'YouTube Music kept feeding me ads, and I was always hunting slowed and sped-up versions of my songs. So I built my own player: free, and it plays and shapes sound without internet.',
+    'YouTube Music kept feeding me ads, and I listen to a lot of slowed and sped-up versions of my songs. So I built my own music player: play, shape, and clip your sounds — free, no internet.',
   'shaper.s1.body':
     'Add your MP3s and you have your own library to listen to, shape, or clip. It works fully offline and hooks into the system — Dynamic Island, widgets, the Lock Screen.',
   'shaper.s2.body':
@@ -59,7 +59,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.tagline': 'Esta es mi obra. Te la cuento yo mismo.',
 
     'shaper.intro':
-      'YouTube Music me llenaba de anuncios, y yo vivía buscando versiones slowed y sped up de mis canciones. Así que me hice mi propio reproductor: gratis, y reproduce y moldea el sonido sin internet.',
+      'YouTube Music me llenaba de anuncios, y yo escucho mucho versiones slowed y sped up de mis canciones. Así que me hice mi propio reproductor de música: reproduce, moldea y clippea tus sonidos, gratis, sin internet.',
     'shaper.s1.body':
       'Subes tus MP3 y ya tienes tu propia biblioteca para escuchar, moldear o hacer clips. Funciona sin conexión y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo.',
     'shaper.s2.body':
@@ -83,7 +83,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.tagline': '这是我的作品。我亲自讲给你听。',
 
     'shaper.intro':
-      'YouTube Music 的广告太多，而我总在找歌曲的 slowed 和 sped up 版本。所以我给自己做了一个播放器：完全免费，播放和塑形都不用网络。',
+      'YouTube Music 的广告太多，而我又常听歌曲的 slowed 和 sped up 版本。所以我给自己做了一个音乐播放器：播放、塑形、剪辑你的声音，免费，不用网络。',
     'shaper.s1.body':
       '加入你的 MP3，就有了自己的资料库，可以听、可以塑形、可以做片段。完全离线可用，还接入系统：灵动岛、小组件、锁定屏幕。',
     'shaper.s2.body': '用你早已熟悉的方式播放音乐，界面漂亮而干净。',
