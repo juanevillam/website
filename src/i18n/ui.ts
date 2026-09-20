@@ -39,13 +39,13 @@ const en = {
   'shaper.solution':
     'A free app where you add your MP3s and it works without internet: change the speed live, shape the equalizer and the effects — preserve pitch, echo, next room — and make clips of your favorite parts.',
   'shaper.s1.body':
-    'Add your MP3s and you have your own library to listen to, shape, or clip. It works fully offline and hooks into the system — Dynamic Island, widgets, the Lock Screen.',
+    'Add your songs as MP3s and build your own library, each with its artwork and its info. Everything lives on your phone and works fully offline, and it hooks into the system — Dynamic Island, widgets, the Lock Screen, the OS playback controls.',
   'shaper.s2.body':
-    'Play your music the way you already know how, in a beautiful, clean interface.',
+    'A player like the one you already know: big artwork, clear controls, and the cover turned into the light of the screen. Underneath, one bar with what makes the app special — Shape, Clips and Edit, one tap away.',
   'shaper.s3.body':
-    'Shape your sound the way you want: the presets, or a five-band equalizer set your way, playback speed, and the original pitch kept at any speed.',
+    "This screen is why the app exists: ready-made presets or a five-band equalizer set your way, playback speed changed live — slowed, sped up, whatever you're feeling — and effects like preserve pitch, echo and next room.",
   'shaper.s4.body':
-    'Make clips of your favorite parts and play them whenever you want.',
+    'Pick the exact seconds you love — the whole track below, the zoom above — and save them as clips: your favorite parts, documented and ready to loop whenever you want.',
 };
 
 export type UIKey = keyof typeof en;
@@ -75,13 +75,13 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.solution':
       'Una app gratis donde subes tus MP3 y funciona sin internet: cambias la velocidad en vivo, moldeas el ecualizador y los efectos — preservar el tono, eco, next room — y haces clips de tus partes favoritas.',
     'shaper.s1.body':
-      'Subes tus MP3 y ya tienes tu propia biblioteca para escuchar, moldear o hacer clips. Funciona sin conexión y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo.',
+      'Subes tus canciones en MP3 y armas tu propia biblioteca, cada una con su ilustración y sus datos. Todo vive en tu teléfono y funciona sin conexión, y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo, los controles del OS.',
     'shaper.s2.body':
-      'Reproduce tu música como ya sabes hacerlo, en una interfaz bonita y limpia.',
+      'Un reproductor como el que ya conoces: portada grande, controles claros y la ilustración convertida en la luz de la pantalla. Debajo, una barra con lo que hace especial a la app — Moldear, Clips y Editar, a un toque.',
     'shaper.s3.body':
-      'Dale la forma que quieras a tu sonido: con los presets, o ajustando tú mismo el ecualizador de cinco bandas, la velocidad de reproducción y el tono original a cualquier velocidad.',
+      'Esta pantalla es la razón de que exista la app: presets listos o un ecualizador de cinco bandas a tu manera, velocidad de reproducción en vivo — slowed, sped up, lo que quieras — y efectos como preservar el tono, eco y next room.',
     'shaper.s4.body':
-      'Crea clips de tus partes favoritas y reprodúcelos cuando quieras.',
+      'Elige los segundos exactos que te encantan — la canción entera abajo, el zoom arriba — y guárdalos como clips: tus partes favoritas, documentadas y listas para repetir en loop cuando quieras.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -106,10 +106,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.solution':
       '一个免费的应用：加入你的 MP3，不用网络就能用——实时改变速度，亲手调均衡器和音效（保持原调、回声、Next Room），把最喜欢的部分做成片段。',
     'shaper.s1.body':
-      '加入你的 MP3，就有了自己的资料库，可以听、可以塑形、可以做片段。完全离线可用，还接入系统：灵动岛、小组件、锁定屏幕。',
-    'shaper.s2.body': '用你早已熟悉的方式播放音乐，界面漂亮而干净。',
+      '把歌曲以 MP3 加入，建立你自己的资料库，每一首都带着插图和信息。一切都存在你的手机里，完全离线可用，并且接入系统：灵动岛、小组件、锁定屏幕、系统播放控制。',
+    'shaper.s2.body':
+      '一个你早已熟悉的播放器：大封面、清晰的控制，插图化作整个屏幕的光。下方一条栏，放着这个应用的特别之处——塑形、片段、编辑，一点即达。',
     'shaper.s3.body':
-      '随心塑造你的声音：用预设，或亲手调五段均衡器、播放速度，任何速度下都保持原调。',
-    'shaper.s4.body': '把最喜欢的部分做成片段，想什么时候听就什么时候听。',
+      '这个屏幕就是这个应用存在的理由：现成的预设，或亲手调的五段均衡器；实时改变播放速度——slowed、sped up，随你心情——还有保持原调、回声、Next Room 这些音效。',
+    'shaper.s4.body':
+      '选出你最爱的那几秒——整首歌在下面，放大在上面——存成片段：你最喜欢的部分，被记录下来，想循环就循环。',
   },
 };
