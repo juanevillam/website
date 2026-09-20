@@ -1,0 +1,502 @@
+---
+import type { UIKey } from '../i18n/ui';
+import ListenPill from './ListenPill.astro';
+import StoreBadges from './StoreBadges.astro';
+import T from './T.astro';
+
+/**
+ * One app, told as a story: an intro panel (logo, three lines, stores,
+ * the listen pill), then a full-viewport STAGE the screenshots present
+ * themselves on, one per scroll step — the shot centered, the backdrop a
+ * blurred blow-up of the same image (the light the app's own player makes
+ * from artwork), the caption the transcript of that slide's voice clip.
+ *
+ * The stage is sticky; invisible 100svh steps behind it carry the scroll
+ * snapping, so each flick lands exactly one slide — a deck, not a feed.
+ */
+export type StorySlide = {
+  src: string;
+  width: number;
+  height: number;
+  titleKey?: UIKey;
+  bodyKey?: UIKey;
+  /** Narration clip for this slide — absent until it's recorded. */
+  audio?: string;
+};
+
+type Props = {
+  id: string;
+  name: string;
+  introKey: UIKey;
+  /** The app's intro narration — why it exists, in Juan's voice. */
+  introAudio?: string;
+  slides: StorySlide[];
+  /** Show the App Store / Google Play slots (apps, not web products). */
+  stores?: boolean;
+};
+
+const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
+---
+
+<section class="panel intro" id={id}>
+  <div class="inner">
+    <div class="logo" data-reveal>
+      <slot name="logo" />
+      <span class="app-name">{name}</span>
+    </div>
+
+    <p class="body intro-copy" data-reveal><T k={introKey} /></p>
+
+    {stores && <StoreBadges />}
+
+    <ListenPill audio={introAudio} story={id} />
+  </div>
+</section>
+
+<section class="story" data-story={id} style={`--slides: ${slides.length}`}>
+  <!-- The scroll rail: one invisible step per slide. Each carries the snap
+       point and, once recorded, that slide's narration clip. -->
+  <div class="steps" aria-hidden="true">
+    {
+      slides.map((slide, i) => (
+        <div class="step" data-index={i} data-audio={slide.audio} />
+      ))
+    }
+  </div>
+
+  <div class="stage">
+    <!-- The backdrop is the slide itself, blown up and blurred — the image
+         generates its own gradient, no color math anywhere. -->
+    <div class="backdrops" aria-hidden="true">
+      {
+        slides.map((slide, i) => (
+          <img
+            class="backdrop"
+            data-index={i}
+            src={slide.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        ))
+      }
+    </div>
+
+    <div class="inner stage-grid">
+      <div class="caption">
+        {
+          slides.map((slide, i) => (
+            <div class="cap" data-index={i}>
+              <span class="label">{name}</span>
+              {slide.titleKey && (
+                <h3 class="heading">
+                  <T k={slide.titleKey} />
+                </h3>
+              )}
+              {slide.bodyKey && (
+                <p class="body">
+                  <T k={slide.bodyKey} />
+                </p>
+              )}
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="shots">
+        {
+          slides.map((slide, i) => (
+            <img
+              class="shot"
+              data-index={i}
+              src={slide.src}
+              alt={`${name} screenshot`}
+              width={slide.width}
+              height={slide.height}
+              loading="lazy"
+              decoding="async"
+            />
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="dots">
+      {
+        slides.map((_, i) => (
+          <button
+            class="dot"
+            data-index={i}
+            aria-label={`${name} ${i + 1} / ${slides.length}`}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .inner {
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .logo :global(svg) {
+    flex: 0 0 auto;
+  }
+
+  /* The app's name beside its icon, the way the welcome screens title it —
+     SF Pro Display at Large Title weight. */
+  .app-name {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: var(--track-heading);
+    line-height: 1;
+  }
+
+  .intro-copy {
+    margin-top: 1.5rem;
+  }
+
+  /* ---------- the stage ---------- */
+
+  .story {
+    position: relative;
+    height: calc(var(--slides) * 100svh);
+  }
+
+  .steps {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .step {
+    height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
+  }
+
+  /* Fade the glow out at both edges so the stage melts into the ground
+     instead of cutting against the neighboring panels. */
+  .backdrops {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black 16%,
+      black 84%,
+      transparent
+    );
+  }
+
+  .backdrop {
+    position: absolute;
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+    object-fit: cover;
+    filter: blur(72px) saturate(1.35) brightness(0.45);
+    opacity: 0;
+    /* Light changes slower than the thing that casts it — dotted beat. */
+    transition: opacity calc(var(--beat) * 1.5) var(--ease);
+  }
+
+  .backdrop[data-active] {
+    opacity: 1;
+  }
+
+  /* Caption on the 4 side of the Monolith seam, the shot on the 9. */
+  .stage-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--seam) 1fr;
+    /* One explicit row: it IS the stage's free height, so the shots can
+       take height: 100% of something real (an auto row makes that
+       percentage unresolvable and the shot overflows under the header). */
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--space-4);
+    min-height: 0;
+    flex: 1;
+  }
+
+  .caption {
+    position: relative;
+    align-self: center;
+    min-height: 14rem;
+  }
+
+  .cap {
+    position: absolute;
+    inset: 0 0 auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity var(--dur-enter) var(--ease),
+      transform var(--dur-enter) var(--ease);
+    /* The words wait a sixteenth behind the shot — the picture leads. */
+    transition-delay: var(--dur-micro);
+    pointer-events: none;
+  }
+
+  .cap[data-active] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .cap .heading {
+    margin-top: 0.75rem;
+  }
+
+  .cap .body {
+    margin-top: 1rem;
+  }
+
+  .shots {
+    position: relative;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .shot {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 100%;
+    width: auto;
+    opacity: 0;
+    transform: translateX(-50%) translateY(24px) scale(0.97);
+    transition:
+      opacity var(--dur-enter) var(--ease),
+      transform var(--dur-enter) var(--ease);
+
+    /* The corner is the PHONE'S, not the App Store's — 55pt on a 393pt
+       screen, i.e. 14% of the width / 6.46% of the height, measured so a
+       full-height sheet's own display-concentric corners don't leave black
+       notches (the full derivation lived in Showcase.astro's history). The
+       hairline is Apple's dark-appearance treatment. No bezel, no fill. */
+    border-radius: 14% / 6.46%;
+    border: 1px solid var(--hairline);
+  }
+
+  .shot[data-active] {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+
+  .dots {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 0.875rem;
+    padding-top: 1.5rem;
+  }
+
+  .dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: var(--ink-3);
+    opacity: 0.45;
+    cursor: pointer;
+    transition:
+      opacity var(--dur-micro) var(--ease),
+      background var(--dur-micro) var(--ease);
+  }
+
+  .dot[data-active] {
+    background: var(--ink);
+    opacity: 1;
+  }
+
+  @media (max-width: 48rem) {
+    .stage {
+      padding-top: 4.5rem;
+      padding-bottom: 2rem;
+    }
+
+    /* One column: the shot leads, the caption reads under it. */
+    .stage-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 1.25rem;
+    }
+
+    .shots {
+      order: -1;
+    }
+
+    .caption {
+      min-height: 10.5rem;
+    }
+  }
+</style>
+
+<script>
+  // ---------- the story controller ----------
+  // One module for every story on the page: slide activation off the step
+  // sentinels, plus narration — a single shared Audio element (unlocked by
+  // the pill's tap, then free to swap sources) that reads each slide and,
+  // when a clip ends, advances the deck itself. Any manual scroll simply
+  // re-targets it: the newly active slide's clip plays instead.
+
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches;
+
+  const voice = new Audio();
+  voice.preload = 'auto';
+
+  type Story = {
+    root: HTMLElement;
+    steps: HTMLElement[];
+    pill: HTMLElement | null;
+    current: number;
+  };
+
+  let armed: Story | null = null;
+
+  const setPill = (story: Story, playing: boolean) => {
+    story.pill?.classList.toggle('is-playing', playing);
+  };
+
+  const disarm = () => {
+    if (!armed) return;
+    voice.pause();
+    voice.onended = null;
+    setPill(armed, false);
+    armed = null;
+  };
+
+  const play = (src: string | undefined, onEnd: () => void) => {
+    if (!src) {
+      voice.pause();
+      voice.onended = null;
+      return;
+    }
+    voice.src = src;
+    voice.onended = onEnd;
+    voice.play().catch(() => disarm());
+  };
+
+  const scrollToStep = (story: Story, index: number) => {
+    story.steps[index]?.scrollIntoView({
+      block: 'start',
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  };
+
+  const playStep = (story: Story, index: number) => {
+    const src = story.steps[index]?.dataset.audio;
+    // Narration ends where the recorded clips do — never a lying pill.
+    if (!src) {
+      disarm();
+      return;
+    }
+    play(src, () => {
+      if (armed !== story) return;
+      if (index + 1 < story.steps.length) scrollToStep(story, index + 1);
+      else disarm();
+    });
+  };
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-story]')) {
+    const story: Story = {
+      root,
+      steps: [...root.querySelectorAll<HTMLElement>('.step')],
+      pill: document.querySelector<HTMLElement>(
+        `[data-narrate-story="${root.dataset.story}"]`
+      ),
+      current: -1,
+    };
+
+    const activate = (index: number) => {
+      if (index === story.current) return;
+      story.current = index;
+      for (const el of root.querySelectorAll<HTMLElement>(
+        '.backdrop, .shot, .cap, .dot'
+      )) {
+        el.toggleAttribute('data-active', Number(el.dataset.index) === index);
+      }
+      if (armed === story) playStep(story, index);
+    };
+
+    const io = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            activate(Number((entry.target as HTMLElement).dataset.index));
+          }
+        }
+      },
+      { threshold: 0.6 }
+    );
+    story.steps.forEach(step => io.observe(step));
+
+    for (const dot of root.querySelectorAll<HTMLElement>('.dot')) {
+      dot.addEventListener('click', () =>
+        scrollToStep(story, Number(dot.dataset.index))
+      );
+    }
+
+    // The pill: arm narration for this story. Its own clip is the app's
+    // intro; when that ends, the deck starts itself.
+    story.pill?.addEventListener('click', () => {
+      if (armed === story) {
+        disarm();
+        return;
+      }
+      disarm();
+      armed = story;
+      setPill(story, true);
+      const intro = story.pill?.dataset.audio;
+      if (intro) {
+        play(intro, () => {
+          if (armed === story) scrollToStep(story, 0);
+        });
+      } else {
+        scrollToStep(story, 0);
+      }
+    });
+  }
+
+  // Solo pills (the hero's intro): one clip, play/pause, no deck behind it.
+  for (const pill of document.querySelectorAll<HTMLElement>(
+    'button[data-audio]:not([data-narrate-story])'
+  )) {
+    pill.addEventListener('click', () => {
+      if (pill.classList.contains('is-playing')) {
+        voice.pause();
+        pill.classList.remove('is-playing');
+        return;
+      }
+      disarm();
+      pill.classList.add('is-playing');
+      voice.src = pill.dataset.audio!;
+      voice.onended = () => pill.classList.remove('is-playing');
+      voice.play().catch(() => pill.classList.remove('is-playing'));
+    });
+  }
+</script>
