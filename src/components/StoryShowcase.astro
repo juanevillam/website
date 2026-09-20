@@ -217,9 +217,38 @@ const stepCount = slides.length + 1;
 
   /* ---------- the scene ---------- */
 
+  /* ONE spacing scale for the whole story — the opener and the slides
+     read from the same four numbers, so nothing can drift apart. */
   .story {
     position: relative;
     height: calc(var(--steps) * 100svh);
+
+    /* The inset under the fixed header, and the panel's bottom. */
+    --stage-top: 7rem;
+    --stage-bottom: 2rem;
+    /* The step between any two blocks: pitch → row, caption → row,
+       row → foot. One value, everywhere. */
+    --gap-block: 2.5rem;
+    /* The text column, and the opener's pitch at 1.5x of it. */
+    --text-col: calc(100% * 6 / 13 * 0.81);
+    --text-wide: calc(100% * 6 / 13 * 0.81 * 1.5);
+  }
+
+  @media (max-width: 64rem) {
+    .story {
+      --stage-top: 6rem;
+      --gap-block: 2rem;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .story {
+      --stage-top: 5.25rem;
+      --stage-bottom: 1.25rem;
+      --gap-block: 1.5rem;
+      --text-col: 100%;
+      --text-wide: 100%;
+    }
   }
 
   .steps {
@@ -252,21 +281,22 @@ const stepCount = slides.length + 1;
     flex-direction: column;
     /* The one stage inset — the slides' scene takes the same, so both
        start on the same line. */
-    padding: 7rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+    padding: var(--stage-top) clamp(1.25rem, 4vw, 2.5rem) var(--stage-bottom);
     will-change: opacity;
   }
 
   /* Content reads from the top, not centred in the panel: that is what
-     puts it level with the slides and keeps the lockup's trip short. */
+     puts it level with the slides and keeps the lockup's trip short.
+     It does NOT grow — the foot follows the content by one step
+     instead of being flung to the bottom of the panel. */
   .intro-body {
-    flex: 1;
     display: flex;
     align-items: flex-start;
     min-height: 0;
   }
 
   .intro-grid {
-    margin-top: 2rem;
+    margin-top: var(--gap-block);
   }
 
   /* The pitch: problem over solution, reading left — twice the width
@@ -275,7 +305,7 @@ const stepCount = slides.length + 1;
     display: flex;
     flex-direction: column;
     gap: 1.75rem;
-    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
+    max-width: var(--text-wide);
   }
 
   .pitch-block .body {
@@ -308,25 +338,29 @@ const stepCount = slides.length + 1;
     margin-top: 0;
   }
 
+  /* Both ends of the row's trip reserve the same box and stand one
+     step below the text they follow — which is what makes the gap
+     identical on the opener and on every slide. */
   .actions-anchor-big,
   .actions-anchor-small {
     height: 3rem;
-  }
-
-  .actions-anchor-big {
-    margin-top: 2.25rem;
+    margin-top: var(--gap-block);
   }
 
   /* The page foot: the legal and help pages, under one hairline at the
      bottom of the panel — where a foot belongs. */
   /* The rule sits on the links themselves, so it spans the content
      above it rather than the whole panel. */
+  .intro-foot {
+    margin-top: var(--gap-block);
+  }
+
   .intro-links {
     display: flex;
-    gap: 4rem;
-    padding-top: 1.75rem;
+    gap: clamp(2rem, 6vw, 4rem);
+    padding-top: var(--gap-block);
     border-top: 1px solid var(--hairline);
-    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
+    max-width: var(--text-wide);
   }
 
   .link-group .label {
@@ -369,7 +403,7 @@ const stepCount = slides.length + 1;
     position: absolute;
     inset: 0;
     z-index: 2;
-    padding: 7rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+    padding: var(--stage-top) clamp(1.25rem, 4vw, 2.5rem) var(--stage-bottom);
     opacity: var(--float-in, 0);
     /* It covers the whole stage, including the opener beneath it — so
        the layer is DEAF and only the captions take events back. Without
@@ -383,30 +417,30 @@ const stepCount = slides.length + 1;
     max-width: var(--content-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
+    grid-template-columns: var(--text-col) 1fr;
     gap: var(--space-4);
   }
 
-  /* The text column: words at the top, the action row's rest position
-     at the foot. */
+  /* The text column: words at the top, the action row one step below
+     them — the same step the opener uses. */
   .col-text {
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
-  .actions-anchor-small {
-    margin-top: auto;
-  }
-
   /* The words start at the phone's own top edge, which is also where
      the opener's lockup sits — so the shared lockup barely travels
      between the two (it was a 171px trip when this was centred). */
+  /* Every cap is absolutely placed inside this box, so the box holds
+     the TALLEST one — that is what keeps the action row below it from
+     moving as the slides change. `align-self` must not be set here:
+     in a flex column it is the cross axis, and `start` collapsed the
+     column to its text's width. */
   .caption {
     position: relative;
     z-index: 1;
-    align-self: start;
-    min-height: 16rem;
+    min-height: 21rem;
   }
 
   .cap {
@@ -449,7 +483,10 @@ const stepCount = slides.length + 1;
   .shots {
     position: relative;
     height: auto;
-    margin: -2.5rem 0 -1rem;
+    /* The phone takes back the whole inset the WORDS need under the
+       header, top and bottom, so it runs as tall as the panel allows
+       and still clears the header. */
+    margin: calc(var(--stage-top) * -0.5) 0 calc(var(--stage-bottom) * -1);
     min-height: 0;
     overflow: hidden;
     mask-image: linear-gradient(
@@ -476,7 +513,7 @@ const stepCount = slides.length + 1;
     justify-content: center;
     /* Air for the glow and the contact shadow, so the pane never
        crops either. */
-    padding: 2rem 0;
+    padding: 1.25rem 0;
   }
 
   .shot-wrap {
@@ -560,32 +597,93 @@ const stepCount = slides.length + 1;
     height: 2rem;
   }
 
+  /* ---------- big screens ----------
+     Past the container cap everything would just sit in the middle
+     with growing margins, so the cap itself opens up and the phone
+     grows with it. */
+  @media (min-width: 100rem) {
+    .story {
+      --content-max: 82rem;
+      --stage-top: 8rem;
+      --gap-block: 3rem;
+    }
+
+    .float-grid,
+    .intro-scene .inner,
+    .intro-foot {
+      max-width: var(--content-max);
+    }
+  }
+
+  /* ---------- phones ----------
+     One column, the phone on top and the words under it. The column
+     tokens already went full-width; what changes here is the ORDER,
+     the type, and how much copy is asked to carry the slide. */
   @media (max-width: 48rem) {
     .float-grid {
       grid-template-columns: 1fr;
       grid-template-rows: minmax(0, 1fr) auto;
-      gap: 1.25rem;
-      padding: 1.5rem 1.25rem;
+      gap: 1rem;
+    }
+
+    .col-text {
+      display: contents;
     }
 
     .shots {
       order: -1;
+      margin: 0;
     }
 
     .caption {
-      min-height: 13rem;
+      order: 0;
+      min-height: 9.5rem;
+    }
+
+    .actions-anchor-small {
+      order: 1;
+    }
+
+    /* A phone reads the headline and one line under it. The second
+       paragraph is the desk-sized detail — it would be a wall here. */
+    .cap .body + .body {
+      display: none;
     }
 
     .slide-title {
       font-size: clamp(1.75rem, 7vw, 2.25rem);
     }
 
+    .cap {
+      padding-top: 2.75rem;
+    }
+
     .lockup {
-      gap: 1rem;
+      gap: 0.75rem;
+      height: 3.25rem;
+    }
+
+    .lockup-anchor-big {
+      height: 3.25rem;
     }
 
     .lockup-name {
-      font-size: 2rem;
+      font-size: clamp(1.75rem, 8vw, 2.25rem);
+    }
+
+    .pitch {
+      gap: 1.25rem;
+    }
+
+    .intro-links {
+      gap: 2rem;
+    }
+  }
+
+  /* Short phones: the pitch is the one block that can lose a line. */
+  @media (max-width: 48rem) and (max-height: 46rem) {
+    .pitch-block:last-child .body {
+      display: none;
     }
   }
 </style>
