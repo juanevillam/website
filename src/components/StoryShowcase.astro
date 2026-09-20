@@ -845,18 +845,27 @@ const stepCount = slides.length + 1;
         );
       }
 
-      // The shots: a cross-fade with a small scale settle, no travel.
-      // The first one holds while the opener is still up, so the stack
-      // is never blank.
-      for (let i = 0; i < s.slots.length; i++) {
-        const t = clamp(p, 1, s.steps.length - 1) - (i + 1);
-        const at = Math.abs(t);
-        if (reduceMotion) {
-          s.slots[i].style.opacity = Math.round(clamp(p, 1, 99)) === i + 1 ? '1' : '0';
-          continue;
+      // The shots cross-fade in place, no travel. The two involved are
+      // COMPLEMENTARY — their opacities always sum to 1 — so the stack
+      // can never go blank between them, which is what a pair of
+      // independent fades does as soon as you make them quick. Speed
+      // comes from compressing WHEN the swap happens (the middle ~40%
+      // of the step), not from fading each one out faster.
+      {
+        const pos = clamp(p, 1, s.steps.length - 1) - 1;
+        const base = Math.min(Math.floor(pos), s.slots.length - 1);
+        const frac = pos - base;
+        const w = reduceMotion
+          ? frac < 0.5
+            ? 0
+            : 1
+          : smooth(clamp((frac - 0.3) / 0.4, 0, 1));
+
+        for (let i = 0; i < s.slots.length; i++) {
+          const o = i === base ? 1 - w : i === base + 1 ? w : 0;
+          s.slots[i].style.opacity = String(o);
+          s.slots[i].style.transform = `scale(${(1 - (1 - o) * 0.03).toFixed(4)})`;
         }
-        s.slots[i].style.opacity = String(clamp(1 - at * 1.6, 0, 1));
-        s.slots[i].style.transform = `scale(${(1 - Math.min(at, 1) * 0.04).toFixed(4)})`;
       }
 
       // Captions: crossfade with a short eased drift as their shot
@@ -868,9 +877,10 @@ const stepCount = slides.length + 1;
           s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
           continue;
         }
-        // A pure crossfade, and a quick one — the words arrive in
-        // place, they don't ride and they don't linger.
-        s.caps[i].style.opacity = String(clamp(1 - at * 7, 0, 1));
+        // The words do not animate at all: they are simply the caption
+        // of whichever shot is nearest. Fading them only ever read as
+        // lag, because the reader is already looking at the picture.
+        s.caps[i].style.opacity = at < 0.5 ? '1' : '0';
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
