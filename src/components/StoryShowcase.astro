@@ -325,6 +325,9 @@ const stepCount = slides.length + 1;
 
   .caption {
     position: relative;
+    /* Above the shots: a horizontal slide tucks UNDER the words while it
+       fades, instead of crossing the whole stage over them. */
+    z-index: 1;
     align-self: center;
     min-height: 16rem;
     /* Lift the words above the geometric center — the phone holds the
@@ -656,14 +659,14 @@ const stepCount = slides.length + 1;
           continue;
         }
 
-        // The shots are a REAL slider — full travel, no fade — but each
-        // slide owns a DIRECTION: in from the right, from below, from
-        // above, from the left, cycling. It enters along its vector and
-        // exits out the opposite edge. The words barely move: a quick
-        // crossfade in place, so the impression is that only the
-        // screenshots change.
+        // Each slide owns a DIRECTION, cycling right / below / above /
+        // left. Vertical movers ride the full stage, edge to edge, no
+        // fade. Horizontal movers take a SHORT path — in from the
+        // screen's right edge, out under the caption column — fading as
+        // they tuck under the words (the caption layer sits above them).
+        // The words themselves never travel: a near-instant crossfade.
         if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 4.5, 0, 1));
+          s.intro.style.opacity = String(clamp(1 - at * 6, 0, 1));
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
@@ -671,14 +674,19 @@ const stepCount = slides.length + 1;
           const [dx, dy] = DIRS[(i - 1) % DIRS.length];
           // The move finishes in 2/3 of a step — then the slide rests.
           const ts = clamp(t * 1.5, -1, 1);
-          shot.style.opacity = at < 1.05 ? '1' : '0';
+          shot.style.opacity =
+            dx !== 0
+              ? String(clamp(1 - at * 1.8, 0, 1))
+              : at < 1.05
+                ? '1'
+                : '0';
           shot.style.transform =
-            `translate(calc(-50% + ${(-ts * 0.8 * vw * dx).toFixed(1)}px), ` +
+            `translate(calc(-50% + ${(-ts * 0.45 * vw * dx).toFixed(1)}px), ` +
             `${(-ts * 1.15 * vh * dy).toFixed(1)}px)`;
         }
 
         if (cap) {
-          cap.style.opacity = String(clamp(1 - at * 6, 0, 1));
+          cap.style.opacity = String(clamp(1 - at * 8, 0, 1));
           cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
       }
