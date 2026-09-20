@@ -10,7 +10,7 @@ import { locales, localeNames } from '../i18n/ui';
 
   <!-- One control: the language. A real <select>, so the OS renders the
        menu; switching re-renders in place (html[data-lang]). -->
-  <select id="lang-picker" aria-label="Language">
+  <select id="lang-picker" class="label" aria-label="Language">
     {
       locales.map(l => (
         <option value={l} selected={l === 'en'}>
@@ -44,11 +44,10 @@ import { locales, localeNames } from '../i18n/ui';
     opacity: 0.7;
   }
 
+  /* The picker wears the same mono label as every section title and
+     link-group heading — it IS one. Type comes from `.label`; only the
+     control's own chrome is set here. */
   #lang-picker {
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--ink-3);
     background: transparent;
     border: none;
     padding: 0.375rem 0;
