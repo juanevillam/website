@@ -1,6 +1,6 @@
 ---
 import BrandMark from './BrandMark.astro';
-import { locales, localeNames } from '../i18n/ui';
+import { locales, localeCodes, localeNames } from '../i18n/ui';
 ---
 
 <header class="site-header">
@@ -9,16 +9,29 @@ import { locales, localeNames } from '../i18n/ui';
   </a>
 
   <!-- One control: the language. A real <select>, so the OS renders the
-       menu; switching re-renders in place (html[data-lang]). -->
-  <select id="lang-picker" class="label" aria-label="Language">
-    {
-      locales.map(l => (
-        <option value={l} selected={l === 'en'}>
-          {localeNames[l]}
-        </option>
-      ))
-    }
-  </select>
+       menu and it stays keyboard-operable; switching re-renders in
+       place (html[data-lang]).
+
+       The select itself is invisible and the code beside it is what is
+       drawn. That is the only way to have BOTH: a label-cased "EN" at
+       rest and a menu that lists the languages by their own names in
+       their own case. Styling an <option> cannot do it — a native
+       popup renders outside CSS's reach, which is why the menu kept
+       shouting ESPAÑOL. -->
+  <div class="lang">
+    <span class="label lang-code" id="lang-code" aria-hidden="true">
+      {localeCodes.en}
+    </span>
+    <select id="lang-picker" aria-label="Language">
+      {
+        locales.map(l => (
+          <option value={l} selected={l === 'en'}>
+            {localeNames[l]}
+          </option>
+        ))
+      }
+    </select>
+  </div>
 </header>
 
 <style>
@@ -44,40 +57,56 @@ import { locales, localeNames } from '../i18n/ui';
     opacity: 0.7;
   }
 
-  /* The picker wears the same mono label as every section title and
-     link-group heading — it IS one. Type comes from `.label`; only the
-     control's own chrome is set here. */
-  #lang-picker {
-    background: transparent;
-    border: none;
+  .lang {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
     padding: 0.375rem 0;
-    cursor: pointer;
+  }
+
+  /* The code is what the header draws — same mono label as every
+     section title and link-group heading, because it IS one. */
+  .lang-code {
     transition: color var(--dur-micro) var(--ease);
   }
 
-  /* The uppercase belongs to the LABEL, not to the language names —
-     those are native names Apple writes as their speakers do
-     ("Español", never "ESPAÑOL"), so the open menu keeps its own case
-     while the closed control still reads as a label. */
-  #lang-picker option {
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
-    letter-spacing: normal;
-    text-transform: none;
+  .lang:hover .lang-code {
+    color: var(--ink);
   }
 
-  #lang-picker:hover {
-    color: var(--ink);
+  /* The real control, invisible but present: it keeps the native menu,
+     the keyboard and the accessible name. */
+  #lang-picker {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
   }
 </style>
 
 <script>
+  import { localeCodes, type Locale } from '../i18n/ui';
+
   const picker = document.getElementById('lang-picker') as HTMLSelectElement;
+  const code = document.getElementById('lang-code') as HTMLElement;
+
+  const show = (lang: string) => {
+    code.textContent = localeCodes[lang as Locale] ?? lang.toUpperCase();
+  };
+
   picker.value = localStorage.getItem('lang') || 'en';
+  show(picker.value);
+
   picker.addEventListener('change', () => {
     const next = picker.value;
     localStorage.setItem('lang', next);
     document.documentElement.lang = next;
     document.documentElement.dataset.lang = next;
+    show(next);
   });
 </script>
