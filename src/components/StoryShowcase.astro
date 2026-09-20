@@ -110,10 +110,10 @@ const stepCount = slides.length + 1;
               linkGroups.length > 0 && (
                 <nav class="intro-links">
                   {linkGroups.map(group => (
-                    <details>
-                      <summary class="label">
+                    <div class="link-group">
+                      <span class="label">
                         <T k={group.key} />
-                      </summary>
+                      </span>
                       <div class="group-links">
                         {group.links.map(link => (
                           <a href={link.href}>
@@ -121,7 +121,7 @@ const stepCount = slides.length + 1;
                           </a>
                         ))}
                       </div>
-                    </details>
+                    </div>
                   ))}
                 </nav>
               )
@@ -131,7 +131,7 @@ const stepCount = slides.length + 1;
       </div>
     </div>
 
-    <!-- The floating window the scene docks into. -->
+    <!-- The slides' scene, on the ground with the opener. -->
     <div class="float">
       <div class="float-grid">
         <div class="caption">
@@ -252,7 +252,7 @@ const stepCount = slides.length + 1;
     display: flex;
     flex-direction: column;
     gap: 1.75rem;
-    max-width: calc(100% * 6 / 13 * 0.81 * 2);
+    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
   }
 
   .pitch-block .body {
@@ -264,68 +264,50 @@ const stepCount = slides.length + 1;
     max-width: none;
   }
 
-  /* The action row closes the opener under a hairline, the width of
-     the pitch — content above the line, controls below it. */
+  /* The opener closes like a product page's foot: the two store slots
+     lead on the left, the link columns stand to their right, one
+     hairline over the whole band. Everything is visible at rest — no
+     accordions to open, nothing that shifts. */
   .intro-actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 2rem;
-    margin-top: 2.5rem;
-    padding-top: 1.75rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem 3rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
     border-top: 1px solid var(--hairline);
-    max-width: calc(100% * 6 / 13 * 0.81 * 2);
+    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
   }
 
-  .intro-actions :global(.stores),
-  .intro-actions :global(.listen) {
+  .intro-actions :global(.stores) {
     margin-top: 0;
+    gap: 0.875rem;
   }
 
-  /* The link accordions: Legal and Help, quiet until asked. Their
-     panels OVERLAY (absolute) instead of pushing — zero layout shift. */
+  .intro-actions :global(.listen) {
+    margin-top: 1rem;
+  }
+
+  /* The two link columns — a header and its pages, always shown. */
   .intro-links {
     display: flex;
-    align-items: center;
-    gap: 2.5rem;
+    gap: 3rem;
   }
 
-  .intro-links details {
-    position: relative;
-  }
-
-  .intro-links summary {
-    list-style: none;
-    cursor: pointer;
-    transition: color var(--dur-micro) var(--ease);
-  }
-
-  .intro-links summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .intro-links summary::after {
-    content: ' ▾';
-  }
-
-  .intro-links details[open] summary,
-  .intro-links summary:hover {
-    color: var(--ink);
+  .link-group .label {
+    display: block;
   }
 
   .group-links {
-    position: absolute;
-    top: 100%;
-    left: 0;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin-top: 0.75rem;
-    width: max-content;
+    margin-top: 0.875rem;
   }
 
   .group-links a {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     color: var(--ink-2);
     text-decoration-color: transparent;
     transition:
@@ -343,19 +325,12 @@ const stepCount = slides.length + 1;
   /* Driven by --f (0 = full-bleed and invisible chrome, 1 = docked):
      the window pulls in from the stage edges, grows its corner and its
      hairline, and lifts one surface step off the ground. */
+  /* The slides' scene: the same full-bleed stage the opener stands on —
+     no detached container, the screenshots live on the ground. */
   .float {
     position: absolute;
+    inset: 0;
     z-index: 2;
-    top: calc(var(--f, 0) * 4.75rem);
-    bottom: calc(var(--f, 0) * 2.75rem);
-    left: calc(var(--f, 0) * clamp(1rem, 2.5vw, 2.25rem));
-    right: calc(var(--f, 0) * clamp(1rem, 2.5vw, 2.25rem));
-    border-radius: calc(var(--f, 0) * 1.75rem);
-    /* Opaque at rest: the window is a surface, not a veil — nothing
-       behind it may ever read through the words. */
-    background: color-mix(in srgb, var(--surface) calc(var(--f, 0) * 100%), transparent);
-    border: 1px solid rgba(38, 38, 38, var(--f, 0));
-    overflow: hidden;
     opacity: var(--float-in, 0);
     will-change: opacity;
   }
@@ -365,8 +340,10 @@ const stepCount = slides.length + 1;
     inset: 0;
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    gap: 2rem;
-    padding: 2.5rem clamp(1.5rem, 3vw, 2.5rem);
+    gap: var(--space-4);
+    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
+    max-width: var(--content-max);
+    margin: 0 auto;
   }
 
   .caption {
@@ -412,7 +389,6 @@ const stepCount = slides.length + 1;
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    border-radius: 1.25rem;
   }
 
   .strip {
@@ -679,22 +655,15 @@ const stepCount = slides.length + 1;
 
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
-      const f = reduceMotion
-        ? p >= 0.5
-          ? 1
-          : 0
-        : smooth(clamp(p, 0, 1));
 
-      // The opener fades as the window docks.
+      // The opener fades as the slides arrive.
       if (s.intro) {
         s.intro.style.opacity = String(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1));
         s.intro.style.pointerEvents = p < 0.5 ? 'auto' : 'none';
       }
 
-      // The window: chrome morphs with --f, visibility with --float-in
-      // (it waits until the opener is mostly gone, then arrives).
+      // The slides' scene arrives once the opener is mostly gone.
       if (s.float) {
-        s.float.style.setProperty('--f', f.toFixed(4));
         s.float.style.setProperty(
           '--float-in',
           reduceMotion
