@@ -473,6 +473,14 @@ const stepCount = slides.length + 1;
   const clamp = (v: number, min: number, max: number) =>
     Math.min(max, Math.max(min, v));
 
+  // Entry vectors, cycling per slide: right, below, above, left.
+  const DIRS: [number, number][] = [
+    [1, 0],
+    [0, 1],
+    [0, -1],
+    [-1, 0],
+  ];
+
   const voice = new Audio();
   voice.preload = 'auto';
 
@@ -625,19 +633,23 @@ const stepCount = slides.length + 1;
           continue;
         }
 
-        // The shots are a REAL slider — full travel, no fade, in through
-        // the right edge and out through the left. The words barely
-        // move: a quick crossfade in place, so the impression is that
-        // only the screenshots change.
+        // The shots are a REAL slider — full travel, no fade — but each
+        // slide owns a DIRECTION: in from the right, from below, from
+        // above, from the left, cycling. It enters along its vector and
+        // exits out the opposite edge. The words barely move: a quick
+        // crossfade in place, so the impression is that only the
+        // screenshots change.
         if (i === 0 && s.intro) {
           s.intro.style.opacity = String(clamp(1 - at * 3.2, 0, 1));
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
         if (shot) {
+          const [dx, dy] = DIRS[(i - 1) % DIRS.length];
           shot.style.opacity = at < 1.05 ? '1' : '0';
           shot.style.transform =
-            `translate(calc(-50% + ${(-t * 0.8 * vw).toFixed(1)}px), 0)`;
+            `translate(calc(-50% + ${(-t * 0.8 * vw * dx).toFixed(1)}px), ` +
+            `${(-t * 1.15 * vh * dy).toFixed(1)}px)`;
         }
 
         if (cap) {
