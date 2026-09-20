@@ -24,8 +24,10 @@ export type StorySlide = {
   src: string;
   width: number;
   height: number;
-  titleKey?: UIKey;
-  bodyKey?: UIKey;
+  /** Slide titles are ALWAYS English, in every locale — brand nouns. */
+  title?: string;
+  /** The wedge: three lines, longest and largest first, per locale. */
+  lines?: [UIKey, UIKey, UIKey];
   /** Narration clip for this slide — absent until it's recorded. */
   audio?: string;
 };
@@ -84,15 +86,15 @@ const stepCount = slides.length + 1;
         {
           slides.map(slide => (
             <div class="cap">
-              {slide.titleKey && (
-                <h3 class="slide-title">
-                  <T k={slide.titleKey} />
-                </h3>
-              )}
-              {slide.bodyKey && (
-                <p class="body">
-                  <T k={slide.bodyKey} />
-                </p>
+              {slide.title && <h3 class="slide-title">{slide.title}</h3>}
+              {slide.lines && (
+                <div class="wedge">
+                  {slide.lines.map(k => (
+                    <p class="wedge-line">
+                      <T k={k} />
+                    </p>
+                  ))}
+                </div>
               )}
             </div>
           ))
@@ -267,7 +269,8 @@ const stepCount = slides.length + 1;
        the caption and the lockup — the text changes underneath it. */
     z-index: 3;
     display: grid;
-    grid-template-columns: var(--seam) 1fr;
+    /* One rung wider than the seam (5/13) — the words need the room. */
+    grid-template-columns: calc(100% * 5 / 13) 1fr;
     /* One explicit row: it IS the stage's free height, so the shots can
        take height: 100% of something real (an auto row makes that
        percentage unresolvable and the shot overflows under the header). */
@@ -304,8 +307,31 @@ const stepCount = slides.length + 1;
     line-height: 0.95;
   }
 
-  .cap .body {
+  /* The wedge: three lines stepping down in size and ink —
+     ========  /  =======  /  ====== */
+  .wedge {
     margin-top: 1.25rem;
+  }
+
+  .wedge-line {
+    line-height: 1.5;
+  }
+
+  .wedge-line:nth-child(1) {
+    font-size: 1.25rem;
+    color: var(--ink);
+  }
+
+  .wedge-line:nth-child(2) {
+    margin-top: 0.375rem;
+    font-size: 1.125rem;
+    color: var(--ink-2);
+  }
+
+  .wedge-line:nth-child(3) {
+    margin-top: 0.375rem;
+    font-size: 1rem;
+    color: var(--ink-3);
   }
 
   .shots {
