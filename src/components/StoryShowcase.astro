@@ -215,6 +215,8 @@ const stepCount = slides.length + 1;
 
   .step {
     height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .stage {
@@ -344,12 +346,14 @@ const stepCount = slides.length + 1;
   .float {
     position: absolute;
     z-index: 2;
-    top: calc(var(--f, 0) * 6rem);
-    bottom: calc(var(--f, 0) * 4.5rem);
-    left: calc(var(--f, 0) * clamp(1.5rem, 6vw, 5rem));
-    right: calc(var(--f, 0) * clamp(1.5rem, 6vw, 5rem));
-    border-radius: calc(var(--f, 0) * 1.5rem);
-    background: rgba(22, 22, 22, calc(var(--f, 0) * 0.92));
+    top: calc(var(--f, 0) * 4.75rem);
+    bottom: calc(var(--f, 0) * 2.75rem);
+    left: calc(var(--f, 0) * clamp(1rem, 2.5vw, 2.25rem));
+    right: calc(var(--f, 0) * clamp(1rem, 2.5vw, 2.25rem));
+    border-radius: calc(var(--f, 0) * 1.75rem);
+    /* Opaque at rest: the window is a surface, not a veil — nothing
+       behind it may ever read through the words. */
+    background: color-mix(in srgb, var(--surface) calc(var(--f, 0) * 100%), transparent);
     border: 1px solid rgba(38, 38, 38, var(--f, 0));
     overflow: hidden;
     opacity: var(--float-in, 0);
@@ -361,8 +365,8 @@ const stepCount = slides.length + 1;
     inset: 0;
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    gap: var(--space-4);
-    padding: 2.5rem clamp(1.5rem, 4vw, 3rem);
+    gap: 2rem;
+    padding: 2.5rem clamp(1.5rem, 3vw, 2.5rem);
   }
 
   .caption {
@@ -401,11 +405,14 @@ const stepCount = slides.length + 1;
 
   /* ---------- the filmstrip ---------- */
 
+  /* The strip lives in its OWN clipped pane, so a travelling shot can
+     never cross into the caption column and read through the words. */
   .shots {
     position: relative;
     height: 100%;
     min-height: 0;
-    overflow: visible;
+    overflow: hidden;
+    border-radius: 1.25rem;
   }
 
   .strip {
@@ -421,6 +428,8 @@ const stepCount = slides.length + 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Air for the contact shadow, so the pane never crops it. */
+    padding: 1.25rem 0;
   }
 
   .shot-wrap {
@@ -428,22 +437,36 @@ const stepCount = slides.length + 1;
     height: 100%;
   }
 
+  /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
+     a visible rectangle and banding, which is what read as cheap — so
+     the halo is masked to an ellipse that fades to nothing well before
+     its own edge, blurred far heavier, and kept dim. What's left is
+     light in the shot's own colors, with no shape of its own. */
   .halo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     max-width: none;
-    transform: scale(1.06);
-    filter: blur(44px) saturate(1.5);
-    opacity: 0.85;
-    border-radius: 14% / 6.46%;
+    transform: scale(1.35);
+    filter: blur(80px) saturate(1.6) brightness(1.1);
+    opacity: 0.55;
+    mask-image: radial-gradient(
+      ellipse 60% 55% at 50% 50%,
+      #000 0%,
+      rgba(0, 0, 0, 0.6) 45%,
+      transparent 75%
+    );
   }
 
   .shot {
     position: relative;
     height: 100%;
     width: auto;
+    /* A real contact shadow does the depth the blur used to fake. */
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
     /* The global `img { max-width: 100% }` squishes an auto-width image
        inside a shrink-to-fit wrapper — the phone keeps its native
        1179:2556 ratio, whatever the column does. */
