@@ -26,7 +26,8 @@ export type StorySlide = {
   height: number;
   /** Slide titles are ALWAYS English, in every locale — brand nouns. */
   title?: string;
-  bodyKey?: UIKey;
+  /** The caption, split in readable paragraphs. */
+  paras?: UIKey[];
   /** Narration clip for this slide — absent until it's recorded. */
   audio?: string;
 };
@@ -137,11 +138,11 @@ const stepCount = slides.length + 1;
           slides.map(slide => (
             <div class="cap">
               {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-              {slide.bodyKey && (
+              {slide.paras?.map(k => (
                 <p class="body">
-                  <T k={slide.bodyKey} />
+                  <T k={k} />
                 </p>
-              )}
+              ))}
             </div>
           ))
         }
@@ -255,28 +256,29 @@ const stepCount = slides.length + 1;
     margin-bottom: 4rem;
   }
 
+  /* Full-width rows: the pitch reads long, then one action row. */
   .intro-grid {
-    display: grid;
-    grid-template-columns: 1.35fr 1fr;
-    gap: 3rem;
-    align-items: start;
     margin-top: 2rem;
   }
 
   .intro-actions {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+    margin-top: 2.25rem;
   }
 
   /* The badges and the pill carry their own top margins for other
-     homes; inside the actions column the column sets the rhythm. */
-  .intro-actions :global(.stores) {
+     homes; inside the action row the row sets the rhythm. */
+  .intro-actions :global(.stores),
+  .intro-actions :global(.listen) {
     margin-top: 0;
   }
 
-  .intro-actions :global(.listen) {
-    margin-top: 1rem;
+  /* Long rows on purpose — the measure cap is for columns. */
+  .pitch .body {
+    max-width: none;
   }
 
   /* ---------- the shared lockup ---------- */
@@ -334,9 +336,8 @@ const stepCount = slides.length + 1;
      opening or closing, in either axis. */
   .intro-links {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 2.5rem;
-    margin-top: 2rem;
   }
 
   .intro-links details {
@@ -387,13 +388,6 @@ const stepCount = slides.length + 1;
     text-decoration-color: var(--ink-3);
   }
 
-  @media (max-width: 48rem) {
-    .intro-grid {
-      grid-template-columns: 1fr;
-      gap: 1.75rem;
-      margin-top: 1.5rem;
-    }
-  }
 
   /* The two control rows read as one group: air above, tight between. */
   .intro-scene :global(.stores) {
@@ -415,8 +409,8 @@ const stepCount = slides.length + 1;
     z-index: 3;
     pointer-events: none;
     display: grid;
-    /* One rung wider than the seam (5/13) — the words need the room. */
-    grid-template-columns: calc(100% * 5 / 13) 1fr;
+    /* Wider than the seam (6/13) — the words need the room. */
+    grid-template-columns: calc(100% * 6 / 13) 1fr;
     /* One explicit row: it IS the stage's free height, so the shots can
        take height: 100% of something real (an auto row makes that
        percentage unresolvable and the shot overflows under the header). */
@@ -428,32 +422,12 @@ const stepCount = slides.length + 1;
 
   .caption {
     position: relative;
-    /* Above the shots: a horizontal slide HIDES under the words' column,
-       occluded by the ground-colored slab below. */
     z-index: 1;
     align-self: center;
     min-height: 16rem;
     /* Lift the words above the geometric center — the phone holds the
        middle, the text reads a beat higher. */
     margin-bottom: 6rem;
-  }
-
-  /* The occluder: a ground-colored slab over the whole text column, so a
-     shot sliding left genuinely disappears UNDER the content — invisible
-     against the ground itself. Faded in by the render loop only once the
-     deck leaves the opener (--occlude), so it never covers the opener. */
-  .caption::before {
-    content: '';
-    position: absolute;
-    top: -100vh;
-    bottom: -100vh;
-    left: -100vw;
-    right: 0;
-    z-index: -1;
-    background: var(--ground);
-    opacity: var(--occlude, 0);
-    /* Purely visual — it must never eat the opener's clicks. */
-    pointer-events: none;
   }
 
   .cap {
@@ -477,6 +451,10 @@ const stepCount = slides.length + 1;
 
   .cap .body {
     margin-top: 1.25rem;
+  }
+
+  .cap .body + .body {
+    margin-top: 0.875rem;
   }
 
   .shots {
@@ -633,10 +611,6 @@ const stepCount = slides.length + 1;
     [0, -1],
   ];
 
-  // One column on a phone: no side column to hide a slide under, so
-  // horizontal movers fade there instead of relying on the occluder.
-  const narrow = window.matchMedia('(max-width: 48rem)');
-
   const voice = new Audio();
   voice.preload = 'auto';
 
@@ -758,18 +732,6 @@ const stepCount = slides.length + 1;
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
 
-      // The occluder slab arrives with the first screenshot and stays —
-      // invisible against the ground, it only exists to swallow the
-      // slides that dive under the text column.
-      s.caption?.style.setProperty(
-        '--occlude',
-        reduceMotion
-          ? active > 0
-            ? '1'
-            : '0'
-          : String(clamp((p - 0.5) * 4, 0, 1))
-      );
-
       // The lockup rides from the opener's anchor to the caption's on
       // the first step and parks there — icon and name never redraw,
       // they just travel (FLIP between the two anchors' rects).
@@ -820,14 +782,16 @@ const stepCount = slides.length + 1;
           const [dx, dy] = DIRS[(i - 1) % DIRS.length];
           // The move finishes in 2/3 of a step — then the slide rests.
           const ts = clamp(t * 1.5, -1, 1);
-          // Horizontal movers stay solid while crossing, then any
-          // sliver still peeking past the occluder fades right after
-          // parking (|t| 1 → 1.15). Phones fade throughout — no side
-          // column to hide under.
+          // Horizontal movers enter solid from the screen's edge and
+          // DISSOLVE on the way out — gone before they reach the words,
+          // so nothing ever gets visibly cut. Vertical movers ride the
+          // full stage.
           shot.style.opacity =
-            dx !== 0 && narrow.matches
-              ? String(clamp(1 - at * 1.8, 0, 1))
-              : String(clamp(1 - Math.max(at - 1, 0) * 6, 0, 1));
+            dx !== 0
+              ? String(clamp(1 - Math.max(t * dx, 0) * 2.4, 0, 1))
+              : at < 1.05
+                ? '1'
+                : '0';
           shot.style.transform =
             `translate(calc(-50% + ${(-ts * 0.45 * vw * dx).toFixed(1)}px), ` +
             `${(-ts * 1.15 * vh * dy).toFixed(1)}px)`;
