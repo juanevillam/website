@@ -65,23 +65,6 @@ const stepCount = slides.length + 1;
   </div>
 
   <div class="stage">
-    <!-- The backdrop is the slide itself, blown up and blurred — the image
-         generates its own gradient, no color math anywhere. The opener
-         borrows the first shot's glow, so slide 0 → 1 is seamless. -->
-    <div class="backdrops" aria-hidden="true">
-      {
-        [slides[0], ...slides].map(slide => (
-          <img
-            class="backdrop"
-            src={slide.src}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-        ))
-      }
-    </div>
-
     <!-- Slide 0: the opener, riding the same lateral rail. -->
     <div class="intro-scene">
       <div class="inner">
@@ -119,15 +102,25 @@ const stepCount = slides.length + 1;
       <div class="shots">
         {
           slides.map(slide => (
-            <img
-              class="shot"
-              src={slide.src}
-              alt={`${name} screenshot`}
-              width={slide.width}
-              height={slide.height}
-              loading="lazy"
-              decoding="async"
-            />
+            <div class="shot-wrap">
+              <img
+                class="halo"
+                src={slide.src}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />
+              <img
+                class="shot"
+                src={slide.src}
+                alt={`${name} screenshot`}
+                width={slide.width}
+                height={slide.height}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
           ))
         }
       </div>
@@ -182,38 +175,6 @@ const stepCount = slides.length + 1;
     flex-direction: column;
     justify-content: center;
     padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
-  }
-
-  /* Fade the glow out at both edges so the stage melts into the ground
-     instead of cutting against the neighboring panels. */
-  .backdrops {
-    position: absolute;
-    inset: 0;
-    mask-image: linear-gradient(
-      to bottom,
-      transparent,
-      black 16%,
-      black 84%,
-      transparent
-    );
-  }
-
-  /* Every moving layer starts invisible and the render loop drives it —
-     except slide 0, the opener, which shows without JS at all. */
-  .backdrop {
-    position: absolute;
-    inset: -8%;
-    width: 116%;
-    height: 116%;
-    object-fit: cover;
-    filter: blur(72px) saturate(1.35) brightness(0.45);
-    opacity: 0;
-    transform: scale(1.1);
-    will-change: opacity, transform;
-  }
-
-  .backdrop:first-child {
-    opacity: 1;
   }
 
   /* ---------- slide 0: the opener ---------- */
@@ -288,15 +249,35 @@ const stepCount = slides.length + 1;
     min-height: 0;
   }
 
-  .shot {
+  /* The render loop moves the WRAP; the shot and its halo ride inside. */
+  .shot-wrap {
     position: absolute;
     top: 0;
     left: 50%;
     height: 100%;
-    width: auto;
     opacity: 0;
     transform: translate(-50%, 0);
     will-change: opacity, transform;
+  }
+
+  /* The gradient the image generates, cast from its own border — the
+     same picture behind itself, slightly larger and blurred, so the
+     halo hugs the phone's silhouette and the ground stays ground. */
+  .halo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scale(1.06);
+    filter: blur(44px) saturate(1.5);
+    opacity: 0.85;
+    border-radius: 14% / 6.46%;
+  }
+
+  .shot {
+    position: relative;
+    height: 100%;
+    width: auto;
 
     /* The corner is the PHONE'S, not the App Store's — 55pt on a 393pt
        screen, i.e. 14% of the width / 6.46% of the height, measured so a
@@ -370,9 +351,8 @@ const stepCount = slides.length + 1;
   // in one rAF pass: for step i, t = p - i where p is how many viewports
   // deep the story is. Step 0 is the opener; screenshots are steps 1..n.
   // The page scrolls down, the scene travels SIDEWAYS: a slide enters
-  // from the right and leaves to the left. Backdrop drifts slowly under
-  // its zoom, shot rides fast, title at a third speed — the depth IS the
-  // difference. No triggers, no state machines.
+  // from the right and leaves to the left, shot faster than its caption —
+  // the depth IS the difference. No triggers, no state machines.
   //
   // NARRATION — a single shared Audio element (unlocked by the pill's
   // tap, then free to swap sources) reads the active slide and advances
@@ -391,7 +371,6 @@ const stepCount = slides.length + 1;
   type Story = {
     root: HTMLElement;
     steps: HTMLElement[];
-    backdrops: HTMLElement[];
     intro: HTMLElement | null;
     shots: HTMLElement[];
     caps: HTMLElement[];
@@ -443,9 +422,8 @@ const stepCount = slides.length + 1;
     const story: Story = {
       root,
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
-      backdrops: [...root.querySelectorAll<HTMLElement>('.backdrop')],
       intro: root.querySelector<HTMLElement>('.intro-scene'),
-      shots: [...root.querySelectorAll<HTMLElement>('.shot')],
+      shots: [...root.querySelectorAll<HTMLElement>('.shot-wrap')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       dots: [...root.querySelectorAll<HTMLElement>('.dot')],
       pill: document.querySelector<HTMLElement>(
@@ -505,17 +483,11 @@ const stepCount = slides.length + 1;
 
         if (reduceMotion) {
           const on = i === active ? '1' : '0';
-          s.backdrops[i].style.opacity = on;
           if (i === 0 && s.intro) s.intro.style.opacity = on;
           if (shot) shot.style.opacity = on;
           if (cap) cap.style.opacity = on;
           continue;
         }
-
-        s.backdrops[i].style.opacity = String(clamp(1 - at, 0, 1));
-        s.backdrops[i].style.transform =
-          `translateX(${(-t * 0.04 * vw).toFixed(1)}px) ` +
-          `scale(${(1.1 + clamp(t, -1, 1) * 0.1).toFixed(3)})`;
 
         if (i === 0 && s.intro) {
           s.intro.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
