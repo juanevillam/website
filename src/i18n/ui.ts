@@ -28,6 +28,7 @@ const en = {
   'legal.delete': 'Delete Account',
   'links.legal': 'Legal',
   'links.help': 'Help',
+  'stores.soon': 'Coming Soon',
   'pitch.problem': 'The Problem',
   'pitch.solution': 'The Solution',
 
@@ -71,6 +72,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': 'Eliminar cuenta',
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
+    'stores.soon': 'Próximamente',
     'pitch.problem': 'El problema',
     'pitch.solution': 'La solución',
 
@@ -109,6 +111,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': '删除账户',
     'links.legal': '法律',
     'links.help': '帮助',
+    'stores.soon': '即将推出',
     'pitch.problem': '问题',
     'pitch.solution': '解决方案',
 
