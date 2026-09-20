@@ -113,8 +113,8 @@ const stepCount = slides.length + 1;
 
       {
         linkGroups.length > 0 && (
-          <footer class="intro-foot">
-            <nav class="inner intro-links">
+          <footer class="inner intro-foot">
+            <nav class="intro-links">
               {linkGroups.map(group => (
                 <div class="link-group">
                   <span class="label">
@@ -292,15 +292,14 @@ const stepCount = slides.length + 1;
 
   /* The page foot: the legal and help pages, under one hairline at the
      bottom of the panel — where a foot belongs. */
-  .intro-foot {
-    padding-top: 1.75rem;
-    border-top: 1px solid var(--hairline);
-  }
-
-  /* The two link columns — a header and its pages, always shown. */
+  /* The rule sits on the links themselves, so it spans the content
+     above it rather than the whole panel. */
   .intro-links {
     display: flex;
     gap: 4rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--hairline);
+    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
   }
 
   .link-group .label {
@@ -368,7 +367,7 @@ const stepCount = slides.length + 1;
     padding-top: 3.5rem;
     opacity: 0;
     pointer-events: none;
-    will-change: opacity, transform;
+    will-change: opacity;
   }
 
   /* The slide title IS the opener's name size — one ladder, and one
@@ -698,9 +697,8 @@ const stepCount = slides.length + 1;
           s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
           continue;
         }
-        const te = clamp(t * 1.6, -1, 1);
+        // A pure crossfade — the words arrive in place, they don't ride.
         s.caps[i].style.opacity = String(clamp(1 - at * 2.6, 0, 1));
-        s.caps[i].style.transform = `translateY(${(-te * 22).toFixed(1)}px)`;
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
