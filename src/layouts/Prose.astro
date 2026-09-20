@@ -1,0 +1,67 @@
+---
+import Base from './Base.astro';
+
+/**
+ * A document page — the legal and support pages the stores require.
+ * Free-scrolling (the one-pager's snap is turned off here), one measure
+ * wide, English only: store review reads these, not the app's locales.
+ */
+type Props = {
+  title: string;
+  /** The app the document belongs to, shown as the eyebrow. */
+  app: string;
+  updated: string;
+};
+
+const { title, app, updated } = Astro.props;
+---
+
+<Base title={`${title} — ${app}`}>
+  <article class="prose">
+    <p class="label">{app}</p>
+    <h1 class="heading">{title}</h1>
+    <p class="label updated">Updated {updated}</p>
+    <slot />
+  </article>
+</Base>
+
+<style is:global>
+  /* A document scrolls like a document — no panel snapping here. */
+  html {
+    scroll-snap-type: none;
+  }
+</style>
+
+<style>
+  .prose {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: clamp(8rem, 16vh, 11rem) clamp(1.25rem, 4vw, 2.5rem) 6rem;
+  }
+
+  .updated {
+    margin-top: 0.75rem;
+  }
+
+  .prose :global(h2) {
+    margin-top: 2.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: var(--track-heading);
+  }
+
+  .prose :global(p),
+  .prose :global(li) {
+    margin-top: 1rem;
+    color: var(--ink-2);
+  }
+
+  .prose :global(ul) {
+    margin-top: 0.5rem;
+    padding-left: 1.25rem;
+  }
+
+  .prose :global(li) {
+    margin-top: 0.5rem;
+  }
+</style>
