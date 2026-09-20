@@ -1,8 +1,24 @@
 ---
+import ListenPill from './ListenPill.astro';
+import T from './T.astro';
+
+/**
+ * The hero stays the wordmark — that decision holds. What it gains is the
+ * door to the narrated format: one line saying the site speaks, and the
+ * listen pill for Juan's own intro clip (hidden until it's recorded).
+ */
+type Props = {
+  /** Juan's personal intro narration — /media/narration/intro.m4a. */
+  narration?: string;
+};
+
+const { narration } = Astro.props;
 ---
 
 <section class="hero" id="top">
   <h1 class="display" data-reveal>juanevillam</h1>
+  <p class="body tagline" data-reveal><T k="hero.tagline" /></p>
+  <ListenPill audio={narration} />
 </section>
 
 <style>
@@ -16,5 +32,9 @@
     justify-content: center;
     text-align: center;
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .tagline {
+    margin-top: 1.5rem;
   }
 </style>

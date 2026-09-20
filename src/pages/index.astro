@@ -1,61 +1,85 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Showcase, { type MediaItem } from '../components/Showcase.astro';
+import StoryShowcase, {
+  type StorySlide,
+} from '../components/StoryShowcase.astro';
 import AppTile from '../components/AppTile.astro';
+import type { UIKey } from '../i18n/ui';
 
-// Media manifests — iPhone screenshots only (Juan shoots them all); the
-// landing webs need no previews, the visit pills already go there.
-// Sliders show iPhone-shaped placeholders until the real shots land.
-const TOPPER_MEDIA: MediaItem[] = [
-  'ios-dark-home',
-  'ios-dark-top-detail',
-  'ios-dark-profile',
-  'ios-dark-trophies',
-].map(name => ({
-  type: 'image',
-  src: `/media/topper/${name}.png`,
-  width: 1290,
-  height: 2796,
-}));
+// Media manifests — iPhone screenshots, all shot by Juan.
+//
+// NARRATION: each slide's body text is the transcript of a voice clip Juan
+// records. When a clip lands, set its `audio` path here (and `introAudio` /
+// the hero's `narration`) and the listen pill appears on its own:
+//   public/media/narration/intro.m4a                 — the hero, Juan himself
+//   public/media/shaper/narration/00-intro.m4a       — why Sound Shaper exists
+//   public/media/shaper/narration/01-home.m4a … 04-clip.m4a — one per slide
+const shots = (
+  app: string,
+  size: [number, number],
+  entries: [name: string, titleKey?: UIKey, bodyKey?: UIKey][]
+) =>
+  entries.map(
+    ([name, titleKey, bodyKey]): StorySlide => ({
+      src: `/media/${app}/${name}.png`,
+      width: size[0],
+      height: size[1],
+      titleKey,
+      bodyKey,
+    })
+  );
+
+// Four slides, in the order the story is told. The two apps were shot on
+// different phones — 393x852pt for Sound Shaper, 402x874pt for Topper — so
+// each manifest states its own pixel size, and it must match the files on
+// disk: it reserves the slot before the image lands.
+const SHAPER_SLIDES = shots(
+  'shaper',
+  [1179, 2556],
+  [
+    ['ios-dark-home', 'shaper.s1.title', 'shaper.s1.body'],
+    ['ios-dark-player', 'shaper.s2.title', 'shaper.s2.body'],
+    ['ios-dark-shape', 'shaper.s3.title', 'shaper.s3.body'],
+    ['ios-dark-clip', 'shaper.s4.title', 'shaper.s4.body'],
+  ]
+);
+
+// Topper's shots are being RETAKEN — until they land, its stage stands
+// Sound Shaper's images (Juan's call, 2026-09-20) and carries no captions,
+// so no words claim to describe a screen that isn't there yet.
+const TOPPER_SLIDES = shots(
+  'shaper',
+  [1179, 2556],
+  [
+    ['ios-dark-home'],
+    ['ios-dark-player'],
+    ['ios-dark-shape'],
+    ['ios-dark-clip'],
+  ]
+);
 ---
 
 <Base>
   <Hero />
 
-  <Showcase id="shaper" name="Sound Shaper" titled placeholders={3}>
+  <StoryShowcase
+    id="shaper"
+    name="Sound Shaper"
+    introKey="shaper.intro"
+    slides={SHAPER_SLIDES}
+    stores
+  >
     <AppTile app="shaper" slot="logo" />
-  </Showcase>
+  </StoryShowcase>
 
-  <Showcase id="topper" name="Topper" titled media={TOPPER_MEDIA}>
+  <StoryShowcase
+    id="topper"
+    name="Topper"
+    introKey="topper.intro"
+    slides={TOPPER_SLIDES}
+    stores
+  >
     <AppTile app="topper" slot="logo" />
-  </Showcase>
-
-  <Showcase
-    id="salvalo"
-    name="Sálvalo"
-    accent="#53DA8F"
-    href="https://salvalo.app"
-    domain="salvalo.app"
-    placeholders={3}
-  >
-    <img
-      slot="logo"
-      src="/media/brand/salvalo.png"
-      alt="Sálvalo"
-      height="60"
-      style="height: 3.75rem"
-    />
-  </Showcase>
-
-  <Showcase
-    id="crol"
-    name="Crol ERP"
-    accent="#00E100"
-    href="https://www.crol.mx"
-    domain="crol.mx"
-    placeholders={3}
-  >
-    <img slot="logo" src="/media/brand/crol.png" alt="Crol ERP" height="40" />
-  </Showcase>
+  </StoryShowcase>
 </Base>
