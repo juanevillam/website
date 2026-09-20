@@ -55,13 +55,18 @@ const SHAPER_SLIDES = shots(
   <StoryShowcase
     id="shaper"
     name="Sound Shaper"
-    introKey="shaper.intro"
+    pitch={{
+      problem: 'shaper.problem',
+      solution: 'shaper.solution',
+      closing: 'shaper.closing',
+    }}
     slides={SHAPER_SLIDES}
     stores
     links={[
       { key: 'legal.terms', href: '/sound-shaper/terms-and-conditions' },
       { key: 'legal.privacy', href: '/sound-shaper/privacy-policy' },
       { key: 'legal.support', href: '/sound-shaper/support' },
+      { key: 'legal.delete', href: '/sound-shaper/delete-account' },
     ]}
   >
     <AppTile app="shaper" size={76} slot="logo" />

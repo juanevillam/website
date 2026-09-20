@@ -34,7 +34,9 @@ export type StorySlide = {
 type Props = {
   id: string;
   name: string;
-  introKey: UIKey;
+  /** The opener reads as a startup pitch: problem, solution, one
+   *  personal closing line. */
+  pitch: { problem: UIKey; solution: UIKey; closing: UIKey };
   /** The app's intro narration — why it exists, in Juan's voice. */
   introAudio?: string;
   slides: StorySlide[];
@@ -48,7 +50,7 @@ type Props = {
 const {
   id,
   name,
-  introKey,
+  pitch,
   introAudio,
   slides,
   stores = false,
@@ -82,7 +84,18 @@ const stepCount = slides.length + 1;
     <div class="intro-scene">
       <div class="inner">
         <div class="lockup-anchor-big" aria-hidden="true"></div>
-        <p class="body intro-copy" data-reveal><T k={introKey} /></p>
+
+        <div class="pitch" data-reveal>
+          <div class="pitch-block">
+            <span class="label"><T k="pitch.problem" /></span>
+            <p class="body"><T k={pitch.problem} /></p>
+          </div>
+          <div class="pitch-block">
+            <span class="label"><T k="pitch.solution" /></span>
+            <p class="body"><T k={pitch.solution} /></p>
+          </div>
+          <p class="pitch-closing"><T k={pitch.closing} /></p>
+        </div>
 
         {stores && <StoreBadges />}
 
@@ -289,8 +302,23 @@ const stepCount = slides.length + 1;
     height: 2.25rem;
   }
 
-  .intro-copy {
+  /* The pitch: problem, solution, one personal line — scannable, not a
+     wall of prose. */
+  .pitch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
     margin-top: 1.25rem;
+  }
+
+  .pitch-block .body {
+    margin-top: 0.5rem;
+  }
+
+  .pitch-closing {
+    color: var(--ink-3);
+    font-size: 0.9375rem;
   }
 
   /* The two control rows read as one group: air above, tight between. */
