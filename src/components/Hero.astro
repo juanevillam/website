@@ -16,9 +16,14 @@ const { narration } = Astro.props;
 ---
 
 <section class="hero" id="top">
-  <h1 class="display" data-reveal>juanevillam</h1>
-  <p class="body tagline" data-reveal><T k="hero.tagline" /></p>
-  <ListenPill audio={narration} />
+  <!-- The wrapper is what the cinema controller rides out on scroll — the
+       revealed children carry transitions of their own, so the scroll-
+       coupled transform lives one level up where nothing animates it. -->
+  <div class="hero-inner" data-hero-inner>
+    <h1 class="display" data-reveal>juanevillam</h1>
+    <p class="body tagline" data-reveal><T k="hero.tagline" /></p>
+    <ListenPill audio={narration} />
+  </div>
 </section>
 
 <style>
@@ -32,6 +37,13 @@ const { narration } = Astro.props;
     justify-content: center;
     text-align: center;
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    will-change: opacity, transform;
   }
 
   .tagline {

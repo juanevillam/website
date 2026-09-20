@@ -40,9 +40,6 @@ const en = {
   'shaper.s4.title': 'Clips',
   'shaper.s4.body':
     'Cut the exact seconds you care about. The whole track below, the zoom above, two handles, done.',
-
-  'topper.intro':
-    "Topper is where I build my tops — games, movies, albums — and follow my people's tops.",
 };
 
 export type UIKey = keyof typeof en;
@@ -73,9 +70,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.title': 'Clips',
     'shaper.s4.body':
       'Corta los segundos exactos que te importan. La canción entera abajo, el zoom arriba, dos bordes y listo.',
-
-    'topper.intro':
-      'En Topper armo mis tops — juegos, películas, álbumes — y sigo los tops de mi gente.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -100,8 +94,5 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.title': 'Clips',
     'shaper.s4.body':
       '剪出你在乎的那几秒。整首歌在下面，放大在上面，两个手柄，完成。',
-
-    'topper.intro':
-      '在 Topper 我给自己喜欢的东西排名——游戏、电影、专辑——也关注我的人的排名。',
   },
 };
