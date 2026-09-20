@@ -65,11 +65,11 @@ const stepCount = slides.length + 1;
   </div>
 
   <div class="stage">
-    <!-- Slide 0: the opener, riding the same lateral rail. -->
+    <!-- Slide 0: the opener. The icon + name live in the shared lockup
+         below; the anchor just reserves their place in this layout. -->
     <div class="intro-scene">
       <div class="inner">
-        <div class="tile" data-reveal><slot name="logo" /></div>
-        <h2 class="app-title" data-reveal>{name}</h2>
+        <div class="lockup-anchor-big" aria-hidden="true"></div>
         <p class="body intro-copy" data-reveal><T k={introKey} /></p>
 
         {stores && <StoreBadges />}
@@ -80,10 +80,10 @@ const stepCount = slides.length + 1;
 
     <div class="inner stage-grid">
       <div class="caption">
+        <div class="lockup-anchor-small" aria-hidden="true"></div>
         {
           slides.map(slide => (
             <div class="cap">
-              <span class="label">{name}</span>
               {slide.titleKey && (
                 <h3 class="slide-title">
                   <T k={slide.titleKey} />
@@ -124,6 +124,15 @@ const stepCount = slides.length + 1;
           ))
         }
       </div>
+    </div>
+
+    <!-- The shared lockup: icon + name in a row, once per story. Big on
+         the opener, it shrinks into the caption corner as slide 1 rides
+         in and stays there for every screenshot — the render loop
+         interpolates between the two anchors' rects. -->
+    <div class="lockup">
+      <slot name="logo" />
+      <span class="lockup-name">{name}</span>
     </div>
 
     <div class="dots">
@@ -193,15 +202,41 @@ const stepCount = slides.length + 1;
     margin-bottom: 4rem;
   }
 
-  /* One ladder for the opener: 76px tile, a name ~1.5 tiles tall, body
-     text, then the two control rows — each gap a step of the same scale
-     instead of the ad-hoc margins that had the name at 2x the icon. */
-  .app-title {
-    margin-top: 1.5rem;
+  /* ---------- the shared lockup ---------- */
+
+  /* Icon + name in one row, drawn ONCE per story. The two anchors below
+     reserve its place in each layout; the render loop translates and
+     scales the lockup between their rects (origin top left), so the
+     opener's big lockup IS the small one over the captions — a shared
+     element, not two copies. */
+  .lockup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    height: 4.75rem;
+    white-space: nowrap;
+    transform-origin: top left;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .lockup-name {
     font-size: clamp(2.5rem, 5.5vw, 4.25rem);
     font-weight: 800;
     letter-spacing: var(--track-display);
     line-height: 0.95;
+  }
+
+  /* The anchors: same box the lockup occupies at each end of the ride. */
+  .lockup-anchor-big {
+    height: 4.75rem;
+  }
+
+  .lockup-anchor-small {
+    height: 1.625rem;
   }
 
   .intro-copy {
@@ -245,9 +280,11 @@ const stepCount = slides.length + 1;
   .cap {
     position: absolute;
     inset: 0 0 auto;
+    /* Clear the small lockup parked above the captions. */
+    padding-top: 2.75rem;
     opacity: 0;
     pointer-events: none;
-    will-change: opacity, transform;
+    will-change: opacity;
   }
 
   .slide-title {
@@ -361,6 +398,15 @@ const stepCount = slides.length + 1;
     .slide-title {
       font-size: clamp(1.875rem, 8vw, 2.5rem);
     }
+
+    /* A narrow screen can't seat a 4rem name beside the tile. */
+    .lockup {
+      gap: 1rem;
+    }
+
+    .lockup-name {
+      font-size: 2rem;
+    }
   }
 </style>
 
@@ -392,7 +438,11 @@ const stepCount = slides.length + 1;
   type Story = {
     root: HTMLElement;
     steps: HTMLElement[];
+    stage: HTMLElement | null;
     intro: HTMLElement | null;
+    lockup: HTMLElement | null;
+    anchorBig: HTMLElement | null;
+    anchorSmall: HTMLElement | null;
     shots: HTMLElement[];
     caps: HTMLElement[];
     dots: HTMLElement[];
@@ -443,7 +493,11 @@ const stepCount = slides.length + 1;
     const story: Story = {
       root,
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
+      stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
+      lockup: root.querySelector<HTMLElement>('.lockup'),
+      anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
+      anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
       shots: [...root.querySelectorAll<HTMLElement>('.shot-wrap')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       dots: [...root.querySelectorAll<HTMLElement>('.dot')],
@@ -476,7 +530,7 @@ const stepCount = slides.length + 1;
   // The hero rides out as the first story rides in.
   const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
-  const render = () => {
+  const render = (force = false) => {
     const vh = window.innerHeight;
     const vw = window.innerWidth;
 
@@ -490,10 +544,30 @@ const stepCount = slides.length + 1;
 
     for (const s of stories) {
       const rect = s.root.getBoundingClientRect();
-      if (rect.bottom < 0 || rect.top > vh) continue;
+      // The forced pass places every layer once at load, so nothing is
+      // ever seen untransformed when a story first scrolls in.
+      if (!force && (rect.bottom < 0 || rect.top > vh)) continue;
 
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
+
+      // The lockup rides from the opener's anchor to the caption's on
+      // the first step and parks there — icon and name never redraw,
+      // they just travel (FLIP between the two anchors' rects).
+      if (s.lockup && s.stage && s.anchorBig && s.anchorSmall) {
+        const stageRect = s.stage.getBoundingClientRect();
+        const big = s.anchorBig.getBoundingClientRect();
+        const small = s.anchorSmall.getBoundingClientRect();
+        let q = clamp(p, 0, 1);
+        if (reduceMotion) q = q < 0.5 ? 0 : 1;
+        else q = q * q * (3 - 2 * q); // smoothstep — eased, not floaty
+        const scale = 1 + (small.height / big.height - 1) * q;
+        const x = big.left - stageRect.left + (small.left - big.left) * q;
+        const y = big.top - stageRect.top + (small.top - big.top) * q;
+        s.lockup.style.transform =
+          `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
+          `scale(${scale.toFixed(4)})`;
+      }
 
       for (let i = 0; i < s.steps.length; i++) {
         const t = p - i;
@@ -515,7 +589,7 @@ const stepCount = slides.length + 1;
         // move: a quick crossfade in place, so the impression is that
         // only the screenshots change.
         if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 2.5, 0, 1));
+          s.intro.style.opacity = String(clamp(1 - at * 3.2, 0, 1));
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
@@ -526,7 +600,7 @@ const stepCount = slides.length + 1;
         }
 
         if (cap) {
-          cap.style.opacity = String(clamp(1 - at * 2.5, 0, 1));
+          cap.style.opacity = String(clamp(1 - at * 3.2, 0, 1));
           cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
       }
@@ -553,5 +627,5 @@ const stepCount = slides.length + 1;
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
-  render();
+  render(true);
 </script>
