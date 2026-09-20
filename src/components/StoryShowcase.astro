@@ -261,9 +261,8 @@ const stepCount = slides.length + 1;
     position: absolute;
     top: 0;
     left: 0;
-    /* Above the opener, BELOW the shots: a passing screenshot covers the
-       lockup and the words, never the other way around. */
-    z-index: 2;
+    /* Part of the text layer: above the occluder slab, like the words. */
+    z-index: 4;
     display: flex;
     align-items: center;
     gap: 1.25rem;
@@ -325,14 +324,30 @@ const stepCount = slides.length + 1;
 
   .caption {
     position: relative;
-    /* Above the shots: a horizontal slide tucks UNDER the words while it
-       fades, instead of crossing the whole stage over them. */
+    /* Above the shots: a horizontal slide HIDES under the words' column,
+       occluded by the ground-colored slab below. */
     z-index: 1;
     align-self: center;
     min-height: 16rem;
     /* Lift the words above the geometric center — the phone holds the
        middle, the text reads a beat higher. */
     margin-bottom: 6rem;
+  }
+
+  /* The occluder: a ground-colored slab over the whole text column, so a
+     shot sliding left genuinely disappears UNDER the content — invisible
+     against the ground itself. Faded in by the render loop only once the
+     deck leaves the opener (--occlude), so it never covers the opener. */
+  .caption::before {
+    content: '';
+    position: absolute;
+    top: -100vh;
+    bottom: -100vh;
+    left: -100vw;
+    right: 0;
+    z-index: -1;
+    background: var(--ground);
+    opacity: var(--occlude, 0);
   }
 
   .cap {
@@ -345,9 +360,10 @@ const stepCount = slides.length + 1;
     will-change: opacity;
   }
 
+  /* The slide title IS the opener's name size — one ladder, and one
+     1.25rem step everywhere: lockup → title → description. */
   .slide-title {
-    margin-top: 0.875rem;
-    font-size: clamp(2.25rem, 4.5vw, 4rem);
+    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
     font-weight: 800;
     letter-spacing: var(--track-display);
     line-height: 0.95;
@@ -407,7 +423,7 @@ const stepCount = slides.length + 1;
 
   .dots {
     position: relative;
-    z-index: 4;
+    z-index: 5;
     display: flex;
     justify-content: center;
     gap: 0.875rem;
@@ -458,6 +474,11 @@ const stepCount = slides.length + 1;
       margin-bottom: 0;
     }
 
+    /* One column on mobile: there's no side column to hide under. */
+    .caption::before {
+      display: none;
+    }
+
     .slide-title {
       font-size: clamp(1.875rem, 8vw, 2.5rem);
     }
@@ -504,6 +525,10 @@ const stepCount = slides.length + 1;
     [-1, 0],
   ];
 
+  // One column on a phone: no side column to hide a slide under, so
+  // horizontal movers fade there instead of relying on the occluder.
+  const narrow = window.matchMedia('(max-width: 48rem)');
+
   const voice = new Audio();
   voice.preload = 'auto';
 
@@ -512,6 +537,7 @@ const stepCount = slides.length + 1;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
+    caption: HTMLElement | null;
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
@@ -567,6 +593,7 @@ const stepCount = slides.length + 1;
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
+      caption: root.querySelector<HTMLElement>('.caption'),
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
@@ -623,6 +650,18 @@ const stepCount = slides.length + 1;
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
 
+      // The occluder slab arrives with the first screenshot and stays —
+      // invisible against the ground, it only exists to swallow the
+      // slides that dive under the text column.
+      s.caption?.style.setProperty(
+        '--occlude',
+        reduceMotion
+          ? active > 0
+            ? '1'
+            : '0'
+          : String(clamp((p - 0.5) * 4, 0, 1))
+      );
+
       // The lockup rides from the opener's anchor to the caption's on
       // the first step and parks there — icon and name never redraw,
       // they just travel (FLIP between the two anchors' rects).
@@ -675,9 +714,9 @@ const stepCount = slides.length + 1;
           // The move finishes in 2/3 of a step — then the slide rests.
           const ts = clamp(t * 1.5, -1, 1);
           shot.style.opacity =
-            dx !== 0
+            dx !== 0 && narrow.matches
               ? String(clamp(1 - at * 1.8, 0, 1))
-              : at < 1.05
+              : at < 1.3
                 ? '1'
                 : '0';
           shot.style.transform =
