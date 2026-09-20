@@ -97,13 +97,6 @@ const stepCount = slides.length + 1;
             </div>
           ))
         }
-        {
-          stores && (
-            <div class="slider-stores">
-              <StoreBadges />
-            </div>
-          )
-        }
       </div>
 
       <div class="shots">
@@ -285,19 +278,10 @@ const stepCount = slides.length + 1;
   .caption {
     position: relative;
     align-self: center;
-    min-height: 20rem;
+    min-height: 16rem;
     /* Lift the words above the geometric center — the phone holds the
        middle, the text reads a beat higher. */
     margin-bottom: 6rem;
-  }
-
-  /* The store slots ride the slides too, parked under the words. */
-  .slider-stores {
-    position: absolute;
-    inset: auto auto 0 0;
-    width: max-content;
-    opacity: 0;
-    will-change: opacity;
   }
 
   .cap {
@@ -376,7 +360,8 @@ const stepCount = slides.length + 1;
     display: flex;
     justify-content: center;
     gap: 0.875rem;
-    padding-top: 1.5rem;
+    /* Real air between the scene and the indicators. */
+    padding-top: 3rem;
   }
 
   .dot {
@@ -435,10 +420,6 @@ const stepCount = slides.length + 1;
       font-size: 2rem;
     }
 
-    /* No room under the caption on a phone — the opener's slots serve. */
-    .slider-stores {
-      display: none;
-    }
   }
 </style>
 
@@ -472,7 +453,6 @@ const stepCount = slides.length + 1;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
-    sliderStores: HTMLElement | null;
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
@@ -528,7 +508,6 @@ const stepCount = slides.length + 1;
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
-      sliderStores: root.querySelector<HTMLElement>('.slider-stores'),
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
@@ -601,16 +580,6 @@ const stepCount = slides.length + 1;
         s.lockup.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
           `scale(${scale.toFixed(4)})`;
-      }
-
-      // The store slots fade in once the deck leaves the opener and
-      // stay for every screenshot.
-      if (s.sliderStores) {
-        s.sliderStores.style.opacity = reduceMotion
-          ? active > 0
-            ? '1'
-            : '0'
-          : String(clamp((p - 0.55) * 3, 0, 1));
       }
 
       for (let i = 0; i < s.steps.length; i++) {
