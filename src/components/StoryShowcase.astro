@@ -5,18 +5,17 @@ import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
 
 /**
- * One app, told as CINEMA. Two acts:
+ * One app = ONE horizontal deck. The first slide is the opener — tile,
+ * the name at display size, three lines, the listen pill — and the
+ * screenshots follow, all in the same lateral slider.
  *
- * An opener panel — the app's first shot blown into a full-bleed glow,
- * the tile, the name at display size, three lines, the listen pill.
- *
- * Then the stage: a sticky full-viewport scene per screenshot, every
- * layer COUPLED to the scroll rather than triggered by it — position is
- * a function of scroll, the grammar of Rockstar's GTA VI site. The
- * backdrop (the slide itself, blurred) zooms THROUGH as you pass, the
- * shot rides faster than the backdrop (parallax = depth), the title
- * arrives at a third speed. Invisible 100svh steps carry the snapping,
- * so a flick still lands exactly one slide.
+ * The page scrolls down; the SCENE travels sideways. Every layer is
+ * COUPLED to the scroll rather than triggered by it — position is a
+ * function of scroll, the grammar of Rockstar's GTA VI site. The
+ * backdrop (the slide itself, blurred) zooms through as you pass, the
+ * shot rides the scroll faster than the backdrop (parallax = depth),
+ * the title arrives at a third speed. Invisible 100svh steps carry the
+ * snapping, so a flick still lands exactly one slide.
  *
  * Captions double as narration transcripts; each slide can carry a
  * voice clip and the deck advances itself when one ends.
@@ -43,45 +42,35 @@ type Props = {
 };
 
 const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
+
+// The deck: step 0 is the opener, then one step per screenshot.
+const stepCount = slides.length + 1;
 ---
 
-<section class="panel intro" id={id}>
-  <img
-    class="intro-backdrop"
-    src={slides[0].src}
-    alt=""
-    aria-hidden="true"
-    loading="lazy"
-    decoding="async"
-  />
-  <div class="inner intro-content">
-    <div class="tile" data-reveal><slot name="logo" /></div>
-    <h2 class="app-title" data-reveal>{name}</h2>
-    <p class="body intro-copy" data-reveal><T k={introKey} /></p>
-
-    {stores && <StoreBadges />}
-
-    <ListenPill audio={introAudio} story={id} />
-  </div>
-</section>
-
-<section class="story" data-story={id} style={`--slides: ${slides.length}`}>
+<section
+  class="story"
+  id={id}
+  data-story={id}
+  style={`--steps: ${stepCount}`}
+>
   <!-- The scroll rail: one invisible step per slide. Each carries the snap
        point and, once recorded, that slide's narration clip. -->
   <div class="steps" aria-hidden="true">
+    <div class="step" data-index="0" data-audio={introAudio} />
     {
       slides.map((slide, i) => (
-        <div class="step" data-index={i} data-audio={slide.audio} />
+        <div class="step" data-index={i + 1} data-audio={slide.audio} />
       ))
     }
   </div>
 
   <div class="stage">
     <!-- The backdrop is the slide itself, blown up and blurred — the image
-         generates its own gradient, no color math anywhere. -->
+         generates its own gradient, no color math anywhere. The opener
+         borrows the first shot's glow, so slide 0 → 1 is seamless. -->
     <div class="backdrops" aria-hidden="true">
       {
-        slides.map(slide => (
+        [slides[0], ...slides].map(slide => (
           <img
             class="backdrop"
             src={slide.src}
@@ -91,6 +80,19 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
           />
         ))
       }
+    </div>
+
+    <!-- Slide 0: the opener, riding the same lateral rail. -->
+    <div class="intro-scene">
+      <div class="inner">
+        <div class="tile" data-reveal><slot name="logo" /></div>
+        <h2 class="app-title" data-reveal>{name}</h2>
+        <p class="body intro-copy" data-reveal><T k={introKey} /></p>
+
+        {stores && <StoreBadges />}
+
+        <ListenPill audio={introAudio} story={id} />
+      </div>
     </div>
 
     <div class="inner stage-grid">
@@ -133,11 +135,11 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
 
     <div class="dots">
       {
-        slides.map((_, i) => (
+        Array.from({ length: stepCount }).map((_, i) => (
           <button
             class="dot"
             data-index={i}
-            aria-label={`${name} ${i + 1} / ${slides.length}`}
+            aria-label={`${name} ${i + 1} / ${stepCount}`}
           />
         ))
       }
@@ -152,45 +154,11 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
     margin: 0 auto;
   }
 
-  /* ---------- the opener ---------- */
-
-  .intro {
-    position: relative;
-    overflow: hidden;
-    justify-content: center;
-  }
-
-  .intro-backdrop {
-    position: absolute;
-    inset: -10%;
-    width: 120%;
-    height: 120%;
-    object-fit: cover;
-    filter: blur(110px) saturate(1.3) brightness(0.3);
-  }
-
-  .intro-content {
-    position: relative;
-  }
-
-  /* The name at the size Rockstar titles a scene — the opener's whole job. */
-  .app-title {
-    margin-top: 1.25rem;
-    font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 800;
-    letter-spacing: var(--track-display);
-    line-height: 0.95;
-  }
-
-  .intro-copy {
-    margin-top: 1.5rem;
-  }
-
-  /* ---------- the stage ---------- */
+  /* ---------- the deck ---------- */
 
   .story {
     position: relative;
-    height: calc(var(--slides) * 100svh);
+    height: calc(var(--steps) * 100svh);
   }
 
   .steps {
@@ -231,7 +199,7 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
   }
 
   /* Every moving layer starts invisible and the render loop drives it —
-     except the first slide, which shows without JS at all. */
+     except slide 0, the opener, which shows without JS at all. */
   .backdrop {
     position: absolute;
     inset: -8%;
@@ -247,6 +215,32 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
   .backdrop:first-child {
     opacity: 1;
   }
+
+  /* ---------- slide 0: the opener ---------- */
+
+  .intro-scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
+    will-change: opacity, transform;
+  }
+
+  /* The name at the size Rockstar titles a scene — the opener's whole job. */
+  .app-title {
+    margin-top: 1.25rem;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    letter-spacing: var(--track-display);
+    line-height: 0.95;
+  }
+
+  .intro-copy {
+    margin-top: 1.5rem;
+  }
+
+  /* ---------- the screenshot slides ---------- */
 
   /* Caption on the 4 side of the Monolith seam, the shot on the 9. */
   .stage-grid {
@@ -274,10 +268,6 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
     opacity: 0;
     pointer-events: none;
     will-change: opacity, transform;
-  }
-
-  .cap:first-child {
-    opacity: 1;
   }
 
   .slide-title {
@@ -317,10 +307,6 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
     border: 1px solid var(--hairline);
   }
 
-  .shot:first-child {
-    opacity: 1;
-  }
-
   .dots {
     position: relative;
     display: flex;
@@ -349,7 +335,8 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
   }
 
   @media (max-width: 48rem) {
-    .stage {
+    .stage,
+    .intro-scene {
       padding-top: 4.5rem;
       padding-bottom: 2rem;
     }
@@ -380,10 +367,12 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
   // One module for every story on the page. Two jobs:
   //
   // RENDER — every moving layer is a pure function of scroll, recomputed
-  // in one rAF pass: for slide i, t = p - i where p is how many viewports
-  // deep the story is. Backdrop zooms through (slow), shot rides the
-  // scroll (fast), title arrives at a third speed. No triggers, no state
-  // machines — scrub the page and the scene scrubs with it.
+  // in one rAF pass: for step i, t = p - i where p is how many viewports
+  // deep the story is. Step 0 is the opener; screenshots are steps 1..n.
+  // The page scrolls down, the scene travels SIDEWAYS: a slide enters
+  // from the right and leaves to the left. Backdrop drifts slowly under
+  // its zoom, shot rides fast, title at a third speed — the depth IS the
+  // difference. No triggers, no state machines.
   //
   // NARRATION — a single shared Audio element (unlocked by the pill's
   // tap, then free to swap sources) reads the active slide and advances
@@ -403,6 +392,7 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
     root: HTMLElement;
     steps: HTMLElement[];
     backdrops: HTMLElement[];
+    intro: HTMLElement | null;
     shots: HTMLElement[];
     caps: HTMLElement[];
     dots: HTMLElement[];
@@ -424,12 +414,6 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
     armed = null;
   };
 
-  const play = (src: string, onEnd: () => void) => {
-    voice.src = src;
-    voice.onended = onEnd;
-    voice.play().catch(() => disarm());
-  };
-
   const scrollToStep = (story: Story, index: number) => {
     story.steps[index]?.scrollIntoView({
       block: 'start',
@@ -444,11 +428,13 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
       disarm();
       return;
     }
-    play(src, () => {
+    voice.src = src;
+    voice.onended = () => {
       if (armed !== story) return;
       if (index + 1 < story.steps.length) scrollToStep(story, index + 1);
       else disarm();
-    });
+    };
+    voice.play().catch(() => disarm());
   };
 
   const stories: Story[] = [
@@ -458,6 +444,7 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
       root,
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       backdrops: [...root.querySelectorAll<HTMLElement>('.backdrop')],
+      intro: root.querySelector<HTMLElement>('.intro-scene'),
       shots: [...root.querySelectorAll<HTMLElement>('.shot')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       dots: [...root.querySelectorAll<HTMLElement>('.dot')],
@@ -471,8 +458,8 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
       dot.addEventListener('click', () => scrollToStep(story, i))
     );
 
-    // The pill: arm narration for this story. Its own clip is the app's
-    // intro; when that ends, the deck starts itself.
+    // The pill lives on slide 0, so arming starts the deck right where
+    // the person is standing: the opener's own clip, then onward.
     story.pill?.addEventListener('click', () => {
       if (armed === story) {
         disarm();
@@ -481,14 +468,7 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
       disarm();
       armed = story;
       setPill(story, true);
-      const intro = story.pill?.dataset.audio;
-      if (intro) {
-        play(intro, () => {
-          if (armed === story) scrollToStep(story, 0);
-        });
-      } else {
-        scrollToStep(story, 0);
-      }
+      playStep(story, Math.max(story.current, 0));
     });
 
     return story;
@@ -519,32 +499,43 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
       for (let i = 0; i < s.steps.length; i++) {
         const t = p - i;
         const at = Math.abs(t);
+        // The opener is layer 0; screenshot slides sit one step later.
+        const shot = s.shots[i - 1];
+        const cap = s.caps[i - 1];
 
         if (reduceMotion) {
           const on = i === active ? '1' : '0';
           s.backdrops[i].style.opacity = on;
-          s.shots[i].style.opacity = on;
-          s.caps[i].style.opacity = on;
+          if (i === 0 && s.intro) s.intro.style.opacity = on;
+          if (shot) shot.style.opacity = on;
+          if (cap) cap.style.opacity = on;
           continue;
         }
 
-        // Three speeds, one scroll: the depth IS the difference. The
-        // page scrolls down; the SCENE travels sideways — a slide enters
-        // from the right and leaves to the left, deck-style.
         s.backdrops[i].style.opacity = String(clamp(1 - at, 0, 1));
         s.backdrops[i].style.transform =
           `translateX(${(-t * 0.04 * vw).toFixed(1)}px) ` +
           `scale(${(1.1 + clamp(t, -1, 1) * 0.1).toFixed(3)})`;
 
-        s.shots[i].style.opacity = String(clamp(1 - at * 1.4, 0, 1));
-        s.shots[i].style.transform =
-          `translate(calc(-50% + ${(-t * 0.35 * vw).toFixed(1)}px), 0) ` +
-          `scale(${(1 - Math.min(at * 0.08, 0.08)).toFixed(3)})`;
+        if (i === 0 && s.intro) {
+          s.intro.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
+          s.intro.style.transform =
+            `translateX(${(-t * 0.15 * vw).toFixed(1)}px)`;
+          s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
+        }
 
-        s.caps[i].style.opacity = String(clamp(1 - at * 1.8, 0, 1));
-        s.caps[i].style.transform =
-          `translateX(${(-t * 0.08 * vw).toFixed(1)}px)`;
-        s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
+        if (shot) {
+          shot.style.opacity = String(clamp(1 - at * 1.4, 0, 1));
+          shot.style.transform =
+            `translate(calc(-50% + ${(-t * 0.35 * vw).toFixed(1)}px), 0) ` +
+            `scale(${(1 - Math.min(at * 0.08, 0.08)).toFixed(3)})`;
+        }
+
+        if (cap) {
+          cap.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
+          cap.style.transform = `translateX(${(-t * 0.08 * vw).toFixed(1)}px)`;
+          cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
+        }
       }
 
       if (active !== s.current) {
