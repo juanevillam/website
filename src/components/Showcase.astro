@@ -1,12 +1,11 @@
 ---
-import { type UIKey } from '../i18n/ui';
 import T from './T.astro';
 
 /**
- * One project section: the logo (passed in the `logo` slot), a short
- * description, an optional visit pill, and a horizontal snap slider that
- * takes any mix of media — portrait app screenshots, wide web stills,
- * muted videos — all normalized to one height.
+ * One project section: the logo (passed in the `logo` slot), an optional
+ * visit pill, and a horizontal snap slider that takes any mix of media —
+ * portrait app screenshots, wide web stills, muted videos — all
+ * normalized to one height. No prose: the vids do the explaining.
  */
 export type MediaItem = {
   type: 'image' | 'video';
@@ -20,8 +19,6 @@ export type MediaItem = {
 type Props = {
   id: string;
   name: string;
-  /** One merged description — the deep story belongs to the vids. */
-  desc: UIKey;
   /** Show the name beside the logo (for icon tiles, which don't carry it). */
   titled?: boolean;
   /** Brand accent for the visit pill's hover. */
@@ -36,7 +33,6 @@ type Props = {
 const {
   id,
   name,
-  desc,
   titled = false,
   accent,
   href,
@@ -56,8 +52,6 @@ const {
       <slot name="logo" />
       {titled && <span class="app-name">{name}</span>}
     </div>
-
-    <p class="body lede" data-reveal><T k={desc} /></p>
 
     {
       href && (
@@ -137,12 +131,6 @@ const {
     font-weight: 700;
     letter-spacing: var(--track-heading);
     line-height: 1;
-  }
-
-  .lede {
-    margin-top: 1.5rem;
-    font-size: 1.125rem;
-    max-width: 44rem;
   }
 
   .visit {
