@@ -45,19 +45,8 @@ const SHAPER_SLIDES = shots(
   ]
 );
 
-// Topper's shots are being RETAKEN — until they land, its stage stands
-// Sound Shaper's images (Juan's call, 2026-09-20) and carries no captions,
-// so no words claim to describe a screen that isn't there yet.
-const TOPPER_SLIDES = shots(
-  'shaper',
-  [1179, 2556],
-  [
-    ['ios-dark-home'],
-    ['ios-dark-player'],
-    ['ios-dark-shape'],
-    ['ios-dark-clip'],
-  ]
-);
+// Topper is OUT for now (Juan's call, 2026-09-20) — it returns as its own
+// story once its screenshots are retaken on the current build.
 ---
 
 <Base>
@@ -71,15 +60,5 @@ const TOPPER_SLIDES = shots(
     stores
   >
     <AppTile app="shaper" slot="logo" />
-  </StoryShowcase>
-
-  <StoryShowcase
-    id="topper"
-    name="Topper"
-    introKey="topper.intro"
-    slides={TOPPER_SLIDES}
-    stores
-  >
-    <AppTile app="topper" slot="logo" />
   </StoryShowcase>
 </Base>
