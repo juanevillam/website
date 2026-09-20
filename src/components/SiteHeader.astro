@@ -22,6 +22,25 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     <span class="label lang-code" id="lang-code" aria-hidden="true">
       {localeCodes.en}
     </span>
+    <!-- The chevron the native control drew for itself, redrawn now
+         that the control is invisible: without it the code reads as a
+         label rather than as something you can open. -->
+    <svg
+      class="lang-chevron"
+      viewBox="0 0 12 12"
+      width="9"
+      height="9"
+      aria-hidden="true"
+    >
+      <path
+        d="M2.5 4.5 L6 8 L9.5 4.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      ></path>
+    </svg>
     <select id="lang-picker" aria-label="Language">
       {
         locales.map(l => (
@@ -61,17 +80,24 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     position: relative;
     display: inline-flex;
     align-items: center;
+    gap: 0.4375rem;
     padding: 0.375rem 0;
+    color: var(--ink-3);
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .lang:hover {
+    color: var(--ink);
   }
 
   /* The code is what the header draws — same mono label as every
      section title and link-group heading, because it IS one. */
   .lang-code {
-    transition: color var(--dur-micro) var(--ease);
+    color: inherit;
   }
 
-  .lang:hover .lang-code {
-    color: var(--ink);
+  .lang-chevron {
+    flex: 0 0 auto;
   }
 
   /* The real control, invisible but present: it keeps the native menu,
