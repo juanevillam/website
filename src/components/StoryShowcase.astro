@@ -102,11 +102,9 @@ const stepCount = slides.length + 1;
             </div>
           </div>
 
-          <div class="intro-actions">
-            {stores && <StoreBadges />}
-
-            <ListenPill audio={introAudio} story={id} />
-          </div>
+          <!-- Reserves the action row's box; the row itself floats in
+               the stage so it can travel to the slides. -->
+          <div class="actions-anchor-big" aria-hidden="true"></div>
         </div>
       </div>
       </div>
@@ -138,6 +136,7 @@ const stepCount = slides.length + 1;
     <!-- The slides' scene, on the ground with the opener. -->
     <div class="float">
       <div class="float-grid">
+        <div class="col-text">
         <div class="caption">
           <div class="lockup-anchor-small" aria-hidden="true"></div>
           {
@@ -152,6 +151,10 @@ const stepCount = slides.length + 1;
               </div>
             ))
           }
+        </div>
+
+          <!-- Where the action row comes to rest on the slides. -->
+          <div class="actions-anchor-small" aria-hidden="true"></div>
         </div>
 
         <!-- The filmstrip: every shot in one row, translated by scroll. -->
@@ -193,6 +196,14 @@ const stepCount = slides.length + 1;
     <div class="lockup">
       <slot name="logo" />
       <span class="lockup-name">{name}</span>
+    </div>
+
+    <!-- The action row, drawn ONCE per story like the lockup: it sits
+         under the opener's pitch and travels to the foot of the slides'
+         text column, rather than fading out with the opener. -->
+    <div class="actions">
+      {stores && <StoreBadges />}
+      <ListenPill audio={introAudio} story={id} />
     </div>
   </div>
 </section>
@@ -241,7 +252,7 @@ const stepCount = slides.length + 1;
     flex-direction: column;
     /* The one stage inset — the slides' scene takes the same, so both
        start on the same line. */
-    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+    padding: 7rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
     will-change: opacity;
   }
 
@@ -276,21 +287,34 @@ const stepCount = slides.length + 1;
     max-width: none;
   }
 
-  /* The download call sits right under the words it belongs to. */
-  .intro-actions {
+  /* The action row is drawn once in the stage and FLIPped between two
+     anchors, exactly like the lockup — these reserve its box at each
+     end so nothing reflows when it travels. */
+  .actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 1rem 1.5rem;
+    transform-origin: top left;
+    will-change: transform;
+  }
+
+  .actions :global(.stores),
+  .actions :global(.listen) {
+    margin-top: 0;
+  }
+
+  .actions-anchor-big,
+  .actions-anchor-small {
+    height: 3rem;
+  }
+
+  .actions-anchor-big {
     margin-top: 2.25rem;
-  }
-
-  .intro-actions :global(.stores) {
-    margin-top: 0;
-  }
-
-  .intro-actions :global(.listen) {
-    margin-top: 0;
   }
 
   /* The page foot: the legal and help pages, under one hairline at the
@@ -345,7 +369,7 @@ const stepCount = slides.length + 1;
     position: absolute;
     inset: 0;
     z-index: 2;
-    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+    padding: 7rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
     opacity: var(--float-in, 0);
     /* It covers the whole stage, including the opener beneath it — so
        the layer is DEAF and only the captions take events back. Without
@@ -361,6 +385,18 @@ const stepCount = slides.length + 1;
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
     gap: var(--space-4);
+  }
+
+  /* The text column: words at the top, the action row's rest position
+     at the foot. */
+  .col-text {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .actions-anchor-small {
+    margin-top: auto;
   }
 
   /* The words start at the phone's own top edge, which is also where
@@ -407,9 +443,13 @@ const stepCount = slides.length + 1;
   /* The pane still clips a travelling shot out of the words' column,
      but it fades at its edges instead of slicing — a hard cut was the
      one thing that gave the seam away mid-move. */
+  /* The words take the comfortable inset under the header; the phone
+     does not need it, so the pane reclaims that space and the shot
+     runs as tall as the panel allows. */
   .shots {
     position: relative;
-    height: 100%;
+    height: auto;
+    margin: -2.5rem 0 -1rem;
     min-height: 0;
     overflow: hidden;
     mask-image: linear-gradient(
@@ -436,7 +476,7 @@ const stepCount = slides.length + 1;
     justify-content: center;
     /* Air for the glow and the contact shadow, so the pane never
        crops either. */
-    padding: 3rem 0;
+    padding: 2rem 0;
   }
 
   .shot-wrap {
@@ -582,6 +622,9 @@ const stepCount = slides.length + 1;
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
+    actions: HTMLElement | null;
+    actionsBig: HTMLElement | null;
+    actionsSmall: HTMLElement | null;
     pill: HTMLElement | null;
     current: number;
   };
@@ -642,6 +685,9 @@ const stepCount = slides.length + 1;
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
+      actions: root.querySelector<HTMLElement>('.actions'),
+      actionsBig: root.querySelector<HTMLElement>('.actions-anchor-big'),
+      actionsSmall: root.querySelector<HTMLElement>('.actions-anchor-small'),
       pill: document.querySelector<HTMLElement>(
         `[data-narrate-story="${root.dataset.story}"]`
       ),
@@ -723,7 +769,7 @@ const stepCount = slides.length + 1;
         }
         // A pure crossfade, and a quick one — the words arrive in
         // place, they don't ride and they don't linger.
-        s.caps[i].style.opacity = String(clamp(1 - at * 4.5, 0, 1));
+        s.caps[i].style.opacity = String(clamp(1 - at * 7, 0, 1));
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
@@ -740,6 +786,21 @@ const stepCount = slides.length + 1;
         s.lockup.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
           `scale(${scale.toFixed(4)})`;
+      }
+
+      // The action row makes the same trip, from under the opener's
+      // pitch to the foot of the slides' text column. It never scales:
+      // both store programs set a minimum badge height, so the badges
+      // keep the size they were measured at.
+      if (s.actions && s.stage && s.actionsBig && s.actionsSmall) {
+        const stageRect = s.stage.getBoundingClientRect();
+        const big = s.actionsBig.getBoundingClientRect();
+        const small = s.actionsSmall.getBoundingClientRect();
+        const q = reduceMotion ? (p >= 0.5 ? 1 : 0) : smooth(clamp(p, 0, 1));
+        const x = big.left - stageRect.left + (small.left - big.left) * q;
+        const y = big.top - stageRect.top + (small.top - big.top) * q;
+        s.actions.style.transform =
+          `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       }
 
       if (active !== s.current) {
