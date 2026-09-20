@@ -239,14 +239,18 @@ const stepCount = slides.length + 1;
     z-index: 1;
     display: flex;
     flex-direction: column;
-    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
+    /* The one stage inset — the slides' scene takes the same, so both
+       start on the same line. */
+    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
     will-change: opacity;
   }
 
+  /* Content reads from the top, not centred in the panel: that is what
+     puts it level with the slides and keeps the lockup's trip short. */
   .intro-body {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     min-height: 0;
   }
 
@@ -333,10 +337,15 @@ const stepCount = slides.length + 1;
      hairline, and lifts one surface step off the ground. */
   /* The slides' scene: the same full-bleed stage the opener stands on —
      no detached container, the screenshots live on the ground. */
+  /* Exactly the opener's box: the PADDING lives here and the grid
+     centres inside it, the way `.inner` centres inside `.intro-scene`.
+     When the grid carried both its own padding AND the max-width, it
+     sat 40px further in than the opener at any width past the cap. */
   .float {
     position: absolute;
     inset: 0;
     z-index: 2;
+    padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
     opacity: var(--float-in, 0);
     /* It covers the whole stage, including the opener beneath it — so
        the layer is DEAF and only the captions take events back. Without
@@ -346,14 +355,12 @@ const stepCount = slides.length + 1;
   }
 
   .float-grid {
-    position: absolute;
-    inset: 0;
+    height: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
     gap: var(--space-4);
-    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
-    max-width: var(--content-max);
-    margin: 0 auto;
   }
 
   /* The words start at the phone's own top edge, which is also where
