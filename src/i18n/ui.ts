@@ -14,9 +14,8 @@ export const localeNames: Record<Locale, string> = {
  * One merged description per section; the deep story belongs to the vids.
  */
 const en = {
-  'meta.title': 'juanevillam — developer',
-  'meta.description': 'Developer. I build native mobile apps and web products.',
-  'hero.eyebrow': 'developer',
+  'meta.title': 'juanevillam',
+  'meta.description': 'I build native mobile apps and web products.',
   'shaper.desc':
     'A personal audio player: upload the sounds you already have, shape their speed and pitch — my own phase-vocoder patch keeps Preserve Pitch clean on real music — and mark the best seconds as clips.',
   'topper.desc':
@@ -33,10 +32,8 @@ export type UIKey = keyof typeof en;
 export const ui: Record<Locale, Record<UIKey, string>> = {
   en,
   es: {
-    'meta.title': 'juanevillam — desarrollador',
-    'meta.description':
-      'Desarrollador. Hago apps móviles nativas y productos web.',
-    'hero.eyebrow': 'desarrollador',
+    'meta.title': 'juanevillam',
+    'meta.description': 'Hago apps móviles nativas y productos web.',
     'shaper.desc':
       'Un reproductor de audio personal: sube los sonidos que ya tienes, dales forma en velocidad y tono — mi propio parche de phase vocoder mantiene limpio Preservar tono con música de verdad — y marca los mejores segundos como clips.',
     'topper.desc':
@@ -48,9 +45,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: 'visitar',
   },
   zh: {
-    'meta.title': 'juanevillam — 开发者',
-    'meta.description': '开发者。我做原生移动应用和网页产品。',
-    'hero.eyebrow': '开发者',
+    'meta.title': 'juanevillam',
+    'meta.description': '我做原生移动应用和网页产品。',
     'shaper.desc':
       '一个个人音频播放器：上传你已有的声音，随意调整速度和音调 — 我自己写的 phase vocoder 补丁让"保持音调"在真正的音乐上也干净利落 — 再把最精彩的几秒标记为 clip。',
     'topper.desc':
