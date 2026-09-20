@@ -28,18 +28,14 @@ const en = {
 
   'shaper.intro':
     'YouTube Music kept feeding me ads, and I was always hunting slowed and sped-up versions of my songs. So I built my own player: free, and it plays and shapes sound without internet.',
-  'shaper.s1.l1': 'Add your MP3s, build your library.',
-  'shaper.s1.l2': 'Listen, shape, or clip — fully offline.',
-  'shaper.s1.l3': 'Dynamic Island, widgets, the Lock Screen.',
-  'shaper.s2.l1': 'Play your music like you already do.',
-  'shaper.s2.l2': 'A beautiful, clean interface.',
-  'shaper.s2.l3': 'Nothing to relearn.',
-  'shaper.s3.l1': 'Shape your sound the way you want it.',
-  'shaper.s3.l2': 'Presets, or a five-band EQ your way.',
-  'shaper.s3.l3': 'Speed, with the original pitch kept.',
-  'shaper.s4.l1': 'Make clips of your favorite parts.',
-  'shaper.s4.l2': 'Play them whenever you want.',
-  'shaper.s4.l3': 'Straight from your library.',
+  'shaper.s1.body':
+    'Add your MP3s and you have your own library to listen to, shape, or clip. It works fully offline and hooks into the system — Dynamic Island, widgets, the Lock Screen.',
+  'shaper.s2.body':
+    'Play your music the way you already know how, in a beautiful, clean interface.',
+  'shaper.s3.body':
+    'Shape your sound the way you want: the presets, or a five-band equalizer set your way, playback speed, and the original pitch kept at any speed.',
+  'shaper.s4.body':
+    'Make clips of your favorite parts and play them whenever you want.',
 };
 
 export type UIKey = keyof typeof en;
@@ -58,18 +54,14 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
 
     'shaper.intro':
       'YouTube Music me llenaba de anuncios, y yo vivía buscando versiones slowed y sped up de mis canciones. Así que me hice mi propio reproductor: gratis, y reproduce y moldea el sonido sin internet.',
-    'shaper.s1.l1': 'Sube tus MP3, arma tu biblioteca.',
-    'shaper.s1.l2': 'Escucha, moldea o haz clips, sin conexión.',
-    'shaper.s1.l3': 'Dynamic Island, widgets, pantalla de bloqueo.',
-    'shaper.s2.l1': 'Reproduce tu música como ya sabes.',
-    'shaper.s2.l2': 'Una interfaz bonita y limpia.',
-    'shaper.s2.l3': 'Nada que reaprender.',
-    'shaper.s3.l1': 'Dale la forma que quieras a tu sonido.',
-    'shaper.s3.l2': 'Presets o ecualizador de cinco bandas.',
-    'shaper.s3.l3': 'Velocidad, con el tono original intacto.',
-    'shaper.s4.l1': 'Crea clips de tus partes favoritas.',
-    'shaper.s4.l2': 'Reprodúcelos cuando quieras.',
-    'shaper.s4.l3': 'Directo desde tu biblioteca.',
+    'shaper.s1.body':
+      'Subes tus MP3 y ya tienes tu propia biblioteca para escuchar, moldear o hacer clips. Funciona sin conexión y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo.',
+    'shaper.s2.body':
+      'Reproduce tu música como ya sabes hacerlo, en una interfaz bonita y limpia.',
+    'shaper.s3.body':
+      'Dale la forma que quieras a tu sonido: con los presets, o ajustando tú mismo el ecualizador de cinco bandas, la velocidad de reproducción y el tono original a cualquier velocidad.',
+    'shaper.s4.body':
+      'Crea clips de tus partes favoritas y reprodúcelos cuando quieras.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -83,17 +75,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
 
     'shaper.intro':
       'YouTube Music 的广告太多，而我总在找歌曲的 slowed 和 sped up 版本。所以我给自己做了一个播放器：完全免费，播放和塑形都不用网络。',
-    'shaper.s1.l1': '加入 MP3，建立你自己的资料库。',
-    'shaper.s1.l2': '听、塑形、做片段，完全离线。',
-    'shaper.s1.l3': '灵动岛、小组件、锁定屏幕。',
-    'shaper.s2.l1': '用你早已熟悉的方式播放音乐。',
-    'shaper.s2.l2': '界面漂亮而干净。',
-    'shaper.s2.l3': '无需重新学习。',
-    'shaper.s3.l1': '随心塑造你的声音。',
-    'shaper.s3.l2': '预设，或亲手调五段均衡器。',
-    'shaper.s3.l3': '改速度，原调不变。',
-    'shaper.s4.l1': '把最喜欢的部分做成片段。',
-    'shaper.s4.l2': '想什么时候听就什么时候听。',
-    'shaper.s4.l3': '直接来自你的资料库。',
+    'shaper.s1.body':
+      '加入你的 MP3，就有了自己的资料库，可以听、可以塑形、可以做片段。完全离线可用，还接入系统：灵动岛、小组件、锁定屏幕。',
+    'shaper.s2.body': '用你早已熟悉的方式播放音乐，界面漂亮而干净。',
+    'shaper.s3.body':
+      '随心塑造你的声音：用预设，或亲手调五段均衡器、播放速度，任何速度下都保持原调。',
+    'shaper.s4.body': '把最喜欢的部分做成片段，想什么时候听就什么时候听。',
   },
 };
