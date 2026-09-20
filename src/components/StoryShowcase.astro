@@ -499,6 +499,7 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
 
   const render = () => {
     const vh = window.innerHeight;
+    const vw = window.innerWidth;
 
     if (heroInner) {
       const hp = clamp(window.scrollY / vh, 0, 1);
@@ -527,19 +528,22 @@ const { id, name, introKey, introAudio, slides, stores = false } = Astro.props;
           continue;
         }
 
-        // Three speeds, one scroll: the depth IS the difference.
+        // Three speeds, one scroll: the depth IS the difference. The
+        // page scrolls down; the SCENE travels sideways — a slide enters
+        // from the right and leaves to the left, deck-style.
         s.backdrops[i].style.opacity = String(clamp(1 - at, 0, 1));
         s.backdrops[i].style.transform =
+          `translateX(${(-t * 0.04 * vw).toFixed(1)}px) ` +
           `scale(${(1.1 + clamp(t, -1, 1) * 0.1).toFixed(3)})`;
 
         s.shots[i].style.opacity = String(clamp(1 - at * 1.4, 0, 1));
         s.shots[i].style.transform =
-          `translate(-50%, ${(-t * 0.16 * vh).toFixed(1)}px) ` +
+          `translate(calc(-50% + ${(-t * 0.35 * vw).toFixed(1)}px), 0) ` +
           `scale(${(1 - Math.min(at * 0.08, 0.08)).toFixed(3)})`;
 
         s.caps[i].style.opacity = String(clamp(1 - at * 1.8, 0, 1));
         s.caps[i].style.transform =
-          `translateY(${(-t * 0.07 * vh).toFixed(1)}px)`;
+          `translateX(${(-t * 0.08 * vw).toFixed(1)}px)`;
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
