@@ -55,6 +55,17 @@ import { locales, localeNames } from '../i18n/ui';
     transition: color var(--dur-micro) var(--ease);
   }
 
+  /* The uppercase belongs to the LABEL, not to the language names —
+     those are native names Apple writes as their speakers do
+     ("Español", never "ESPAÑOL"), so the open menu keeps its own case
+     while the closed control still reads as a label. */
+  #lang-picker option {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
   #lang-picker:hover {
     color: var(--ink);
   }
