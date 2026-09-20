@@ -78,8 +78,12 @@ html[data-lang='zh'] .t[lang='zh'] {
   display: inline;
 }
 
-/* The scroll is CONTINUOUS — no snapping. The scenes are coupled to the
-   scroll position itself, so the page reads like one take, not pages. */
+/* The site pages, not free-scrolls — every section is a full-height panel
+   the viewport snaps to, the way an app screens its content. Scenes are
+   still coupled to the scroll position; the snap decides where it rests. */
+html {
+  scroll-snap-type: y mandatory;
+}
 
 body {
   background: var(--ground);
@@ -95,6 +99,8 @@ body {
    gets cleared by the top padding. */
 .panel {
   min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   display: flex;
   flex-direction: column;
   /* Content sits high in the panel — above center, below the header. */
