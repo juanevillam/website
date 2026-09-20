@@ -18,15 +18,15 @@ import type { UIKey } from '../i18n/ui';
 const shots = (
   app: string,
   size: [number, number],
-  entries: [name: string, title?: string, lines?: [UIKey, UIKey, UIKey]][]
+  entries: [name: string, title?: string, bodyKey?: UIKey][]
 ) =>
   entries.map(
-    ([name, title, lines]): StorySlide => ({
+    ([name, title, bodyKey]): StorySlide => ({
       src: `/media/${app}/${name}.png`,
       width: size[0],
       height: size[1],
       title,
-      lines,
+      bodyKey,
     })
   );
 
@@ -38,10 +38,10 @@ const SHAPER_SLIDES = shots(
   'shaper',
   [1179, 2556],
   [
-    ['ios-dark-home', 'Library', ['shaper.s1.l1', 'shaper.s1.l2', 'shaper.s1.l3']],
-    ['ios-dark-player', 'Player', ['shaper.s2.l1', 'shaper.s2.l2', 'shaper.s2.l3']],
-    ['ios-dark-shape', 'Shape', ['shaper.s3.l1', 'shaper.s3.l2', 'shaper.s3.l3']],
-    ['ios-dark-clip', 'Clips', ['shaper.s4.l1', 'shaper.s4.l2', 'shaper.s4.l3']],
+    ['ios-dark-home', 'Library', 'shaper.s1.body'],
+    ['ios-dark-player', 'Player', 'shaper.s2.body'],
+    ['ios-dark-shape', 'Shape', 'shaper.s3.body'],
+    ['ios-dark-clip', 'Clips', 'shaper.s4.body'],
   ]
 );
 

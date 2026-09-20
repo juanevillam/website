@@ -26,8 +26,7 @@ export type StorySlide = {
   height: number;
   /** Slide titles are ALWAYS English, in every locale — brand nouns. */
   title?: string;
-  /** The wedge: three lines, longest and largest first, per locale. */
-  lines?: [UIKey, UIKey, UIKey];
+  bodyKey?: UIKey;
   /** Narration clip for this slide — absent until it's recorded. */
   audio?: string;
 };
@@ -87,14 +86,10 @@ const stepCount = slides.length + 1;
           slides.map(slide => (
             <div class="cap">
               {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-              {slide.lines && (
-                <div class="wedge">
-                  {slide.lines.map(k => (
-                    <p class="wedge-line">
-                      <T k={k} />
-                    </p>
-                  ))}
-                </div>
+              {slide.bodyKey && (
+                <p class="body">
+                  <T k={slide.bodyKey} />
+                </p>
               )}
             </div>
           ))
@@ -307,31 +302,8 @@ const stepCount = slides.length + 1;
     line-height: 0.95;
   }
 
-  /* The wedge: three lines stepping down in size and ink —
-     ========  /  =======  /  ====== */
-  .wedge {
+  .cap .body {
     margin-top: 1.25rem;
-  }
-
-  .wedge-line {
-    line-height: 1.5;
-  }
-
-  .wedge-line:nth-child(1) {
-    font-size: 1.25rem;
-    color: var(--ink);
-  }
-
-  .wedge-line:nth-child(2) {
-    margin-top: 0.375rem;
-    font-size: 1.125rem;
-    color: var(--ink-2);
-  }
-
-  .wedge-line:nth-child(3) {
-    margin-top: 0.375rem;
-    font-size: 1rem;
-    color: var(--ink-3);
   }
 
   .shots {
@@ -378,7 +350,7 @@ const stepCount = slides.length + 1;
        the 14% clip still let a sliver of the sheet shots' dead corners
        through. The hairline is Apple's dark-appearance treatment. No
        bezel, no fill. */
-    border-radius: 14% 14% 14.8% 14.8% / 6.46% 6.46% 6.85% 6.85%;
+    border-radius: 14% 14% 15.9% 15.9% / 6.46% 6.46% 7.35% 7.35%;
     border: 1px solid var(--hairline);
   }
 
@@ -640,20 +612,22 @@ const stepCount = slides.length + 1;
         // crossfade in place, so the impression is that only the
         // screenshots change.
         if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 3.2, 0, 1));
+          s.intro.style.opacity = String(clamp(1 - at * 4.5, 0, 1));
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
         if (shot) {
           const [dx, dy] = DIRS[(i - 1) % DIRS.length];
+          // The move finishes in 2/3 of a step — then the slide rests.
+          const ts = clamp(t * 1.5, -1, 1);
           shot.style.opacity = at < 1.05 ? '1' : '0';
           shot.style.transform =
-            `translate(calc(-50% + ${(-t * 0.8 * vw * dx).toFixed(1)}px), ` +
-            `${(-t * 1.15 * vh * dy).toFixed(1)}px)`;
+            `translate(calc(-50% + ${(-ts * 0.8 * vw * dx).toFixed(1)}px), ` +
+            `${(-ts * 1.15 * vh * dy).toFixed(1)}px)`;
         }
 
         if (cap) {
-          cap.style.opacity = String(clamp(1 - at * 4.5, 0, 1));
+          cap.style.opacity = String(clamp(1 - at * 6, 0, 1));
           cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
       }
