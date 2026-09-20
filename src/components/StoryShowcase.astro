@@ -320,11 +320,13 @@ const stepCount = slides.length + 1;
     height: 2.25rem;
   }
 
-  /* The pitch: problem over solution, reading left. */
+  /* The pitch: problem over solution, reading left — twice the width
+     of a slide's caption column, no wider. */
   .pitch {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    max-width: calc(100% * 6 / 13 * 0.9 * 2);
   }
 
   .pitch-block .body {
@@ -409,8 +411,9 @@ const stepCount = slides.length + 1;
     z-index: 3;
     pointer-events: none;
     display: grid;
-    /* Wider than the seam (6/13) — the words need the room. */
-    grid-template-columns: calc(100% * 6 / 13) 1fr;
+    /* The words' column: 6/13 pulled in 10%, so the shot keeps its
+       room. The opener's pitch is exactly DOUBLE this width. */
+    grid-template-columns: calc(100% * 6 / 13 * 0.9) 1fr;
     /* One explicit row: it IS the stage's free height, so the shots can
        take height: 100% of something real (an auto row makes that
        percentage unresolvable and the shot overflows under the header). */
