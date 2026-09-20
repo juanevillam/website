@@ -185,7 +185,12 @@ const stepCount = slides.length + 1;
     display: flex;
     align-items: center;
     padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
-    will-change: opacity, transform;
+    will-change: opacity;
+  }
+
+  /* Same lift as the captions: content reads above center. */
+  .intro-scene .inner {
+    margin-bottom: 4rem;
   }
 
   /* One ladder for the opener: 76px tile, a name ~1.5 tiles tall, body
@@ -232,6 +237,9 @@ const stepCount = slides.length + 1;
     position: relative;
     align-self: center;
     min-height: 16rem;
+    /* Lift the words above the geometric center — the phone holds the
+       middle, the text reads a beat higher. */
+    margin-bottom: 6rem;
   }
 
   .cap {
@@ -346,6 +354,8 @@ const stepCount = slides.length + 1;
 
     .caption {
       min-height: 12rem;
+      /* Below the shot on mobile — no lift to apply. */
+      margin-bottom: 0;
     }
 
     .slide-title {
@@ -500,25 +510,23 @@ const stepCount = slides.length + 1;
           continue;
         }
 
-        // Short travel, tight fade: the move resolves in half a step —
-        // quick and clean, not a floaty ride across the viewport.
+        // The shots are a REAL slider — full travel, no fade, in through
+        // the right edge and out through the left. The words barely
+        // move: a quick crossfade in place, so the impression is that
+        // only the screenshots change.
         if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 2.2, 0, 1));
-          s.intro.style.transform =
-            `translateX(${(-t * 0.1 * vw).toFixed(1)}px)`;
+          s.intro.style.opacity = String(clamp(1 - at * 2.5, 0, 1));
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
         if (shot) {
-          shot.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
+          shot.style.opacity = at < 1.05 ? '1' : '0';
           shot.style.transform =
-            `translate(calc(-50% + ${(-t * 0.16 * vw).toFixed(1)}px), 0) ` +
-            `scale(${(1 - Math.min(at * 0.04, 0.04)).toFixed(3)})`;
+            `translate(calc(-50% + ${(-t * 0.8 * vw).toFixed(1)}px), 0)`;
         }
 
         if (cap) {
-          cap.style.opacity = String(clamp(1 - at * 2.2, 0, 1));
-          cap.style.transform = `translateX(${(-t * 0.05 * vw).toFixed(1)}px)`;
+          cap.style.opacity = String(clamp(1 - at * 2.5, 0, 1));
           cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
       }
