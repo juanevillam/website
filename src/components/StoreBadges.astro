@@ -1,5 +1,6 @@
 ---
 import { locales } from '../i18n/ui';
+import T from './T.astro';
 
 /**
  * The two store badges — Apple's and Google's OFFICIAL artwork, used
@@ -31,7 +32,10 @@ const STORES = [
 ];
 ---
 
-<div class="stores" data-reveal>
+<div class="store-block" data-reveal>
+  <span class="label"><T k="stores.soon" /></span>
+
+  <div class="stores">
   {
     STORES.map(store => (
       <a class="badge-link" href={store.href} aria-label={store.name}>
@@ -47,17 +51,26 @@ const STORES = [
       </a>
     ))
   }
+  </div>
 </div>
 
 <style>
+  /* NEITHER APP IS PUBLISHED, so the badges carry a heading that says
+     so — the same mono label every other group on the page uses. It
+     goes the day the listings go live; the badges stay. */
+  .store-block {
+    margin-top: 1.5rem;
+  }
+
   /* Apple asks for clear space of 1/10 the badge height, Google for
-     1/4 — 12px at a 48px badge, so the gap takes the larger rule. */
+     1/4 — 12px at a 48px badge, so the gap takes the larger rule, and
+     the heading clears them by the same amount. */
   .stores {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.875rem;
-    margin-top: 1.5rem;
+    margin-top: 0.875rem;
   }
 
   .badge-link {
