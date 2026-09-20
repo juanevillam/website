@@ -281,7 +281,7 @@ const stepCount = slides.length + 1;
     margin-top: 2.25rem;
   }
 
-  .intro-actions :global(.store-block) {
+  .intro-actions :global(.stores) {
     margin-top: 0;
   }
 
@@ -356,10 +356,13 @@ const stepCount = slides.length + 1;
     margin: 0 auto;
   }
 
+  /* The words start at the phone's own top edge, which is also where
+     the opener's lockup sits — so the shared lockup barely travels
+     between the two (it was a 171px trip when this was centred). */
   .caption {
     position: relative;
     z-index: 1;
-    align-self: center;
+    align-self: start;
     min-height: 16rem;
   }
 
@@ -394,11 +397,21 @@ const stepCount = slides.length + 1;
 
   /* The strip lives in its OWN clipped pane, so a travelling shot can
      never cross into the caption column and read through the words. */
+  /* The pane still clips a travelling shot out of the words' column,
+     but it fades at its edges instead of slicing — a hard cut was the
+     one thing that gave the seam away mid-move. */
   .shots {
     position: relative;
     height: 100%;
     min-height: 0;
     overflow: hidden;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 9%,
+      #000 91%,
+      transparent
+    );
   }
 
   .strip {
@@ -414,8 +427,9 @@ const stepCount = slides.length + 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Air for the contact shadow, so the pane never crops it. */
-    padding: 1.25rem 0;
+    /* Air for the glow and the contact shadow, so the pane never
+       crops either. */
+    padding: 3rem 0;
   }
 
   .shot-wrap {
@@ -434,9 +448,9 @@ const stepCount = slides.length + 1;
     width: 100%;
     height: 100%;
     max-width: none;
-    transform: scale(1.35);
-    filter: blur(80px) saturate(1.6) brightness(1.1);
-    opacity: 0.55;
+    transform: scale(1.22);
+    filter: blur(64px) saturate(1.7) brightness(1.15);
+    opacity: 0.7;
     mask-image: radial-gradient(
       ellipse 60% 55% at 50% 50%,
       #000 0%,
@@ -700,8 +714,9 @@ const stepCount = slides.length + 1;
           s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
           continue;
         }
-        // A pure crossfade — the words arrive in place, they don't ride.
-        s.caps[i].style.opacity = String(clamp(1 - at * 2.6, 0, 1));
+        // A pure crossfade, and a quick one — the words arrive in
+        // place, they don't ride and they don't linger.
+        s.caps[i].style.opacity = String(clamp(1 - at * 4.5, 0, 1));
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
