@@ -188,17 +188,28 @@ const stepCount = slides.length + 1;
     will-change: opacity, transform;
   }
 
-  /* The name at the size Rockstar titles a scene — the opener's whole job. */
+  /* One ladder for the opener: 76px tile, a name ~1.5 tiles tall, body
+     text, then the two control rows — each gap a step of the same scale
+     instead of the ad-hoc margins that had the name at 2x the icon. */
   .app-title {
-    margin-top: 1.25rem;
-    font-size: clamp(3rem, 8vw, 6rem);
+    margin-top: 1.5rem;
+    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
     font-weight: 800;
     letter-spacing: var(--track-display);
     line-height: 0.95;
   }
 
   .intro-copy {
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
+  }
+
+  /* The two control rows read as one group: air above, tight between. */
+  .intro-scene :global(.stores) {
+    margin-top: 2rem;
+  }
+
+  .intro-scene :global(.listen) {
+    margin-top: 1rem;
   }
 
   /* ---------- the screenshot slides ---------- */
@@ -489,23 +500,25 @@ const stepCount = slides.length + 1;
           continue;
         }
 
+        // Short travel, tight fade: the move resolves in half a step —
+        // quick and clean, not a floaty ride across the viewport.
         if (i === 0 && s.intro) {
-          s.intro.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
+          s.intro.style.opacity = String(clamp(1 - at * 2.2, 0, 1));
           s.intro.style.transform =
-            `translateX(${(-t * 0.15 * vw).toFixed(1)}px)`;
+            `translateX(${(-t * 0.1 * vw).toFixed(1)}px)`;
           s.intro.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
 
         if (shot) {
-          shot.style.opacity = String(clamp(1 - at * 1.4, 0, 1));
+          shot.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
           shot.style.transform =
-            `translate(calc(-50% + ${(-t * 0.35 * vw).toFixed(1)}px), 0) ` +
-            `scale(${(1 - Math.min(at * 0.08, 0.08)).toFixed(3)})`;
+            `translate(calc(-50% + ${(-t * 0.16 * vw).toFixed(1)}px), 0) ` +
+            `scale(${(1 - Math.min(at * 0.04, 0.04)).toFixed(3)})`;
         }
 
         if (cap) {
-          cap.style.opacity = String(clamp(1 - at * 1.8, 0, 1));
-          cap.style.transform = `translateX(${(-t * 0.08 * vw).toFixed(1)}px)`;
+          cap.style.opacity = String(clamp(1 - at * 2.2, 0, 1));
+          cap.style.transform = `translateX(${(-t * 0.05 * vw).toFixed(1)}px)`;
           cap.style.pointerEvents = at < 0.5 ? 'auto' : 'none';
         }
       }
