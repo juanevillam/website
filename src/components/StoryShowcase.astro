@@ -86,6 +86,7 @@ const stepCount = slides.length + 1;
   <div class="stage">
     <!-- The opener, full-bleed on the ground. -->
     <div class="intro-scene">
+      <div class="intro-body">
       <div class="inner">
         <div class="lockup-anchor-big" aria-hidden="true"></div>
 
@@ -105,30 +106,33 @@ const stepCount = slides.length + 1;
             {stores && <StoreBadges />}
 
             <ListenPill audio={introAudio} story={id} />
-
-            {
-              linkGroups.length > 0 && (
-                <nav class="intro-links">
-                  {linkGroups.map(group => (
-                    <div class="link-group">
-                      <span class="label">
-                        <T k={group.key} />
-                      </span>
-                      <div class="group-links">
-                        {group.links.map(link => (
-                          <a href={link.href}>
-                            <T k={link.key} />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </nav>
-              )
-            }
           </div>
         </div>
       </div>
+      </div>
+
+      {
+        linkGroups.length > 0 && (
+          <footer class="intro-foot">
+            <nav class="inner intro-links">
+              {linkGroups.map(group => (
+                <div class="link-group">
+                  <span class="label">
+                    <T k={group.key} />
+                  </span>
+                  <div class="group-links">
+                    {group.links.map(link => (
+                      <a href={link.href}>
+                        <T k={link.key} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+          </footer>
+        )
+      }
     </div>
 
     <!-- The slides' scene, on the ground with the opener. -->
@@ -228,18 +232,22 @@ const stepCount = slides.length + 1;
 
   /* ---------- the opener ---------- */
 
+  /* Content centered in the panel, the page foot pinned under it. */
   .intro-scene {
     position: absolute;
     inset: 0;
     z-index: 1;
     display: flex;
-    align-items: center;
-    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 1.5rem;
+    flex-direction: column;
+    padding: 5rem clamp(1.25rem, 4vw, 2.5rem) 2rem;
     will-change: opacity;
   }
 
-  .intro-scene .inner {
-    margin-bottom: 3rem;
+  .intro-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 0;
   }
 
   .intro-grid {
@@ -264,20 +272,13 @@ const stepCount = slides.length + 1;
     max-width: none;
   }
 
-  /* The opener closes like a product page's foot: the two store slots
-     lead on the left, the link columns stand to their right, one
-     hairline over the whole band. Everything is visible at rest — no
-     accordions to open, nothing that shifts. */
+  /* The download call sits right under the words it belongs to. */
   .intro-actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 2rem 3rem;
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--hairline);
-    max-width: calc(100% * 6 / 13 * 0.81 * 1.5);
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: 2.25rem;
   }
 
   .intro-actions :global(.stores) {
@@ -286,13 +287,20 @@ const stepCount = slides.length + 1;
   }
 
   .intro-actions :global(.listen) {
-    margin-top: 1rem;
+    margin-top: 0;
+  }
+
+  /* The page foot: the legal and help pages, under one hairline at the
+     bottom of the panel — where a foot belongs. */
+  .intro-foot {
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--hairline);
   }
 
   /* The two link columns — a header and its pages, always shown. */
   .intro-links {
     display: flex;
-    gap: 3rem;
+    gap: 4rem;
   }
 
   .link-group .label {
