@@ -27,6 +27,8 @@ const en = {
   'legal.privacy': 'Privacy Policy',
   'legal.support': 'Support',
   'legal.delete': 'Delete Account',
+  'links.legal': 'Legal',
+  'links.help': 'Help',
   'pitch.problem': 'The Problem',
   'pitch.solution': 'The Solution',
 
@@ -36,8 +38,6 @@ const en = {
     'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
   'shaper.solution':
     'A free app where you add your MP3s and it works without internet: change the speed live, shape the equalizer and the effects — preserve pitch, echo, next room — and make clips of your favorite parts.',
-  'shaper.closing':
-    'I built it for me, like all my apps. If it helps someone else, great.',
   'shaper.s1.body':
     'Add your MP3s and you have your own library to listen to, shape, or clip. It works fully offline and hooks into the system — Dynamic Island, widgets, the Lock Screen.',
   'shaper.s2.body':
@@ -63,6 +63,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.privacy': 'Política de privacidad',
     'legal.support': 'Soporte',
     'legal.delete': 'Eliminar cuenta',
+    'links.legal': 'Legal',
+    'links.help': 'Ayuda',
     'pitch.problem': 'El problema',
     'pitch.solution': 'La solución',
 
@@ -72,8 +74,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
     'shaper.solution':
       'Una app gratis donde subes tus MP3 y funciona sin internet: cambias la velocidad en vivo, moldeas el ecualizador y los efectos — preservar el tono, eco, next room — y haces clips de tus partes favoritas.',
-    'shaper.closing':
-      'La hice para mí, como todas mis apps. Si a alguien más le sirve, genial.',
     'shaper.s1.body':
       'Subes tus MP3 y ya tienes tu propia biblioteca para escuchar, moldear o hacer clips. Funciona sin conexión y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo.',
     'shaper.s2.body':
@@ -94,6 +94,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.privacy': '隐私政策',
     'legal.support': '支持',
     'legal.delete': '删除账户',
+    'links.legal': '法律',
+    'links.help': '帮助',
     'pitch.problem': '问题',
     'pitch.solution': '解决方案',
 
@@ -103,8 +105,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',
     'shaper.solution':
       '一个免费的应用：加入你的 MP3，不用网络就能用——实时改变速度，亲手调均衡器和音效（保持原调、回声、Next Room），把最喜欢的部分做成片段。',
-    'shaper.closing':
-      '我做它是为了自己，我所有的应用都是。如果对别人也有用，那就太好了。',
     'shaper.s1.body':
       '加入你的 MP3，就有了自己的资料库，可以听、可以塑形、可以做片段。完全离线可用，还接入系统：灵动岛、小组件、锁定屏幕。',
     'shaper.s2.body': '用你早已熟悉的方式播放音乐，界面漂亮而干净。',

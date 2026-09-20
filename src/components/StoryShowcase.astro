@@ -34,17 +34,20 @@ export type StorySlide = {
 type Props = {
   id: string;
   name: string;
-  /** The opener reads as a startup pitch: problem, solution, one
-   *  personal closing line. */
-  pitch: { problem: UIKey; solution: UIKey; closing: UIKey };
+  /** The opener reads as a startup pitch: problem and solution. */
+  pitch: { problem: UIKey; solution: UIKey };
   /** The app's intro narration — why it exists, in Juan's voice. */
   introAudio?: string;
   slides: StorySlide[];
   /** Show the App Store / Google Play slots (apps, not web products). */
   stores?: boolean;
   /** Legal and support pages, linked from the opener — the stores
-   *  require them reachable from outside the app. */
-  links?: { key: UIKey; href: string }[];
+   *  require them reachable from outside the app. Grouped: each group
+   *  renders as a small accordion. */
+  linkGroups?: {
+    key: UIKey;
+    links: { key: UIKey; href: string }[];
+  }[];
 };
 
 const {
@@ -54,7 +57,7 @@ const {
   introAudio,
   slides,
   stores = false,
-  links = [],
+  linkGroups = [],
 } = Astro.props;
 
 // The deck: step 0 is the opener, then one step per screenshot.
@@ -94,7 +97,6 @@ const stepCount = slides.length + 1;
             <span class="label"><T k="pitch.solution" /></span>
             <p class="body"><T k={pitch.solution} /></p>
           </div>
-          <p class="pitch-closing"><T k={pitch.closing} /></p>
         </div>
 
         {stores && <StoreBadges />}
@@ -102,12 +104,21 @@ const stepCount = slides.length + 1;
         <ListenPill audio={introAudio} story={id} />
 
         {
-          links.length > 0 && (
+          linkGroups.length > 0 && (
             <nav class="intro-links" data-reveal>
-              {links.map(link => (
-                <a href={link.href}>
-                  <T k={link.key} />
-                </a>
+              {linkGroups.map(group => (
+                <details>
+                  <summary class="label">
+                    <T k={group.key} />
+                  </summary>
+                  <div class="group-links">
+                    {group.links.map(link => (
+                      <a href={link.href}>
+                        <T k={link.key} />
+                      </a>
+                    ))}
+                  </div>
+                </details>
               ))}
             </nav>
           )
@@ -244,25 +255,6 @@ const stepCount = slides.length + 1;
     margin-bottom: 4rem;
   }
 
-  .intro-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem 1.75rem;
-    margin-top: 2.5rem;
-  }
-
-  .intro-links a {
-    font-size: 0.8125rem;
-    color: var(--ink-3);
-    text-decoration-color: transparent;
-  }
-
-  .intro-links a:hover {
-    color: var(--ink);
-    text-decoration-color: var(--ink-3);
-  }
-
   /* ---------- the shared lockup ---------- */
 
   /* Icon + name in one row, drawn ONCE per story. The two anchors below
@@ -302,23 +294,75 @@ const stepCount = slides.length + 1;
     height: 2.25rem;
   }
 
-  /* The pitch: problem, solution, one personal line — scannable, not a
-     wall of prose. */
+  /* The pitch, deck-style: problem and solution side by side, each
+     column reading left-aligned under its mono label. */
   .pitch {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    margin-top: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    max-width: 52rem;
+    margin-top: 1.5rem;
+    text-align: left;
   }
 
   .pitch-block .body {
     margin-top: 0.5rem;
   }
 
-  .pitch-closing {
-    color: var(--ink-3);
-    font-size: 0.9375rem;
+  @media (max-width: 48rem) {
+    .pitch {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+  }
+
+  /* The link accordions: Legal and Help, quiet until asked. */
+  .intro-links {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3rem;
+    margin-top: 2.5rem;
+  }
+
+  .intro-links summary {
+    list-style: none;
+    cursor: pointer;
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .intro-links summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .intro-links summary::after {
+    content: ' ▾';
+  }
+
+  .intro-links details[open] summary,
+  .intro-links summary:hover {
+    color: var(--ink);
+  }
+
+  .group-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .group-links a {
+    font-size: 0.8125rem;
+    color: var(--ink-2);
+    text-decoration-color: transparent;
+    transition:
+      color var(--dur-micro) var(--ease),
+      text-decoration-color var(--dur-micro) var(--ease);
+  }
+
+  .group-links a:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink-3);
   }
 
   /* The two control rows read as one group: air above, tight between. */
@@ -335,9 +379,11 @@ const stepCount = slides.length + 1;
   /* Caption on the 4 side of the Monolith seam, the shot on the 9. */
   .stage-grid {
     position: relative;
-    /* The slider is the TOP layer: a shot crossing the stage wipes over
-       the caption and the lockup — the text changes underneath it. */
+    /* The slider is the TOP layer visually — but the mouse must reach
+       the opener's links through it, so the layer itself is deaf and
+       only the captions re-enable pointer events. */
     z-index: 3;
+    pointer-events: none;
     display: grid;
     /* One rung wider than the seam (5/13) — the words need the room. */
     grid-template-columns: calc(100% * 5 / 13) 1fr;
@@ -376,6 +422,8 @@ const stepCount = slides.length + 1;
     z-index: -1;
     background: var(--ground);
     opacity: var(--occlude, 0);
+    /* Purely visual — it must never eat the opener's clicks. */
+    pointer-events: none;
   }
 
   .cap {
