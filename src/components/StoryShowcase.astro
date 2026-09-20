@@ -97,6 +97,13 @@ const stepCount = slides.length + 1;
             </div>
           ))
         }
+        {
+          stores && (
+            <div class="slider-stores">
+              <StoreBadges />
+            </div>
+          )
+        }
       </div>
 
       <div class="shots">
@@ -191,6 +198,7 @@ const stepCount = slides.length + 1;
   .intro-scene {
     position: absolute;
     inset: 0;
+    z-index: 1;
     display: flex;
     align-items: center;
     padding: 5.5rem clamp(1.25rem, 4vw, 2.5rem) 3.5rem;
@@ -213,6 +221,9 @@ const stepCount = slides.length + 1;
     position: absolute;
     top: 0;
     left: 0;
+    /* Above the opener, BELOW the shots: a passing screenshot covers the
+       lockup and the words, never the other way around. */
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 1.25rem;
@@ -257,6 +268,9 @@ const stepCount = slides.length + 1;
   /* Caption on the 4 side of the Monolith seam, the shot on the 9. */
   .stage-grid {
     position: relative;
+    /* The slider is the TOP layer: a shot crossing the stage wipes over
+       the caption and the lockup — the text changes underneath it. */
+    z-index: 3;
     display: grid;
     grid-template-columns: var(--seam) 1fr;
     /* One explicit row: it IS the stage's free height, so the shots can
@@ -271,10 +285,19 @@ const stepCount = slides.length + 1;
   .caption {
     position: relative;
     align-self: center;
-    min-height: 16rem;
+    min-height: 20rem;
     /* Lift the words above the geometric center — the phone holds the
        middle, the text reads a beat higher. */
     margin-bottom: 6rem;
+  }
+
+  /* The store slots ride the slides too, parked under the words. */
+  .slider-stores {
+    position: absolute;
+    inset: auto auto 0 0;
+    width: max-content;
+    opacity: 0;
+    will-change: opacity;
   }
 
   .cap {
@@ -338,14 +361,18 @@ const stepCount = slides.length + 1;
     /* The corner is the PHONE'S, not the App Store's — 55pt on a 393pt
        screen, i.e. 14% of the width / 6.46% of the height, measured so a
        full-height sheet's own display-concentric corners don't leave black
-       notches (the full derivation lived in Showcase.astro's history). The
-       hairline is Apple's dark-appearance treatment. No bezel, no fill. */
-    border-radius: 14% / 6.46%;
+       notches (the full derivation lived in Showcase.astro's history).
+       The BOTTOM corners crop a beat tighter (+~2px at render size) —
+       the 14% clip still let a sliver of the sheet shots' dead corners
+       through. The hairline is Apple's dark-appearance treatment. No
+       bezel, no fill. */
+    border-radius: 14% 14% 14.8% 14.8% / 6.46% 6.46% 6.85% 6.85%;
     border: 1px solid var(--hairline);
   }
 
   .dots {
     position: relative;
+    z-index: 4;
     display: flex;
     justify-content: center;
     gap: 0.875rem;
@@ -407,6 +434,11 @@ const stepCount = slides.length + 1;
     .lockup-name {
       font-size: 2rem;
     }
+
+    /* No room under the caption on a phone — the opener's slots serve. */
+    .slider-stores {
+      display: none;
+    }
   }
 </style>
 
@@ -440,6 +472,7 @@ const stepCount = slides.length + 1;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
+    sliderStores: HTMLElement | null;
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
@@ -495,6 +528,7 @@ const stepCount = slides.length + 1;
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
+      sliderStores: root.querySelector<HTMLElement>('.slider-stores'),
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
@@ -567,6 +601,16 @@ const stepCount = slides.length + 1;
         s.lockup.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
           `scale(${scale.toFixed(4)})`;
+      }
+
+      // The store slots fade in once the deck leaves the opener and
+      // stay for every screenshot.
+      if (s.sliderStores) {
+        s.sliderStores.style.opacity = reduceMotion
+          ? active > 0
+            ? '1'
+            : '0'
+          : String(clamp((p - 0.55) * 3, 0, 1));
       }
 
       for (let i = 0; i < s.steps.length; i++) {
