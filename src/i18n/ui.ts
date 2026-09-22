@@ -35,8 +35,6 @@ const en = {
   'legal.delete': 'Delete Account',
   'links.legal': 'Legal',
   'links.help': 'Help',
-  'pitch.problem': 'The Problem',
-  'pitch.solution': 'The Solution',
 
   'hero.tagline': "This is my work. I'll tell you the story myself.",
 
@@ -78,8 +76,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': 'Eliminar cuenta',
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
-    'pitch.problem': 'El problema',
-    'pitch.solution': 'La solución',
 
     'hero.tagline': 'Esta es mi obra. Te la cuento yo mismo.',
 
@@ -116,8 +112,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': '删除账户',
     'links.legal': '法律',
     'links.help': '帮助',
-    'pitch.problem': '问题',
-    'pitch.solution': '解决方案',
 
     'hero.tagline': '这是我的作品。我亲自讲给你听。',
 
