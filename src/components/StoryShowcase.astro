@@ -157,8 +157,17 @@ const stepCount = slides.length + 1;
           <div class="actions-anchor-small" aria-hidden="true"></div>
         </div>
 
-        <!-- Every shot in one stack; the scroll cross-fades them. -->
+        <!-- Every shot in one stack; the scroll cross-fades them. The
+             ambient layer under it is the same picture again, spilling
+             far past the phone as room light. -->
         <div class="shots">
+          <div class="ambients" aria-hidden="true">
+            {
+              slides.map(slide => (
+                <img class="ambient" src={slide.src} alt="" loading="lazy" decoding="async" />
+              ))
+            }
+          </div>
           {
               slides.map(slide => (
                 <div class="slot">
@@ -496,7 +505,44 @@ const stepCount = slides.length + 1;
     display: grid;
   }
 
+  /* The room light: the slide's own picture again, blown far past the
+     phone and masked to an ellipse that fades out long before its own
+     edge — so it reads as light the screen is casting, with no shape
+     and no rectangle of its own. It is the same trick the tight halo
+     uses, at a scale that fills the panel. Deliberately NOT a
+     full-viewport blur of the shot: that was tried and read as a muddy
+     wash over everything. */
+  .ambients {
+    position: absolute;
+    inset: -45% -60%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .ambient {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    filter: blur(110px) saturate(1.8) brightness(0.85);
+    opacity: 0;
+    mask-image: radial-gradient(
+      ellipse 45% 40% at 50% 50%,
+      #000 0%,
+      rgba(0, 0, 0, 0.45) 45%,
+      transparent 72%
+    );
+  }
+
+  .ambient:first-child {
+    opacity: 1;
+  }
+
   .slot {
+    position: relative;
+    z-index: 1;
     grid-area: 1 / 1;
     min-height: 0;
     display: flex;
@@ -715,6 +761,7 @@ const stepCount = slides.length + 1;
     intro: HTMLElement | null;
     float: HTMLElement | null;
     slots: HTMLElement[];
+    ambients: HTMLElement[];
     caps: HTMLElement[];
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
@@ -777,6 +824,7 @@ const stepCount = slides.length + 1;
       intro: root.querySelector<HTMLElement>('.intro-scene'),
       float: root.querySelector<HTMLElement>('.float'),
       slots: [...root.querySelectorAll<HTMLElement>('.slot')],
+      ambients: [...root.querySelectorAll<HTMLElement>('.ambient')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
@@ -867,6 +915,9 @@ const stepCount = slides.length + 1;
           const o = i === base ? 1 - w : i === base + 1 ? w : 0;
           s.slots[i].style.opacity = String(o);
           s.slots[i].style.transform = `scale(${(1 - (1 - o) * 0.03).toFixed(4)})`;
+          // The room light rides the SAME weight, so the glow can never
+          // be lit by a picture that is no longer on screen.
+          if (s.ambients[i]) s.ambients[i].style.opacity = String(o * 0.5);
         }
       }
 

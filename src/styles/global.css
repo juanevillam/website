@@ -87,6 +87,15 @@ html[data-lang='zh'] .t[lang='zh'] {
    still coupled to the scroll position; the snap decides where it rests. */
 html {
   scroll-snap-type: y mandatory;
+  /* No scrollbar, on Juan's call: the page is snapped full-height
+     panels, so the bar measures a distance nobody is reading. Note it
+     cuts an affordance — the dots are gone too, so the only cue that
+     there is more below is the content itself. */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
