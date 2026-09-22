@@ -58,6 +58,8 @@ const en = {
     'Pick the exact seconds you love — the whole track below, the zoom above.',
   'shaper.s4.p2':
     'Save them as clips: your favorite parts, documented and ready to loop whenever you want.',
+  'shaper.finale':
+    'Four screens, one idea: your music, exactly the way you want it.',
 };
 
 export type UIKey = keyof typeof en;
@@ -99,6 +101,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Elige los segundos exactos que te encantan — la canción entera abajo, el zoom arriba.',
     'shaper.s4.p2':
       'Guárdalos como clips: tus partes favoritas, documentadas y listas para repetir en loop cuando quieras.',
+    'shaper.finale':
+      'Cuatro pantallas, una idea: tu música, exactamente como la quieres.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -133,5 +137,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '实时改变播放速度——slowed、sped up，随你心情——还有保持原调、回声、Next Room 这些音效。',
     'shaper.s4.p1': '选出你最爱的那几秒——整首歌在下面，放大在上面。',
     'shaper.s4.p2': '存成片段：你最喜欢的部分，被记录下来，想循环就循环。',
+    'shaper.finale': '四个界面，一个想法：你的音乐，完全按你想要的方式。',
   },
 };
