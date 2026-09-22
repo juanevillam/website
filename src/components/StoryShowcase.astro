@@ -38,6 +38,8 @@ type Props = {
   name: string;
   /** The opener reads as a startup pitch: problem and solution. */
   pitch: { problem: UIKey; solution: UIKey };
+  /** The closing line, shown as the shots fan out. */
+  finale?: UIKey;
   /** The app's intro narration — why it exists, in Juan's voice. */
   introAudio?: string;
   slides: StorySlide[];
@@ -56,14 +58,16 @@ const {
   id,
   name,
   pitch,
+  finale,
   introAudio,
   slides,
   stores = false,
   linkGroups = [],
 } = Astro.props;
 
-// The scroll rail: one viewport for the opener, one per screenshot.
-const stepCount = slides.length + 1;
+// The scroll rail: one viewport for the opener, one per screenshot, and
+// a last one where they all fan out together.
+const stepCount = slides.length + (finale ? 2 : 1);
 ---
 
 <section
@@ -81,6 +85,7 @@ const stepCount = slides.length + 1;
         <div class="step" data-index={i + 1} data-audio={slide.audio} />
       ))
     }
+    {finale && <div class="step" data-index={slides.length + 1} />}
   </div>
 
   <div class="stage">
@@ -148,6 +153,13 @@ const stepCount = slides.length + 1;
                 ))}
               </div>
             ))
+          }
+          {
+            finale && (
+              <div class="cap cap-finale">
+                <p class="body"><T k={finale} /></p>
+              </div>
+            )
           }
         </div>
 
@@ -458,6 +470,19 @@ const stepCount = slides.length + 1;
 
   /* The slide title IS the opener's name size — one ladder, and one
      1.25rem step everywhere: lockup → title → description. */
+  /* The closing line has no index and no title — it is the caption of
+     the fan, not of a fifth screen. */
+  .cap-finale {
+    padding-top: 3.5rem;
+  }
+
+  .cap-finale .body {
+    margin-top: 0;
+    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
   .cap-index {
     display: block;
     margin-bottom: 0.625rem;
@@ -751,6 +776,7 @@ const stepCount = slides.length + 1;
     intro: HTMLElement | null;
     float: HTMLElement | null;
     slots: HTMLElement[];
+    shotsBox: HTMLElement | null;
     caps: HTMLElement[];
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
@@ -813,6 +839,7 @@ const stepCount = slides.length + 1;
       intro: root.querySelector<HTMLElement>('.intro-scene'),
       float: root.querySelector<HTMLElement>('.float'),
       slots: [...root.querySelectorAll<HTMLElement>('.slot')],
+      shotsBox: root.querySelector<HTMLElement>('.shots'),
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
@@ -899,10 +926,35 @@ const stepCount = slides.length + 1;
             : 1
           : smooth(clamp((frac - 0.3) / 0.4, 0, 1));
 
-        for (let i = 0; i < s.slots.length; i++) {
+        // THE FAN. Past the last slide the stack opens: every shot
+        // that has been passing one at a time is suddenly all of them,
+        // spread and angled across the pane. Same four pictures, one
+        // more arrangement — it closes the story instead of cutting it.
+        const last = s.steps.length - 2;
+        const fan = reduceMotion
+          ? p > last + 0.5
+            ? 1
+            : 0
+          : smooth(clamp(p - last, 0, 1));
+        const n = s.slots.length;
+        const paneW = s.shotsBox?.clientWidth ?? 0;
+        const step = paneW * 0.22;
+
+        for (let i = 0; i < n; i++) {
           const o = i === base ? 1 - w : i === base + 1 ? w : 0;
-          s.slots[i].style.opacity = String(o);
-          s.slots[i].style.transform = `scale(${(1 - (1 - o) * 0.03).toFixed(4)})`;
+          // Fanned, every shot is present whatever the cross-fade says.
+          const shown = Math.max(o, fan);
+          const mid = (n - 1) / 2;
+          const x = (i - mid) * step * fan;
+          const rot = (i - mid) * 5 * fan;
+          const settle = 1 - (1 - o) * 0.03 * (1 - fan);
+          const shrink = 1 - 0.5 * fan;
+          s.slots[i].style.opacity = String(shown);
+          s.slots[i].style.transform =
+            `translateX(${x.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) ` +
+            `scale(${(settle * shrink).toFixed(4)})`;
+          // Stack them so the fan reads left-to-right, not inside-out.
+          s.slots[i].style.zIndex = String(fan > 0 ? n - i : 1);
         }
       }
 
@@ -959,15 +1011,20 @@ const stepCount = slides.length + 1;
     }
   };
 
-  let ticking = false;
+  // A boolean "already scheduled" guard DEADLOCKS: if the frame it is
+  // waiting on never runs — a hidden tab, a backgrounded window — the
+  // flag stays set and the scene never renders again, even once the
+  // page is visible. Replacing the pending frame instead can't get
+  // stuck, and the visibility handler catches up whatever was missed.
+  let frame = 0;
   const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      render();
-    });
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => render());
   };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) render(true);
+  });
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
