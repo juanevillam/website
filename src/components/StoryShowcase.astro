@@ -407,12 +407,14 @@ const stepCount = slides.length + (fan ? 3 : 1);
     inset: 0;
     z-index: 2;
     padding: var(--stage-top) clamp(1.25rem, 4vw, 2.5rem) var(--stage-bottom);
-    opacity: var(--float-in, 0);
+    /* The scene is ALWAYS there on desktop — the deck peeks in at the
+       opener's right edge (--peek) and only the text column waits for
+       --float-in. Phones keep the whole scene gated instead: a peeking
+       phone over a single-column opener is collision, not cinema. */
     /* It covers the whole stage, including the opener beneath it — so
        the layer is DEAF and only the captions take events back. Without
        this it silently eats every hover and click on the opener. */
     pointer-events: none;
-    will-change: opacity;
   }
 
   /* As the fan opens, the LAYOUT ITSELF reorders: the text column hands
@@ -434,6 +436,8 @@ const stepCount = slides.length + (fan ? 3 : 1);
     display: flex;
     flex-direction: column;
     min-height: 0;
+    opacity: var(--float-in, 0);
+    will-change: opacity;
   }
 
   /* The words start at the phone's own top edge, which is also where
@@ -513,6 +517,11 @@ const stepCount = slides.length + (fan ? 3 : 1);
       calc(var(--stage-bottom) * -1);
     min-height: 0;
     display: grid;
+    /* The PEEK: at the opener the whole deck stands off to the right,
+       cropped by the stage's edge — the story is already on stage
+       before it starts. Scrolling in walks it to its own column. */
+    transform: translateX(calc(var(--peek, 0) * 58%));
+    will-change: transform;
   }
 
 
@@ -650,12 +659,22 @@ const stepCount = slides.length + (fan ? 3 : 1);
     }
 
     .col-text {
+      /* display: contents throws the box away, and its opacity with
+         it — the whole scene gates on --float-in here instead. */
       display: contents;
+    }
+
+    .float {
+      opacity: var(--float-in, 0);
+      will-change: opacity;
     }
 
     .shots {
       order: -1;
       margin: 0;
+      /* No peek on a single column — the deck would stand on the
+         opener's own words. */
+      transform: none;
     }
 
     .caption {
@@ -890,61 +909,88 @@ const stepCount = slides.length + (fan ? 3 : 1);
               : '0'
             : String(clamp((p - 0.35) * 2.4, 0, 1) * (1 - loopW))
         );
+        // The deck's PEEK: parked off the right edge at the opener,
+        // walked into its column across the first step — and walked
+        // back out on the return, so the loop's landing state matches
+        // the opener it hands the scroll to.
+        const peek = reduceMotion
+          ? p < 0.5 || loopW >= 0.5
+            ? 1
+            : 0
+          : Math.max(1 - smooth(clamp(p, 0, 1)), loopW);
+        s.float.style.setProperty('--peek', peek.toFixed(4));
       }
 
       // How far the closing fan has opened — several layers read it:
       // the shots spread on it, the grid REBALANCES on it (the text
       // column gives the pane its width back), and the store row rides
       // it home. One weight, so they all move as one gesture.
+      // The return also CLOSES the fan — the spread regroups into the
+      // stack as it walks out, so the landing state is the opener's
+      // peeked deck exactly, not a spread caught mid-teleport.
       const fanW = !s.fan
         ? 0
         : reduceMotion
-          ? p > s.steps.length - 2.5
+          ? p > s.steps.length - 2.5 && loopW < 0.5
             ? 1
             : 0
-          : smooth(clamp(p - (s.steps.length - 3), 0, 1));
+          : smooth(clamp(p - (s.steps.length - 3), 0, 1)) * (1 - loopW);
       s.float?.style.setProperty('--fanw', fanW.toFixed(4));
 
-      // The shots cross-fade in place, no travel. The two involved are
-      // COMPLEMENTARY — their opacities always sum to 1 — so the stack
-      // can never go blank between them, which is what a pair of
-      // independent fades does as soon as you make them quick. Speed
-      // comes from compressing WHEN the swap happens (the middle ~40%
-      // of the step), not from fading each one out faster.
+      // THE DECK. The shots are a visible stack of cards: the ones
+      // still to come peek out behind the front one — edges showing,
+      // barely turned — and each step pulls the next card forward. A
+      // passed card lifts toward the viewer and fades, the way a card
+      // comes off the top of a deck. The fan is then no surprise: the
+      // deck was on the table the whole time, the finale just spreads
+      // it.
       {
-        const pos = clamp(p, 1, s.steps.length - 1) - 1;
-        const base = Math.min(Math.floor(pos), s.slots.length - 1);
-        const frac = pos - base;
-        const w = reduceMotion
-          ? frac < 0.5
-            ? 0
-            : 1
-          : smooth(clamp((frac - 0.3) / 0.4, 0, 1));
-
-        // THE FAN. Past the last slide the stack opens: every shot
-        // that has been passing one at a time is suddenly all of them,
-        // spread and angled across the pane. Same four pictures, one
-        // more arrangement — it closes the story instead of cutting it.
-        const fan = fanW;
         const n = s.slots.length;
+        // The return riffles the deck back to the first card while it
+        // walks out — mostly cropped by the edge, but it means the
+        // sliver the loop lands on IS the sliver the opener shows.
+        const pos = clamp(p - 1, 0, n - 1) * (1 - loopW);
+        const fan = fanW;
         const paneW = s.shotsBox?.clientWidth ?? 0;
-        const step = paneW * 0.22;
+        const mid = (n - 1) / 2;
 
         for (let i = 0; i < n; i++) {
-          const o = i === base ? 1 - w : i === base + 1 ? w : 0;
-          // Fanned, every shot is present whatever the cross-fade says.
-          const shown = Math.max(o, fan);
-          const mid = (n - 1) / 2;
-          const x = (i - mid) * step * fan;
-          const rot = (i - mid) * 5 * fan;
-          const settle = 1 - (1 - o) * 0.03 * (1 - fan);
-          const shrink = 1 - 0.5 * fan;
-          s.slots[i].style.opacity = String(shown);
+          // Depth relative to the front card: <0 passed, 0 front,
+          // >0 waiting in the stack.
+          const d = reduceMotion ? i - Math.round(pos) : i - pos;
+
+          let op: number, x: number, rot: number, sc: number;
+          if (d < 0) {
+            // Lifted off the top: scales up toward the viewer and
+            // fades, gone within half a step. No sideways travel, so
+            // it can never cross into the words' column.
+            const g = smooth(clamp(-d / 0.55, 0, 1));
+            op = 1 - g;
+            x = 0;
+            rot = -2 * g;
+            sc = 1 + 0.06 * g;
+          } else {
+            // Waiting in the stack: three edges visible behind the
+            // front card, each a small step over and a hair turned.
+            const dd = Math.min(d, 3);
+            op = clamp(1 - dd * 0.28, 0, 1);
+            x = dd * paneW * 0.045;
+            rot = dd * 2.5;
+            sc = 1 - dd * 0.06;
+          }
+
+          // The fan is one more arrangement of the same cards — blend
+          // the deck pose straight into the spread pose.
+          const fx = (i - mid) * paneW * 0.22;
+          const frot = (i - mid) * 5;
+          s.slots[i].style.opacity = String(op + (1 - op) * fan);
           s.slots[i].style.transform =
-            `translateX(${x.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) ` +
-            `scale(${(settle * shrink).toFixed(4)})`;
-          // Stack them so the fan reads left-to-right, not inside-out.
-          s.slots[i].style.zIndex = String(fan > 0 ? n - i : 1);
+            `translateX(${(x + (fx - x) * fan).toFixed(1)}px) ` +
+            `rotate(${(rot + (frot - rot) * fan).toFixed(2)}deg) ` +
+            `scale(${(sc + (0.5 - sc) * fan).toFixed(4)})`;
+          // Front card on top, the stack receding behind it — which is
+          // also exactly the left-to-right order the fan wants.
+          s.slots[i].style.zIndex = String(100 - Math.round(d * 10));
         }
       }
 
@@ -1003,10 +1049,10 @@ const stepCount = slides.length + (fan ? 3 : 1);
         // The row belongs to the FIRST and LAST scenes only: it leaves
         // with the opener and comes home when the fan opens.
         const rowVis = reduceMotion
-          ? p < 0.5 || fanW > 0.5
+          ? p < 0.5 || fanW > 0.5 || loopW > 0.5
             ? 1
             : 0
-          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), fanW);
+          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), fanW, loopW);
         s.actions.style.opacity = String(rowVis);
         s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
       }
