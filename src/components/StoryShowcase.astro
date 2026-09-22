@@ -38,8 +38,9 @@ type Props = {
   name: string;
   /** The opener reads as a startup pitch: problem and solution. */
   pitch: { problem: UIKey; solution: UIKey };
-  /** Close the story with the shots fanning out together. */
-  fan?: boolean;
+  /** After the last slide the story walks back to its opener and
+   *  hands the scroll over — an endless deck. */
+  loop?: boolean;
   /** The app's intro narration — why it exists, in Juan's voice. */
   introAudio?: string;
   slides: StorySlide[];
@@ -58,24 +59,24 @@ const {
   id,
   name,
   pitch,
-  fan = false,
+  loop = false,
   introAudio,
   slides,
   stores = false,
   linkGroups = [],
 } = Astro.props;
 
-// The scroll rail: one viewport for the opener, one per screenshot, one
-// where they all fan out together — and one more where the story walks
-// its opening moves backwards and hands the scroll back to the opener.
-const stepCount = slides.length + (fan ? 3 : 1);
+// The scroll rail: one viewport for the opener, one per screenshot —
+// and one more where the story walks its opening moves backwards and
+// hands the scroll back to the opener.
+const stepCount = slides.length + (loop ? 2 : 1);
 ---
 
 <section
   class="story"
   id={id}
   data-story={id}
-  data-fan={fan ? '' : null}
+  data-loop={loop ? '' : null}
   style={`--steps: ${stepCount}`}
 >
   <!-- Invisible scroll rail — gives the story its length and carries
@@ -87,8 +88,7 @@ const stepCount = slides.length + (fan ? 3 : 1);
         <div class="step" data-index={i + 1} data-audio={slide.audio} />
       ))
     }
-    {fan && <div class="step" data-index={slides.length + 1} />}
-    {fan && <div class="step" data-index={slides.length + 2} />}
+    {loop && <div class="step" data-index={slides.length + 1} />}
   </div>
 
   <div class="stage">
@@ -142,12 +142,8 @@ const stepCount = slides.length + (fan ? 3 : 1);
         <div class="caption">
           <div class="lockup-anchor-small" aria-hidden="true"></div>
           {
-            slides.map((slide, i) => (
+            slides.map(slide => (
               <div class="cap">
-                <span class="label cap-index">
-                  {String(i + 1).padStart(2, '0')}
-                  <i class="cap-index-total">/ {String(slides.length).padStart(2, '0')}</i>
-                </span>
                 {slide.title && <h3 class="slide-title">{slide.title}</h3>}
                 {slide.paras?.map(k => (
                   <p class="body">
@@ -230,8 +226,10 @@ const stepCount = slides.length + (fan ? 3 : 1);
 
     /* The inset under the fixed header, and the panel's bottom. The
        top scales with the viewport so the content sits a beat lower on
-       a tall screen instead of hugging the header. */
-    --stage-top: calc(6rem + 5svh);
+       a tall screen instead of hugging the header. The -3px is Juan's
+       nudge: the floating pills freed the top, so the whole scene
+       stands a hair higher and the bottom breathes. */
+    --stage-top: calc(6rem + 5svh - 3px);
     --stage-bottom: 2rem;
     /* The step between any two blocks: pitch → row, caption → row,
        row → foot. One value, everywhere. */
@@ -243,14 +241,14 @@ const stepCount = slides.length + (fan ? 3 : 1);
 
   @media (max-width: 64rem) {
     .story {
-      --stage-top: calc(5rem + 5svh);
+      --stage-top: calc(5rem + 5svh - 3px);
       --gap-block: 2rem;
     }
   }
 
   @media (max-width: 48rem) {
     .story {
-      --stage-top: calc(4rem + 4svh);
+      --stage-top: calc(4rem + 4svh - 3px);
       --stage-bottom: 1.25rem;
       --gap-block: 1.5rem;
       --text-col: 100%;
@@ -417,16 +415,12 @@ const stepCount = slides.length + (fan ? 3 : 1);
     pointer-events: none;
   }
 
-  /* As the fan opens, the LAYOUT ITSELF reorders: the text column hands
-     half its width back to the pane, and everything anchored in it —
-     the lockup, the store row — glides along, because the FLIP measures
-     its anchors every frame. One weight (--fanw) drives all of it. */
   .float-grid {
     height: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: calc(var(--text-col) * (1 - var(--fanw, 0) * 0.5)) 1fr;
+    grid-template-columns: var(--text-col) 1fr;
     gap: var(--space-4);
   }
 
@@ -460,23 +454,11 @@ const stepCount = slides.length + (fan ? 3 : 1);
     padding-top: 3.5rem;
     opacity: 0;
     pointer-events: none;
-    will-change: opacity;
+    will-change: opacity, transform;
   }
 
   /* The slide title IS the opener's name size — one ladder, and one
      1.25rem step everywhere: lockup → title → description. */
-  .cap-index {
-    display: block;
-    margin-bottom: 0.625rem;
-    color: var(--ink);
-  }
-
-  /* The total is context, not the number you are on. */
-  .cap-index-total {
-    font-style: normal;
-    color: var(--ink-3);
-  }
-
   .slide-title {
     font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: 800;
@@ -636,7 +618,7 @@ const stepCount = slides.length + (fan ? 3 : 1);
   @media (min-width: 100rem) {
     .story {
       --content-max: 82rem;
-      --stage-top: 8rem;
+      --stage-top: calc(8rem - 3px);
       --gap-block: 3rem;
     }
 
@@ -751,8 +733,8 @@ const stepCount = slides.length + (fan ? 3 : 1);
 
   type Story = {
     root: HTMLElement;
-    /** Fan finale + return step — the story loops back to its opener. */
-    fan: boolean;
+    /** Return step — the story loops back to its opener. */
+    loop: boolean;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
@@ -816,7 +798,7 @@ const stepCount = slides.length + (fan ? 3 : 1);
   ].map(root => {
     const story: Story = {
       root,
-      fan: 'fan' in root.dataset,
+      loop: 'loop' in root.dataset,
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
@@ -875,12 +857,12 @@ const stepCount = slides.length + (fan ? 3 : 1);
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
 
-      // THE RETURN. One step past the fan runs the opening moves
-      // backwards — the float dissolves, the lockup and the store row
-      // glide home to their opener anchors, the pitch fades back in.
-      // Its end state IS the opener's, so when it lands the controller
-      // silently rewinds the scroll and the story reads as a loop.
-      const loopW = !s.fan
+      // THE RETURN. One step past the last slide runs the opening
+      // moves backwards — the float dissolves, the lockup and the
+      // store row glide home to their opener anchors, the pitch fades
+      // back in. Its end state IS the opener's, so when it lands the
+      // controller silently rewinds the scroll and the story loops.
+      const loopW = !s.loop
         ? 0
         : reduceMotion
           ? p > s.steps.length - 1.5
@@ -921,38 +903,18 @@ const stepCount = slides.length + (fan ? 3 : 1);
         s.float.style.setProperty('--peek', peek.toFixed(4));
       }
 
-      // How far the closing fan has opened — several layers read it:
-      // the shots spread on it, the grid REBALANCES on it (the text
-      // column gives the pane its width back), and the store row rides
-      // it home. One weight, so they all move as one gesture.
-      // The return also CLOSES the fan — the spread regroups into the
-      // stack as it walks out, so the landing state is the opener's
-      // peeked deck exactly, not a spread caught mid-teleport.
-      const fanW = !s.fan
-        ? 0
-        : reduceMotion
-          ? p > s.steps.length - 2.5 && loopW < 0.5
-            ? 1
-            : 0
-          : smooth(clamp(p - (s.steps.length - 3), 0, 1)) * (1 - loopW);
-      s.float?.style.setProperty('--fanw', fanW.toFixed(4));
-
       // THE DECK. The shots are a visible stack of cards: the ones
       // still to come peek out behind the front one — edges showing,
       // barely turned — and each step pulls the next card forward. A
       // passed card lifts toward the viewer and fades, the way a card
-      // comes off the top of a deck. The fan is then no surprise: the
-      // deck was on the table the whole time, the finale just spreads
-      // it.
+      // comes off the top of a deck.
       {
         const n = s.slots.length;
         // The return riffles the deck back to the first card while it
         // walks out — mostly cropped by the edge, but it means the
         // sliver the loop lands on IS the sliver the opener shows.
         const pos = clamp(p - 1, 0, n - 1) * (1 - loopW);
-        const fan = fanW;
         const paneW = s.shotsBox?.clientWidth ?? 0;
-        const mid = (n - 1) / 2;
 
         for (let i = 0; i < n; i++) {
           // Depth relative to the front card: <0 passed, 0 front,
@@ -979,34 +941,32 @@ const stepCount = slides.length + (fan ? 3 : 1);
             sc = 1 - dd * 0.06;
           }
 
-          // The fan is one more arrangement of the same cards — blend
-          // the deck pose straight into the spread pose.
-          const fx = (i - mid) * paneW * 0.22;
-          const frot = (i - mid) * 5;
-          s.slots[i].style.opacity = String(op + (1 - op) * fan);
+          s.slots[i].style.opacity = String(op);
           s.slots[i].style.transform =
-            `translateX(${(x + (fx - x) * fan).toFixed(1)}px) ` +
-            `rotate(${(rot + (frot - rot) * fan).toFixed(2)}deg) ` +
-            `scale(${(sc + (0.5 - sc) * fan).toFixed(4)})`;
-          // Front card on top, the stack receding behind it — which is
-          // also exactly the left-to-right order the fan wants.
+            `translateX(${x.toFixed(1)}px) ` +
+            `rotate(${rot.toFixed(2)}deg) ` +
+            `scale(${sc.toFixed(4)})`;
+          // Front card on top, the stack receding behind it.
           s.slots[i].style.zIndex = String(100 - Math.round(d * 10));
         }
       }
 
-      // Captions: crossfade with a short eased drift as their shot
-      // centers in the window.
+      // Captions: each one belongs to the shot nearest the window, and
+      // takes a VERY small entrance — a 6px settle over the last sliver
+      // of the step, scroll-coupled like everything else. Any more than
+      // that read as lag next to the picture (tried, rejected); none at
+      // all read as a hard cut (also tried, also rejected).
       for (let i = 0; i < s.caps.length; i++) {
         const t = p - (i + 1);
         const at = Math.abs(t);
         if (reduceMotion) {
           s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
+          s.caps[i].style.transform = '';
           continue;
         }
-        // The words do not animate at all: they are simply the caption
-        // of whichever shot is nearest. Fading them only ever read as
-        // lag, because the reader is already looking at the picture.
-        s.caps[i].style.opacity = at < 0.5 ? '1' : '0';
+        const v = smooth(clamp((0.5 - at) / 0.15, 0, 1));
+        s.caps[i].style.opacity = v.toFixed(4);
+        s.caps[i].style.transform = `translateY(${((1 - v) * 6).toFixed(2)}px)`;
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
@@ -1046,13 +1006,13 @@ const stepCount = slides.length + (fan ? 3 : 1);
         const y = big.top - stageRect.top + (small.top - big.top) * q;
         s.actions.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-        // The row belongs to the FIRST and LAST scenes only: it leaves
-        // with the opener and comes home when the fan opens.
+        // The row belongs to the OPENER: it leaves with it and rides
+        // the return home with it.
         const rowVis = reduceMotion
-          ? p < 0.5 || fanW > 0.5 || loopW > 0.5
+          ? p < 0.5 || loopW > 0.5
             ? 1
             : 0
-          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), fanW, loopW);
+          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), loopW);
         s.actions.style.opacity = String(rowVis);
         s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
       }
@@ -1065,7 +1025,7 @@ const stepCount = slides.length + (fan ? 3 : 1);
       // Land the loop. The return step ends as a pixel-perfect copy of
       // the opener, so rewinding the scroll there is invisible — the
       // next flick down simply tells the story again.
-      if (s.fan && p > s.steps.length - 1.002) {
+      if (s.loop && p > s.steps.length - 1.002) {
         window.scrollTo({
           top: rect.top + window.scrollY,
           behavior: 'auto',
