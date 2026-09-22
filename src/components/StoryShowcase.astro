@@ -38,8 +38,8 @@ type Props = {
   name: string;
   /** The opener reads as a startup pitch: problem and solution. */
   pitch: { problem: UIKey; solution: UIKey };
-  /** The closing line, shown as the shots fan out. */
-  finale?: UIKey;
+  /** Close the story with the shots fanning out together. */
+  fan?: boolean;
   /** The app's intro narration — why it exists, in Juan's voice. */
   introAudio?: string;
   slides: StorySlide[];
@@ -58,7 +58,7 @@ const {
   id,
   name,
   pitch,
-  finale,
+  fan = false,
   introAudio,
   slides,
   stores = false,
@@ -67,7 +67,7 @@ const {
 
 // The scroll rail: one viewport for the opener, one per screenshot, and
 // a last one where they all fan out together.
-const stepCount = slides.length + (finale ? 2 : 1);
+const stepCount = slides.length + (fan ? 2 : 1);
 ---
 
 <section
@@ -85,7 +85,7 @@ const stepCount = slides.length + (finale ? 2 : 1);
         <div class="step" data-index={i + 1} data-audio={slide.audio} />
       ))
     }
-    {finale && <div class="step" data-index={slides.length + 1} />}
+    {fan && <div class="step" data-index={slides.length + 1} />}
   </div>
 
   <div class="stage">
@@ -97,7 +97,7 @@ const stepCount = slides.length + (finale ? 2 : 1);
 
         <div class="intro-grid" data-reveal>
           <div class="pitch">
-            <p class="body pitch-lead"><T k={pitch.problem} /></p>
+            <p class="body"><T k={pitch.problem} /></p>
             <p class="body"><T k={pitch.solution} /></p>
           </div>
 
@@ -153,13 +153,6 @@ const stepCount = slides.length + (finale ? 2 : 1);
                 ))}
               </div>
             ))
-          }
-          {
-            finale && (
-              <div class="cap cap-finale">
-                <p class="body"><T k={finale} /></p>
-              </div>
-            )
           }
         </div>
 
@@ -319,15 +312,6 @@ const stepCount = slides.length + (finale ? 2 : 1);
     max-width: var(--text-wide);
   }
 
-  /* No headings over these: the size carries the turn from the problem
-     to what was built, and two mono labels on a two-paragraph block was
-     more furniture than it was worth. */
-  .pitch-lead {
-    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-    color: var(--ink);
-    line-height: 1.55;
-  }
-
   /* Long rows on purpose — the measure cap is for columns. */
   .pitch .body {
     max-width: none;
@@ -428,12 +412,16 @@ const stepCount = slides.length + (finale ? 2 : 1);
     will-change: opacity;
   }
 
+  /* As the fan opens, the LAYOUT ITSELF reorders: the text column hands
+     half its width back to the pane, and everything anchored in it —
+     the lockup, the store row — glides along, because the FLIP measures
+     its anchors every frame. One weight (--fanw) drives all of it. */
   .float-grid {
     height: 100%;
     max-width: var(--content-max);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: var(--text-col) 1fr;
+    grid-template-columns: calc(var(--text-col) * (1 - var(--fanw, 0) * 0.5)) 1fr;
     gap: var(--space-4);
   }
 
@@ -470,19 +458,6 @@ const stepCount = slides.length + (finale ? 2 : 1);
 
   /* The slide title IS the opener's name size — one ladder, and one
      1.25rem step everywhere: lockup → title → description. */
-  /* The closing line has no index and no title — it is the caption of
-     the fan, not of a fifth screen. */
-  .cap-finale {
-    padding-top: 3.5rem;
-  }
-
-  .cap-finale .body {
-    margin-top: 0;
-    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-    color: var(--ink);
-    line-height: 1.55;
-  }
-
   .cap-index {
     display: block;
     margin-bottom: 0.625rem;
@@ -556,26 +531,9 @@ const stepCount = slides.length + (finale ? 2 : 1);
     opacity: 1;
   }
 
-  /* A slight, ALTERNATING angle per slide. Four shots of one phone shown
-     flat, one after another, is what read as boring; a few degrees of
-     perspective gives each slide its own attitude without moving a
-     single element of the layout. */
   .shot-wrap {
     position: relative;
     height: 100%;
-    transform: perspective(1600px) rotateY(-5deg) rotateX(1.5deg);
-    transform-style: preserve-3d;
-  }
-
-  .slot:nth-child(even) .shot-wrap {
-    transform: perspective(1600px) rotateY(5deg) rotateX(-1.5deg);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .shot-wrap,
-    .slot:nth-child(even) .shot-wrap {
-      transform: none;
-    }
   }
 
   /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
@@ -910,6 +868,17 @@ const stepCount = slides.length + (finale ? 2 : 1);
         );
       }
 
+      // How far the closing fan has opened — several layers read it:
+      // the shots spread on it, the grid REBALANCES on it (the text
+      // column gives the pane its width back), and the store row rides
+      // it home. One weight, so they all move as one gesture.
+      const fanW = reduceMotion
+        ? p > s.steps.length - 1.5
+          ? 1
+          : 0
+        : smooth(clamp(p - (s.steps.length - 2), 0, 1));
+      s.float?.style.setProperty('--fanw', fanW.toFixed(4));
+
       // The shots cross-fade in place, no travel. The two involved are
       // COMPLEMENTARY — their opacities always sum to 1 — so the stack
       // can never go blank between them, which is what a pair of
@@ -930,12 +899,7 @@ const stepCount = slides.length + (finale ? 2 : 1);
         // that has been passing one at a time is suddenly all of them,
         // spread and angled across the pane. Same four pictures, one
         // more arrangement — it closes the story instead of cutting it.
-        const last = s.steps.length - 2;
-        const fan = reduceMotion
-          ? p > last + 0.5
-            ? 1
-            : 0
-          : smooth(clamp(p - last, 0, 1));
+        const fan = fanW;
         const n = s.slots.length;
         const paneW = s.shotsBox?.clientWidth ?? 0;
         const step = paneW * 0.22;
@@ -1002,6 +966,15 @@ const stepCount = slides.length + (finale ? 2 : 1);
         const y = big.top - stageRect.top + (small.top - big.top) * q;
         s.actions.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        // The row belongs to the FIRST and LAST scenes only: it leaves
+        // with the opener and comes home when the fan opens.
+        const rowVis = reduceMotion
+          ? p < 0.5 || fanW > 0.5
+            ? 1
+            : 0
+          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), fanW);
+        s.actions.style.opacity = String(rowVis);
+        s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
       }
 
       if (active !== s.current) {

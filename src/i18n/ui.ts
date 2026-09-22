@@ -36,8 +36,6 @@ const en = {
   'links.legal': 'Legal',
   'links.help': 'Help',
 
-  'hero.tagline': "This is my work. I'll tell you the story myself.",
-
   'shaper.problem':
     'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
   'shaper.solution':
@@ -58,8 +56,6 @@ const en = {
     'Pick the exact seconds you love — the whole track below, the zoom above.',
   'shaper.s4.p2':
     'Save them as clips: your favorite parts, documented and ready to loop whenever you want.',
-  'shaper.finale':
-    'Four screens, one idea: your music, exactly the way you want it.',
 };
 
 export type UIKey = keyof typeof en;
@@ -78,8 +74,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': 'Eliminar cuenta',
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
-
-    'hero.tagline': 'Esta es mi obra. Te la cuento yo mismo.',
 
     'shaper.problem':
       'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
@@ -101,8 +95,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Elige los segundos exactos que te encantan — la canción entera abajo, el zoom arriba.',
     'shaper.s4.p2':
       'Guárdalos como clips: tus partes favoritas, documentadas y listas para repetir en loop cuando quieras.',
-    'shaper.finale':
-      'Cuatro pantallas, una idea: tu música, exactamente como la quieres.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -116,8 +108,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': '删除账户',
     'links.legal': '法律',
     'links.help': '帮助',
-
-    'hero.tagline': '这是我的作品。我亲自讲给你听。',
 
     'shaper.problem':
       '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',
@@ -137,6 +127,5 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '实时改变播放速度——slowed、sped up，随你心情——还有保持原调、回声、Next Room 这些音效。',
     'shaper.s4.p1': '选出你最爱的那几秒——整首歌在下面，放大在上面。',
     'shaper.s4.p2': '存成片段：你最喜欢的部分，被记录下来，想循环就循环。',
-    'shaper.finale': '四个界面，一个想法：你的音乐，完全按你想要的方式。',
   },
 };

@@ -1,6 +1,5 @@
 ---
 import ListenPill from './ListenPill.astro';
-import T from './T.astro';
 
 /**
  * The hero stays the wordmark — that decision holds. What it gains is the
@@ -21,7 +20,6 @@ const { narration } = Astro.props;
        coupled transform lives one level up where nothing animates it. -->
   <div class="hero-inner" data-hero-inner>
     <h1 class="display" data-reveal>juanevillam</h1>
-    <p class="body tagline" data-reveal><T k="hero.tagline" /></p>
     <ListenPill audio={narration} />
   </div>
 </section>
@@ -46,7 +44,4 @@ const { narration } = Astro.props;
     will-change: opacity, transform;
   }
 
-  .tagline {
-    margin-top: 1.5rem;
-  }
 </style>
