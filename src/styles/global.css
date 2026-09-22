@@ -46,10 +46,16 @@
   --seam: calc(100% * 4 / 13);
 
   /* layout */
-  /* The fixed header's height. It is a TOKEN because the story's
-     screenshot column has to clear exactly this much and no more —
-     guessing it is what left the phone hanging low in its panel. */
-  --header-h: 4rem;
+  /* The two floating controls at the top corners — their inset, their
+     height, and the clearance they add up to. `--header-h` is a TOKEN
+     because the story's screenshot column has to clear exactly this
+     much and no more — guessing it is what left the phone hanging low
+     in its panel. */
+  --float-gap: 1rem;
+  --float-h: 2.5rem;
+  /* Exactly where the pills END — counting the gap twice put 40px of
+     air over the phone against 24 under it. */
+  --header-h: calc(var(--float-gap) + var(--float-h));
   --space-section: clamp(6rem, 14vh, var(--space-9));
   --measure: 65ch;
   --content-max: 68.75rem; /* 1100px */
