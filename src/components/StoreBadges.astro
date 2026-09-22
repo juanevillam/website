@@ -15,16 +15,24 @@ import { locales } from '../i18n/ui';
  * each SVG carries its own aspect (Apple 119.66x40, Google 238.96x70.87),
  * so only the height is set and the width follows.
  *
- * THEY ARE NOT LINKS, ON PURPOSE. Neither app is published, so there is
- * no listing to point at — a badge that navigates nowhere is worse than
- * one that plainly cannot be pressed. They render dimmed and inert
- * (no href, no hover, out of the tab order, aria-disabled) until the
- * listings exist. To turn them on: give each entry its store URL below
- * and the markup becomes a link again.
+ * SENTINEL: the hrefs point at google.com because NEITHER APP IS
+ * PUBLISHED YET — enabled anyway, on Juan's call, to judge how live
+ * badges look. Same sentinel as AUTHOR_URL in
+ * packages/mobile-ui/src/author.ts: grep google.com before release and
+ * swap each for its real store listing. Set an href to null and the
+ * badge renders dimmed and inert instead.
  */
 const STORES = [
-  { key: 'app-store', name: 'App Store', href: null as string | null },
-  { key: 'google-play', name: 'Google Play', href: null as string | null },
+  {
+    key: 'app-store',
+    name: 'App Store',
+    href: 'https://www.google.com' as string | null,
+  },
+  {
+    key: 'google-play',
+    name: 'Google Play',
+    href: 'https://www.google.com' as string | null,
+  },
 ];
 
 const BADGE_HEIGHT = 48;
