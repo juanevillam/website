@@ -910,16 +910,21 @@ const stepCount = slides.length + (loop ? 2 : 1);
       // comes off the top of a deck.
       {
         const n = s.slots.length;
-        // The return riffles the deck back to the first card while it
-        // walks out — mostly cropped by the edge, but it means the
-        // sliver the loop lands on IS the sliver the opener shows.
-        const pos = clamp(p - 1, 0, n - 1) * (1 - loopW);
+        // The deck is CIRCULAR: past the last card the first one is
+        // simply next again. The return deals ONE more card instead of
+        // riffling backwards over the front one, so the opener's card
+        // arrives the same way every other card did — and the state it
+        // lands on is the opener's exactly.
+        const pos = clamp(p - 1, 0, s.steps.length - 2);
         const paneW = s.shotsBox?.clientWidth ?? 0;
 
         for (let i = 0; i < n; i++) {
-          // Depth relative to the front card: <0 passed, 0 front,
-          // >0 waiting in the stack.
-          const d = reduceMotion ? i - Math.round(pos) : i - pos;
+          const lin = reduceMotion ? i - Math.round(pos) : i - pos;
+          // Depth wrapped into [-0.5, n - 0.5): the card just dealt
+          // lifts off in front of the stack; everything else waits
+          // behind the front card, the dealt card rejoining at the
+          // BACK once its lift has fully faded.
+          const d = (((lin % n) + n + 0.5) % n) - 0.5;
 
           let op: number, x: number, rot: number, sc: number;
           if (d < 0) {
@@ -934,8 +939,11 @@ const stepCount = slides.length + (loop ? 2 : 1);
           } else {
             // Waiting in the stack: three edges visible behind the
             // front card, each a small step over and a hair turned.
+            // Opacity reads the RAW depth, so a card sliding round to
+            // the back of the stack arrives from nothing instead of
+            // popping in at the last edge's strength.
             const dd = Math.min(d, 3);
-            op = clamp(1 - dd * 0.28, 0, 1);
+            op = clamp(1 - d * 0.28, 0, 1);
             x = dd * paneW * 0.045;
             rot = dd * 2.5;
             sc = 1 - dd * 0.06;
