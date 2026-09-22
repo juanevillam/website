@@ -6,6 +6,10 @@ import { defineConfig } from 'astro/config';
 // page re-renders in place, the way the apps do from Settings.
 export default defineConfig({
   site: 'https://juanevillam.com',
+  // Off in the CONFIG, not in `astro preferences` — that one lives in
+  // .astro/settings.json, which any cache clear wipes, and the toolbar
+  // came back twice that way.
+  devToolbar: { enabled: false },
   // Dev only: let a launcher hand the server a free port (PORT env);
   // Astro itself doesn't read PORT. Production is static output.
   server: ({ command }) =>

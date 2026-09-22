@@ -61,9 +61,13 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem) 1.75rem;
+    height: var(--header-h);
+    padding: 0 clamp(1.25rem, 4vw, 2.5rem);
     /* Scrim so the fixed controls never collide with scrolled content. */
-    background: linear-gradient(to bottom, var(--ground) 55%, transparent);
+    /* The scrim reaches PAST the header's own box so content scrolling
+       under it fades out rather than meeting a hard edge. */
+    background: linear-gradient(to bottom, var(--ground) 40%, transparent);
+    box-shadow: 0 1.5rem 1.5rem -0.5rem var(--ground);
   }
 
   .mark-link {
