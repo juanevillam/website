@@ -39,7 +39,7 @@ const en = {
   'shaper.problem':
     'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
   'shaper.solution':
-    'A free app where you add your MP3s and it works without internet: change the speed live, shape the equalizer and the effects — preserve pitch, echo, next room — and make clips of your favorite parts.',
+    'An app where you add your MP3s and it works without internet: change the speed live, shape the equalizer and the effects — preserve pitch, echo, next room — and make clips of your favorite parts.',
   'shaper.s1.p1':
     'Add your songs as MP3s and build your own library, each with its artwork and its info.',
   'shaper.s1.p2':
@@ -78,7 +78,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem':
       'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
     'shaper.solution':
-      'Una app gratis donde subes tus MP3 y funciona sin internet: cambias la velocidad en vivo, moldeas el ecualizador y los efectos — preservar el tono, eco, next room — y haces clips de tus partes favoritas.',
+      'Una app donde subes tus MP3 y funciona sin internet: cambias la velocidad en vivo, moldeas el ecualizador y los efectos — preservar el tono, eco, next room — y haces clips de tus partes favoritas.',
     'shaper.s1.p1':
       'Subes tus canciones en MP3 y armas tu propia biblioteca, cada una con su ilustración y sus datos.',
     'shaper.s1.p2':
@@ -112,7 +112,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem':
       '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',
     'shaper.solution':
-      '一个免费的应用：加入你的 MP3，不用网络就能用——实时改变速度，亲手调均衡器和音效（保持原调、回声、Next Room），把最喜欢的部分做成片段。',
+      '一个应用：加入你的 MP3，不用网络就能用——实时改变速度，亲手调均衡器和音效（保持原调、回声、Next Room），把最喜欢的部分做成片段。',
     'shaper.s1.p1':
       '把歌曲以 MP3 加入，建立你自己的资料库，每一首都带着插图和信息。',
     'shaper.s1.p2':
