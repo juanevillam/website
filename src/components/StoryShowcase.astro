@@ -486,10 +486,12 @@ const stepCount = slides.length + 1;
   .shots {
     position: relative;
     height: auto;
-    /* The phone takes back the whole inset the WORDS need under the
-       header, top and bottom, so it runs as tall as the panel allows
-       and still clears the header. */
-    margin: calc(var(--stage-top) * -0.5) 0 calc(var(--stage-bottom) * -1);
+    /* The pane runs from the header's bottom edge to the panel's, so
+       the phone's air is EQUAL top and bottom — the slot's padding is
+       the whole gap on both sides. Reclaiming half the top inset but
+       all of the bottom one is what left it hanging low. */
+    margin: calc(var(--header-h) - var(--stage-top)) 0
+      calc(var(--stage-bottom) * -1);
     min-height: 0;
     display: grid;
   }
@@ -500,8 +502,8 @@ const stepCount = slides.length + 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Air for the glow and the contact shadow. */
-    padding: 1.25rem 0;
+    /* This padding IS the phone's gap, above and below alike. */
+    padding: 1.5rem 0;
     opacity: 0;
     will-change: opacity, transform;
   }
