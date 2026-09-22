@@ -92,14 +92,8 @@ const stepCount = slides.length + 1;
 
         <div class="intro-grid" data-reveal>
           <div class="pitch">
-            <div class="pitch-block">
-              <span class="label"><T k="pitch.problem" /></span>
-              <p class="body"><T k={pitch.problem} /></p>
-            </div>
-            <div class="pitch-block">
-              <span class="label"><T k="pitch.solution" /></span>
-              <p class="body"><T k={pitch.solution} /></p>
-            </div>
+            <p class="body pitch-lead"><T k={pitch.problem} /></p>
+            <p class="body"><T k={pitch.solution} /></p>
           </div>
 
           <!-- Reserves the action row's box; the row itself floats in
@@ -140,8 +134,12 @@ const stepCount = slides.length + 1;
         <div class="caption">
           <div class="lockup-anchor-small" aria-hidden="true"></div>
           {
-            slides.map(slide => (
+            slides.map((slide, i) => (
               <div class="cap">
+                <span class="label cap-index">
+                  {String(i + 1).padStart(2, '0')}
+                  <i class="cap-index-total">/ {String(slides.length).padStart(2, '0')}</i>
+                </span>
                 {slide.title && <h3 class="slide-title">{slide.title}</h3>}
                 {slide.paras?.map(k => (
                   <p class="body">
@@ -158,16 +156,8 @@ const stepCount = slides.length + 1;
         </div>
 
         <!-- Every shot in one stack; the scroll cross-fades them. The
-             ambient layer under it is the same picture again, spilling
-             far past the phone as room light. -->
+             glow is a rim on the shot itself, nothing more. -->
         <div class="shots">
-          <div class="ambients" aria-hidden="true">
-            {
-              slides.map(slide => (
-                <img class="ambient" src={slide.src} alt="" loading="lazy" decoding="async" />
-              ))
-            }
-          </div>
           {
               slides.map(slide => (
                 <div class="slot">
@@ -317,8 +307,13 @@ const stepCount = slides.length + 1;
     max-width: var(--text-wide);
   }
 
-  .pitch-block .body {
-    margin-top: 0.5rem;
+  /* No headings over these: the size carries the turn from the problem
+     to what was built, and two mono labels on a two-paragraph block was
+     more furniture than it was worth. */
+  .pitch-lead {
+    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+    color: var(--ink);
+    line-height: 1.55;
   }
 
   /* Long rows on purpose — the measure cap is for columns. */
@@ -463,6 +458,18 @@ const stepCount = slides.length + 1;
 
   /* The slide title IS the opener's name size — one ladder, and one
      1.25rem step everywhere: lockup → title → description. */
+  .cap-index {
+    display: block;
+    margin-bottom: 0.625rem;
+    color: var(--ink);
+  }
+
+  /* The total is context, not the number you are on. */
+  .cap-index-total {
+    font-style: normal;
+    color: var(--ink-3);
+  }
+
   .slide-title {
     font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: 800;
@@ -505,58 +512,6 @@ const stepCount = slides.length + 1;
     display: grid;
   }
 
-  /* The room light: the slide's own picture again, blown far past the
-     phone and masked to an ellipse that fades out long before its own
-     edge — so it reads as light the screen is casting, with no shape
-     and no rectangle of its own. It is the same trick the tight halo
-     uses, at a scale that fills the panel. Deliberately NOT a
-     full-viewport blur of the shot: that was tried and read as a muddy
-     wash over everything. */
-  .ambients {
-    position: absolute;
-    inset: -45% -60%;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  .ambient {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    object-fit: cover;
-    /* Dimmer and less saturated than it was: a heavy blur over a
-       near-black ground makes a ramp so gentle that 8-bit colour
-       quantises it into visible rings, and every point of contrast
-       feeds them. */
-    filter: blur(120px) saturate(1.3) brightness(0.62);
-    opacity: 0;
-    /* One long falloff instead of a mid stop — the knee at 45% was
-       itself a ring. */
-    mask-image: radial-gradient(
-      ellipse 52% 46% at 50% 50%,
-      #000 0%,
-      transparent 78%
-    );
-  }
-
-  /* The dither. Banding is a QUANTISING artefact, so the fix is grain,
-     not a gentler gradient: a little noise over the glow scatters each
-     step across the boundary and the rings stop resolving. */
-  .ambients::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.05;
-    mix-blend-mode: overlay;
-    pointer-events: none;
-  }
-
-  .ambient:first-child {
-    opacity: 1;
-  }
 
   .slot {
     position: relative;
@@ -576,9 +531,26 @@ const stepCount = slides.length + 1;
     opacity: 1;
   }
 
+  /* A slight, ALTERNATING angle per slide. Four shots of one phone shown
+     flat, one after another, is what read as boring; a few degrees of
+     perspective gives each slide its own attitude without moving a
+     single element of the layout. */
   .shot-wrap {
     position: relative;
     height: 100%;
+    transform: perspective(1600px) rotateY(-5deg) rotateX(1.5deg);
+    transform-style: preserve-3d;
+  }
+
+  .slot:nth-child(even) .shot-wrap {
+    transform: perspective(1600px) rotateY(5deg) rotateX(-1.5deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shot-wrap,
+    .slot:nth-child(even) .shot-wrap {
+      transform: none;
+    }
   }
 
   /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
@@ -592,9 +564,9 @@ const stepCount = slides.length + 1;
     width: 100%;
     height: 100%;
     max-width: none;
-    transform: scale(1.22);
-    filter: blur(64px) saturate(1.7) brightness(1.15);
-    opacity: 0.7;
+    transform: scale(1.12);
+    filter: blur(40px) saturate(1.6) brightness(1.1);
+    opacity: 0.8;
     mask-image: radial-gradient(
       ellipse 60% 55% at 50% 50%,
       #000 0%,
@@ -779,7 +751,6 @@ const stepCount = slides.length + 1;
     intro: HTMLElement | null;
     float: HTMLElement | null;
     slots: HTMLElement[];
-    ambients: HTMLElement[];
     caps: HTMLElement[];
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
@@ -842,7 +813,6 @@ const stepCount = slides.length + 1;
       intro: root.querySelector<HTMLElement>('.intro-scene'),
       float: root.querySelector<HTMLElement>('.float'),
       slots: [...root.querySelectorAll<HTMLElement>('.slot')],
-      ambients: [...root.querySelectorAll<HTMLElement>('.ambient')],
       caps: [...root.querySelectorAll<HTMLElement>('.cap')],
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
@@ -933,9 +903,6 @@ const stepCount = slides.length + 1;
           const o = i === base ? 1 - w : i === base + 1 ? w : 0;
           s.slots[i].style.opacity = String(o);
           s.slots[i].style.transform = `scale(${(1 - (1 - o) * 0.03).toFixed(4)})`;
-          // The room light rides the SAME weight, so the glow can never
-          // be lit by a picture that is no longer on screen.
-          if (s.ambients[i]) s.ambients[i].style.opacity = String(o * 0.32);
         }
       }
 
