@@ -54,6 +54,9 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
 </header>
 
 <style>
+  /* NOT a bar: two floating controls at the top corners, and nothing
+     between them. The row itself is deaf so the gap it spans never
+     eats a click meant for the page under it. */
   .site-header {
     position: fixed;
     inset: 0 0 auto 0;
@@ -61,13 +64,27 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: var(--header-h);
-    padding: 0 clamp(1.25rem, 4vw, 2.5rem);
-    /* Scrim so the fixed controls never collide with scrolled content. */
-    /* The scrim reaches PAST the header's own box so content scrolling
-       under it fades out rather than meeting a hard edge. */
-    background: linear-gradient(to bottom, var(--ground) 40%, transparent);
-    box-shadow: 0 1.5rem 1.5rem -0.5rem var(--ground);
+    padding: var(--float-gap) clamp(1.25rem, 4vw, 2.5rem) 0;
+    pointer-events: none;
+  }
+
+  /* With no scrim behind them they carry their own ground, or they
+     would sit unreadable on whatever scrolls past. */
+  .site-header > * {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    height: var(--float-h);
+    padding: 0 0.875rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    transition: border-color var(--dur-micro) var(--ease);
+  }
+
+  .site-header > *:hover {
+    border-color: var(--ink-3);
   }
 
   .mark-link {
@@ -82,10 +99,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
 
   .lang {
     position: relative;
-    display: inline-flex;
-    align-items: center;
     gap: 0.4375rem;
-    padding: 0.375rem 0;
     color: var(--ink-3);
     transition: color var(--dur-micro) var(--ease);
   }
