@@ -832,9 +832,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   const narrator = document.querySelector<HTMLElement>('[data-narrator]');
-  const lights = narrator
-    ? [...narrator.querySelectorAll<HTMLElement>('.nar-glow i')]
-    : [];
+  const wave = narrator?.querySelector<HTMLCanvasElement>('.nar-wave');
 
   /** Where the voice is — kept while paused, so play resumes in place. */
   let session: { block: Narr; para: number } | null = null;
@@ -870,31 +868,16 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     narrator?.classList.toggle('is-playing', running);
   };
 
-  // ----- the orb: light swirling inside the pill, Siri's way -----
-  // Four soft lights orbit inside the narrator. At rest they drift and
-  // barely glow; while Juan speaks the pill lights up, the swirl quickens
-  // and each light swells with its own band of his voice — lows, low
-  // mids, high mids, air — off a live analyser. Nothing else is in it.
-
-  // Speech bands, Hz — one per light.
-  const EDGES = [90, 250, 700, 1800, 4500];
-  // Each light's own orbit: radius (share of the pill), speed, phase.
-  const ORBITS = [
-    { rx: 0.34, ry: 0.3, sp: 0.00042, ph: 0 },
-    { rx: 0.28, ry: 0.36, sp: -0.00033, ph: 1.7 },
-    { rx: 0.38, ry: 0.24, sp: 0.00027, ph: 3.4 },
-    { rx: 0.22, ry: 0.32, sp: -0.00048, ph: 5.1 },
-  ];
-  const bands = [0, 0, 0, 0];
-  /** 0 at rest, 1 while the voice is running — eased, never switched. */
-  let live = 0;
-  /** Each light's own clock, so a quickened swirl never jumps phase. */
-  const turn = [0, 0, 0, 0];
+  // ----- the wave: Juan's voice, drawn -----
+  // An oscilloscope of the actual audio. Each frame takes the analyser's
+  // raw waveform, finds a rising zero crossing and draws from there — the
+  // trigger an oscilloscope uses — so a steady tone holds still instead
+  // of crawling. Nothing is invented: silence (at rest, in a pause,
+  // between words) is a flat line; louder grows it, higher tightens it.
 
   let ctx: AudioContext | null = null;
   let analyser: AnalyserNode | null = null;
-  let freq: Uint8Array<ArrayBuffer> | null = null;
-  let peak = 0.2;
+  let samples: Float32Array<ArrayBuffer> | null = null;
 
   // The analyser needs an AudioContext, which a browser only lets a
   // gesture create — so it is built on the first play. Routing the voice
@@ -905,58 +888,91 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       ctx = new AudioContext();
       const source = ctx.createMediaElementSource(voice);
       analyser = ctx.createAnalyser();
-      analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.6;
+      analyser.fftSize = 2048;
       source.connect(analyser).connect(ctx.destination);
-      freq = new Uint8Array(analyser.frequencyBinCount);
+      samples = new Float32Array(analyser.fftSize);
     } catch {
       ctx = null;
       analyser = null;
     }
   };
 
-  const voiceBands = () => {
-    if (!analyser || !freq || !ctx) return [0, 0, 0, 0];
-    analyser.getByteFrequencyData(freq);
-    const binHz = ctx.sampleRate / analyser.fftSize;
-    const raw = EDGES.slice(0, -1).map((lo, i) => {
-      const a = Math.max(1, Math.floor(lo / binHz));
-      const b = Math.max(a + 1, Math.ceil(EDGES[i + 1] / binHz));
-      let sum = 0;
-      for (let k = a; k < b; k++) sum += freq![k];
-      return sum / (b - a) / 255;
-    });
-    // A slow automatic gain, so a quiet take and a loud one both light
-    // the pill across its whole range.
-    peak = Math.max(peak * 0.997, ...raw, 0.12);
-    return raw.map(v => Math.min(1, v / peak) ** 1.4);
+  // What is drawn: POINTS columns across the pill, eased toward each
+  // new frame so a syllable's onset reads as motion, not a cut.
+  const POINTS = 96;
+  const shape = new Float32Array(POINTS);
+  const frameShape = new Float32Array(POINTS);
+  // Samples shown: ~21ms at 48kHz — two to five cycles of a voice.
+  const SPAN = 1024;
+  let gain = 8;
+
+  const readVoice = (): Float32Array | null => {
+    if (!analyser || !samples) return null;
+    analyser.getFloatTimeDomainData(samples);
+    // The trigger: the first rising zero crossing in the first half.
+    let at = 0;
+    for (let i = 1; i < samples.length - SPAN; i++)
+      if (samples[i - 1] < 0 && samples[i] >= 0) {
+        at = i;
+        break;
+      }
+    let loud = 0;
+    for (let i = at; i < at + SPAN; i++)
+      loud = Math.max(loud, Math.abs(samples[i]));
+    // A slow automatic gain, so a quiet take and a loud one both fill
+    // the pill — floored, so background hiss is never blown up into a
+    // wave that is not there.
+    gain += (Math.min(12, 0.85 / Math.max(loud, 0.07)) - gain) * 0.02;
+    const out = frameShape;
+    for (let j = 0; j < POINTS; j++)
+      out[j] = samples[at + Math.floor((j / (POINTS - 1)) * (SPAN - 1))] * gain;
+    return out;
   };
 
-  let last = 0;
-  const animateOrb = (now: number) => {
-    const dt = last ? Math.min(now - last, 64) : 16;
-    last = now;
+  let dpr = 0;
+  const drawWave = () => {
+    if (!wave || !narrator) return;
+    const w = wave.clientWidth;
+    const h = wave.clientHeight;
+    const ratio = window.devicePixelRatio || 1;
+    if (dpr !== ratio || wave.width !== Math.round(w * ratio)) {
+      dpr = ratio;
+      wave.width = Math.round(w * ratio);
+      wave.height = Math.round(h * ratio);
+    }
+    const g = wave.getContext('2d');
+    if (!g) return;
+
     const talking = running && !voice.paused;
-    live += ((talking ? 1 : 0) - live) * 0.05;
-    const target = talking ? voiceBands() : [0, 0, 0, 0];
-    const w = narrator!.clientWidth;
-    const h = narrator!.clientHeight;
-    narrator!.style.setProperty('--live', live.toFixed(3));
-    lights.forEach((light, i) => {
-      const d = target[i] - bands[i];
-      // Quick to swell, slower to settle — how a voice meter reads.
-      bands[i] += d * (d > 0 ? 0.45 : 0.12);
-      const o = ORBITS[i];
-      turn[i] += dt * o.sp * (reduceMotion ? 0 : 1 + 2.2 * live);
-      const a = o.ph + turn[i];
-      const x = Math.cos(a) * w * o.rx;
-      const y = Math.sin(a * 1.3) * h * o.ry;
-      const scale = 0.85 + 0.12 * Math.sin(now * 0.0009 + i * 1.9) + 0.75 * bands[i];
-      light.style.transform =
-        `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
-      light.style.opacity = (0.7 + 0.3 * live * (0.4 + bands[i])).toFixed(3);
-    });
-    requestAnimationFrame(animateOrb);
+    const target = talking ? readVoice() : null;
+    for (let j = 0; j < POINTS; j++) {
+      // Taper to the centre line at both ends: the wave rises out of the
+      // rim rather than being sliced by it.
+      const taper = Math.sin((j / (POINTS - 1)) * Math.PI);
+      const t = target ? Math.max(-1, Math.min(1, target[j])) * taper : 0;
+      shape[j] += (t - shape[j]) * (reduceMotion ? 1 : 0.55);
+    }
+
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.beginPath();
+    const mid = h / 2;
+    const amp = h * 0.38;
+    for (let j = 0; j < POINTS; j++) {
+      const x = (j / (POINTS - 1)) * w;
+      const y = mid - shape[j] * amp;
+      if (j) g.lineTo(x, y);
+      else g.moveTo(x, y);
+    }
+    g.lineWidth = 1.5;
+    g.lineJoin = 'round';
+    g.strokeStyle = getComputedStyle(narrator).color;
+    g.stroke();
+  };
+
+  const animateWave = () => {
+    drawWave();
+    requestAnimationFrame(animateWave);
   };
 
   // ----- the session -----
@@ -1115,7 +1131,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // Nothing recorded anywhere → no narrator at all.
   if (narrator && narrs.length) {
     narrator.hidden = false;
-    requestAnimationFrame(animateOrb);
+    requestAnimationFrame(animateWave);
   }
 
   // The hero rides out as the first story rides in.

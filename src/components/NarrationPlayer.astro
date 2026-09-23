@@ -8,17 +8,13 @@ import T from './T.astro';
  * wordmark, under the opener's pitch, under each slide's caption), the
  * way the lockup travels. One voice, so one control.
  *
- * Nothing on it but light — iOS 27's Siri pill, spoken by Juan instead.
- * Four soft lights swirl inside: at rest they drift and barely glow;
- * while he speaks the pill lights up and each light swells with its own
- * band of his actual voice (a live analyser, not a canned loop).
+ * Nothing on it but Juan's voice, drawn: an oscilloscope of the actual
+ * audio (a live analyser's waveform, locked to each cycle so it holds
+ * still instead of flickering). Silence is a flat line — at rest, in a
+ * pause, between words. Louder, the wave grows; higher, it tightens.
  *
- * The palette is Siri's iOS 27 one, softened — pink, deep blue, violet,
- * amber. It is the one place the site breaks its monochrome, because
- * here the colour IS the effect.
- *
- * The shape is the floating pills' (the header's two controls), so the
- * page's three floating things read as one family.
+ * The shape and material are the floating pills', one size up: it is
+ * Juan speaking, so it outranks the chrome it shares a family with.
  */
 ---
 
@@ -30,13 +26,7 @@ import T from './T.astro';
 >
   <span class="sr-only nar-idle"><T k="listen" /></span>
   <span class="sr-only nar-live"><T k="pause" /></span>
-  <!-- The glow is blurred INSIDE a clipping layer, so the light stays
-       in the pill instead of bleeding past its edge. -->
-  <span class="nar-orb" aria-hidden="true">
-    <span class="nar-glow">
-      <i></i><i></i><i></i><i></i>
-    </span>
-  </span>
+  <canvas class="nar-wave" aria-hidden="true"></canvas>
 </button>
 
 <style>
@@ -48,7 +38,7 @@ import T from './T.astro';
     display: block;
     overflow: hidden;
     width: var(--narrator-w);
-    height: var(--float-h);
+    height: var(--narrator-h);
     padding: 0 0.875rem;
     border: 1px solid var(--hairline);
     border-radius: 999px;
@@ -90,51 +80,19 @@ import T from './T.astro';
     display: inline;
   }
 
-  /* The light. The clip is the pill; the blur lives one layer in. */
-  .nar-orb {
+  /* The wave: drawn by the controller in the pill's ink, faded at both
+     ends so it rises out of the rim rather than being cut by it. */
+  .nar-wave {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    overflow: hidden;
-  }
-
-  .nar-glow {
-    position: absolute;
-    inset: 0;
-    filter: blur(9px) saturate(1.15);
-    /* Dim at rest, lit while the voice runs (--live, eased by the
-       controller). */
-    opacity: calc(0.8 + 0.2 * var(--live, 0));
-  }
-
-  /* Siri's iOS 27 palette, softened: pink, deep blue, violet, amber. */
-  .nar-glow {
-    --nar-1: #ff8fb4;
-    --nar-2: #3d63e6;
-    --nar-3: #9a6cf2;
-    --nar-4: #ffa25c;
-  }
-
-  .nar-glow i:nth-child(1) { --c: var(--nar-1); }
-  .nar-glow i:nth-child(2) { --c: var(--nar-2); }
-  .nar-glow i:nth-child(3) { --c: var(--nar-3); }
-  .nar-glow i:nth-child(4) { --c: var(--nar-4); }
-
-  .nar-glow i {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 2.5rem;
-    height: 2.5rem;
-    margin: -1.25rem;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      var(--c) 0%,
-      color-mix(in srgb, var(--c) 45%, transparent) 40%,
-      transparent 70%
+    inset: 0 1rem;
+    width: calc(100% - 2rem);
+    height: 100%;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 18%,
+      #000 82%,
+      transparent
     );
-    mix-blend-mode: screen;
-    will-change: transform, opacity;
   }
 </style>
