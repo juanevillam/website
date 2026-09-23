@@ -2,7 +2,7 @@
 import type { UIKey } from '../i18n/ui';
 import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
-import { clipFor } from '../lib/narration';
+import { clipFor, subsFor } from '../lib/narration';
 
 /**
  * One app = one continuous scene, no snapping anywhere.
@@ -71,7 +71,7 @@ const stepCount = slides.length + (loop ? 2 : 1);
 // Every narratable block, resolved against the clips on disk: the
 // opener's pitch is block 0, each slide's caption the block of its step.
 const narrate = (keys: UIKey[]) =>
-  keys.map(k => ({ k, clip: clipFor(k) }));
+  keys.map(k => ({ k, clip: clipFor(k), subs: subsFor(k) }));
 const pitchParas = narrate([pitch.problem, pitch.solution]);
 const slideParas = slides.map(slide => narrate(slide.paras ?? []));
 const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
@@ -104,19 +104,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
             class="pitch"
             data-narr-block={voiced(pitchParas) ? '0' : null}
           >
-            {pitchParas.map(({ k, clip }) => (
+            {pitchParas.map(({ k, clip, subs }) => (
               <p
                 class="body"
                 data-narr-para
                 data-clip-en={clip?.en}
                 data-clip-es={clip?.es}
+                data-subs-en={subs.en}
+                data-subs-es={subs.es}
               >
                 <T k={k} />
               </p>
             ))}
-            {voiced(pitchParas) && (
-              <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
-            )}
           </div>
 
           <!-- Reserves the action row's box; the row itself floats in
@@ -145,6 +144,17 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
                 </div>
               ))}
             </nav>
+            {/* The opener's narrator stands HERE, not in the pitch where
+                it got lost among the words: centred on the page like the
+                hero's, level with the links. */}
+            {voiced(pitchParas) && (
+              <div
+                class="narr-anchor"
+                data-narr-anchor="0"
+                data-narr-align="center"
+                aria-hidden="true"
+              />
+            )}
           </footer>
         )
       }
@@ -163,12 +173,14 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
                 data-narr-block={voiced(slideParas[i]) ? String(i + 1) : null}
               >
                 {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-                {slideParas[i].map(({ k, clip }) => (
+                {slideParas[i].map(({ k, clip, subs }) => (
                   <p
                     class="body"
                     data-narr-para
                     data-clip-en={clip?.en}
                     data-clip-es={clip?.es}
+                    data-subs-en={subs.en}
+                    data-subs-es={subs.es}
                   >
                     <T k={k} />
                   </p>
@@ -402,6 +414,20 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   /* The rule sits on the links themselves, so it spans the content
      above it rather than the whole panel. */
   .intro-foot {
+    margin-top: var(--gap-block);
+    display: grid;
+  }
+
+  .intro-foot > * {
+    grid-area: 1 / 1;
+  }
+
+  /* Centred on the page, and level with the LINKS rather than their
+     hairline: the anchor takes the nav's top padding as its own margin,
+     so centring happens in the links' own band. */
+  .intro-foot .narr-anchor {
+    justify-self: center;
+    align-self: center;
     margin-top: var(--gap-block);
   }
 
@@ -759,6 +785,12 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     .intro-links {
       gap: 2rem;
     }
+
+    /* One column: under the links, still centred. */
+    .intro-foot .narr-anchor {
+      grid-area: 2 / 1;
+      align-self: start;
+    }
   }
 
   /* Short phones: the pitch is the one block that can lose a line. */
@@ -797,6 +829,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const voice = new Audio();
   voice.preload = 'auto';
+  // Dev only: lets a check drive the narrator MUTED — never shipped.
+  if (import.meta.env.DEV) Object.assign(window, { __narrVoice: voice });
 
   /** A narrated block: the hero's wordmark, a story's opener pitch, or
    *  one slide's caption. */
@@ -844,11 +878,31 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const narrs: Narr[] = [];
 
-  // Chinese has no recording; it hears English under its own transcript.
+  // Which recording a paragraph plays: the page's language when Juan
+  // recorded it, the other one when he did not. Chinese has no recording;
+  // it hears English under its own transcript.
+  const voiceLang = (p: HTMLElement) => {
+    const es = document.documentElement.dataset.lang === 'es';
+    if (es) return p.dataset.clipEs ? 'es' : 'en';
+    return p.dataset.clipEn ? 'en' : 'es';
+  };
+
   const clipOf = (p: HTMLElement) =>
-    document.documentElement.dataset.lang === 'es'
-      ? p.dataset.clipEs || p.dataset.clipEn
-      : p.dataset.clipEn || p.dataset.clipEs;
+    voiceLang(p) === 'es' ? p.dataset.clipEs : p.dataset.clipEn;
+
+  /** The subtitles for the recording that plays — always its language. */
+  type Subs = { phrases: string[]; times?: number[] };
+  const subsCache = new WeakMap<HTMLElement, Map<string, Subs | null>>();
+  const subsOf = (p: HTMLElement): Subs | null => {
+    const lang = voiceLang(p);
+    let byLang = subsCache.get(p);
+    if (!byLang) subsCache.set(p, (byLang = new Map()));
+    if (!byLang.has(lang)) {
+      const raw = lang === 'es' ? p.dataset.subsEs : p.dataset.subsEn;
+      byLang.set(lang, raw ? (JSON.parse(raw) as Subs) : null);
+    }
+    return byLang.get(lang) ?? null;
+  };
 
   const firstVoiced = (block: Narr | undefined, from = 0) => {
     if (!block) return -1;
@@ -981,7 +1035,79 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     }
   };
 
+  // ----- subtitles: the pill opens and says what Juan is saying -----
+  const subEl = narrator?.querySelector<HTMLElement>('[data-nar-sub]');
+  let subShown = '';
+
+  /** The phrase being said now, or '' when there is none to show. */
+  const currentPhrase = () => {
+    if (!session || !running) return '';
+    const subs = subsOf(session.block.paras[session.para]);
+    if (!subs?.phrases.length) return '';
+    const t = voice.currentTime || 0;
+    let starts = subs.times;
+    if (!starts) {
+      // A plain transcript carries no timings: each phrase gets the share
+      // of the clip its length earns, plus a beat for the breath between.
+      const d = voice.duration;
+      if (!Number.isFinite(d) || d <= 0) return '';
+      const weights = subs.phrases.map(ph => ph.length + 12);
+      const total = weights.reduce((a, b) => a + b, 0);
+      let acc = 0;
+      starts = weights.map(wt => {
+        const at = (acc / total) * d;
+        acc += wt;
+        return at;
+      });
+    }
+    let i = 0;
+    while (i + 1 < starts.length && starts[i + 1] <= t) i++;
+    return subs.phrases[i];
+  };
+
+  const updateSub = () => {
+    if (!narrator || !subEl) return;
+    const phrase = currentPhrase();
+    narrator.classList.toggle('is-captioned', !!phrase);
+    if (!phrase || phrase === subShown) return;
+    subShown = phrase;
+    // A fresh line per phrase, so each one fades in on its own.
+    const line = document.createElement('span');
+    line.className = 'nar-sub-line';
+    line.textContent = phrase;
+    subEl.replaceChildren(line);
+  };
+
+  // ----- placement: the narrator glides between its anchors -----
+  /** The anchors in play and how much of the page each one owns. */
+  let parks: { anchor: HTMLElement; w: number }[] = [];
+
+  // Every frame, not only on scroll: the pill's own width animates when
+  // it opens, and a centred anchor has to keep it centred all the way.
+  const placeNarrator = () => {
+    if (!narrator || narrator.hidden) return;
+    const width = narrator.offsetWidth;
+    let sum = 0;
+    let x = 0;
+    let y = 0;
+    for (const { anchor, w } of parks) {
+      const r = anchor.getBoundingClientRect();
+      const left =
+        anchor.dataset.narrAlign === 'center'
+          ? r.left + r.width / 2 - width / 2
+          : r.left;
+      sum += w;
+      x += left * w;
+      y += r.top * w;
+    }
+    if (sum > 0.0001)
+      narrator.style.transform =
+        `translate(${(x / sum).toFixed(1)}px, ${(y / sum).toFixed(1)}px)`;
+  };
+
   const animateWave = (now: number) => {
+    updateSub();
+    placeNarrator();
     drawWave(now);
     requestAnimationFrame(animateWave);
   };
@@ -1091,7 +1217,12 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     const n: Narr = {
       el,
       paras: [...el.querySelectorAll<HTMLElement>('[data-narr-para]')],
-      anchor: el.querySelector<HTMLElement>('[data-narr-anchor]'),
+      // A block's anchor is inside it — unless the story placed it
+      // elsewhere by name, as the opener does (in its foot).
+      anchor:
+        story?.root.querySelector<HTMLElement>(
+          `[data-narr-anchor="${step}"]`
+        ) ?? el.querySelector<HTMLElement>('[data-narr-anchor]'),
       story,
       step,
     };
@@ -1155,7 +1286,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     // Where the narrator stands: a weighted blend of every anchor, each
     // weighted by how much of the page its block owns right now — so it
     // glides between blocks as the page scrolls, never jumps.
-    const parks: { anchor: HTMLElement; w: number }[] = [];
+    parks = [];
     if (heroNarr?.anchor) parks.push({ anchor: heroNarr.anchor, w: 1 - hp });
     showing = heroNarr && window.scrollY < vh * 0.5 ? heroNarr : undefined;
 
@@ -1367,20 +1498,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
     if (session && running && showing !== session.block) follow(showing);
 
-    if (narrator && !narrator.hidden) {
-      let sum = 0;
-      let x = 0;
-      let y = 0;
-      for (const { anchor, w } of parks) {
-        const r = anchor.getBoundingClientRect();
-        sum += w;
-        x += r.left * w;
-        y += r.top * w;
-      }
-      if (sum > 0.0001)
-        narrator.style.transform =
-          `translate(${(x / sum).toFixed(1)}px, ${(y / sum).toFixed(1)}px)`;
-    }
+    placeNarrator();
   };
 
   // A boolean "already scheduled" guard DEADLOCKS: if the frame it is
