@@ -527,13 +527,28 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     display: grid;
   }
 
+  /* The swap: the outgoing words leave in one micro-step, the incoming
+     ones arrive in the next — never both on screen in the same cell. */
   .cap {
     grid-area: 1 / 1;
     /* Clear the small lockup parked above the captions. */
     padding-top: 3.5rem;
     opacity: 0;
     pointer-events: none;
-    will-change: opacity, transform;
+    transition: opacity var(--dur-micro) var(--ease);
+  }
+
+  .cap.is-current {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: var(--dur-micro);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cap,
+    .cap.is-current {
+      transition: none;
+    }
   }
 
   /* The slide title IS the opener's name size — one ladder, and one
@@ -1542,22 +1557,15 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         }
       }
 
-      // Captions: each one belongs to the shot nearest the window, and
-      // DISSOLVES — opacity only. The deck already carries the motion; a
-      // caption that also travelled (a 6px settle, tried) made the eye
-      // track two moving things at once. None at all read as a hard cut
-      // (also tried). So: a soft dip through black over the middle
-      // ~60% of the step, eased at both ends, nothing moving.
-      for (let i = 0; i < s.caps.length; i++) {
-        const at = Math.abs(p - (i + 1));
-        if (reduceMotion) {
-          s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
-          continue;
-        }
-        const v = smooth(clamp((0.5 - at) / 0.3, 0, 1));
-        s.caps[i].style.opacity = v.toFixed(4);
-        s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
-      }
+      // Captions change as an EVENT, not with the scroll. Every earlier
+      // version tied the words' opacity to the scroll position — a dip,
+      // a drift, a settle — so each pixel of a slow or hesitant scroll
+      // made them flicker, and read as noise beside the deck (which IS
+      // scroll-coupled, rightly: it is things moving). The words just
+      // hold, whole, until the next slide becomes the active one; then
+      // one short swap (CSS, `is-current`) and they hold again.
+      for (let i = 0; i < s.caps.length; i++)
+        s.caps[i].classList.toggle('is-current', active === i + 1);
 
       // The lockup FLIPs from the opener header to the window's caption
       // corner and parks there — one element, never redrawn.
