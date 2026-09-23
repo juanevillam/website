@@ -537,7 +537,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     padding-top: 3.5rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity calc(var(--beat) / 6) linear;
+    /* 50ms: the fastest a change still has a soft edge — below it the
+       eye can no longer tell it from a cut. */
+    transition: opacity calc(var(--beat) / 12) linear;
   }
 
   .cap.is-current {
