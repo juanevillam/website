@@ -8,13 +8,14 @@ import T from './T.astro';
  * wordmark, under the opener's pitch, under each slide's caption), the
  * way the lockup travels. One voice, so one control.
  *
- * No word on it. It is Sound Shaper's own mark — five bars — and the
- * bars ARE the state: at rest they hold the mark's frozen shape; while
- * Juan speaks they follow his actual voice, band by band, off a live
- * analyser on the audio; paused, they settle back into the mark.
+ * No word on it — a word read as odd. It is Sound Shaper's own mark,
+ * five bars, beside a clock. At rest the bars hold the mark's shape and
+ * breathe, and the clock gives the length of what the page is showing;
+ * while Juan speaks they follow his actual voice, band by band, off a
+ * live analyser, and the clock counts down; paused, they settle back.
  *
- * The material is the floating pills' (the header's two controls), so
- * the page's three floating things read as one family.
+ * The shape and material are the floating pills' (the header's two
+ * controls), so the page's three floating things read as one family.
  */
 ---
 
@@ -29,6 +30,7 @@ import T from './T.astro';
   <span class="nar-bars" aria-hidden="true">
     <i></i><i></i><i></i><i></i><i></i>
   </span>
+  <span class="nar-time" data-nar-time aria-hidden="true"></span>
 </button>
 
 <style>
@@ -37,11 +39,13 @@ import T from './T.astro';
     top: 0;
     left: 0;
     z-index: 40;
-    display: grid;
-    place-items: center;
-    width: var(--float-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: var(--narrator-w);
     height: var(--float-h);
-    padding: 0;
+    padding: 0 0.875rem;
     border: 1px solid var(--hairline);
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface) 82%, transparent);
@@ -82,17 +86,52 @@ import T from './T.astro';
     display: inline;
   }
 
-  /* The mark on the app's own grid: 2px bars on a 7-unit pitch, heights
+  /* The mark on the app's own grid: bars on a 7-unit pitch, heights
      driven per frame by the controller (--h, 0–1 of the tallest). */
   .nar-bars {
     display: flex;
     align-items: center;
     gap: 3px;
-    height: 1rem;
+    height: 1.125rem;
+  }
+
+  /* At rest the mark breathes — an invitation, not a performance. */
+  .narrator:not(.is-playing) .nar-bars {
+    animation: nar-breathe calc(var(--beat) * 4) ease-in-out infinite;
+  }
+
+  @keyframes nar-breathe {
+    0%,
+    100% {
+      transform: scaleY(0.86);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .narrator .nar-bars {
+      animation: none;
+    }
+  }
+
+  /* The clock: the mono label face, figures that never shift width. */
+  .nar-time {
+    min-width: 4.5ch;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--track-label);
+    text-align: left;
+  }
+
+  .nar-time:empty {
+    display: none;
   }
 
   .nar-bars i {
-    width: 2px;
+    width: 2.5px;
     height: 100%;
     border-radius: 1px;
     background: currentColor;

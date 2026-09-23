@@ -859,7 +859,66 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return -1;
   };
 
+  // ----- the clock: the length of what the page shows, or what is left
+  // of it while it is being told -----
+  const timeEl = narrator?.querySelector<HTMLElement>('[data-nar-time]');
+  const lengths = new Map<string, number>();
+
+  // Metadata only — the clip's header, never its audio.
+  const measure = () => {
+    for (const n of narrs)
+      for (const p of n.paras) {
+        const src = clipOf(p);
+        if (!src || lengths.has(src)) continue;
+        lengths.set(src, NaN);
+        const probe = new Audio();
+        probe.preload = 'metadata';
+        probe.addEventListener(
+          'loadedmetadata',
+          () => {
+            lengths.set(src, probe.duration);
+            updateClock();
+          },
+          { once: true }
+        );
+        probe.src = src;
+      }
+  };
+
+  /** Seconds of voice in a block, from paragraph `from` on. */
+  const lengthOf = (block: Narr, from = 0) => {
+    let sum = 0;
+    for (let i = from; i < block.paras.length; i++) {
+      const src = clipOf(block.paras[i]);
+      if (src) sum += lengths.get(src) ?? NaN;
+    }
+    return sum;
+  };
+
+  const clock = (seconds: number) => {
+    const t = Math.max(0, Math.ceil(seconds));
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  };
+
+  let shown = '';
+  const updateClock = () => {
+    if (!timeEl) return;
+    const block = showing;
+    let text = '';
+    if (block) {
+      const told = session?.block === block;
+      const left = told
+        ? lengthOf(block, session!.para) - (voice.currentTime || 0)
+        : lengthOf(block);
+      // Unknown until every clip's header has landed — say nothing
+      // rather than a wrong number.
+      if (Number.isFinite(left)) text = (told ? '−' : '') + clock(left);
+    }
+    if (text !== shown) timeEl.textContent = shown = text;
+  };
+
   const paint = () => {
+    updateClock();
     for (const n of narrs) {
       const on = session?.block === n;
       n.el.classList.toggle('is-narrating', on);
@@ -933,6 +992,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       if (Math.abs(d) > 0.002) settled = false;
       bars[i].style.setProperty('--h', levels[i].toFixed(3));
     }
+    updateClock();
     barsFrame =
       running || !settled ? requestAnimationFrame(animateBars) : 0;
   };
@@ -1024,6 +1084,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // A language switch mid-sentence restarts that sentence in the new
   // voice; paused, the next play simply uses it.
   new MutationObserver(() => {
+    measure();
+    updateClock();
     if (!session) return;
     const { block, para } = session;
     if (running) start(block, para);
@@ -1100,6 +1162,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // Nothing recorded anywhere → no narrator at all.
   if (narrator && narrs.length) {
     narrator.hidden = false;
+    measure();
     bars.forEach((bar, i) => bar.style.setProperty('--h', MARK[i].toFixed(3)));
   }
 
@@ -1324,6 +1387,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     }
 
     if (session && running && showing !== session.block) follow(showing);
+    updateClock();
 
     if (narrator && !narrator.hidden) {
       let sum = 0;
