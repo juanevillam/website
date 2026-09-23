@@ -1033,8 +1033,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
     const talking = running && !voice.paused;
     const bands = talking ? voiceBands(half) : null;
-    // How loud the voice is right now, for the field behind the page.
+    // How loud the voice is right now, and its shape, for the field.
     loudness = bands ? bands.reduce((a, b) => a + b, 0) / bands.length : 0;
+    spectrum = bands ?? [];
     // At rest: a bell, centre high, breathing on a slow four-beat cycle.
     const breathe = reduceMotion ? 1 : 0.88 + 0.12 * Math.sin(now / 1100);
 
@@ -1061,30 +1062,35 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   // ----- the field: the page listens -----
-  // Behind everything, three hairline sound waves cross the whole page at
-  // the pill's height — one continuous voice, never a burst of events.
-  // Silent, they lie flat and nearly vanish; speaking, they swell with
-  // the loudness and tighten as the voice brightens, gathered round the
-  // pill and settling to nothing at the page's edges. They only travel
-  // while there is voice to carry them, and leave with the narration.
+  // Three hairline sound waves along the FOOT of the screen — a horizon
+  // under the page, decoration rather than a second control beside the
+  // pill. Each stretch of each line answers its own band of the voice
+  // (the body of it at the centre, the air towards the sides, mirrored
+  // like the pill's bars), and each strand reads the bands a little
+  // differently, so they move apart rather than in lockstep. Silence
+  // lays them flat; they travel only while there is voice to carry them.
 
   const field = document.querySelector<HTMLCanvasElement>('.nar-field');
   /** Mean band level this frame, 0–1 (set by the bars). */
   let loudness = 0;
+  /** The bars' bands this frame, centre first (set by the bars). */
+  let spectrum: number[] = [];
   /** Where the voice's energy sits, 0 low – 1 high (set by the bars). */
   let brightness = 0.3;
-  let amp = 0;
+  let heard: number[] = [];
   let tone = 0.3;
   let presence = 0;
   let travel = 0;
   let lastFrame = 0;
   let fieldDirty = false;
-  // Three strands, each its own wavelength, speed and weight, so they
-  // braid rather than stack.
+  // Where the horizon sits: low on the screen, clear of the content.
+  const HORIZON = 0.86;
+  // Three strands: wavelength, speed, how far along the spectrum each
+  // one reads (so each leans on different bands), weight and ink.
   const STRANDS = [
-    { k: 1, speed: 1, gain: 1, alpha: 1 },
-    { k: 1.55, speed: -0.7, gain: 0.6, alpha: 0.6 },
-    { k: 0.7, speed: 0.45, gain: 0.8, alpha: 0.45 },
+    { k: 1, speed: 1, shift: 0, gain: 1, alpha: 1 },
+    { k: 1.6, speed: -0.75, shift: 0.22, gain: 0.7, alpha: 0.6 },
+    { k: 0.65, speed: 0.5, shift: -0.18, gain: 0.85, alpha: 0.45 },
   ];
   // The field's ink: the page's own --ink, only ever at a whisper.
   const INK = (() => {
@@ -1098,18 +1104,34 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       : '245, 245, 245';
   })();
 
+  /** The heard level at a point along the spectrum, 0 centre – 1 edge. */
+  const levelAt = (u: number) => {
+    const n = heard.length;
+    if (!n) return 0;
+    const f = Math.min(n - 1, Math.max(0, u * (n - 1)));
+    const i = Math.floor(f);
+    const t = f - i;
+    return (heard[i] ?? 0) * (1 - t) + (heard[i + 1] ?? heard[i] ?? 0) * t;
+  };
+
   const drawField = (now: number) => {
     if (!field || !narrator || narrator.hidden || reduceMotion) return;
     const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
     lastFrame = now;
     const talking = running && !voice.paused;
 
-    // Everything eases: the strands never snap to a syllable.
-    amp += ((talking ? loudness : 0) - amp) * 0.08;
-    tone += (brightness - tone) * 0.05;
+    // Quick enough to follow the voice, eased enough not to twitch.
+    if (heard.length !== spectrum.length && spectrum.length)
+      heard = new Array(spectrum.length).fill(0);
+    for (let i = 0; i < heard.length; i++) {
+      const target = talking ? spectrum[i] ?? 0 : 0;
+      const d = target - heard[i];
+      heard[i] += d * (d > 0 ? 0.3 : 0.12);
+    }
+    tone += (brightness - tone) * 0.08;
     presence += ((session && running ? 1 : 0) - presence) * 0.04;
     // They travel only on voice — a pause holds them where they are.
-    travel += dt * 0.0022 * (0.15 + amp);
+    travel += dt * 0.0024 * (0.1 + loudness);
 
     const g = field.getContext('2d');
     if (!g) return;
@@ -1132,32 +1154,34 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     g.setTransform(ratio, 0, 0, ratio, 0, 0);
     g.clearRect(0, 0, w, h);
 
-    const pill = narrator.getBoundingClientRect();
-    const cx = pill.left + pill.width / 2;
-    const cy = pill.top + pill.height / 2;
+    const base = h * HORIZON;
     // Low voice → long, lazy waves; bright voice → tighter ones.
-    const wavelength = 520 - 360 * Math.min(1, Math.max(0, tone));
-    const height = Math.min(h, w) * 0.09 * amp;
-    const spread = w * 0.42;
+    const wavelength = 480 - 330 * Math.min(1, Math.max(0, tone));
+    const reach = Math.min(h * 0.16, 140);
 
     g.lineWidth = 1;
     for (const strand of STRANDS) {
-      g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.05 + 0.13 * amp)).toFixed(4)})`;
+      g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.07 + 0.16 * loudness)).toFixed(4)})`;
       g.beginPath();
-      for (let x = 0; x <= w; x += 6) {
-        // Gathered round the pill, settling to flat at the edges.
-        const env =
-          Math.exp(-(((x - cx) / spread) ** 2)) *
-          Math.sin(Math.PI * Math.min(1, Math.max(0, x / w)));
+      for (let x = 0; x <= w; x += 5) {
+        const u = x / w;
+        // Mirrored from the centre, like the pill: body in the middle,
+        // air towards both sides — read at this strand's own shift.
+        const along = Math.min(1, Math.max(0, Math.abs(u - 0.5) * 2 + strand.shift));
+        const level = levelAt(along);
+        // Flat at the screen's very edges, so the lines fade out rather
+        // than being cut off.
+        const edge = Math.sin(Math.PI * u);
         const y =
-          cy +
+          base +
           Math.sin(
-            ((x - cx) / wavelength) * Math.PI * 2 * strand.k +
+            ((x - w / 2) / wavelength) * Math.PI * 2 * strand.k +
               travel * strand.speed * Math.PI * 2
           ) *
-            height *
+            reach *
+            level *
             strand.gain *
-            env;
+            edge;
         if (x) g.lineTo(x, y);
         else g.moveTo(x, y);
       }
