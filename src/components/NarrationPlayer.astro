@@ -8,10 +8,11 @@ import T from './T.astro';
  * wordmark, under the opener's pitch, under each slide's caption), the
  * way the lockup travels. One voice, so one control.
  *
- * Nothing on it but Juan's voice, drawn: an oscilloscope of the actual
- * audio (a live analyser's waveform, locked to each cycle so it holds
- * still instead of flickering). Silence is a flat line — at rest, in a
- * pause, between words. Louder, the wave grows; higher, it tightens.
+ * Nothing on it but Juan's voice, drawn the way Sound Shaper's clip
+ * sheet draws a sound: thin bars on the centre line, each the loudness
+ * of its slice of the real audio. At rest it shows the waveform of what
+ * it is about to play — a voice note, at a glance; playing, the bars
+ * already heard take full ink. Silence is low bars; phrases rise.
  *
  * The shape and material are the floating pills', one size up: it is
  * Juan speaking, so it outranks the chrome it shares a family with.
@@ -80,19 +81,11 @@ import T from './T.astro';
     display: inline;
   }
 
-  /* The wave: drawn by the controller in the pill's ink, faded at both
-     ends so it rises out of the rim rather than being cut by it. */
+  /* The wave: bars drawn by the controller in the pill's ink. */
   .nar-wave {
     position: absolute;
-    inset: 0 1rem;
-    width: calc(100% - 2rem);
+    inset: 0 1.125rem;
+    width: calc(100% - 2.25rem);
     height: 100%;
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      #000 18%,
-      #000 82%,
-      transparent
-    );
   }
 </style>
