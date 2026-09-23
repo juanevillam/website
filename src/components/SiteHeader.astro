@@ -5,6 +5,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
 
 <header class="site-header">
   <a href="/" class="mark-link" aria-label="juanevillam">
+    <!-- 26 = --float-glyph (1.625rem); the narrator scales the same. -->
     <BrandMark size={26} />
   </a>
 
@@ -75,7 +76,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     display: inline-flex;
     align-items: center;
     height: var(--float-h);
-    padding: 0 0.875rem;
+    padding: 0 var(--float-pad);
     border: 1px solid var(--hairline);
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface) 82%, transparent);
