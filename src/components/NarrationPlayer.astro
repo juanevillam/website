@@ -19,10 +19,19 @@ import T from './T.astro';
  * leading end and what Juan is saying — which is looser than the words
  * on screen — runs beside them, phrase by phrase.
  *
+ * THE PAGE LISTENS TOO. Behind everything, a field the voice drops
+ * into: each syllable's onset sends a ring out from the pill across the
+ * whole page, sized by how hard it lands, and a soft glow round the pill
+ * breathes with the loudness. Silence lets it settle. Monochrome.
+ *
  * The shape and material are the floating pills', one size up: it is
  * Juan speaking, so it outranks the chrome it shares a family with.
  */
 ---
+
+<!-- The field the voice drops into — behind every section, above only
+     the page's own ground (z -1, painted over the body's background). -->
+<canvas class="nar-field" aria-hidden="true"></canvas>
 
 <button
   class="narrator"
@@ -37,6 +46,15 @@ import T from './T.astro';
 </button>
 
 <style>
+  .nar-field {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
   .narrator {
     position: fixed;
     top: 0;

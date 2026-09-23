@@ -125,6 +125,22 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       </div>
       </div>
 
+      {/* The opener's narrator stands on its own, centred on the page
+          like the hero's, one step under the store row — not in the
+          pitch, where it got lost among the words. */}
+      {
+        voiced(pitchParas) && (
+          <div class="inner intro-narr">
+            <div
+              class="narr-anchor"
+              data-narr-anchor="0"
+              data-narr-align="center"
+              aria-hidden="true"
+            />
+          </div>
+        )
+      }
+
       {
         linkGroups.length > 0 && (
           <footer class="inner intro-foot">
@@ -144,17 +160,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
                 </div>
               ))}
             </nav>
-            {/* The opener's narrator stands HERE, not in the pitch where
-                it got lost among the words: centred on the page like the
-                hero's, level with the links. */}
-            {voiced(pitchParas) && (
-              <div
-                class="narr-anchor"
-                data-narr-anchor="0"
-                data-narr-align="center"
-                aria-hidden="true"
-              />
-            )}
           </footer>
         )
       }
@@ -415,20 +420,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
      above it rather than the whole panel. */
   .intro-foot {
     margin-top: var(--gap-block);
-    display: grid;
   }
 
-  .intro-foot > * {
-    grid-area: 1 / 1;
+  /* The narrator's place on the opener: centred, two steps of air
+     above it so it reads as its own moment, not the row's tail. */
+  .intro-narr {
+    display: flex;
+    justify-content: center;
+    margin-top: calc(var(--gap-block) * 2);
   }
 
-  /* Centred on the page, and level with the LINKS rather than their
-     hairline: the anchor takes the nav's top padding as its own margin,
-     so centring happens in the links' own band. */
-  .intro-foot .narr-anchor {
-    justify-self: center;
-    align-self: center;
-    margin-top: var(--gap-block);
+  .intro-narr .narr-anchor {
+    margin-top: 0;
   }
 
   .intro-links {
@@ -786,11 +789,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       gap: 2rem;
     }
 
-    /* One column: under the links, still centred. */
-    .intro-foot .narr-anchor {
-      grid-area: 2 / 1;
-      align-self: start;
-    }
   }
 
   /* Short phones: the pitch is the one block that can lose a line. */
@@ -829,8 +827,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const voice = new Audio();
   voice.preload = 'auto';
-  // Dev only: lets a check drive the narrator MUTED — never shipped.
-  if (import.meta.env.DEV) Object.assign(window, { __narrVoice: voice });
+  // Dev only: lets a check drive the narrator SILENTLY — the analyser
+  // still hears the voice (bars, subtitles, field all run), the speakers
+  // do not. Never shipped.
+  let devSilent = false;
+  if (import.meta.env.DEV)
+    Object.assign(window, {
+      __narrVoice: voice,
+      __narrSilence: () => {
+        devSilent = true;
+        if (output) output.gain.value = 0;
+      },
+    });
 
   /** A narrated block: the hero's wordmark, a story's opener pitch, or
    *  one slide's caption. */
@@ -933,6 +941,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   let ctx: AudioContext | null = null;
   let analyser: AnalyserNode | null = null;
+  let output: GainNode | null = null;
   let freq: Uint8Array<ArrayBuffer> | null = null;
 
   // The analyser needs an AudioContext, which a browser only lets a
@@ -948,7 +957,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       analyser.minDecibels = -85;
       analyser.maxDecibels = -25;
       analyser.smoothingTimeConstant = 0.72;
-      source.connect(analyser).connect(ctx.destination);
+      output = ctx.createGain();
+      output.gain.value = devSilent ? 0 : 1;
+      source.connect(analyser).connect(output).connect(ctx.destination);
       freq = new Uint8Array(analyser.frequencyBinCount);
     } catch {
       ctx = null;
@@ -1010,6 +1021,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
     const talking = running && !voice.paused;
     const bands = talking ? voiceBands(half) : null;
+    // How loud the voice is right now, for the field behind the page.
+    loudness = bands ? bands.reduce((a, b) => a + b, 0) / bands.length : 0;
     // At rest: a bell, centre high, breathing on a slow four-beat cycle.
     const breathe = reduceMotion ? 1 : 0.88 + 0.12 * Math.sin(now / 1100);
 
@@ -1032,6 +1045,104 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       g.beginPath();
       g.roundRect(offset + i * BAR_PITCH, (h - barH) / 2, BAR_WIDTH, barH, BAR_WIDTH / 2);
       g.fill();
+    }
+  };
+
+  // ----- the field: the page listens -----
+  // Behind everything, the voice falls like drops into still water. Each
+  // syllable's ONSET — loudness jumping clear of its own recent average —
+  // sends a ring out from the pill across the page, sized and inked by
+  // how hard it landed, with a fainter second ring a beat behind it the
+  // way a real drop throws two. A soft glow round the pill breathes with
+  // the loudness itself. Silence lets the water settle.
+
+  const field = document.querySelector<HTMLCanvasElement>('.nar-field');
+  /** Mean band level this frame, 0–1 (set by the bars). */
+  let loudness = 0;
+  let trail = 0;
+  let glow = 0;
+  let lastDrop = 0;
+  let fieldDirty = false;
+  type Ripple = { x: number; y: number; born: number; strength: number };
+  let ripples: Ripple[] = [];
+  const RIPPLE_MS = 2800;
+  // The field's ink: the page's own --ink, only ever at a whisper.
+  const INK = (() => {
+    const hex = getComputedStyle(document.documentElement)
+      .getPropertyValue('--ink')
+      .trim()
+      .replace('#', '');
+    const n = parseInt(hex.length === 3 ? hex.replace(/./g, '$&$&') : hex, 16);
+    return Number.isFinite(n)
+      ? `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`
+      : '245, 245, 245';
+  })();
+
+  const drawField = (now: number) => {
+    if (!field || !narrator || narrator.hidden || reduceMotion) return;
+    const talking = running && !voice.paused;
+    const pill = narrator.getBoundingClientRect();
+    const cx = pill.left + pill.width / 2;
+    const cy = pill.top + pill.height / 2;
+
+    trail += (loudness - trail) * 0.12;
+    if (
+      talking &&
+      loudness > 0.3 &&
+      loudness - trail > 0.1 &&
+      now - lastDrop > 240
+    ) {
+      lastDrop = now;
+      const strength = Math.min(1, loudness * 1.2);
+      ripples.push({ x: cx, y: cy, born: now, strength });
+      ripples.push({ x: cx, y: cy, born: now + 160, strength: strength * 0.5 });
+    }
+    glow += ((talking ? loudness : 0) - glow) * 0.08;
+    ripples = ripples.filter(r => now - r.born < RIPPLE_MS);
+
+    const g = field.getContext('2d');
+    if (!g) return;
+    if (!ripples.length && glow < 0.004) {
+      if (fieldDirty) {
+        g.clearRect(0, 0, field.width, field.height);
+        fieldDirty = false;
+      }
+      return;
+    }
+    fieldDirty = true;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    if (field.width !== Math.round(w * ratio)) {
+      field.width = Math.round(w * ratio);
+      field.height = Math.round(h * ratio);
+    }
+    g.setTransform(ratio, 0, 0, ratio, 0, 0);
+    g.clearRect(0, 0, w, h);
+
+    const reach = Math.min(w, h);
+    if (glow > 0.004) {
+      const radius = reach * (0.18 + 0.22 * glow);
+      const halo = g.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      halo.addColorStop(0, `rgba(${INK}, ${(0.07 * glow).toFixed(4)})`);
+      halo.addColorStop(1, `rgba(${INK}, 0)`);
+      g.fillStyle = halo;
+      g.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+    }
+
+    g.lineWidth = 1;
+    for (const r of ripples) {
+      const age = (now - r.born) / RIPPLE_MS;
+      if (age < 0) continue;
+      // Fast off the mark, slowing as it spreads — how water rings run.
+      const radius =
+        pill.height / 2 + (1 - (1 - age) ** 3) * reach * (0.35 + 0.4 * r.strength);
+      const alpha = (1 - age) ** 2 * 0.22 * r.strength;
+      g.strokeStyle = `rgba(${INK}, ${alpha.toFixed(4)})`;
+      g.beginPath();
+      g.arc(r.x, r.y, radius, 0, Math.PI * 2);
+      g.stroke();
     }
   };
 
@@ -1109,6 +1220,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     updateSub();
     placeNarrator();
     drawWave(now);
+    drawField(now);
     requestAnimationFrame(animateWave);
   };
 
