@@ -859,8 +859,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return -1;
   };
 
-  // ----- the clock: the length of what the page shows, or what is left
-  // of it while it is being told -----
+  // ----- the clock: the length of what the page shows, or how far into
+  // it the voice is while it is being told. It counts UP, like Voice
+  // Memos — a countdown read as a timer on a bomb. -----
   const timeEl = narrator?.querySelector<HTMLElement>('[data-nar-time]');
   const lengths = new Map<string, number>();
 
@@ -895,8 +896,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return sum;
   };
 
-  const clock = (seconds: number) => {
-    const t = Math.max(0, Math.ceil(seconds));
+  const clock = (seconds: number, round = Math.round) => {
+    const t = Math.max(0, round(seconds));
     return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   };
 
@@ -907,12 +908,16 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     let text = '';
     if (block) {
       const told = session?.block === block;
-      const left = told
-        ? lengthOf(block, session!.para) - (voice.currentTime || 0)
-        : lengthOf(block);
+      const total = lengthOf(block);
       // Unknown until every clip's header has landed — say nothing
       // rather than a wrong number.
-      if (Number.isFinite(left)) text = (told ? '−' : '') + clock(left);
+      if (Number.isFinite(total))
+        text = told
+          ? clock(
+              total - lengthOf(block, session!.para) + (voice.currentTime || 0),
+              Math.floor
+            )
+          : clock(total);
     }
     if (text !== shown) timeEl.textContent = shown = text;
   };
