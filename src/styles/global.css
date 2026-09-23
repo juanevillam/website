@@ -57,6 +57,9 @@
      speaking, so it outranks the chrome. Fixed, so anchors reserve it. */
   --narrator-h: 3rem;
   --narrator-w: 9rem;
+  /* Open, it carries Juan's subtitles beside the bars — Dynamic Island
+     width, never wider than the screen allows. */
+  --narrator-w-open: min(25rem, calc(100vw - 2.5rem));
   /* Exactly where the pills END — counting the gap twice put 40px of
      air over the phone against 24 under it. */
   --header-h: calc(var(--float-gap) + var(--float-h));

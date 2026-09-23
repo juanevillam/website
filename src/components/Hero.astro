@@ -1,5 +1,5 @@
 ---
-import { clipFor } from '../lib/narration';
+import { clipFor, subsFor } from '../lib/narration';
 
 /**
  * The hero stays the wordmark — that decision holds. When Juan's personal
@@ -8,6 +8,7 @@ import { clipFor } from '../lib/narration';
  * pitch can start from the very top.
  */
 const clip = clipFor('hero');
+const subs = subsFor('hero');
 ---
 
 <section class="hero" id="top">
@@ -25,10 +26,21 @@ const clip = clipFor('hero');
       data-narr-para
       data-clip-en={clip?.en}
       data-clip-es={clip?.es}
+      data-subs-en={subs.en}
+      data-subs-es={subs.es}
     >
       juanevillam
     </h1>
-    {clip && <div class="narr-anchor" data-narr-anchor aria-hidden="true" />}
+    {
+      clip && (
+        <div
+          class="narr-anchor"
+          data-narr-anchor
+          data-narr-align="center"
+          aria-hidden="true"
+        />
+      )
+    }
   </div>
 </section>
 
