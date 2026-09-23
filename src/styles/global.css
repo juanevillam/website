@@ -53,11 +53,19 @@
      in its panel. */
   --float-gap: 1rem;
   --float-h: 2.5rem;
-  /* The narrator: the floating pills' shape at TWICE their size — it is
-     Juan speaking, so it outranks the chrome. Fixed, so anchors reserve
-     it. */
-  --narrator-h: calc(var(--float-h) * 2);
-  --narrator-w: calc(var(--float-h) * 4);
+  /* A floating pill's side padding and the glyph inside it — the header's
+     mark is drawn at this size. */
+  --float-pad: 0.875rem;
+  --float-glyph: 1.625rem;
+  /* The narrator: a floating pill built by the SAME recipe — height,
+     side padding, glyph — at three times its area (√3 on every side),
+     so it outranks the chrome it belongs to. Content-sized like the
+     header's pills; fixed, so anchors can reserve it. */
+  --narrator-scale: 1.7320508;
+  --narrator-h: calc(var(--float-h) * var(--narrator-scale));
+  --narrator-pad: calc(var(--float-pad) * var(--narrator-scale));
+  --narrator-glyph: calc(var(--float-glyph) * var(--narrator-scale));
+  --narrator-w: calc(var(--narrator-glyph) + var(--narrator-pad) * 2 + 2px);
   /* Open, it carries Juan's subtitles beside the glyph — Dynamic Island
      width, never wider than the screen allows. */
   --narrator-w-open: min(30rem, calc(100vw - 2.5rem));
