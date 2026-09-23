@@ -832,8 +832,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   const narrator = document.querySelector<HTMLElement>('[data-narrator]');
-  const bars = narrator
-    ? [...narrator.querySelectorAll<HTMLElement>('.nar-bars i')]
+  const lights = narrator
+    ? [...narrator.querySelectorAll<HTMLElement>('.nar-glow i')]
     : [];
 
   /** Where the voice is — kept while paused, so play resumes in place. */
@@ -859,71 +859,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return -1;
   };
 
-  // ----- the clock: the length of what the page shows, or how far into
-  // it the voice is while it is being told. It counts UP, like Voice
-  // Memos — a countdown read as a timer on a bomb. -----
-  const timeEl = narrator?.querySelector<HTMLElement>('[data-nar-time]');
-  const lengths = new Map<string, number>();
-
-  // Metadata only — the clip's header, never its audio.
-  const measure = () => {
-    for (const n of narrs)
-      for (const p of n.paras) {
-        const src = clipOf(p);
-        if (!src || lengths.has(src)) continue;
-        lengths.set(src, NaN);
-        const probe = new Audio();
-        probe.preload = 'metadata';
-        probe.addEventListener(
-          'loadedmetadata',
-          () => {
-            lengths.set(src, probe.duration);
-            updateClock();
-          },
-          { once: true }
-        );
-        probe.src = src;
-      }
-  };
-
-  /** Seconds of voice in a block, from paragraph `from` on. */
-  const lengthOf = (block: Narr, from = 0) => {
-    let sum = 0;
-    for (let i = from; i < block.paras.length; i++) {
-      const src = clipOf(block.paras[i]);
-      if (src) sum += lengths.get(src) ?? NaN;
-    }
-    return sum;
-  };
-
-  const clock = (seconds: number, round = Math.round) => {
-    const t = Math.max(0, round(seconds));
-    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-  };
-
-  let shown = '';
-  const updateClock = () => {
-    if (!timeEl) return;
-    const block = showing;
-    let text = '';
-    if (block) {
-      const told = session?.block === block;
-      const total = lengthOf(block);
-      // Unknown until every clip's header has landed — say nothing
-      // rather than a wrong number.
-      if (Number.isFinite(total))
-        text = told
-          ? clock(
-              total - lengthOf(block, session!.para) + (voice.currentTime || 0),
-              Math.floor
-            )
-          : clock(total);
-    }
-    if (text !== shown) timeEl.textContent = shown = text;
-  };
-
   const paint = () => {
-    updateClock();
     for (const n of narrs) {
       const on = session?.block === n;
       n.el.classList.toggle('is-narrating', on);
@@ -934,16 +870,26 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     narrator?.classList.toggle('is-playing', running);
   };
 
-  // ----- the bars: the mark at rest, the voice while speaking -----
-  // Heights of Sound Shaper's mark (15/25/16/32/20 on its 48 grid), as a
-  // share of the tallest bar.
-  const MARK = [15, 25, 16, 32, 20].map(h => h / 32);
-  // Speech bands, Hz — fundamentals up to sibilance.
-  const EDGES = [90, 180, 360, 720, 1440, 3600];
-  // Which band each bar shows: the body of the voice sits in the middle
-  // of the mark, the air at its edges.
-  const ORDER = [3, 1, 0, 2, 4];
-  const levels = MARK.slice();
+  // ----- the orb: light swirling inside the pill, Siri's way -----
+  // Four soft lights orbit inside the narrator. At rest they drift and
+  // barely glow; while Juan speaks the pill lights up, the swirl quickens
+  // and each light swells with its own band of his voice — lows, low
+  // mids, high mids, air — off a live analyser. Nothing else is in it.
+
+  // Speech bands, Hz — one per light.
+  const EDGES = [90, 250, 700, 1800, 4500];
+  // Each light's own orbit: radius (share of the pill), speed, phase.
+  const ORBITS = [
+    { rx: 0.34, ry: 0.3, sp: 0.00042, ph: 0 },
+    { rx: 0.28, ry: 0.36, sp: -0.00033, ph: 1.7 },
+    { rx: 0.38, ry: 0.24, sp: 0.00027, ph: 3.4 },
+    { rx: 0.22, ry: 0.32, sp: -0.00048, ph: 5.1 },
+  ];
+  const bands = [0, 0, 0, 0];
+  /** 0 at rest, 1 while the voice is running — eased, never switched. */
+  let live = 0;
+  /** Each light's own clock, so a quickened swirl never jumps phase. */
+  const turn = [0, 0, 0, 0];
 
   let ctx: AudioContext | null = null;
   let analyser: AnalyserNode | null = null;
@@ -960,7 +906,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       const source = ctx.createMediaElementSource(voice);
       analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.55;
+      analyser.smoothingTimeConstant = 0.6;
       source.connect(analyser).connect(ctx.destination);
       freq = new Uint8Array(analyser.frequencyBinCount);
     } catch {
@@ -969,40 +915,48 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     }
   };
 
-  const voiceLevels = () => {
-    if (!analyser || !freq || !ctx) return MARK;
+  const voiceBands = () => {
+    if (!analyser || !freq || !ctx) return [0, 0, 0, 0];
     analyser.getByteFrequencyData(freq);
     const binHz = ctx.sampleRate / analyser.fftSize;
-    const bands = EDGES.slice(0, -1).map((lo, i) => {
+    const raw = EDGES.slice(0, -1).map((lo, i) => {
       const a = Math.max(1, Math.floor(lo / binHz));
       const b = Math.max(a + 1, Math.ceil(EDGES[i + 1] / binHz));
       let sum = 0;
       for (let k = a; k < b; k++) sum += freq![k];
       return sum / (b - a) / 255;
     });
-    // A slow automatic gain, so a quiet take and a loud one both move
-    // the bars across their whole range.
-    peak = Math.max(peak * 0.997, ...bands, 0.12);
-    return ORDER.map(i => 0.12 + 0.88 * Math.min(1, bands[i] / peak) ** 1.3);
+    // A slow automatic gain, so a quiet take and a loud one both light
+    // the pill across its whole range.
+    peak = Math.max(peak * 0.997, ...raw, 0.12);
+    return raw.map(v => Math.min(1, v / peak) ** 1.4);
   };
 
-  let barsFrame = 0;
-  const animateBars = () => {
-    const target = running && !voice.paused ? voiceLevels() : MARK;
-    let settled = true;
-    for (let i = 0; i < bars.length; i++) {
-      const d = target[i] - levels[i];
-      // Quick to rise, slower to fall — how a level meter reads.
-      levels[i] += d * (d > 0 ? 0.5 : 0.2);
-      if (Math.abs(d) > 0.002) settled = false;
-      bars[i].style.setProperty('--h', levels[i].toFixed(3));
-    }
-    updateClock();
-    barsFrame =
-      running || !settled ? requestAnimationFrame(animateBars) : 0;
-  };
-  const wakeBars = () => {
-    if (!barsFrame) barsFrame = requestAnimationFrame(animateBars);
+  let last = 0;
+  const animateOrb = (now: number) => {
+    const dt = last ? Math.min(now - last, 64) : 16;
+    last = now;
+    const talking = running && !voice.paused;
+    live += ((talking ? 1 : 0) - live) * 0.05;
+    const target = talking ? voiceBands() : [0, 0, 0, 0];
+    const w = narrator!.clientWidth;
+    const h = narrator!.clientHeight;
+    narrator!.style.setProperty('--live', live.toFixed(3));
+    lights.forEach((light, i) => {
+      const d = target[i] - bands[i];
+      // Quick to swell, slower to settle — how a voice meter reads.
+      bands[i] += d * (d > 0 ? 0.45 : 0.12);
+      const o = ORBITS[i];
+      turn[i] += dt * o.sp * (reduceMotion ? 0 : 1 + 2.2 * live);
+      const a = o.ph + turn[i];
+      const x = Math.cos(a) * w * o.rx;
+      const y = Math.sin(a * 1.3) * h * o.ry;
+      const scale = 0.85 + 0.12 * Math.sin(now * 0.0009 + i * 1.9) + 0.75 * bands[i];
+      light.style.transform =
+        `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+      light.style.opacity = (0.7 + 0.3 * live * (0.4 + bands[i])).toFixed(3);
+    });
+    requestAnimationFrame(animateOrb);
   };
 
   // ----- the session -----
@@ -1011,7 +965,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     session = null;
     running = false;
     paint();
-    wakeBars();
   };
 
   const start = (block: Narr, para: number) => {
@@ -1028,14 +981,12 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     voice.src = src;
     voice.play().catch(() => stop());
     paint();
-    wakeBars();
   };
 
   const pause = () => {
     running = false;
     voice.pause();
     paint();
-    wakeBars();
   };
 
   const resume = () => {
@@ -1043,7 +994,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     ctx?.resume();
     voice.play().catch(() => stop());
     paint();
-    wakeBars();
   };
 
   const scrollToStep = (story: Story, index: number) => {
@@ -1089,8 +1039,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // A language switch mid-sentence restarts that sentence in the new
   // voice; paused, the next play simply uses it.
   new MutationObserver(() => {
-    measure();
-    updateClock();
     if (!session) return;
     const { block, para } = session;
     if (running) start(block, para);
@@ -1167,8 +1115,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // Nothing recorded anywhere → no narrator at all.
   if (narrator && narrs.length) {
     narrator.hidden = false;
-    measure();
-    bars.forEach((bar, i) => bar.style.setProperty('--h', MARK[i].toFixed(3)));
+    requestAnimationFrame(animateOrb);
   }
 
   // The hero rides out as the first story rides in.
@@ -1392,7 +1339,6 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     }
 
     if (session && running && showing !== session.block) follow(showing);
-    updateClock();
 
     if (narrator && !narrator.hidden) {
       let sum = 0;
