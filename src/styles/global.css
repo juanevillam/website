@@ -58,10 +58,10 @@
   --float-pad: 0.875rem;
   --float-glyph: 1.625rem;
   /* The narrator: a floating pill built by the SAME recipe — height,
-     side padding, glyph — at three times its area (√3 on every side),
+     side padding, glyph — at twice its area (√2 on every side),
      so it outranks the chrome it belongs to. Content-sized like the
      header's pills; fixed, so anchors can reserve it. */
-  --narrator-scale: 1.7320508;
+  --narrator-scale: 1.4142136;
   --narrator-h: calc(var(--float-h) * var(--narrator-scale));
   --narrator-pad: calc(var(--float-pad) * var(--narrator-scale));
   --narrator-glyph: calc(var(--float-glyph) * var(--narrator-scale));
