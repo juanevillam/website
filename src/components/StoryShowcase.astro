@@ -1,8 +1,9 @@
 ---
 import type { UIKey } from '../i18n/ui';
-import ListenPill from './ListenPill.astro';
+import NarrationPlayer from './NarrationPlayer.astro';
 import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
+import { clipFor } from '../lib/narration';
 
 /**
  * One app = one continuous scene, no snapping anywhere.
@@ -18,8 +19,9 @@ import T from './T.astro';
  * The icon + name are ONE lockup that FLIPs from the opener header into
  * the window's caption corner and parks there.
  *
- * Narration: a single shared Audio element reads the slide nearest to
- * center and advances the scroll itself when a clip ends.
+ * Narration: Juan's voice, one clip per paragraph (see lib/narration).
+ * A single shared Audio element tells the story as a pitch — paragraph
+ * to paragraph, slide to slide, the page following the voice.
  */
 export type StorySlide = {
   src: string;
@@ -27,10 +29,9 @@ export type StorySlide = {
   height: number;
   /** Slide titles are ALWAYS English, in every locale — brand nouns. */
   title?: string;
-  /** The caption, split in readable paragraphs. */
+  /** The caption, split in readable paragraphs — each one is also the
+   *  transcript of its own narration clip. */
   paras?: UIKey[];
-  /** Narration clip for this slide — absent until it's recorded. */
-  audio?: string;
 };
 
 type Props = {
@@ -41,8 +42,6 @@ type Props = {
   /** After the last slide the story walks back to its opener and
    *  hands the scroll over — an endless deck. */
   loop?: boolean;
-  /** The app's intro narration — why it exists, in Juan's voice. */
-  introAudio?: string;
   slides: StorySlide[];
   /** Show the App Store / Google Play slots (apps, not web products). */
   stores?: boolean;
@@ -60,7 +59,6 @@ const {
   name,
   pitch,
   loop = false,
-  introAudio,
   slides,
   stores = false,
   linkGroups = [],
@@ -70,6 +68,14 @@ const {
 // and one more where the story walks its opening moves backwards and
 // hands the scroll back to the opener.
 const stepCount = slides.length + (loop ? 2 : 1);
+
+// Every narratable block, resolved against the clips on disk: the
+// opener's pitch is block 0, each slide's caption the block of its step.
+const narrate = (keys: UIKey[]) =>
+  keys.map(k => ({ k, clip: clipFor(k) }));
+const pitchParas = narrate([pitch.problem, pitch.solution]);
+const slideParas = slides.map(slide => narrate(slide.paras ?? []));
+const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 ---
 
 <section
@@ -82,12 +88,8 @@ const stepCount = slides.length + (loop ? 2 : 1);
   <!-- Invisible scroll rail — gives the story its length and carries
        each step's narration clip. No snapping: positions, not pages. -->
   <div class="steps" aria-hidden="true">
-    <div class="step" data-index="0" data-audio={introAudio} />
-    {
-      slides.map((slide, i) => (
-        <div class="step" data-index={i + 1} data-audio={slide.audio} />
-      ))
-    }
+    <div class="step" data-index="0" />
+    {slides.map((_, i) => <div class="step" data-index={i + 1} />)}
     {loop && <div class="step" data-index={slides.length + 1} />}
   </div>
 
@@ -99,9 +101,15 @@ const stepCount = slides.length + (loop ? 2 : 1);
         <div class="lockup-anchor-big" aria-hidden="true"></div>
 
         <div class="intro-grid" data-reveal>
-          <div class="pitch">
-            <p class="body"><T k={pitch.problem} /></p>
-            <p class="body"><T k={pitch.solution} /></p>
+          <div class="pitch" data-narr-block="0">
+            {pitchParas.map(({ k, clip }) => (
+              <p class="body" data-clip-en={clip?.en} data-clip-es={clip?.es}>
+                <T k={k} />
+              </p>
+            ))}
+            {voiced(pitchParas) && (
+              <NarrationPlayer segments={pitchParas.length} />
+            )}
           </div>
 
           <!-- Reserves the action row's box; the row itself floats in
@@ -142,14 +150,21 @@ const stepCount = slides.length + (loop ? 2 : 1);
         <div class="caption">
           <div class="lockup-anchor-small" aria-hidden="true"></div>
           {
-            slides.map(slide => (
-              <div class="cap">
+            slides.map((slide, i) => (
+              <div class="cap" data-narr-block={i + 1}>
                 {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-                {slide.paras?.map(k => (
-                  <p class="body">
+                {slideParas[i].map(({ k, clip }) => (
+                  <p
+                    class="body"
+                    data-clip-en={clip?.en}
+                    data-clip-es={clip?.es}
+                  >
                     <T k={k} />
                   </p>
                 ))}
+                {voiced(slideParas[i]) && (
+                  <NarrationPlayer segments={slideParas[i].length} />
+                )}
               </div>
             ))
           }
@@ -204,7 +219,6 @@ const stepCount = slides.length + (loop ? 2 : 1);
          text column, rather than fading out with the opener. -->
     <div class="actions">
       {stores && <StoreBadges />}
-      <ListenPill audio={introAudio} story={id} />
     </div>
   </div>
 </section>
@@ -318,6 +332,27 @@ const stepCount = slides.length + (loop ? 2 : 1);
     max-width: none;
   }
 
+  /* The pitch's own gap already spaces the player. */
+  .pitch :global(.narration) {
+    margin-top: 0;
+  }
+
+  /* While Juan is speaking a block, the page follows his voice: the
+     paragraph being spoken holds full ink and the others step back —
+     and any of them can be tapped to jump the voice there. */
+  [data-narr-block] .body {
+    transition: color calc(var(--beat) / 2) var(--ease);
+  }
+
+  [data-narr-block].is-narrating .body {
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  [data-narr-block].is-narrating .body.is-spoken {
+    color: var(--ink);
+  }
+
   /* The action row is drawn once in the stage and FLIPped between two
      anchors, exactly like the lockup — these reserve its box at each
      end so nothing reflows when it travels. */
@@ -334,8 +369,7 @@ const stepCount = slides.length + (loop ? 2 : 1);
     will-change: transform;
   }
 
-  .actions :global(.stores),
-  .actions :global(.listen) {
+  .actions :global(.stores) {
     margin-top: 0;
   }
 
@@ -668,9 +702,18 @@ const stepCount = slides.length + (loop ? 2 : 1);
     }
 
     /* A phone reads the headline and one line under it. The second
-       paragraph is the desk-sized detail — it would be a wall here. */
+       paragraph is the desk-sized detail — it would be a wall here.
+       While the voice runs, the line shown is the line being SPOKEN. */
     .cap .body + .body {
       display: none;
+    }
+
+    .cap.is-narrating .body:not(.is-spoken) {
+      display: none;
+    }
+
+    .cap.is-narrating .body.is-spoken {
+      display: block;
     }
 
     .slide-title {
@@ -728,8 +771,23 @@ const stepCount = slides.length + (loop ? 2 : 1);
 
   const smooth = (v: number) => v * v * (3 - 2 * v);
 
+  // ---------- narration ----------
+  // Juan's voice tells the story as a pitch. One clip per paragraph, and
+  // ONE session across the whole page: paragraph to paragraph inside a
+  // block, then the page itself turns to the next slide and the voice
+  // follows it there. The last slide hands the scroll back to the opener,
+  // so the pitch closes on the store buttons. Scroll by hand and the
+  // voice follows you instead; tap a paragraph and it jumps there.
+
   const voice = new Audio();
   voice.preload = 'auto';
+
+  type Block = {
+    el: HTMLElement;
+    paras: HTMLElement[];
+    player: HTMLElement | null;
+    segs: HTMLElement[];
+  };
 
   type Story = {
     root: HTMLElement;
@@ -748,22 +806,88 @@ const stepCount = slides.length + (loop ? 2 : 1);
     actions: HTMLElement | null;
     actionsBig: HTMLElement | null;
     actionsSmall: HTMLElement | null;
-    pill: HTMLElement | null;
+    /** Narratable blocks by step: the opener's pitch is 0. */
+    blocks: (Block | undefined)[];
     current: number;
   };
 
-  let armed: Story | null = null;
+  /** Where the voice is — kept while paused, so play resumes in place. */
+  let session: { story: Story; step: number; para: number } | null = null;
+  /** The person's intent: running, or paused by them. Not the element's
+   *  own paused flag, which flips on its own at the end of every clip. */
+  let running = false;
 
-  const setPill = (story: Story, playing: boolean) => {
-    story.pill?.classList.toggle('is-playing', playing);
+  // Chinese has no recording; it hears English under its own transcript.
+  const clipOf = (p: HTMLElement) =>
+    document.documentElement.dataset.lang === 'es'
+      ? p.dataset.clipEs || p.dataset.clipEn
+      : p.dataset.clipEn || p.dataset.clipEs;
+
+  const firstVoiced = (block: Block | undefined, from = 0) => {
+    if (!block) return -1;
+    for (let i = from; i < block.paras.length; i++)
+      if (clipOf(block.paras[i])) return i;
+    return -1;
   };
 
-  const disarm = () => {
-    if (!armed) return;
+  const paint = () => {
+    for (const s of stories)
+      s.blocks.forEach((block, step) => {
+        if (!block) return;
+        const on = session?.story === s && session.step === step;
+        block.el.classList.toggle('is-narrating', on);
+        block.player?.classList.toggle('is-playing', on && running);
+        block.paras.forEach((p, i) =>
+          p.classList.toggle('is-spoken', on && session?.para === i)
+        );
+        block.segs.forEach((seg, i) => {
+          const para = on ? session!.para : -1;
+          const now =
+            voice.duration > 0 ? voice.currentTime / voice.duration : 0;
+          const fill = i < para ? 1 : i === para ? now : 0;
+          seg.style.setProperty('--fill', fill.toFixed(4));
+        });
+      });
+  };
+
+  // The track fills continuously while the voice runs.
+  let ticking = 0;
+  const tick = () => {
+    paint();
+    ticking = running ? requestAnimationFrame(tick) : 0;
+  };
+
+  const stop = () => {
     voice.pause();
-    voice.onended = null;
-    setPill(armed, false);
-    armed = null;
+    session = null;
+    running = false;
+    paint();
+  };
+
+  const start = (story: Story, step: number, para: number) => {
+    const p = story.blocks[step]?.paras[para];
+    const src = p && clipOf(p);
+    if (!src) {
+      stop();
+      return;
+    }
+    session = { story, step, para };
+    running = true;
+    voice.src = src;
+    voice.play().catch(() => stop());
+    if (!ticking) tick();
+  };
+
+  const pause = () => {
+    running = false;
+    voice.pause();
+    paint();
+  };
+
+  const resume = () => {
+    running = true;
+    voice.play().catch(() => stop());
+    if (!ticking) tick();
   };
 
   const scrollToStep = (story: Story, index: number) => {
@@ -777,25 +901,59 @@ const stepCount = slides.length + (loop ? 2 : 1);
     });
   };
 
-  const playStep = (story: Story, index: number) => {
-    const src = story.steps[index]?.dataset.audio;
-    // Narration ends where the recorded clips do — never a lying pill.
-    if (!src) {
-      disarm();
+  // A paragraph ends: the next one in the block, or the page turns and
+  // the render loop picks the voice up on the new slide (see `follow`).
+  voice.addEventListener('ended', () => {
+    if (!session || !running) return;
+    const { story, step, para } = session;
+    const next = firstVoiced(story.blocks[step], para + 1);
+    if (next >= 0) {
+      start(story, step, next);
       return;
     }
-    voice.src = src;
-    voice.onended = () => {
-      if (armed !== story) return;
-      if (index + 1 < story.steps.length) scrollToStep(story, index + 1);
-      else disarm();
-    };
-    voice.play().catch(() => disarm());
+    if (step + 1 < story.steps.length) scrollToStep(story, step + 1);
+    else stop();
+  });
+
+  // The page moved under a running voice — by hand or by the voice's own
+  // page turn. The voice goes where the page went; a step with nothing
+  // recorded (the loop's return) ends the pitch.
+  const follow = (story: Story, step: number) => {
+    const para = firstVoiced(story.blocks[step]);
+    if (para >= 0) start(story, step, para);
+    else stop();
   };
+
+  // A language switch mid-sentence restarts that sentence in the new
+  // voice; paused, the next play simply uses it.
+  new MutationObserver(() => {
+    if (!session) return;
+    const { story, step, para } = session;
+    if (running) start(story, step, para);
+    else {
+      const p = story.blocks[step]?.paras[para];
+      const src = p && clipOf(p);
+      if (src) voice.src = src;
+      paint();
+    }
+  }).observe(document.documentElement, { attributeFilter: ['data-lang'] });
 
   const stories: Story[] = [
     ...document.querySelectorAll<HTMLElement>('[data-story]'),
   ].map(root => {
+    const blocks: (Block | undefined)[] = [];
+    for (const el of root.querySelectorAll<HTMLElement>('[data-narr-block]')) {
+      const player = el.querySelector<HTMLElement>('[data-narration]');
+      blocks[Number(el.dataset.narrBlock)] = {
+        el,
+        paras: [...el.querySelectorAll<HTMLElement>(':scope > .body')],
+        player,
+        segs: player
+          ? [...player.querySelectorAll<HTMLElement>('[data-nar-seg]')]
+          : [],
+      };
+    }
+
     const story: Story = {
       root,
       loop: 'loop' in root.dataset,
@@ -812,23 +970,37 @@ const stepCount = slides.length + (loop ? 2 : 1);
       actions: root.querySelector<HTMLElement>('.actions'),
       actionsBig: root.querySelector<HTMLElement>('.actions-anchor-big'),
       actionsSmall: root.querySelector<HTMLElement>('.actions-anchor-small'),
-      pill: document.querySelector<HTMLElement>(
-        `[data-narrate-story="${root.dataset.story}"]`
-      ),
+      blocks,
       current: -1,
     };
 
-    // The pill lives on the opener, so arming starts the story where
-    // the person is standing: the opener's own clip, then onward.
-    story.pill?.addEventListener('click', () => {
-      if (armed === story) {
-        disarm();
-        return;
-      }
-      disarm();
-      armed = story;
-      setPill(story, true);
-      playStep(story, Math.max(story.current, 0));
+    blocks.forEach((block, step) => {
+      if (!block?.player) return;
+      const here = () => session?.story === story && session.step === step;
+
+      // Play / pause. From anywhere else, it starts THIS block.
+      block.player
+        .querySelector('[data-nar-toggle]')
+        ?.addEventListener('click', () => {
+          if (here()) {
+            if (running) pause();
+            else resume();
+          } else start(story, step, Math.max(firstVoiced(block), 0));
+        });
+
+      // A segment is a paragraph: tap one to hear it.
+      block.segs.forEach((seg, i) =>
+        seg.addEventListener('click', () => {
+          if (clipOf(block.paras[i])) start(story, step, i);
+        })
+      );
+
+      // While this block is being told, its paragraphs are tappable too.
+      block.paras.forEach((p, i) =>
+        p.addEventListener('click', () => {
+          if (here() && clipOf(p)) start(story, step, i);
+        })
+      );
     });
 
     return story;
@@ -960,21 +1132,19 @@ const stepCount = slides.length + (loop ? 2 : 1);
       }
 
       // Captions: each one belongs to the shot nearest the window, and
-      // takes a VERY small entrance — a 6px settle over the last sliver
-      // of the step, scroll-coupled like everything else. Any more than
-      // that read as lag next to the picture (tried, rejected); none at
-      // all read as a hard cut (also tried, also rejected).
+      // DISSOLVES — opacity only. The deck already carries the motion; a
+      // caption that also travelled (a 6px settle, tried) made the eye
+      // track two moving things at once. None at all read as a hard cut
+      // (also tried). So: a soft dip through black over the middle
+      // ~60% of the step, eased at both ends, nothing moving.
       for (let i = 0; i < s.caps.length; i++) {
-        const t = p - (i + 1);
-        const at = Math.abs(t);
+        const at = Math.abs(p - (i + 1));
         if (reduceMotion) {
           s.caps[i].style.opacity = active === i + 1 ? '1' : '0';
-          s.caps[i].style.transform = '';
           continue;
         }
-        const v = smooth(clamp((0.5 - at) / 0.15, 0, 1));
+        const v = smooth(clamp((0.5 - at) / 0.3, 0, 1));
         s.caps[i].style.opacity = v.toFixed(4);
-        s.caps[i].style.transform = `translateY(${((1 - v) * 6).toFixed(2)}px)`;
         s.caps[i].style.pointerEvents = at < 0.5 ? 'auto' : 'none';
       }
 
@@ -1027,7 +1197,8 @@ const stepCount = slides.length + (loop ? 2 : 1);
 
       if (active !== s.current) {
         s.current = active;
-        if (armed === s) playStep(s, active);
+        if (session?.story === s && running && active !== session.step)
+          follow(s, active);
       }
 
       // Land the loop. The return step ends as a pixel-perfect copy of
