@@ -1,6 +1,5 @@
 ---
 import type { UIKey } from '../i18n/ui';
-import NarrationPlayer from './NarrationPlayer.astro';
 import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
 import { clipFor } from '../lib/narration';
@@ -101,14 +100,22 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         <div class="lockup-anchor-big" aria-hidden="true"></div>
 
         <div class="intro-grid" data-reveal>
-          <div class="pitch" data-narr-block="0">
+          <div
+            class="pitch"
+            data-narr-block={voiced(pitchParas) ? '0' : null}
+          >
             {pitchParas.map(({ k, clip }) => (
-              <p class="body" data-clip-en={clip?.en} data-clip-es={clip?.es}>
+              <p
+                class="body"
+                data-narr-para
+                data-clip-en={clip?.en}
+                data-clip-es={clip?.es}
+              >
                 <T k={k} />
               </p>
             ))}
             {voiced(pitchParas) && (
-              <NarrationPlayer segments={pitchParas.length} />
+              <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
             )}
           </div>
 
@@ -151,11 +158,15 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
           <div class="lockup-anchor-small" aria-hidden="true"></div>
           {
             slides.map((slide, i) => (
-              <div class="cap" data-narr-block={i + 1}>
+              <div
+                class="cap"
+                data-narr-block={voiced(slideParas[i]) ? String(i + 1) : null}
+              >
                 {slide.title && <h3 class="slide-title">{slide.title}</h3>}
                 {slideParas[i].map(({ k, clip }) => (
                   <p
                     class="body"
+                    data-narr-para
                     data-clip-en={clip?.en}
                     data-clip-es={clip?.es}
                   >
@@ -163,7 +174,11 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
                   </p>
                 ))}
                 {voiced(slideParas[i]) && (
-                  <NarrationPlayer segments={slideParas[i].length} />
+                  <div
+                    class="narr-anchor"
+                    data-narr-anchor
+                    aria-hidden="true"
+                  />
                 )}
               </div>
             ))
@@ -332,8 +347,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     max-width: none;
   }
 
-  /* The pitch's own gap already spaces the player. */
-  .pitch :global(.narration) {
+  /* The pitch's own gap already spaces the narrator's anchor. */
+  .pitch :global(.narr-anchor) {
     margin-top: 0;
   }
 
@@ -772,21 +787,26 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   const smooth = (v: number) => v * v * (3 - 2 * v);
 
   // ---------- narration ----------
-  // Juan's voice tells the story as a pitch. One clip per paragraph, and
-  // ONE session across the whole page: paragraph to paragraph inside a
-  // block, then the page itself turns to the next slide and the voice
-  // follows it there. The last slide hands the scroll back to the opener,
-  // so the pitch closes on the store buttons. Scroll by hand and the
-  // voice follows you instead; tap a paragraph and it jumps there.
+  // Juan's voice tells the page as a pitch. One clip per paragraph and
+  // ONE session across the whole page — the hero's intro, then each
+  // story's opener and slides: paragraph to paragraph inside a block,
+  // then the page itself turns and the voice follows it. The last slide
+  // hands the scroll back to the opener, so the pitch closes on the store
+  // row. Scroll by hand and the voice follows you; tap a paragraph that
+  // is being told and it jumps there.
 
   const voice = new Audio();
   voice.preload = 'auto';
 
-  type Block = {
+  /** A narrated block: the hero's wordmark, a story's opener pitch, or
+   *  one slide's caption. */
+  type Narr = {
     el: HTMLElement;
     paras: HTMLElement[];
-    player: HTMLElement | null;
-    segs: HTMLElement[];
+    anchor: HTMLElement | null;
+    /** The story it belongs to, and its step there; null = the hero. */
+    story: Story | null;
+    step: number;
   };
 
   type Story = {
@@ -806,16 +826,25 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     actions: HTMLElement | null;
     actionsBig: HTMLElement | null;
     actionsSmall: HTMLElement | null;
-    /** Narratable blocks by step: the opener's pitch is 0. */
-    blocks: (Block | undefined)[];
+    /** Narrated blocks by step: the opener's pitch is 0. */
+    blocks: (Narr | undefined)[];
     current: number;
   };
 
+  const narrator = document.querySelector<HTMLElement>('[data-narrator]');
+  const bars = narrator
+    ? [...narrator.querySelectorAll<HTMLElement>('.nar-bars i')]
+    : [];
+
   /** Where the voice is — kept while paused, so play resumes in place. */
-  let session: { story: Story; step: number; para: number } | null = null;
+  let session: { block: Narr; para: number } | null = null;
   /** The person's intent: running, or paused by them. Not the element's
    *  own paused flag, which flips on its own at the end of every clip. */
   let running = false;
+  /** The block the page is showing right now (set by the render loop). */
+  let showing: Narr | undefined;
+
+  const narrs: Narr[] = [];
 
   // Chinese has no recording; it hears English under its own transcript.
   const clipOf = (p: HTMLElement) =>
@@ -823,7 +852,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       ? p.dataset.clipEs || p.dataset.clipEn
       : p.dataset.clipEn || p.dataset.clipEs;
 
-  const firstVoiced = (block: Block | undefined, from = 0) => {
+  const firstVoiced = (block: Narr | undefined, from = 0) => {
     if (!block) return -1;
     for (let i = from; i < block.paras.length; i++)
       if (clipOf(block.paras[i])) return i;
@@ -831,63 +860,125 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   const paint = () => {
-    for (const s of stories)
-      s.blocks.forEach((block, step) => {
-        if (!block) return;
-        const on = session?.story === s && session.step === step;
-        block.el.classList.toggle('is-narrating', on);
-        block.player?.classList.toggle('is-playing', on && running);
-        block.paras.forEach((p, i) =>
-          p.classList.toggle('is-spoken', on && session?.para === i)
-        );
-        block.segs.forEach((seg, i) => {
-          const para = on ? session!.para : -1;
-          const now =
-            voice.duration > 0 ? voice.currentTime / voice.duration : 0;
-          const fill = i < para ? 1 : i === para ? now : 0;
-          seg.style.setProperty('--fill', fill.toFixed(4));
-        });
-      });
+    for (const n of narrs) {
+      const on = session?.block === n;
+      n.el.classList.toggle('is-narrating', on);
+      n.paras.forEach((p, i) =>
+        p.classList.toggle('is-spoken', on && session?.para === i)
+      );
+    }
+    narrator?.classList.toggle('is-playing', running);
   };
 
-  // The track fills continuously while the voice runs.
-  let ticking = 0;
-  const tick = () => {
-    paint();
-    ticking = running ? requestAnimationFrame(tick) : 0;
+  // ----- the bars: the mark at rest, the voice while speaking -----
+  // Heights of Sound Shaper's mark (15/25/16/32/20 on its 48 grid), as a
+  // share of the tallest bar.
+  const MARK = [15, 25, 16, 32, 20].map(h => h / 32);
+  // Speech bands, Hz — fundamentals up to sibilance.
+  const EDGES = [90, 180, 360, 720, 1440, 3600];
+  // Which band each bar shows: the body of the voice sits in the middle
+  // of the mark, the air at its edges.
+  const ORDER = [3, 1, 0, 2, 4];
+  const levels = MARK.slice();
+
+  let ctx: AudioContext | null = null;
+  let analyser: AnalyserNode | null = null;
+  let freq: Uint8Array<ArrayBuffer> | null = null;
+  let peak = 0.2;
+
+  // The analyser needs an AudioContext, which a browser only lets a
+  // gesture create — so it is built on the first play. Routing the voice
+  // through it is also what makes it audible from then on.
+  const ensureGraph = () => {
+    if (ctx) return;
+    try {
+      ctx = new AudioContext();
+      const source = ctx.createMediaElementSource(voice);
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.55;
+      source.connect(analyser).connect(ctx.destination);
+      freq = new Uint8Array(analyser.frequencyBinCount);
+    } catch {
+      ctx = null;
+      analyser = null;
+    }
   };
 
+  const voiceLevels = () => {
+    if (!analyser || !freq || !ctx) return MARK;
+    analyser.getByteFrequencyData(freq);
+    const binHz = ctx.sampleRate / analyser.fftSize;
+    const bands = EDGES.slice(0, -1).map((lo, i) => {
+      const a = Math.max(1, Math.floor(lo / binHz));
+      const b = Math.max(a + 1, Math.ceil(EDGES[i + 1] / binHz));
+      let sum = 0;
+      for (let k = a; k < b; k++) sum += freq![k];
+      return sum / (b - a) / 255;
+    });
+    // A slow automatic gain, so a quiet take and a loud one both move
+    // the bars across their whole range.
+    peak = Math.max(peak * 0.997, ...bands, 0.12);
+    return ORDER.map(i => 0.12 + 0.88 * Math.min(1, bands[i] / peak) ** 1.3);
+  };
+
+  let barsFrame = 0;
+  const animateBars = () => {
+    const target = running && !voice.paused ? voiceLevels() : MARK;
+    let settled = true;
+    for (let i = 0; i < bars.length; i++) {
+      const d = target[i] - levels[i];
+      // Quick to rise, slower to fall — how a level meter reads.
+      levels[i] += d * (d > 0 ? 0.5 : 0.2);
+      if (Math.abs(d) > 0.002) settled = false;
+      bars[i].style.setProperty('--h', levels[i].toFixed(3));
+    }
+    barsFrame =
+      running || !settled ? requestAnimationFrame(animateBars) : 0;
+  };
+  const wakeBars = () => {
+    if (!barsFrame) barsFrame = requestAnimationFrame(animateBars);
+  };
+
+  // ----- the session -----
   const stop = () => {
     voice.pause();
     session = null;
     running = false;
     paint();
+    wakeBars();
   };
 
-  const start = (story: Story, step: number, para: number) => {
-    const p = story.blocks[step]?.paras[para];
+  const start = (block: Narr, para: number) => {
+    const p = block.paras[para];
     const src = p && clipOf(p);
     if (!src) {
       stop();
       return;
     }
-    session = { story, step, para };
+    ensureGraph();
+    ctx?.resume();
+    session = { block, para };
     running = true;
     voice.src = src;
     voice.play().catch(() => stop());
-    if (!ticking) tick();
+    paint();
+    wakeBars();
   };
 
   const pause = () => {
     running = false;
     voice.pause();
     paint();
+    wakeBars();
   };
 
   const resume = () => {
     running = true;
+    ctx?.resume();
     voice.play().catch(() => stop());
-    if (!ticking) tick();
+    paint();
+    wakeBars();
   };
 
   const scrollToStep = (story: Story, index: number) => {
@@ -902,25 +993,31 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   // A paragraph ends: the next one in the block, or the page turns and
-  // the render loop picks the voice up on the new slide (see `follow`).
+  // the render loop picks the voice up wherever it lands (`follow`).
   voice.addEventListener('ended', () => {
     if (!session || !running) return;
-    const { story, step, para } = session;
-    const next = firstVoiced(story.blocks[step], para + 1);
+    const { block, para } = session;
+    const next = firstVoiced(block, para + 1);
     if (next >= 0) {
-      start(story, step, next);
+      start(block, next);
       return;
     }
-    if (step + 1 < story.steps.length) scrollToStep(story, step + 1);
-    else stop();
+    const story = block.story;
+    if (!story) {
+      // The hero hands over to the first story's opener.
+      if (stories[0]) scrollToStep(stories[0], 0);
+      else stop();
+    } else if (block.step + 1 < story.steps.length) {
+      scrollToStep(story, block.step + 1);
+    } else stop();
   });
 
   // The page moved under a running voice — by hand or by the voice's own
   // page turn. The voice goes where the page went; a step with nothing
   // recorded (the loop's return) ends the pitch.
-  const follow = (story: Story, step: number) => {
-    const para = firstVoiced(story.blocks[step]);
-    if (para >= 0) start(story, step, para);
+  const follow = (block: Narr | undefined) => {
+    const para = firstVoiced(block);
+    if (block && para >= 0) start(block, para);
     else stop();
   };
 
@@ -928,32 +1025,52 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // voice; paused, the next play simply uses it.
   new MutationObserver(() => {
     if (!session) return;
-    const { story, step, para } = session;
-    if (running) start(story, step, para);
+    const { block, para } = session;
+    if (running) start(block, para);
     else {
-      const p = story.blocks[step]?.paras[para];
-      const src = p && clipOf(p);
+      const src = clipOf(block.paras[para]);
       if (src) voice.src = src;
-      paint();
     }
   }).observe(document.documentElement, { attributeFilter: ['data-lang'] });
+
+  // One control. Pressed on the block being told, it pauses or resumes;
+  // anywhere else, it starts telling what the page is showing.
+  narrator?.addEventListener('click', () => {
+    if (session && session.block === showing) {
+      if (running) pause();
+      else resume();
+      return;
+    }
+    const block = showing ?? narrs[0];
+    if (block) start(block, Math.max(firstVoiced(block), 0));
+  });
+
+  const collect = (el: HTMLElement, story: Story | null, step: number) => {
+    const n: Narr = {
+      el,
+      paras: [...el.querySelectorAll<HTMLElement>('[data-narr-para]')],
+      anchor: el.querySelector<HTMLElement>('[data-narr-anchor]'),
+      story,
+      step,
+    };
+    // While a block is being told, its paragraphs are tappable too.
+    n.paras.forEach((p, i) =>
+      p.addEventListener('click', () => {
+        if (session?.block === n && clipOf(p)) start(n, i);
+      })
+    );
+    narrs.push(n);
+    return n;
+  };
+
+  const heroEl = document.querySelector<HTMLElement>(
+    '[data-narr-block="hero"]'
+  );
+  const heroNarr = heroEl ? collect(heroEl, null, -1) : undefined;
 
   const stories: Story[] = [
     ...document.querySelectorAll<HTMLElement>('[data-story]'),
   ].map(root => {
-    const blocks: (Block | undefined)[] = [];
-    for (const el of root.querySelectorAll<HTMLElement>('[data-narr-block]')) {
-      const player = el.querySelector<HTMLElement>('[data-narration]');
-      blocks[Number(el.dataset.narrBlock)] = {
-        el,
-        paras: [...el.querySelectorAll<HTMLElement>(':scope > .body')],
-        player,
-        segs: player
-          ? [...player.querySelectorAll<HTMLElement>('[data-nar-seg]')]
-          : [],
-      };
-    }
-
     const story: Story = {
       root,
       loop: 'loop' in root.dataset,
@@ -970,50 +1087,37 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       actions: root.querySelector<HTMLElement>('.actions'),
       actionsBig: root.querySelector<HTMLElement>('.actions-anchor-big'),
       actionsSmall: root.querySelector<HTMLElement>('.actions-anchor-small'),
-      blocks,
+      blocks: [],
       current: -1,
     };
-
-    blocks.forEach((block, step) => {
-      if (!block?.player) return;
-      const here = () => session?.story === story && session.step === step;
-
-      // Play / pause. From anywhere else, it starts THIS block.
-      block.player
-        .querySelector('[data-nar-toggle]')
-        ?.addEventListener('click', () => {
-          if (here()) {
-            if (running) pause();
-            else resume();
-          } else start(story, step, Math.max(firstVoiced(block), 0));
-        });
-
-      // A segment is a paragraph: tap one to hear it.
-      block.segs.forEach((seg, i) =>
-        seg.addEventListener('click', () => {
-          if (clipOf(block.paras[i])) start(story, step, i);
-        })
-      );
-
-      // While this block is being told, its paragraphs are tappable too.
-      block.paras.forEach((p, i) =>
-        p.addEventListener('click', () => {
-          if (here() && clipOf(p)) start(story, step, i);
-        })
-      );
-    });
-
+    for (const el of root.querySelectorAll<HTMLElement>('[data-narr-block]')) {
+      const step = Number(el.dataset.narrBlock);
+      story.blocks[step] = collect(el, story, step);
+    }
     return story;
   });
+
+  // Nothing recorded anywhere → no narrator at all.
+  if (narrator && narrs.length) {
+    narrator.hidden = false;
+    bars.forEach((bar, i) => bar.style.setProperty('--h', MARK[i].toFixed(3)));
+  }
 
   // The hero rides out as the first story rides in.
   const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
   const render = (force = false) => {
     const vh = window.innerHeight;
+    const hp = clamp(window.scrollY / vh, 0, 1);
+
+    // Where the narrator stands: a weighted blend of every anchor, each
+    // weighted by how much of the page its block owns right now — so it
+    // glides between blocks as the page scrolls, never jumps.
+    const parks: { anchor: HTMLElement; w: number }[] = [];
+    if (heroNarr?.anchor) parks.push({ anchor: heroNarr.anchor, w: 1 - hp });
+    showing = heroNarr && window.scrollY < vh * 0.5 ? heroNarr : undefined;
 
     if (heroInner) {
-      const hp = clamp(window.scrollY / vh, 0, 1);
       heroInner.style.opacity = String(clamp(1 - hp * 1.1, 0, 1));
       heroInner.style.transform = reduceMotion
         ? ''
@@ -1028,6 +1132,17 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
       const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
       const active = Math.round(p);
+
+      // Each step owns the narrator in a tent around its position; the
+      // loop's return step belongs to the opener it lands on.
+      for (let k = 0; k < s.steps.length; k++) {
+        const own = Math.max(0, 1 - Math.abs(p - k));
+        const block =
+          s.loop && k === s.steps.length - 1 ? s.blocks[0] : s.blocks[k];
+        if (own > 0 && block?.anchor)
+          parks.push({ anchor: block.anchor, w: own * hp });
+      }
+      if (!showing) showing = s.blocks[active];
 
       // THE RETURN. One step past the last slide runs the opening
       // moves backwards — the float dissolves, the lockup and the
@@ -1195,11 +1310,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
       }
 
-      if (active !== s.current) {
-        s.current = active;
-        if (session?.story === s && running && active !== session.step)
-          follow(s, active);
-      }
+      s.current = active;
 
       // Land the loop. The return step ends as a pixel-perfect copy of
       // the opener, so rewinding the scroll there is invisible — the
@@ -1210,6 +1321,23 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
           behavior: 'auto',
         });
       }
+    }
+
+    if (session && running && showing !== session.block) follow(showing);
+
+    if (narrator && !narrator.hidden) {
+      let sum = 0;
+      let x = 0;
+      let y = 0;
+      for (const { anchor, w } of parks) {
+        const r = anchor.getBoundingClientRect();
+        sum += w;
+        x += r.left * w;
+        y += r.top * w;
+      }
+      if (sum > 0.0001)
+        narrator.style.transform =
+          `translate(${(x / sum).toFixed(1)}px, ${(y / sum).toFixed(1)}px)`;
     }
   };
 

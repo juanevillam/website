@@ -1,26 +1,34 @@
 ---
-import ListenPill from './ListenPill.astro';
+import { clipFor } from '../lib/narration';
 
 /**
- * The hero stays the wordmark — that decision holds. What it gains is the
- * door to the narrated format: one line saying the site speaks, and the
- * listen pill for Juan's own intro clip (hidden until it's recorded).
+ * The hero stays the wordmark — that decision holds. When Juan's personal
+ * intro is recorded (`hero.m4a`, see lib/narration), the wordmark becomes
+ * the page's first narrated block: the narrator parks under it and the
+ * pitch can start from the very top.
  */
-type Props = {
-  /** Juan's personal intro narration — /media/narration/intro.m4a. */
-  narration?: string;
-};
-
-const { narration } = Astro.props;
+const clip = clipFor('hero');
 ---
 
 <section class="hero" id="top">
   <!-- The wrapper is what the cinema controller rides out on scroll — the
        revealed children carry transitions of their own, so the scroll-
        coupled transform lives one level up where nothing animates it. -->
-  <div class="hero-inner" data-hero-inner>
-    <h1 class="display" data-reveal>juanevillam</h1>
-    <ListenPill audio={narration} />
+  <div
+    class="hero-inner"
+    data-hero-inner
+    data-narr-block={clip ? 'hero' : null}
+  >
+    <h1
+      class="display"
+      data-reveal
+      data-narr-para
+      data-clip-en={clip?.en}
+      data-clip-es={clip?.es}
+    >
+      juanevillam
+    </h1>
+    {clip && <div class="narr-anchor" data-narr-anchor aria-hidden="true" />}
   </div>
 </section>
 

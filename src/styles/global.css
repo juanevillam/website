@@ -230,3 +230,13 @@ a:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Where the page's one narrator parks in a narrated block — it reserves
+   the control's box so nothing reflows when it glides in (see
+   NarrationPlayer). */
+.narr-anchor {
+  flex: none;
+  width: var(--float-h);
+  height: var(--float-h);
+  margin-top: 1.5rem;
+}
