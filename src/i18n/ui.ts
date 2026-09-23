@@ -35,6 +35,8 @@ const en = {
   'legal.delete': 'Delete Account',
   'links.legal': 'Legal',
   'links.help': 'Help',
+  'hero.intro':
+    "I'm Juan. Here I show you the apps I built for myself — and soon Sálvalo, the startup I started with my uncle in Venezuela, and my work.",
 
   'shaper.problem':
     'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
@@ -74,6 +76,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': 'Eliminar cuenta',
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
+    'hero.intro':
+      'Soy Juan. Aquí te muestro las apps que hice para mí — y pronto Sálvalo, la startup que empecé con mi tío en Venezuela, y mi trabajo.',
 
     'shaper.problem':
       'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
@@ -108,6 +112,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': '删除账户',
     'links.legal': '法律',
     'links.help': '帮助',
+    'hero.intro':
+      '我是 Juan。这里有我为自己做的应用——很快还会有 Sálvalo，我和叔叔在委内瑞拉创办的初创公司，以及我的工作。',
 
     'shaper.problem':
       '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',
