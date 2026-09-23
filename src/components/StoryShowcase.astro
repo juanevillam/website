@@ -868,105 +868,74 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     narrator?.classList.toggle('is-playing', running);
   };
 
-  // ----- the wave: Juan's voice, drawn the way Sound Shaper draws it -----
-  // The clip sheet's language: thin vertical bars, symmetric on the
-  // centre line, each one the loudness (RMS) of its slice of the audio.
-  // At rest the pill shows the real waveform of what it is about to
-  // play — so it reads as a voice note at a glance. While it plays, the
-  // bars already heard take full ink and the rest stay dim. Silence is
-  // low bars; phrases rise. Moving to another block, the bars morph into
-  // that block's voice.
+  // ----- the wave: Juan's voice, live, in Sound Shaper's bars -----
+  // Sound Shaper's waveform language (thin bars on the centre line), made
+  // live like a synth's visualiser. The bars mirror out from the middle:
+  // each pair is one band of the actual voice — the body of it at the
+  // centre, the air at the edges — off a live analyser. Speaking low
+  // lifts the centre, a higher pitch spreads the energy outward, louder
+  // lifts it all; between words the bars drop to still dots. At rest the
+  // pill holds a soft bell that breathes: it reads as sound, not a line.
 
-  /** RMS every 50ms, decoded ONCE per clip at 8kHz — Sound Shaper's
-   *  numbers, and all the detail a 3px bar can draw. */
-  type Decoded = { buckets: number[]; duration: number };
-  const decoded = new Map<string, Promise<Decoded | null>>();
-  const BUCKET_S = 0.05;
-  const DECODE_RATE = 8000;
+  let ctx: AudioContext | null = null;
+  let analyser: AnalyserNode | null = null;
+  let freq: Uint8Array<ArrayBuffer> | null = null;
 
-  const decode = (src: string) => {
-    let job = decoded.get(src);
-    if (!job) {
-      job = fetch(src)
-        .then(r => r.arrayBuffer())
-        .then(buf =>
-          new OfflineAudioContext(1, 1, DECODE_RATE).decodeAudioData(buf)
-        )
-        .then(audio => {
-          const data = audio.getChannelData(0);
-          const per = Math.max(1, Math.round(audio.sampleRate * BUCKET_S));
-          const buckets: number[] = [];
-          for (let i = 0; i < data.length; i += per) {
-            let sum = 0;
-            const end = Math.min(data.length, i + per);
-            for (let k = i; k < end; k++) sum += data[k] * data[k];
-            buckets.push(Math.sqrt(sum / (end - i)));
-          }
-          return { buckets, duration: audio.duration };
-        })
-        .catch(() => null);
-      decoded.set(src, job);
+  // The analyser needs an AudioContext, which a browser only lets a
+  // gesture create — so it is built on the first play. Routing the voice
+  // through it is also what makes it audible from then on.
+  const ensureGraph = () => {
+    if (ctx) return;
+    try {
+      ctx = new AudioContext();
+      const source = ctx.createMediaElementSource(voice);
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.minDecibels = -85;
+      analyser.maxDecibels = -25;
+      analyser.smoothingTimeConstant = 0.72;
+      source.connect(analyser).connect(ctx.destination);
+      freq = new Uint8Array(analyser.frequencyBinCount);
+    } catch {
+      ctx = null;
+      analyser = null;
     }
-    return job;
   };
 
-  // The bars, on the clip sheet's proportions scaled to a pill.
-  const BAR_PITCH = 3;
-  const BAR_WIDTH = 1.5;
-  // The ink's ceiling inside the pill, as the clip sheet keeps air above
-  // and below its tallest peaks.
-  const INK_RATIO = 0.62;
-  const UNPLAYED_ALPHA = 0.38;
+  // Sound Shaper's clip-sheet bar, a touch heavier for a small surface.
+  const BAR_PITCH = 3.5;
+  const BAR_WIDTH = 2;
+  const INK_RATIO = 0.7;
+  // The voice's range, centre band to edge band.
+  const LOW_HZ = 90;
+  const HIGH_HZ = 5000;
 
   let heights: number[] = [];
-  let targets: number[] = [];
-  /** Each voiced paragraph's length, in order, for the block drawn. */
-  let paraLengths: number[] = [];
-  let drawnKey = '';
+  let peak = 0.35;
 
-  // Build the drawn block's waveform: its paragraphs' clips end to end.
-  const loadWave = (block: Narr | undefined, bars: number) => {
-    const lang = document.documentElement.dataset.lang ?? 'en';
-    const key = block ? `${narrs.indexOf(block)}:${lang}:${bars}` : '';
-    if (key === drawnKey) return;
-    drawnKey = key;
-    if (!block) {
-      targets = new Array(bars).fill(0);
-      paraLengths = [];
-      return;
+  /** One level per band, centre first; zeros when nothing is speaking. */
+  const voiceBands = (half: number) => {
+    const out = new Array(half).fill(0);
+    if (!analyser || !freq || !ctx) return out;
+    analyser.getByteFrequencyData(freq);
+    const binHz = ctx.sampleRate / analyser.fftSize;
+    for (let k = 0; k < half; k++) {
+      const lo = LOW_HZ * (HIGH_HZ / LOW_HZ) ** (k / half);
+      const hi = LOW_HZ * (HIGH_HZ / LOW_HZ) ** ((k + 1) / half);
+      const a = Math.max(1, Math.floor(lo / binHz));
+      const b = Math.max(a + 1, Math.ceil(hi / binHz));
+      let sum = 0;
+      for (let i = a; i < b; i++) sum += freq[i];
+      out[k] = sum / (b - a) / 255;
     }
-    const srcs = block.paras.map(clipOf);
-    Promise.all(srcs.map(src => (src ? decode(src) : null))).then(parts => {
-      if (drawnKey !== key) return;
-      const all = parts.flatMap(p => p?.buckets ?? []);
-      paraLengths = parts.map(p => p?.duration ?? 0);
-      const means = Array.from({ length: bars }, (_, i) => {
-        const from = Math.floor((i / bars) * all.length);
-        const to = Math.max(from + 1, Math.floor(((i + 1) / bars) * all.length));
-        let sum = 0;
-        for (let k = from; k < to; k++) sum += all[k] ?? 0;
-        return sum / (to - from);
-      });
-      // Normalised to the tallest BAR (not the loudest instant, which
-      // left every bar short), on a gentle curve so quiet phrases still
-      // read as speech — Voice Memos' fullness.
-      const tallest = Math.max(1e-4, ...means);
-      targets = means.map(m => (m / tallest) ** 0.7);
-    });
-  };
-
-  /** How far into the drawn block the voice is, 0–1. */
-  const progress = (block: Narr | undefined) => {
-    if (!block || session?.block !== block) return 0;
-    const total = paraLengths.reduce((a, b) => a + b, 0);
-    if (!total) return 0;
-    let at = voice.currentTime || 0;
-    for (let i = 0; i < session.para; i++) at += paraLengths[i] ?? 0;
-    return Math.min(1, at / total);
+    // A slow automatic gain so a quiet take still fills the pill —
+    // floored, so the room's hiss never passes for a voice.
+    peak = Math.max(peak * 0.998, ...out, 0.35);
+    return out.map(v => Math.min(1, v / peak) ** 1.6);
   };
 
   let dpr = 0;
-  const drawWave = () => {
+  const drawWave = (now: number) => {
     if (!wave || !narrator) return;
     const w = wave.clientWidth;
     const h = wave.clientHeight;
@@ -979,31 +948,41 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     const g = wave.getContext('2d');
     if (!g) return;
 
-    const bars = Math.max(1, Math.floor((w + BAR_PITCH - BAR_WIDTH) / BAR_PITCH));
-    // The block being told wins over the one being shown, so a paused
-    // voice keeps its own wave until it is resumed or replaced.
-    const block = session && !running ? session.block : showing ?? session?.block;
-    loadWave(block, bars);
-    if (heights.length !== bars) heights = new Array(bars).fill(0);
+    // An odd count, so one bar stands on the centre line.
+    let bars = Math.floor((w + BAR_PITCH - BAR_WIDTH) / BAR_PITCH);
+    if (bars % 2 === 0) bars -= 1;
+    const half = (bars + 1) / 2;
+    if (heights.length !== bars) heights = new Array(bars).fill(0.1);
 
-    const done = progress(block);
+    const talking = running && !voice.paused;
+    const bands = talking ? voiceBands(half) : null;
+    // At rest: a bell, centre high, breathing on a slow four-beat cycle.
+    const breathe = reduceMotion ? 1 : 0.88 + 0.12 * Math.sin(now / 1100);
+
+    for (let i = 0; i < bars; i++) {
+      const k = Math.abs(i - (half - 1));
+      const target = bands
+        ? 0.06 + 0.94 * bands[k]
+        : (0.1 + 0.45 * Math.exp(-(((k / half) * 2.4) ** 2))) * breathe;
+      const d = target - heights[i];
+      // Quick to rise, slower to fall — how a level meter reads.
+      heights[i] += reduceMotion ? d : d * (d > 0 ? 0.55 : 0.2);
+    }
+
     const offset = (w - (bars * BAR_PITCH - (BAR_PITCH - BAR_WIDTH))) / 2;
-    const ink = getComputedStyle(narrator).color;
-
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, w, h);
-    g.fillStyle = ink;
+    g.fillStyle = getComputedStyle(narrator).color;
     for (let i = 0; i < bars; i++) {
-      heights[i] += ((targets[i] ?? 0) - heights[i]) * (reduceMotion ? 1 : 0.18);
-      const barH = Math.max(2, heights[i] * h * INK_RATIO);
-      g.globalAlpha = (i + 0.5) / bars <= done ? 1 : UNPLAYED_ALPHA;
-      g.fillRect(offset + i * BAR_PITCH, (h - barH) / 2, BAR_WIDTH, barH);
+      const barH = Math.max(BAR_WIDTH, heights[i] * h * INK_RATIO);
+      g.beginPath();
+      g.roundRect(offset + i * BAR_PITCH, (h - barH) / 2, BAR_WIDTH, barH, BAR_WIDTH / 2);
+      g.fill();
     }
-    g.globalAlpha = 1;
   };
 
-  const animateWave = () => {
-    drawWave();
+  const animateWave = (now: number) => {
+    drawWave(now);
     requestAnimationFrame(animateWave);
   };
 
@@ -1022,6 +1001,8 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       stop();
       return;
     }
+    ensureGraph();
+    ctx?.resume();
     session = { block, para };
     running = true;
     voice.src = src;
@@ -1037,6 +1018,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const resume = () => {
     running = true;
+    ctx?.resume();
     voice.play().catch(() => stop());
     paint();
   };
