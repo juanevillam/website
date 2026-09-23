@@ -1,11 +1,13 @@
 ---
 import { clipFor, subsFor } from '../lib/narration';
+import T from './T.astro';
 
 /**
- * The hero stays the wordmark — that decision holds. When Juan's personal
- * intro is recorded (`hero.m4a`, see lib/narration), the wordmark becomes
- * the page's first narrated block: the narrator parks under it and the
- * pitch can start from the very top.
+ * The wordmark, and one short line under it saying what Juan's intro
+ * covers — a play button with nothing to read beside it asked the
+ * visitor to press play blind. That line is the intro clip's transcript
+ * (`hero.m4a`, see lib/narration): the page's first narrated block, with
+ * the narrator parked under it so the pitch can start from the very top.
  */
 const clip = clipFor('hero');
 const subs = subsFor('hero');
@@ -20,8 +22,9 @@ const subs = subsFor('hero');
     data-hero-inner
     data-narr-block={clip ? 'hero' : null}
   >
-    <h1
-      class="display"
+    <h1 class="display" data-reveal>juanevillam</h1>
+    <p
+      class="body hero-intro"
       data-reveal
       data-narr-para
       data-clip-en={clip?.en}
@@ -29,8 +32,8 @@ const subs = subsFor('hero');
       data-subs-en={subs.en}
       data-subs-es={subs.es}
     >
-      juanevillam
-    </h1>
+      <T k="hero.intro" />
+    </p>
     {
       clip && (
         <div
@@ -55,6 +58,20 @@ const subs = subsFor('hero');
     justify-content: center;
     text-align: center;
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* Centred under the wordmark, a short measure so it reads as one
+     thought in two lines rather than a paragraph. */
+  .hero-intro {
+    max-width: 34rem;
+    margin-top: 1.5rem;
+    text-wrap: balance;
+    transition: color calc(var(--beat) / 2) var(--ease);
+  }
+
+  /* While Juan is telling it, the line takes full ink. */
+  .hero-inner.is-narrating .hero-intro.is-spoken {
+    color: var(--ink);
   }
 
   .hero-inner {
