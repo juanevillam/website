@@ -134,8 +134,11 @@ import T from './T.astro';
      pushed it right). */
   .nar-glyph svg {
     grid-area: 1 / 1;
-    width: var(--narrator-glyph);
-    height: var(--narrator-glyph);
+    /* A play glyph's ink fills its box far more than the header mark's
+       strokes fill theirs, so at the same box it read heavy — it takes
+       60% of the narrator's glyph box. */
+    width: calc(var(--narrator-glyph) * 0.6);
+    height: calc(var(--narrator-glyph) * 0.6);
   }
 
   .nar-pause,
