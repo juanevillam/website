@@ -53,14 +53,14 @@
      in its panel. */
   --float-gap: 1rem;
   --float-h: 2.5rem;
-  /* The narrator: a round play control one step UP from the floating
-     pills — it is Juan speaking, so it outranks the chrome. Fixed, so
-     anchors reserve it. */
-  --narrator-h: 3rem;
-  --narrator-w: 3rem;
+  /* The narrator: the floating pills' shape at TWICE their size — it is
+     Juan speaking, so it outranks the chrome. Fixed, so anchors reserve
+     it. */
+  --narrator-h: calc(var(--float-h) * 2);
+  --narrator-w: calc(var(--float-h) * 4);
   /* Open, it carries Juan's subtitles beside the glyph — Dynamic Island
      width, never wider than the screen allows. */
-  --narrator-w-open: min(25rem, calc(100vw - 2.5rem));
+  --narrator-w-open: min(30rem, calc(100vw - 2.5rem));
   /* Exactly where the pills END — counting the gap twice put 40px of
      air over the phone against 24 under it. */
   --header-h: calc(var(--float-gap) + var(--float-h));

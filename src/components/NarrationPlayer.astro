@@ -8,19 +8,17 @@ import T from './T.astro';
  * wordmark, under the opener's store row, under each slide's caption),
  * the way the lockup travels. One voice, so one control.
  *
- * It is only play and pause — a round control. The voice itself is
+ * It is only play and pause — the floating pills' shape at twice their
+ * size, so it outranks the chrome it shares a family with. The voice itself is
  * drawn once, in the field along the foot of the screen: three hairline
  * sound waves, each stretch answering its own band of Juan's actual
  * voice, flat in silence. Drawing it in the control as well only made
  * the two compete.
  *
  * SUBTITLES unfold from it. While a clip with a transcript plays, the
- * circle opens into a pill like the Dynamic Island: the glyph keeps its
- * place at the leading end and what Juan is saying — looser than the
- * words on screen — runs beside it, phrase by phrase.
- *
- * The material is the floating pills', one size up: it is Juan
- * speaking, so it outranks the chrome it shares a family with.
+ * pill opens wider like the Dynamic Island: the glyph slides to the
+ * leading end and what Juan is saying — looser than the words on
+ * screen — runs beside it, phrase by phrase.
  */
 ---
 
@@ -38,7 +36,7 @@ import T from './T.astro';
   <span class="sr-only nar-live"><T k="pause" /></span>
   <span class="nar-glyph" aria-hidden="true">
     <svg class="nar-play" viewBox="0 0 16 16">
-      <path fill="currentColor" d="M4.5 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L5.7 1.9c-.5-.3-1.2.1-1.2.7z"></path>
+      <path fill="currentColor" d="M3.9 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L5.1 1.9c-.5-.3-1.2.1-1.2.7z"></path>
     </svg>
     <svg class="nar-pause" viewBox="0 0 16 16">
       <rect fill="currentColor" x="3.5" y="2.5" width="3" height="11" rx="1"></rect>
@@ -113,27 +111,30 @@ import T from './T.astro';
     display: inline;
   }
 
-  /* The glyph holds the closed circle's box at the leading end, so it
-     never moves when the pill opens — the pill grows away from it. */
+  /* Centred in the closed pill; when it opens for subtitles the glyph's
+     box narrows to a square at the leading end, carrying it there. */
   .nar-glyph {
     position: absolute;
     top: 0;
     left: 0;
     display: grid;
     place-items: center;
-    width: var(--narrator-h);
+    width: var(--narrator-w);
     height: 100%;
+    transition: width var(--beat) var(--ease);
   }
 
+  .narrator.is-captioned .nar-glyph {
+    width: var(--narrator-h);
+  }
+
+  /* The play triangle is drawn centred on its own balance point, not
+     its box — no nudge on top (a nudge on a pre-shifted path is what
+     pushed it right). */
   .nar-glyph svg {
     grid-area: 1 / 1;
-    width: 1rem;
-    height: 1rem;
-  }
-
-  /* A triangle's weight sits left of its box; nudge it to read centred. */
-  .nar-play {
-    transform: translateX(1px);
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
   .nar-pause,
@@ -151,12 +152,12 @@ import T from './T.astro';
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--narrator-h) - 0.25rem);
-    right: 1.375rem;
+    left: calc(var(--narrator-h) - 0.5rem);
+    right: 1.75rem;
     display: flex;
     align-items: center;
-    font-size: 0.8125rem;
-    line-height: 1.3;
+    font-size: 0.9375rem;
+    line-height: 1.35;
     text-align: left;
     color: var(--ink);
     opacity: 0;
