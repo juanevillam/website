@@ -53,6 +53,9 @@
      in its panel. */
   --float-gap: 1rem;
   --float-h: 2.5rem;
+  /* The narrator pill: the floating pills' height, wide enough for the
+     mark and a m:ss clock, fixed so its anchors can reserve it. */
+  --narrator-w: 6.5rem;
   /* Exactly where the pills END — counting the gap twice put 40px of
      air over the phone against 24 under it. */
   --header-h: calc(var(--float-gap) + var(--float-h));
@@ -236,7 +239,7 @@ a:hover {
    NarrationPlayer). */
 .narr-anchor {
   flex: none;
-  width: var(--float-h);
+  width: var(--narrator-w);
   height: var(--float-h);
   margin-top: 1.5rem;
 }
