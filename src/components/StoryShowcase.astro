@@ -993,6 +993,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       for (let i = a; i < b; i++) sum += freq[i];
       out[k] = sum / (b - a) / 255;
     }
+    // Where the voice's energy sits, 0 (low) – 1 (high): the spectral
+    // centroid across the same range, for the field's wavelength.
+    let wsum = 0;
+    let msum = 0;
+    const lowBin = Math.floor(LOW_HZ / binHz);
+    const highBin = Math.ceil(HIGH_HZ / binHz);
+    for (let i = lowBin; i < highBin; i++) {
+      wsum += i * freq[i];
+      msum += freq[i];
+    }
+    if (msum > 0)
+      brightness = Math.log((wsum / msum) / lowBin) / Math.log(highBin / lowBin);
     // A slow automatic gain so a quiet take still fills the pill —
     // floored, so the room's hiss never passes for a voice.
     peak = Math.max(peak * 0.998, ...out, 0.35);
@@ -1049,23 +1061,31 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   };
 
   // ----- the field: the page listens -----
-  // Behind everything, the voice falls like drops into still water. Each
-  // syllable's ONSET — loudness jumping clear of its own recent average —
-  // sends a ring out from the pill across the page, sized and inked by
-  // how hard it landed, with a fainter second ring a beat behind it the
-  // way a real drop throws two. A soft glow round the pill breathes with
-  // the loudness itself. Silence lets the water settle.
+  // Behind everything, three hairline sound waves cross the whole page at
+  // the pill's height — one continuous voice, never a burst of events.
+  // Silent, they lie flat and nearly vanish; speaking, they swell with
+  // the loudness and tighten as the voice brightens, gathered round the
+  // pill and settling to nothing at the page's edges. They only travel
+  // while there is voice to carry them, and leave with the narration.
 
   const field = document.querySelector<HTMLCanvasElement>('.nar-field');
   /** Mean band level this frame, 0–1 (set by the bars). */
   let loudness = 0;
-  let trail = 0;
-  let glow = 0;
-  let lastDrop = 0;
+  /** Where the voice's energy sits, 0 low – 1 high (set by the bars). */
+  let brightness = 0.3;
+  let amp = 0;
+  let tone = 0.3;
+  let presence = 0;
+  let travel = 0;
+  let lastFrame = 0;
   let fieldDirty = false;
-  type Ripple = { x: number; y: number; born: number; strength: number };
-  let ripples: Ripple[] = [];
-  const RIPPLE_MS = 2800;
+  // Three strands, each its own wavelength, speed and weight, so they
+  // braid rather than stack.
+  const STRANDS = [
+    { k: 1, speed: 1, gain: 1, alpha: 1 },
+    { k: 1.55, speed: -0.7, gain: 0.6, alpha: 0.6 },
+    { k: 0.7, speed: 0.45, gain: 0.8, alpha: 0.45 },
+  ];
   // The field's ink: the page's own --ink, only ever at a whisper.
   const INK = (() => {
     const hex = getComputedStyle(document.documentElement)
@@ -1080,29 +1100,20 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const drawField = (now: number) => {
     if (!field || !narrator || narrator.hidden || reduceMotion) return;
+    const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
+    lastFrame = now;
     const talking = running && !voice.paused;
-    const pill = narrator.getBoundingClientRect();
-    const cx = pill.left + pill.width / 2;
-    const cy = pill.top + pill.height / 2;
 
-    trail += (loudness - trail) * 0.12;
-    if (
-      talking &&
-      loudness > 0.3 &&
-      loudness - trail > 0.1 &&
-      now - lastDrop > 240
-    ) {
-      lastDrop = now;
-      const strength = Math.min(1, loudness * 1.2);
-      ripples.push({ x: cx, y: cy, born: now, strength });
-      ripples.push({ x: cx, y: cy, born: now + 160, strength: strength * 0.5 });
-    }
-    glow += ((talking ? loudness : 0) - glow) * 0.08;
-    ripples = ripples.filter(r => now - r.born < RIPPLE_MS);
+    // Everything eases: the strands never snap to a syllable.
+    amp += ((talking ? loudness : 0) - amp) * 0.08;
+    tone += (brightness - tone) * 0.05;
+    presence += ((session && running ? 1 : 0) - presence) * 0.04;
+    // They travel only on voice — a pause holds them where they are.
+    travel += dt * 0.0022 * (0.15 + amp);
 
     const g = field.getContext('2d');
     if (!g) return;
-    if (!ripples.length && glow < 0.004) {
+    if (presence < 0.004) {
       if (fieldDirty) {
         g.clearRect(0, 0, field.width, field.height);
         fieldDirty = false;
@@ -1121,27 +1132,35 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     g.setTransform(ratio, 0, 0, ratio, 0, 0);
     g.clearRect(0, 0, w, h);
 
-    const reach = Math.min(w, h);
-    if (glow > 0.004) {
-      const radius = reach * (0.18 + 0.22 * glow);
-      const halo = g.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      halo.addColorStop(0, `rgba(${INK}, ${(0.07 * glow).toFixed(4)})`);
-      halo.addColorStop(1, `rgba(${INK}, 0)`);
-      g.fillStyle = halo;
-      g.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
-    }
+    const pill = narrator.getBoundingClientRect();
+    const cx = pill.left + pill.width / 2;
+    const cy = pill.top + pill.height / 2;
+    // Low voice → long, lazy waves; bright voice → tighter ones.
+    const wavelength = 520 - 360 * Math.min(1, Math.max(0, tone));
+    const height = Math.min(h, w) * 0.09 * amp;
+    const spread = w * 0.42;
 
     g.lineWidth = 1;
-    for (const r of ripples) {
-      const age = (now - r.born) / RIPPLE_MS;
-      if (age < 0) continue;
-      // Fast off the mark, slowing as it spreads — how water rings run.
-      const radius =
-        pill.height / 2 + (1 - (1 - age) ** 3) * reach * (0.35 + 0.4 * r.strength);
-      const alpha = (1 - age) ** 2 * 0.22 * r.strength;
-      g.strokeStyle = `rgba(${INK}, ${alpha.toFixed(4)})`;
+    for (const strand of STRANDS) {
+      g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.05 + 0.13 * amp)).toFixed(4)})`;
       g.beginPath();
-      g.arc(r.x, r.y, radius, 0, Math.PI * 2);
+      for (let x = 0; x <= w; x += 6) {
+        // Gathered round the pill, settling to flat at the edges.
+        const env =
+          Math.exp(-(((x - cx) / spread) ** 2)) *
+          Math.sin(Math.PI * Math.min(1, Math.max(0, x / w)));
+        const y =
+          cy +
+          Math.sin(
+            ((x - cx) / wavelength) * Math.PI * 2 * strand.k +
+              travel * strand.speed * Math.PI * 2
+          ) *
+            height *
+            strand.gain *
+            env;
+        if (x) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      }
       g.stroke();
     }
   };
