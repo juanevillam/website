@@ -527,21 +527,22 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     display: grid;
   }
 
-  /* The swap: the outgoing words leave in one micro-step, the incoming
-     ones arrive in the next — never both on screen in the same cell. */
+  /* The swap is a plain cross-fade, the way the system changes a label:
+     the new words come up through the old ones in one short beat. Going
+     out and then in (tried) blinked the column to black between them,
+     and that blink was the part that still read as an animation. */
   .cap {
     grid-area: 1 / 1;
     /* Clear the small lockup parked above the captions. */
     padding-top: 3.5rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--dur-micro) var(--ease);
+    transition: opacity calc(var(--beat) / 3) linear;
   }
 
   .cap.is-current {
     opacity: 1;
     pointer-events: auto;
-    transition-delay: var(--dur-micro);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1563,7 +1564,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       // made them flicker, and read as noise beside the deck (which IS
       // scroll-coupled, rightly: it is things moving). The words just
       // hold, whole, until the next slide becomes the active one; then
-      // one short swap (CSS, `is-current`) and they hold again.
+      // one short cross-fade (CSS, `is-current`) and they hold again.
       for (let i = 0; i < s.caps.length; i++)
         s.caps[i].classList.toggle('is-current', active === i + 1);
 
