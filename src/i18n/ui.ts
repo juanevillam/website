@@ -56,6 +56,26 @@ const en = {
     'Pick the exact seconds you love — the whole track below, the zoom above.',
   'shaper.s4.p2':
     'Save them as clips: your favorite parts, documented and ready to loop whenever you want. Every clip stays with its song: edit it, delete it or play it again whenever you want.',
+  'topper.problem':
+    'My favorite games, movies and anime lived in my head as rankings I changed every week, and the only place to share them was a group chat, where they scrolled away within the hour.',
+  'topper.solution':
+    'An app for tops of anything: rank what you love, follow people whose taste you trust, and settle the order in the comments. Like Letterboxd, but for every list you would make.',
+  'topper.s1.p1':
+    'Your tops open the app, each with its number one as the cover.',
+  'topper.s1.p2':
+    'Below, the tops of the people you follow — their whole order, not just a like, so you see exactly where their taste and yours part ways.',
+  'topper.s2.p1':
+    'Explore is where you find people worth following, and the tops of everyone else.',
+  'topper.s2.p2':
+    'Search looks inside every item too, so typing a game finds every top that ranks it.',
+  'topper.s3.p1':
+    'A top is a list you reorder with a drag; the podium moves with you.',
+  'topper.s3.p2':
+    'Others tap Agree or Could Be Better, and the comments take care of the rest.',
+  'topper.s4.p1':
+    'Your profile is every top you have made, with its top three in view.',
+  'topper.s4.p2':
+    'And trophies, PlayStation-style, that unlock as you use the app, all the way to the platinum.',
 };
 
 export type UIKey = keyof typeof en;
@@ -95,6 +115,26 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Elige los segundos exactos que te encantan — la canción entera abajo, el zoom arriba.',
     'shaper.s4.p2':
       'Guárdalos como clips: tus partes favoritas, documentadas y listas para repetir en loop cuando quieras. Cada clip se queda con su canción: lo editas, lo eliminas o lo vuelves a escuchar cuando quieras.',
+    'topper.problem':
+      'Mis juegos, películas y anime favoritos vivían en mi cabeza como rankings que cambiaba cada semana, y el único lugar para compartirlos era un chat de grupo, donde se perdían en una hora.',
+    'topper.solution':
+      'Una app de tops de lo que sea: ordenas lo que te encanta, sigues a gente con buen gusto y el orden se discute en los comentarios. Como Letterboxd, pero para cualquier lista que harías.',
+    'topper.s1.p1':
+      'Tus tops abren la app, cada uno con su número uno de portada.',
+    'topper.s1.p2':
+      'Debajo, los tops de las personas que sigues — su orden completo, no solo un like, así ves exactamente dónde su gusto y el tuyo se separan.',
+    'topper.s2.p1':
+      'Explorar es donde encuentras gente que vale la pena seguir, y los tops de todos los demás.',
+    'topper.s2.p2':
+      'La búsqueda también mira dentro de cada elemento: escribes un juego y aparecen todos los tops que lo tienen.',
+    'topper.s3.p1':
+      'Un top es una lista que reordenas arrastrando; el podio se mueve contigo.',
+    'topper.s3.p2':
+      'Los demás tocan De acuerdo o Podría mejorar, y los comentarios hacen el resto.',
+    'topper.s4.p1':
+      'Tu perfil son todos los tops que has hecho, con sus tres primeros a la vista.',
+    'topper.s4.p2':
+      'Y trofeos, al estilo PlayStation, que se desbloquean mientras usas la app, hasta llegar al platino.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -128,5 +168,20 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.p1': '选出你最爱的那几秒——整首歌在下面，放大在上面。',
     'shaper.s4.p2':
       '存成片段：你最喜欢的部分，被记录下来，想循环就循环。每个片段都跟着它的歌曲：随时编辑、删除，或者再听一遍。',
+    'topper.problem':
+      '我最爱的游戏、电影和动漫，一直以排名的形式留在脑子里，每周都在变；唯一能分享的地方是群聊，不到一小时就被刷走了。',
+    'topper.solution':
+      '一个什么都能排的榜单应用：给你喜欢的东西排序，关注品味值得信赖的人，在评论里争论谁该排第一。就像 Letterboxd，但适用于你会列的每一份清单。',
+    'topper.s1.p1': '打开应用先看到你的榜单，每个都以第一名作为封面。',
+    'topper.s1.p2':
+      '下面是你关注的人的榜单——完整的排序，而不只是一个赞，让你清楚看到他们的品味和你在哪里分道扬镳。',
+    'topper.s2.p1': '“探索”里能找到值得关注的人，以及其他所有人的榜单。',
+    'topper.s2.p2':
+      '搜索也会查看每个条目：输入一款游戏，就能找到所有收录它的榜单。',
+    'topper.s3.p1': '榜单就是一份拖动即可重新排序的清单；领奖台随你而动。',
+    'topper.s3.p2': '其他人可以轻点“赞同”或“可以更好”，剩下的交给评论。',
+    'topper.s4.p1': '你的个人资料就是你做过的所有榜单，前三名一目了然。',
+    'topper.s4.p2':
+      '还有 PlayStation 风格的奖杯，随着你使用应用逐一解锁，直到白金。',
   },
 };
