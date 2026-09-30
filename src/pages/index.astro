@@ -28,10 +28,10 @@ const shots = (
     })
   );
 
-// Four slides, in the order the story is told. The two apps were shot on
-// different phones — 393x852pt for Sound Shaper, 402x874pt for Topper — so
-// each manifest states its own pixel size, and it must match the files on
-// disk: it reserves the slot before the image lands.
+// Four slides per app, in the order the story is told. Each manifest states
+// its own pixel size, and it must match the files on disk: it reserves the
+// slot before the image lands. Both apps are shot on the same iPhone
+// (393x852pt at 3x) today, but a retake on another phone changes that.
 const SHAPER_SLIDES = shots(
   'shaper',
   [1179, 2556],
@@ -43,22 +43,43 @@ const SHAPER_SLIDES = shots(
   ]
 );
 
-// Topper is OUT for now (Juan's call, 2026-09-20) — it returns as its own
-// story once its screenshots are retaken on the current build.
+const TOPPER_SLIDES = shots(
+  'topper',
+  [1179, 2556],
+  [
+    ['ios-dark-home', 'Home', ['topper.s1.p1', 'topper.s1.p2']],
+    ['ios-dark-explore', 'Explore', ['topper.s2.p1', 'topper.s2.p2']],
+    ['ios-dark-top-detail', 'Top', ['topper.s3.p1', 'topper.s3.p2']],
+    ['ios-dark-profile', 'Profile', ['topper.s4.p1', 'topper.s4.p2']],
+  ]
+);
 ---
 
 <Base>
   <Hero />
 
+  <!-- Only the LAST story loops: a looping story rewinds the scroll to its
+       own opener at its end, so any story after it could never be reached. -->
+
   <StoryShowcase
     id="shaper"
     name="Sound Shaper"
     pitch={['shaper.problem', 'shaper.solution']}
-    loop
     slides={SHAPER_SLIDES}
     stores
   >
     <AppTile app="shaper" size={76} slot="logo" />
+  </StoryShowcase>
+
+  <StoryShowcase
+    id="topper"
+    name="Topper"
+    pitch={['topper.problem', 'topper.solution']}
+    loop
+    slides={TOPPER_SLIDES}
+    stores
+  >
+    <AppTile app="topper" size={76} slot="logo" />
   </StoryShowcase>
 
   <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
