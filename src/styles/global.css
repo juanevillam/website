@@ -75,8 +75,48 @@
   --space-section: clamp(6rem, 14vh, var(--space-9));
   --measure: 65ch;
   --content-max: 68.75rem; /* 1100px */
+  /* The SCREEN beside a block of words — the game's 4:3 cabinet and every
+     project card's capture share it, so the foot of the page reads as one
+     standard: words in the stories' text column, a 4:3 screen in the rest,
+     as wide as that column allows while the panel still fits the height.
+     Both resolve against whatever box uses them. */
+  --screen-cols: calc(100% * 6 / 13 * 0.81) 1fr;
+  /* Where a full panel's content starts under the fixed header, and its
+     bottom. The top scales with the viewport so the content sits a beat
+     lower on a tall screen instead of hugging the header. The -3px is
+     Juan's nudge: the floating pills freed the top, so the whole scene
+     stands a hair higher and the bottom breathes. Every panel — the
+     stories, the game, More Work — stands on these. */
+  --stage-top: calc(6rem + 5svh - 3px);
+  --stage-bottom: 2rem;
+  /* The step between any two blocks: pitch → row, caption → row,
+     row → foot. One value, everywhere. */
+  --gap-block: 2.5rem;
+  --screen-w: min(100%, calc((100svh - 14rem) * 4 / 3));
 
   color-scheme: dark;
+}
+
+@media (max-width: 64rem) {
+  :root {
+    --stage-top: calc(5rem + 5svh - 3px);
+    --gap-block: 2rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  :root {
+    --stage-top: calc(4rem + 4svh - 3px);
+    --stage-bottom: 1.25rem;
+    --gap-block: 1.5rem;
+  }
+}
+
+@media (min-width: 100rem) {
+  :root {
+    --stage-top: calc(8rem - 3px);
+    --gap-block: 3rem;
+  }
 }
 
 /* ---------- reset ---------- */
@@ -255,4 +295,76 @@ a:hover {
   width: var(--narrator-w);
   height: var(--narrator-h);
   margin-top: 1.5rem;
+}
+
+/* ---------- stepped motion (touch screens) ----------
+   On a touch screen the stories' controller moves in whole steps (see
+   StoryShowcase) and these transitions carry each change — run by the
+   GPU, so they don't trail the finger the way per-pixel scroll scrubbing
+   does on iOS. One duration for all of them: three quarters of a beat. */
+html.is-stepped .story .slot,
+html.is-stepped .story .lockup,
+html.is-stepped .story .actions,
+html.is-stepped .story .shots,
+html.is-stepped [data-hero-inner] {
+  transition:
+    transform calc(var(--beat) * 0.75) var(--ease),
+    opacity calc(var(--beat) * 0.75) var(--ease);
+}
+
+html.is-stepped .story .intro-scene,
+html.is-stepped .story .col-text,
+html.is-stepped .story .float {
+  transition: opacity calc(var(--beat) * 0.75) var(--ease);
+}
+
+/* The narrator glides between anchors the same way. Its own width,
+   colour and border transitions are restated, since this replaces the
+   list. */
+html.is-stepped [data-narrator] {
+  transition:
+    transform calc(var(--beat) * 0.75) var(--ease),
+    opacity calc(var(--beat) * 0.75) var(--ease),
+    width var(--beat) var(--ease),
+    color var(--dur-micro) var(--ease),
+    border-color var(--dur-micro) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-stepped .story .slot,
+  html.is-stepped .story .lockup,
+  html.is-stepped .story .actions,
+  html.is-stepped .story .shots,
+  html.is-stepped [data-hero-inner],
+  html.is-stepped .story .intro-scene,
+  html.is-stepped .story .col-text,
+  html.is-stepped .story .float,
+  html.is-stepped [data-narrator] {
+    transition: none;
+  }
+}
+
+/* ---------- the phone's narrator ----------
+   On a phone the narrator does not travel between anchors (that motion,
+   driven by script, dragged behind iOS's scroll): it sits still in the
+   bottom-right corner, clear of the home indicator, at the header pills'
+   size so the screenshots keep the room. The controller only fades it
+   where there is nothing to tell. */
+@media (max-width: 48rem) {
+  :root {
+    --narrator-scale: 1;
+  }
+
+  [data-narrator] {
+    top: auto !important;
+    left: auto !important;
+    right: clamp(1.25rem, 4vw, 2.5rem);
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    transform: none !important;
+    transition:
+      opacity calc(var(--beat) * 0.75) var(--ease),
+      width var(--beat) var(--ease),
+      color var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease) !important;
+  }
 }

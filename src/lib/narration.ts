@@ -30,8 +30,36 @@ const find = (lang: NarrationLang, key: string) => {
   return fs.existsSync(path.join(PUBLIC, url)) ? url : undefined;
 };
 
-/** The clips recorded for one paragraph, or null when there are none. */
-export const clipFor = (key: string): Clip | null => {
+/**
+ * STAND-INS — TEMPORARY (Juan, 2026-10-01). Every narrated block has the
+ * narrator now, but only Sound Shaper is recorded, so Topper and Space
+ * Explorer borrow its clips paragraph for paragraph. A paragraph's OWN
+ * recording always wins: drop `topper.s1.p1.m4a` in and that paragraph
+ * stops borrowing, with nothing to change here. Delete this map once
+ * every key below has a file of its own.
+ */
+const STAND_IN: Record<string, string> = {
+  'topper.problem': 'shaper.problem',
+  'topper.solution': 'shaper.solution',
+  'topper.s1.p1': 'shaper.s1.p1',
+  'topper.s1.p2': 'shaper.s1.p2',
+  // The merged second slides (2026-10-01): until they are recorded, each
+  // borrows the old recordings closest to its two paragraphs.
+  'shaper.s23.p1': 'shaper.s2.p1',
+  'shaper.s23.p2': 'shaper.s3.p1',
+  'topper.s23.p1': 'shaper.s2.p1',
+  'topper.s23.p2': 'shaper.s3.p1',
+  'topper.s4.p1': 'shaper.s4.p1',
+  'topper.s4.p2': 'shaper.s4.p2',
+  'arcade.p1': 'shaper.problem',
+  'arcade.p2': 'shaper.solution',
+  'work.crol.body': 'shaper.s1.p1',
+  'work.salvalo.body': 'shaper.s2.p1',
+  'work.maktub.body': 'shaper.s3.p1',
+  'work.andreina.body': 'shaper.s4.p1',
+};
+
+const recorded = (key: string): Clip | null => {
   const clip: Clip = {};
   for (const lang of NARRATION_LANGS) {
     const url = find(lang, key);
@@ -39,6 +67,10 @@ export const clipFor = (key: string): Clip | null => {
   }
   return Object.keys(clip).length ? clip : null;
 };
+
+/** The clips recorded for one paragraph, or null when there are none. */
+export const clipFor = (key: string): Clip | null =>
+  recorded(key) ?? (STAND_IN[key] ? recorded(STAND_IN[key]) : null);
 
 /**
  * SUBTITLES — what Juan actually SAYS, which is looser than the paragraph
@@ -118,11 +150,13 @@ const readSubs = (lang: NarrationLang, key: string): Subs | undefined => {
   return undefined;
 };
 
-/** Subtitles per language for one clip, as data attributes' JSON. */
+/** Subtitles per language for one clip, as data attributes' JSON. The
+ *  subtitles follow the CLIP: a borrowed recording brings its own. */
 export const subsFor = (key: string) => {
   const subs: Partial<Record<NarrationLang, string>> = {};
+  const source = !recorded(key) && STAND_IN[key] ? STAND_IN[key] : key;
   for (const lang of NARRATION_LANGS) {
-    const found = readSubs(lang, key);
+    const found = readSubs(lang, source);
     if (found?.phrases.length) subs[lang] = JSON.stringify(found);
   }
   return subs;

@@ -1,6 +1,8 @@
 ---
 import type { UIKey } from '../i18n/ui';
 import StoreBadges from './StoreBadges.astro';
+import AppTile from './AppTile.astro';
+import type { ReleasedApp } from '../lib/releases';
 import T from './T.astro';
 import { clipFor, subsFor } from '../lib/narration';
 
@@ -23,7 +25,10 @@ import { clipFor, subsFor } from '../lib/narration';
  * to paragraph, slide to slide, the page following the voice.
  */
 export type StorySlide = {
-  src: string;
+  /** One screenshot — or two that SHARE one phone: a slide that tells two
+   *  neighbouring screens shows them in turn on the same phone, so it
+   *  looks like every other slide (same pixel size for both). */
+  src: string | [string, string];
   width: number;
   height: number;
   /** Slide titles are ALWAYS English, in every locale — brand nouns. */
@@ -45,6 +50,11 @@ type Props = {
   slides: StorySlide[];
   /** Show the App Store / Google Play slots (apps, not web products). */
   stores?: boolean;
+  /** Where the deck waits at the opener, on desktop: off the RIGHT edge
+   *  ('side', the default) or below the BOTTOM edge ('rise') — so two
+   *  stories in a row don't enter the same way twice. The words stay on
+   *  the left either way: mirroring them was tried and read backwards. */
+  enter?: 'side' | 'rise';
   /** Legal and support pages, linked from the opener — the stores
    *  require them reachable from outside the app. Grouped: each group
    *  renders as a small accordion. */
@@ -61,6 +71,7 @@ const {
   loop = false,
   slides,
   stores = false,
+  enter = 'side',
   linkGroups = [],
 } = Astro.props;
 
@@ -76,6 +87,14 @@ const narrate = (keys: UIKey[]) =>
 const pitchParas = narrate(pitch);
 const slideParas = slides.map(slide => narrate(slide.paras ?? []));
 const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
+
+// PHONE copy: the short version of each block, found by convention — a
+// pitch paragraph `k` has `k.m`; a slide's paragraphs `….sN.pM` share
+// `….sN.m`. The narration stays on the full paragraphs (hidden there).
+const mobileKey = (k: string) =>
+  (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
+const pitchMobile = pitch.map(mobileKey);
+const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : null));
 ---
 
 <section
@@ -83,6 +102,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   id={id}
   data-story={id}
   data-loop={loop ? '' : null}
+  data-enter={enter}
   style={`--steps: ${stepCount}`}
 >
   <!-- Invisible scroll rail — gives the story its length and carries
@@ -122,6 +142,19 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
           <!-- Reserves the action row's box; the row itself floats in
                the stage so it can travel to the slides. -->
           <div class="actions-anchor-big" aria-hidden="true"></div>
+
+          {/* A RISING deck comes up under the page's middle, right where a
+              centred narrator would stand — so there it parks under the
+              store row instead, on the words' own left edge. */}
+          {
+            voiced(pitchParas) && enter === 'rise' && (
+              <div
+                class="narr-anchor narr-under-actions"
+                data-narr-anchor="0"
+                aria-hidden="true"
+              />
+            )
+          }
         </div>
       </div>
       </div>
@@ -130,7 +163,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
           like the hero's, one step under the store row — not in the
           pitch, where it got lost among the words. */}
       {
-        voiced(pitchParas) && (
+        voiced(pitchParas) && enter !== 'rise' && (
           <div class="inner intro-narr">
             <div
               class="narr-anchor"
@@ -212,25 +245,36 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         <div class="shots">
           {
               slides.map(slide => (
-                <div class="slot">
+                <div
+                  class:list={['slot', { 'is-pair': Array.isArray(slide.src) }]}
+                >
+                  {/* One phone. A pair stacks its second screen over the
+                      first and cross-fades between them (see .layer-b). */}
                   <div class="shot-wrap">
-                    <img
-                      class="halo"
-                      src={slide.src}
-                      alt=""
-                      aria-hidden="true"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <img
-                      class="shot"
-                      src={slide.src}
-                      alt={`${name} screenshot`}
-                      width={slide.width}
-                      height={slide.height}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    {[slide.src].flat().map((src, layer) => {
+                      const imgs = (
+                        <>
+                          <img
+                            class="halo"
+                            src={src}
+                            alt=""
+                            aria-hidden="true"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <img
+                            class="shot"
+                            src={src}
+                            alt={`${name} screenshot`}
+                            width={slide.width}
+                            height={slide.height}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </>
+                      );
+                      return layer === 0 ? imgs : <div class="layer-b">{imgs}</div>;
+                    })}
                   </div>
                 </div>
               ))
@@ -251,8 +295,110 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
          under the opener's pitch and travels to the foot of the slides'
          text column, rather than fading out with the opener. -->
     <div class="actions">
-      {stores && <StoreBadges />}
+      {stores && <StoreBadges app={id as ReleasedApp} />}
     </div>
+  </div>
+
+  <!-- THE PHONE'S STORY. Below 48rem the pinned stage above is not drawn
+       at all: a phone gets plain full-screen panels on native scroll-snap
+       — the opener, then one per slide, the screenshot large and the
+       words short. Nothing here moves with the scroll by script, which is
+       what made the stage drag on iOS. Each panel is a narrated block of
+       its own (data-narr-panel); its full paragraphs ride along hidden,
+       carrying the clips. -->
+  <div class="m-story">
+    <section
+      class="m-panel m-opener"
+      data-narr-panel={voiced(pitchParas) ? '' : null}
+    >
+      <div class="m-lockup">
+        {/* Drawn at its phone size, not shrunk by CSS: the tile carries a
+            negative margin solved for its own size, and scaling the SVG
+            box cut the squircle off. Story ids are the tiles' app ids. */}
+        <AppTile app={id as 'shaper' | 'topper'} size={52} />
+        <span class="m-lockup-name">{name}</span>
+      </div>
+      {pitchMobile.map(k => (
+        <p class="body m-copy">
+          <T k={k} />
+        </p>
+      ))}
+      {stores && <StoreBadges app={id as ReleasedApp} />}
+      {pitchParas.map(({ clip, subs }) => (
+        <span
+          hidden
+          data-narr-para
+          data-clip-en={clip?.en}
+          data-clip-es={clip?.es}
+          data-subs-en={subs.en}
+          data-subs-es={subs.es}
+        />
+      ))}
+    </section>
+
+    {/* All the slides in ONE panel, swiped sideways — a panel per slide
+        made the page a long vertical climb. Native horizontal scroll-snap,
+        so the swipe is Safari's own. */}
+    <section
+      class="m-panel m-deck"
+      data-narr-panel={slideParas.some(voiced) ? '' : null}
+      data-narr-start="0"
+    >
+      <div class="m-track">
+        {slides.map((slide, i) => (
+          <article class="m-card" aria-label={`${i + 1} / ${slides.length}`}>
+            <div class:list={['m-shot', { 'is-pair': Array.isArray(slide.src) }]}>
+              <div class="shot-wrap">
+                {[slide.src].flat().map((src, layer) => {
+                  const img = (
+                    <img
+                      class="shot"
+                      src={src}
+                      alt={`${name} screenshot`}
+                      width={slide.width}
+                      height={slide.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  );
+                  return layer === 0 ? img : <div class="layer-b">{img}</div>;
+                })}
+              </div>
+            </div>
+            <div class="m-words">
+              <div class="m-lockup m-lockup-small">
+                <AppTile app={id as 'shaper' | 'topper'} size={24} />
+                <span class="m-lockup-name">{name}</span>
+              </div>
+              {slide.title && <h3 class="slide-title">{slide.title}</h3>}
+              {slideMobile[i] && (
+                <p class="body m-copy">
+                  <T k={slideMobile[i]!} />
+                </p>
+              )}
+            </div>
+            {/* This card's narration: its full paragraphs, hidden. `sub`
+                is the paragraph's place in the card (a two-screen card
+                shows the screen its paragraph is about). */}
+            {slideParas[i].map(({ clip, subs }, sub) => (
+              <span
+                hidden
+                data-narr-para
+                data-card={i}
+                data-sub={sub}
+                data-clip-en={clip?.en}
+                data-clip-es={clip?.es}
+                data-subs-en={subs.en}
+                data-subs-es={subs.es}
+              />
+            ))}
+          </article>
+        ))}
+      </div>
+      <div class="m-dots" aria-hidden="true">
+        {slides.map(() => <span class="m-dot" />)}
+      </div>
+    </section>
   </div>
 </section>
 
@@ -271,33 +417,16 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     position: relative;
     height: calc(var(--steps) * 100svh);
 
-    /* The inset under the fixed header, and the panel's bottom. The
-       top scales with the viewport so the content sits a beat lower on
-       a tall screen instead of hugging the header. The -3px is Juan's
-       nudge: the floating pills freed the top, so the whole scene
-       stands a hair higher and the bottom breathes. */
-    --stage-top: calc(6rem + 5svh - 3px);
-    --stage-bottom: 2rem;
-    /* The step between any two blocks: pitch → row, caption → row,
-       row → foot. One value, everywhere. */
-    --gap-block: 2.5rem;
+    /* --stage-top, --stage-bottom and --gap-block are the PAGE's (see
+       global.css): every full panel — the game, More Work — stands on
+       the same three numbers, so nothing below the stories drifts. */
     /* The text column, and the opener's pitch at 1.5x of it. */
     --text-col: calc(100% * 6 / 13 * 0.81);
     --text-wide: calc(100% * 6 / 13 * 0.81 * 1.5);
   }
 
-  @media (max-width: 64rem) {
-    .story {
-      --stage-top: calc(5rem + 5svh - 3px);
-      --gap-block: 2rem;
-    }
-  }
-
   @media (max-width: 48rem) {
     .story {
-      --stage-top: calc(4rem + 4svh - 3px);
-      --stage-bottom: 1.25rem;
-      --gap-block: 1.5rem;
       --text-col: 100%;
       --text-wide: 100%;
     }
@@ -309,9 +438,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     pointer-events: none;
   }
 
+  /* Every step is a resting place, but only the OPENER insists on it:
+     a gentle scroll still lands slide by slide, while a hard flick may
+     pass several slides at once — a returning visitor's fingers shouldn't
+     have to pay for every screen. A flick never skips a whole app, since
+     each story's opener (and every panel) stops it. */
   .step {
     height: 100svh;
     scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+
+  .step:first-child {
     scroll-snap-stop: always;
   }
 
@@ -420,6 +558,12 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   /* The rule sits on the links themselves, so it spans the content
      above it rather than the whole panel. */
   .intro-foot {
+    margin-top: var(--gap-block);
+  }
+
+  /* A rising story's opener parks the narrator one block step under the
+     store row, the step every block takes. */
+  .narr-under-actions {
     margin-top: var(--gap-block);
   }
 
@@ -627,6 +771,49 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     height: 100%;
   }
 
+  /* A slide with two screens keeps ONE phone, like every other slide:
+     the second screen lies over the first and the phone turns between
+     them on a SLOW clock — 24 beats round (~14s): each screen holds ~6s
+     and the cross-fade takes ~1.2s. Ten beats (3s a screen) was tried
+     and read as flicker. Two phones side by side were tried first and read as a
+     different kind of slide in the middle of the deck. While Juan's voice
+     tells the slide, the screen follows the paragraph instead
+     (data-screen, set by the narrator). */
+  .layer-b {
+    position: absolute;
+    inset: 0;
+    animation: pair-swap calc(var(--beat) * 24) ease-in-out infinite;
+  }
+
+  .layer-b .shot {
+    height: 100%;
+  }
+
+  @keyframes pair-swap {
+    0%,
+    42% {
+      opacity: 0;
+    }
+    50%,
+    92% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .slot.is-pair[data-screen] .layer-b {
+    animation: none;
+    opacity: 0;
+    /* The same ~1.2s turn as the clock's. */
+    transition: opacity calc(var(--beat) * 2) ease-in-out;
+  }
+
+  .slot.is-pair[data-screen='1'] .layer-b {
+    opacity: 1;
+  }
+
   /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
      a visible rectangle and banding, which is what read as cheap — so
      the halo is masked to an ellipse that fades to nothing well before
@@ -647,6 +834,25 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       rgba(0, 0, 0, 0.6) 45%,
       transparent 75%
     );
+  }
+
+  /* A card away from the front: grey, and no halo at all — the halo is
+     the most expensive thing on the page to paint, and at 0.4 opacity
+     or less nobody sees it. */
+  .slot.is-away .shot {
+    filter: grayscale(1);
+  }
+
+  .slot.is-away .halo {
+    display: none;
+  }
+
+  /* A phone's GPU pays for a 40px blur on every composited frame; the
+     glow is decoration, so phones go without it. */
+  @media (hover: none) and (pointer: coarse) {
+    .halo {
+      display: none;
+    }
   }
 
   .shot {
@@ -715,14 +921,23 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   @media (min-width: 100rem) {
     .story {
       --content-max: 82rem;
-      --stage-top: calc(8rem - 3px);
-      --gap-block: 3rem;
     }
 
     .float-grid,
     .intro-scene .inner,
     .intro-foot {
       max-width: var(--content-max);
+    }
+  }
+
+  /* ---------- rising ----------
+     The other way in: the deck waits below the stage's bottom edge, its
+     top showing under the opener, and the first step lifts it into its
+     column. Same columns, same gaps as a side entrance — only the
+     direction of travel changes. Desktop only: phones have no peek. */
+  @media (min-width: 48.01rem) {
+    [data-enter='rise'] .shots {
+      transform: translateY(calc(var(--peek, 0) * 62%));
     }
   }
 
@@ -760,8 +975,14 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       order: 0;
     }
 
+    /* The store row only shows on the opener — on a phone's slides its
+       reserved box (48px plus a block step) was taken straight out of the
+       phone's height. The anchor stays as the row's exit point, but takes
+       no room. */
     .actions-anchor-small {
       order: 1;
+      height: 0;
+      margin-top: 0;
     }
 
     /* A phone reads the headline and one line under it. The second
@@ -783,8 +1004,10 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       font-size: clamp(1.75rem, 7vw, 2.25rem);
     }
 
+    /* The small lockup is 2rem tall here too: 3.5rem puts the slide
+       title one 1.5rem step under it, as on desktop (2.75rem left 12px). */
     .cap {
-      padding-top: 2.75rem;
+      padding-top: 3.5rem;
     }
 
     .lockup {
@@ -833,6 +1056,175 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       display: block;
     }
   }
+
+  /* ---------- the phone's story ----------
+     Above 48rem it is not drawn; below, it IS the story and the pinned
+     stage is not. Every panel is one snapped screen sized for the space
+     a phone browser really leaves (svh: Safari's bars showing), with room
+     at the foot for the fixed narrator. */
+  .m-story {
+    display: none;
+  }
+
+  @media (max-width: 48rem) {
+    .story {
+      height: auto;
+    }
+
+    .story > .steps,
+    .story > .stage {
+      display: none;
+    }
+
+    .m-story {
+      display: block;
+    }
+
+    .m-panel {
+      position: relative;
+      height: 100svh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      padding: calc(var(--header-h) + 1rem) clamp(1.25rem, 4vw, 2.5rem)
+        calc(var(--narrator-h) + 2rem);
+    }
+
+    .m-opener {
+      justify-content: center;
+      gap: 1.25rem;
+    }
+
+    .m-lockup {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .m-lockup-name {
+      font-size: clamp(1.75rem, 8vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: var(--track-display);
+      line-height: 0.95;
+    }
+
+    .m-lockup-small {
+      gap: 0.5rem;
+    }
+
+    .m-lockup-small .m-lockup-name {
+      font-size: 1rem;
+      letter-spacing: var(--track-heading);
+    }
+
+    .m-copy {
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    /* The screenshot takes every pixel the words leave. */
+    .m-shot {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .m-shot .shot-wrap {
+      position: relative;
+      height: 100%;
+    }
+
+    .m-shot .shot {
+      height: 100%;
+      width: auto;
+    }
+
+    /* Room for three lines of copy whatever a card says, so the phone
+       above is the same size on every card of the deck (measured: the
+       words run 119-167px across en/es/zh at 390px wide). */
+    .m-words {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-top: 1.25rem;
+      min-height: 10.5rem;
+    }
+
+    .m-words .slide-title {
+      font-size: clamp(1.75rem, 7vw, 2.25rem);
+    }
+
+    /* The deck: one panel, the cards side by side in a native
+       horizontal scroller that snaps card by card. It runs edge to edge
+       of the panel's gutter; the dots stand at the foot, left of the
+       corner narrator. */
+    .m-deck {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .m-track {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .m-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* min-width: 0 — without it a flex item never shrinks below its
+       content, and the card grew to its paragraph's unwrapped width. */
+    .m-card {
+      flex: 0 0 100%;
+      min-width: 0;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .m-dots {
+      position: absolute;
+      left: clamp(1.25rem, 4vw, 2.5rem);
+      bottom: calc(1rem + env(safe-area-inset-bottom) + var(--narrator-h) / 2);
+      transform: translateY(50%);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .m-dot {
+      width: 0.4375rem;
+      height: 0.4375rem;
+      border-radius: 999px;
+      background: var(--ink-3);
+      opacity: 0.5;
+      transition: opacity var(--dur-micro) var(--ease);
+    }
+
+    .m-dot.is-current {
+      background: var(--ink);
+      opacity: 1;
+    }
+  }
+
+  .m-shot.is-pair[data-screen] .layer-b {
+    animation: none;
+    opacity: 0;
+    transition: opacity calc(var(--beat) * 2) ease-in-out;
+  }
+
+  .m-shot.is-pair[data-screen='1'] .layer-b {
+    opacity: 1;
+  }
 </style>
 
 <script>
@@ -849,6 +1241,28 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const clamp = (v: number, min: number, max: number) =>
     Math.min(max, Math.max(min, v));
+
+  // STEPPED on a touch screen. iOS scrolls on its own compositor and hands
+  // the page its scroll position a frame or more late, so anything this
+  // script moves pixel-by-pixel with the scroll trails behind the finger
+  // and reads as heavy — however cheap the frame is (measured: ~52fps in a
+  // throttled phone emulation, yet it still drags on a real iPhone 15).
+  // So on touch the controller works in WHOLE STEPS: every scroll-coupled
+  // value is rounded to the step the page is on, and the change between
+  // two states is a CSS transition the GPU runs by itself (html.is-stepped
+  // in global.css). A mouse or trackpad keeps the continuous scrub.
+  const stepped = window.matchMedia(
+    '(hover: none) and (pointer: coarse)'
+  ).matches;
+  const step = (v: number) => (stepped ? Math.round(v) : v);
+
+  // PHONE: the stories are drawn as plain snapped panels (.m-story) and
+  // the pinned stage is not drawn at all, so the controller drives no
+  // stage and the narrator sits still in its corner (NarrationPlayer).
+  // The layout is chosen once per load; crossing the line reloads.
+  const phoneQuery = window.matchMedia('(max-width: 48rem)');
+  const phone = phoneQuery.matches;
+  phoneQuery.addEventListener('change', () => location.reload());
 
   const smooth = (v: number) => v * v * (3 - 2 * v);
 
@@ -876,15 +1290,18 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       },
     });
 
-  /** A narrated block: the hero's wordmark, a story's opener pitch, or
-   *  one slide's caption. */
+  /** A narrated block: the hero's wordmark, a story's opener pitch, one
+   *  slide's caption, or a PANEL — a plain full-height section after the
+   *  stories (the game), marked `data-narr-panel`. */
   type Narr = {
     el: HTMLElement;
     paras: HTMLElement[];
     anchor: HTMLElement | null;
-    /** The story it belongs to, and its step there; null = the hero. */
+    /** The story it belongs to, and its step there; null = the hero or a
+     *  panel. */
     story: Story | null;
     step: number;
+    panel: boolean;
   };
 
   type Story = {
@@ -954,9 +1371,35 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return -1;
   };
 
+  // Where a block's telling starts: its first recorded paragraph — unless
+  // the block names its own start (`data-narr-start`), as a carousel does
+  // for the card in front.
+  const startOf = (block: Narr) => {
+    const named = Number(block.el.dataset.narrStart);
+    if (Number.isInteger(named) && block.paras[named] && clipOf(block.paras[named]))
+      return named;
+    return firstVoiced(block);
+  };
+
   const paint = () => {
     for (const n of narrs) {
       const on = session?.block === n;
+      // A two-screen slide shows the screen its spoken paragraph is about.
+      const slot =
+        n.story && n.step > 0
+          ? n.story.slots[n.step - 1]
+          : n.panel
+            ? n.el.querySelector<HTMLElement>('.is-pair')
+            : null;
+      if (slot?.classList.contains('is-pair')) {
+        // In a phone deck the spoken paragraph must belong to the pair's
+        // own card; its `sub` says which of the two screens it is about.
+        const spoken = on && session ? session.block.paras[session.para] : null;
+        const card = slot.closest('.m-card');
+        if (spoken && (!card || spoken.closest('.m-card') === card))
+          slot.dataset.screen = spoken.dataset.sub ?? String(Math.min(session!.para, 1));
+        else delete slot.dataset.screen;
+      }
       n.el.classList.toggle('is-narrating', on);
       n.paras.forEach((p, i) =>
         p.classList.toggle('is-spoken', on && session?.para === i)
@@ -1226,6 +1669,14 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   // it opens, and a centred anchor has to keep it centred all the way.
   const placeNarrator = () => {
     if (!narrator || narrator.hidden) return;
+    // A phone's narrator never travels: it stays in its corner, shown
+    // only while the screen holds a block it can tell.
+    if (phone) {
+      const has = !!showing && firstVoiced(showing) >= 0;
+      narrator.style.opacity = has ? '' : '0';
+      narrator.style.pointerEvents = has ? '' : 'none';
+      return;
+    }
     const width = narrator.offsetWidth;
     let sum = 0;
     let x = 0;
@@ -1243,6 +1694,12 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     if (sum > 0.0001)
       narrator.style.transform =
         `translate(${(x / sum).toFixed(1)}px, ${(y / sum).toFixed(1)}px)`;
+    // Past the last narrated block (the page's foot) nothing owns the
+    // narrator: it fades with the block that lets it go, instead of being
+    // left standing wherever that block last put it.
+    const own = Math.min(1, sum);
+    narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
+    narrator.style.pointerEvents = own < 0.05 ? 'none' : '';
   };
 
   const animateNarrator = (now: number) => {
@@ -1275,6 +1732,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     voice.src = src;
     voice.play().catch(() => stop());
     paint();
+    // Whatever shows this paragraph can follow the voice to it (the More
+    // Work deck turns to the card being told).
+    document.dispatchEvent(new CustomEvent('narr:para', { detail: p }));
   };
 
   const pause = () => {
@@ -1312,23 +1772,66 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       return;
     }
     const story = block.story;
-    if (!story) {
+    if (block.panel) {
+      // A panel hands over to the next panel, if there is one.
+      const next = panels[panels.indexOf(block) + 1];
+      if (next) scrollToPanel(next);
+      else stop();
+    } else if (!story) {
       // The hero hands over to the first story's opener.
       if (stories[0]) scrollToStep(stories[0], 0);
+      else if (panels[0]) scrollToPanel(panels[0]);
       else stop();
     } else if (block.step + 1 < story.steps.length) {
       scrollToStep(story, block.step + 1);
-    } else stop();
+    } else {
+      // A story's last slide hands over to the next story's opener, and
+      // the last story to the first panel — the pitch runs to the foot.
+      const next = stories[stories.indexOf(story) + 1];
+      if (next) scrollToStep(next, 0);
+      else if (panels[0]) scrollToPanel(panels[0]);
+      else stop();
+    }
   });
+
+  const scrollToPanel = (panel: Narr) =>
+    window.scrollTo({
+      top:
+        (panel.el.closest<HTMLElement>('section') ?? panel.el)
+          .getBoundingClientRect().top + window.scrollY,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
 
   // The page moved under a running voice — by hand or by the voice's own
   // page turn. The voice goes where the page went; a step with nothing
   // recorded (the loop's return) ends the pitch.
   const follow = (block: Narr | undefined) => {
-    const para = firstVoiced(block);
+    const para = block ? startOf(block) : -1;
     if (block && para >= 0) start(block, para);
     else stop();
   };
+
+  // A block turned to another paragraph by hand (the More Work deck): a
+  // running voice switches to it; a paused one will start there.
+  document.addEventListener('narr:select', e => {
+    const p = (e as CustomEvent<HTMLElement>).detail;
+    if (!session) return;
+    const i = session.block.paras.indexOf(p);
+    if (i < 0 || i === session.para) return;
+    if (running) start(session.block, i);
+    else {
+      session = { block: session.block, para: i };
+      const src = clipOf(p);
+      if (src) voice.src = src;
+      paint();
+    }
+  });
+
+  // The game has its own music: starting it quiets the voice, which
+  // resumes from the same sentence on the next press.
+  document.addEventListener('arcade:start', () => {
+    if (running) pause();
+  });
 
   // A language switch mid-sentence restarts that sentence in the new
   // voice; paused, the next play simply uses it.
@@ -1351,10 +1854,15 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
       return;
     }
     const block = showing ?? narrs[0];
-    if (block) start(block, Math.max(firstVoiced(block), 0));
+    if (block) start(block, Math.max(startOf(block), 0));
   });
 
-  const collect = (el: HTMLElement, story: Story | null, step: number) => {
+  const collect = (
+    el: HTMLElement,
+    story: Story | null,
+    step: number,
+    panel = false
+  ) => {
     const n: Narr = {
       el,
       paras: [...el.querySelectorAll<HTMLElement>('[data-narr-para]')],
@@ -1366,6 +1874,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         ) ?? el.querySelector<HTMLElement>('[data-narr-anchor]'),
       story,
       step,
+      panel,
     };
     // While a block is being told, its paragraphs are tappable too.
     n.paras.forEach((p, i) =>
@@ -1382,9 +1891,9 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   );
   const heroNarr = heroEl ? collect(heroEl, null, -1) : undefined;
 
-  const stories: Story[] = [
-    ...document.querySelectorAll<HTMLElement>('[data-story]'),
-  ].map(root => {
+  const stories: Story[] = (
+    phone ? [] : [...document.querySelectorAll<HTMLElement>('[data-story]')]
+  ).map(root => {
     const story: Story = {
       root,
       loop: 'loop' in root.dataset,
@@ -1411,6 +1920,14 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
     return story;
   });
 
+  // Only the panels this layout draws: the phone's story panels are not
+  // drawn on desktop, and must not join its hand-over chain.
+  const panels = [
+    ...document.querySelectorAll<HTMLElement>('[data-narr-panel]'),
+  ]
+    .filter(el => el.getClientRects().length > 0)
+    .map(el => collect(el, null, -1, true));
+
   // Nothing recorded anywhere → no narrator at all.
   if (narrator && narrs.length) {
     narrator.hidden = false;
@@ -1422,7 +1939,7 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
 
   const render = (force = false) => {
     const vh = window.innerHeight;
-    const hp = clamp(window.scrollY / vh, 0, 1);
+    const hp = step(clamp(window.scrollY / vh, 0, 1));
 
     // Where the narrator stands: a weighted blend of every anchor, each
     // weighted by how much of the page its block owns right now — so it
@@ -1438,23 +1955,49 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
         : `scale(${1 - hp * 0.08}) translateY(${(-hp * 0.06 * vh).toFixed(1)}px)`;
     }
 
+    // A panel owns the narrator in proportion to how much of it is on
+    // screen — the same glide a story hands over with — and owns the
+    // voice once it holds the middle of the screen.
+    for (const n of panels) {
+      const section = n.el.closest<HTMLElement>('section') ?? n.el;
+      const rect = section.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > vh) continue;
+      // In by how far it has come up, out by how far it has gone — the
+      // story rule, so two panels in a row cross-fade it at their seam.
+      const own =
+        step(clamp(1 - rect.top / vh, 0, 1)) * step(clamp(rect.bottom / vh, 0, 1));
+      if (n.anchor && own > 0) parks.push({ anchor: n.anchor, w: own * hp });
+      if (!showing && rect.top < vh * 0.5 && rect.bottom > vh * 0.5)
+        showing = n;
+    }
+
     for (const s of stories) {
       const rect = s.root.getBoundingClientRect();
       // The forced pass places every layer once at load, so nothing is
       // ever seen unstyled when a story first scrolls in.
       if (!force && (rect.bottom < 0 || rect.top > vh)) continue;
 
-      const p = clamp(-rect.top / vh, 0, s.steps.length - 1);
+      const p = step(clamp(-rect.top / vh, 0, s.steps.length - 1));
       const active = Math.round(p);
 
       // Each step owns the narrator in a tent around its position; the
-      // loop's return step belongs to the opener it lands on.
+      // loop's return step belongs to the opener it lands on. A story
+      // lets go as it scrolls off, so whatever comes up under it — the
+      // next story, the game — takes the narrator over smoothly. Without
+      // this, a story whose bottom sat exactly on the screen's top edge
+      // still owned half the narrator and parked it mid-title.
+      const out = step(clamp(rect.bottom / vh, 0, 1));
+      // ...and a story coming up takes it by how far it has come in, so
+      // two stories meeting cross-fade it — out + in = 1 at the seam —
+      // the same glide the hero hands over with. (For the first story
+      // this IS the hero's hp.)
+      const enter = step(clamp(1 - rect.top / vh, 0, 1));
       for (let k = 0; k < s.steps.length; k++) {
         const own = Math.max(0, 1 - Math.abs(p - k));
         const block =
           s.loop && k === s.steps.length - 1 ? s.blocks[0] : s.blocks[k];
         if (own > 0 && block?.anchor)
-          parks.push({ anchor: block.anchor, w: own * hp });
+          parks.push({ anchor: block.anchor, w: own * enter * out });
       }
       if (!showing) showing = s.blocks[active];
 
@@ -1543,14 +2086,23 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
             // Opacity reads the RAW depth, so a card sliding round to
             // the back of the stack arrives from nothing instead of
             // popping in at the last edge's strength.
+            // Muted hard: the card being read is the only one at full
+            // strength — the next one is a hint (0.4), the ones behind it
+            // barely there (0.2, 0.08), and none of them in colour.
             const dd = Math.min(d, 3);
-            op = clamp(1 - d * 0.28, 0, 1);
+            op = d <= 1 ? 1 - d * 0.6 : 0.4 * Math.pow(0.5, d - 1);
             x = dd * paneW * 0.045;
             rot = dd * 2.5;
             sc = 1 - dd * 0.06;
           }
 
           s.slots[i].style.opacity = String(op);
+          // A STATE, not a per-frame value: a filter that changes every
+          // scroll frame re-rasterizes the card's 40px-blurred halo every
+          // frame — fine on a Mac, a slideshow on an iPhone. The card goes
+          // grey (and drops its halo) once it is more than half a step
+          // away, and comes back the same way.
+          s.slots[i].classList.toggle('is-away', Math.abs(d) > 0.5);
           s.slots[i].style.transform =
             `translateX(${x.toFixed(1)}px) ` +
             `rotate(${rot.toFixed(2)}deg) ` +
@@ -1667,4 +2219,50 @@ const voiced = (paras: { clip: unknown }[]) => paras.some(p => p.clip);
   );
 
   render(true);
+  // Transitions switch on only AFTER the first placement, so nothing
+  // animates in from nowhere on load.
+  // ---------- the phone's decks ----------
+  // Which card is in front: by the track's own scroll. The narrator starts
+  // the panel there (data-narr-start = that card's first paragraph), a
+  // running voice switches to it, and a clip that ends turns the deck.
+  for (const deck of document.querySelectorAll<HTMLElement>('.m-deck')) {
+    const track = deck.querySelector<HTMLElement>('.m-track');
+    const cards = [...deck.querySelectorAll<HTMLElement>('.m-card')];
+    const dots = [...deck.querySelectorAll<HTMLElement>('.m-dot')];
+    const paras = [...deck.querySelectorAll<HTMLElement>('[data-narr-para]')];
+    if (!track || !cards.length) continue;
+    let front = -1;
+    const settle = () => {
+      const i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
+      if (i === front) return;
+      front = i;
+      dots.forEach((d, k) => d.classList.toggle('is-current', k === i));
+      const first = paras.find(p => p.dataset.card === String(i));
+      if (first) {
+        deck.dataset.narrStart = String(paras.indexOf(first));
+        document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
+      }
+    };
+    track.addEventListener('scroll', () => requestAnimationFrame(settle), {
+      passive: true,
+    });
+    document.addEventListener('narr:para', e => {
+      const p = (e as CustomEvent<HTMLElement>).detail;
+      if (!deck.contains(p)) return;
+      const i = Number(p.dataset.card);
+      if (i !== front)
+        track.scrollTo({
+          left: i * track.clientWidth,
+          behavior: reduceMotion ? 'auto' : 'smooth',
+        });
+    });
+    settle();
+  }
+
+  if (stepped)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        document.documentElement.classList.add('is-stepped')
+      )
+    );
 </script>

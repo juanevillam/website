@@ -39,6 +39,17 @@ const social = app.content === 'tops';
     someone else's rights, or harms other people. Accounts that do may be
     suspended or removed{social ? ', along with the content' : ''}.
   </p>
+  {
+    social && (
+      <p>
+        There is no tolerance for objectionable content or abusive people.
+        You can report a comment or a person, and block anyone, from inside
+        the app. Reports are reviewed within 24 hours, and content that breaks
+        these terms is removed, along with the account that posted it when
+        warranted.
+      </p>
+    )
+  }
 
   <h2>The service</h2>
   <p>

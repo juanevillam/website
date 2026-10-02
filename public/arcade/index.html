@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  Space Explorer, exactly as the Platanus cabinet runs it: the shipped
+  game.js, untouched, over Phaser 3.87. It lives in its own document so the
+  game's window-level key listeners (W A S D, U I O J K L, Enter) only hear
+  keys while this frame has focus, and the site never loads 1.2 MB of engine
+  unless someone presses Play. Refresh game.js with `npm run arcade`.
+-->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Space Explorer</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #070709;
+      }
+
+      #game-root {
+        width: 100%;
+        height: 100%;
+      }
+
+      canvas {
+        display: block;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-root"></div>
+    <script src="phaser.min.js"></script>
+    <script src="game.js"></script>
+    <script>
+      // The cabinet's keys are letters and Enter, but a browser still
+      // scrolls or activates things on Space and the arrows; inside the
+      // frame nothing should move but the ship.
+      window.addEventListener('keydown', e => {
+        if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key))
+          e.preventDefault();
+      });
+      window.focus();
+    </script>
+  </body>
+</html>

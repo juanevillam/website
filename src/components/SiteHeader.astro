@@ -67,6 +67,16 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     justify-content: space-between;
     padding: var(--float-gap) clamp(1.25rem, 4vw, 2.5rem) 0;
     pointer-events: none;
+    transition: transform calc(var(--beat) / 2) var(--ease);
+  }
+
+  /* On a phone the pills step out of the way while you read down the
+     page and come back the moment you scroll up — the screen is too
+     small to keep chrome over the screenshots. */
+  @media (max-width: 48rem) {
+    .site-header.is-tucked {
+      transform: translateY(calc(-100% - var(--float-gap)));
+    }
   }
 
   /* With no scrim behind them they carry their own ground, or they
@@ -146,6 +156,41 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
 
   picker.value = localStorage.getItem('lang') || 'en';
   show(picker.value);
+
+  // Tuck the header on a phone while scrolling down; any scroll up (or
+  // the top of the page) brings it back. A class flip, never per-frame
+  // styling — the transform runs on the GPU.
+  const header = document.querySelector<HTMLElement>('.site-header');
+  let lastY = window.scrollY;
+  window.addEventListener(
+    'scroll',
+    () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) < 8) return;
+      header?.classList.toggle('is-tucked', y > lastY && y > 80);
+      lastY = y;
+    },
+    { passive: true }
+  );
+
+  // The Konami code — ↑ ↑ ↓ ↓ ← → ← → B A — from any page, the old way
+  // into a game: on the landing it scrolls to the game and presses Play.
+  // The game's own frame never sees these keys while it has focus.
+  const KONAMI = [
+    'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a',
+  ];
+  let typed = 0;
+  window.addEventListener('keydown', event => {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    typed = key === KONAMI[typed] ? typed + 1 : key === KONAMI[0] ? 1 : 0;
+    if (typed < KONAMI.length) return;
+    typed = 0;
+    const game = document.getElementById('space-explorer');
+    if (!game) return void (location.href = '/#space-explorer');
+    game.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('arcade-play')?.click();
+  });
 
   picker.addEventListener('change', () => {
     const next = picker.value;

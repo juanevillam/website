@@ -1,0 +1,533 @@
+---
+import T from './T.astro';
+import type { UIKey } from '../i18n/ui';
+import { clipFor, subsFor } from '../lib/narration';
+
+/**
+ * Space Explorer — the Platanus Hack 26 arcade entry, playable at the foot
+ * of the landing, after the apps.
+ *
+ * The site's easter egg, in plain sight at the page's foot. Its one
+ * shortcut is secret: the Konami code (SiteHeader) scrolls here AND
+ * presses Play.
+ *
+ * The game runs in an iframe (public/arcade/) for two reasons: its key
+ * listeners sit on `window`, so they must only hear keys while the game has
+ * focus — never while someone is scrolling the page; and the 1.2 MB engine
+ * should load when someone presses Play, not with the landing. A phone sees
+ * the words and the cover, never a game it cannot control — the cabinet
+ * build has no touch input.
+ */
+
+// Narration: one clip per paragraph, like every story block. The first
+// paragraph is three keys on screen (it holds a link) but ONE clip.
+const narrate = (k: string) => ({ clip: clipFor(k), subs: subsFor(k) });
+const p1 = narrate('arcade.p1');
+const p2 = narrate('arcade.p2');
+const voiced = !!(p1.clip || p2.clip);
+
+// The cabinet's own wiring (CABINET_KEYS in the game): one stick and six
+// buttons, mapped to the keyboard exactly as the dev cabinet maps them.
+// The game's title screen spells out the taps and holds; here, one word.
+const CONTROLS: { keys: string[]; k: UIKey }[] = [
+  { keys: ['W', 'A', 'S', 'D'], k: 'arcade.c.fly' },
+  { keys: ['U'], k: 'arcade.c.fire' },
+  { keys: ['I'], k: 'arcade.c.dash' },
+  { keys: ['O'], k: 'arcade.c.missile' },
+  { keys: ['J', 'L'], k: 'arcade.c.shield' },
+  { keys: ['K'], k: 'arcade.c.overdrive' },
+  { keys: ['Enter'], k: 'arcade.c.start' },
+];
+---
+
+<section class="arcade" id="space-explorer">
+  <div class="grid">
+    <div
+      class="words"
+      data-reveal
+      data-narr-panel={voiced ? '' : null}
+    >
+      <h2 class="title">Space Explorer</h2>
+      <p
+        class="body"
+        data-narr-para
+        data-clip-en={p1.clip?.en}
+        data-clip-es={p1.clip?.es}
+        data-subs-en={p1.subs.en}
+        data-subs-es={p1.subs.es}
+      >
+        <T k="arcade.p1.before" /><a
+          href="https://hack.platan.us/26-ve"
+          target="_blank"
+          rel="noopener noreferrer"><T k="arcade.p1.link" /></a
+        ><T k="arcade.p1.after" />
+      </p>
+      <p
+        class="body"
+        data-narr-para
+        data-clip-en={p2.clip?.en}
+        data-clip-es={p2.clip?.es}
+        data-subs-en={p2.subs.en}
+        data-subs-es={p2.subs.es}
+      >
+        <T k="arcade.p2" />
+      </p>
+      {/* The phone's version: one short paragraph, same link. */}
+      <p class="body phone-copy">
+        <T k="arcade.m.before" /><a
+          href="https://hack.platan.us/26-ve"
+          target="_blank"
+          rel="noopener noreferrer"><T k="arcade.p1.link" /></a
+        ><T k="arcade.m.after" />
+      </p>
+      {voiced && <div class="narr-anchor" data-narr-anchor aria-hidden="true" />}
+      <p class="mobile notice"><T k="arcade.mobile" /></p>
+    </div>
+
+    <div class="cabinet" data-reveal>
+      <div class="screen" id="arcade-screen">
+        <img
+          class="cover"
+          src="/media/arcade/cover.png"
+          alt="Space Explorer"
+          width="800"
+          height="600"
+          loading="lazy"
+          decoding="async"
+        />
+        <!-- Two ways in, both on the cover: the filled one is THE action;
+             the outlined one starts it filling the screen. -->
+        <div class="start">
+          <button class="pill pill-filled" id="arcade-play" type="button">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path>
+            </svg>
+            <T k="arcade.play" />
+          </button>
+          <button class="pill" id="arcade-play-full" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path>
+            </svg>
+            <T k="arcade.fullscreen" />
+          </button>
+        </div>
+        <p class="resume label" id="arcade-resume" hidden>
+          <T k="arcade.resume" />
+        </p>
+      </div>
+
+      <div class="foot">
+        <ul class="controls">
+          {
+            CONTROLS.map(c => (
+              <li>
+                <span class="keys">
+                  {c.keys.map(key => (
+                    <kbd>{key}</kbd>
+                  ))}
+                </span>
+                <T k={c.k} />
+              </li>
+            ))
+          }
+        </ul>
+        <!-- ONE Full Screen at a time: the cover's own until the game
+             starts, then this one, under the screen, for the rest of the
+             visit. -->
+        <button
+          class="pill pill-small"
+          id="arcade-fullscreen"
+          type="button"
+          hidden
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path>
+            </svg>
+          <T k="arcade.fullscreen" />
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* One full panel, snapped like every other, on the stories' columns:
+     the words in the text column, the cabinet where the phone stands. */
+  .arcade {
+    min-height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    padding: calc(var(--header-h) + 2rem) clamp(1.25rem, 4vw, 2.5rem) 2rem;
+  }
+
+  .grid {
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: var(--screen-cols);
+    gap: var(--space-4);
+    /* The words start level with the screen's top edge, the way a slide's
+       caption starts level with its phone — never centred against it. */
+    align-items: start;
+  }
+
+  .words {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* While the voice tells this block, the spoken paragraph holds full ink
+     and the other steps back — the stories' own treatment. */
+  [data-narr-panel] .body {
+    transition: color calc(var(--beat) / 2) var(--ease);
+  }
+
+  [data-narr-panel].is-narrating .body {
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+
+  [data-narr-panel].is-narrating .body.is-spoken {
+    color: var(--ink);
+  }
+
+  /* The paragraphs' own gap already spaces the anchor. */
+  .words .narr-anchor {
+    margin-top: 0;
+  }
+
+  /* The stories' slide-title step — one ladder down the whole page. */
+  .title {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: var(--track-display);
+    line-height: 0.95;
+  }
+
+  /* ---------- the screen ---------- */
+
+  /* 4:3, the cabinet's 800 x 600, as large as the column allows while
+     the controls under it stay inside the panel. */
+  .cabinet {
+    width: var(--screen-w);
+    justify-self: center;
+  }
+
+  .screen {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 1rem;
+    background: #070709;
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+  }
+
+  .screen:fullscreen {
+    border: none;
+    border-radius: 0;
+  }
+
+  .cover,
+  .screen :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .cover {
+    max-width: none;
+    object-fit: cover;
+    transition: opacity var(--dur-enter) var(--ease);
+  }
+
+  .screen.is-on .cover {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* The cover dims a step so the two buttons read over any frame of it. */
+  .screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 7, 9, 0.35);
+    pointer-events: none;
+    transition: opacity var(--dur-enter) var(--ease);
+  }
+
+  .screen.is-on::after {
+    opacity: 0;
+  }
+
+  .start {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+  }
+
+  /* Stacked, Play on top, each as wide as its own words — a shared
+     width stretched the short one into a bar. */
+
+  .screen.is-on .start {
+    display: none;
+  }
+
+  /* The header's pill recipe, a step up. Outlined by default; FILLED is
+     the primary action — ink on ground, the brand's own inversion, so it
+     reads as the thing to press without borrowing an accent. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.75rem;
+    padding: 0 1.25rem;
+    border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    backdrop-filter: blur(12px);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-micro) var(--ease),
+      opacity var(--dur-micro) var(--ease),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .pill[hidden] {
+    display: none;
+  }
+
+  .pill:hover {
+    border-color: var(--ink);
+  }
+
+  .pill:active {
+    transform: scale(0.96);
+  }
+
+  .pill-filled {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--ground);
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.5);
+  }
+
+  .pill-filled:hover {
+    opacity: 0.88;
+  }
+
+  /* Under the screen: the same control at a legend row's height, so it
+     stands level with the first row of keys beside it. */
+  .pill-small {
+    flex: 0 0 auto;
+    height: var(--legend-row);
+    padding: 0 0.875rem;
+    font-size: 0.875rem;
+    backdrop-filter: none;
+  }
+
+  /* When the page takes the keyboard back, the game keeps flying — say
+     how to hand it back, over the game, until the next click. */
+  .resume {
+    position: absolute;
+    /* The frame is appended after it, so it would otherwise cover it. */
+    z-index: 1;
+    left: 50%;
+    top: 1rem;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.875rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    color: var(--ink);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* ---------- the controls ---------- */
+
+  .foot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    /* One row of the legend — the Full Screen pill takes the same box. */
+    --legend-row: 2rem;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+    font-size: 0.875rem;
+  }
+
+  .controls li {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--legend-row);
+    gap: 0.5rem;
+  }
+
+  .keys {
+    display: inline-flex;
+    gap: 0.1875rem;
+  }
+
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.3125rem;
+    border: 1px solid var(--hairline);
+    border-bottom-width: 2px;
+    border-radius: 0.3125rem;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .mobile {
+    display: none;
+  }
+
+  /* A phone reads the short paragraph; the full ones stay in the DOM
+     (hidden) because they carry the narration. The narrator sits in its
+     corner there, so its anchor takes no room. */
+  .phone-copy {
+    display: none;
+  }
+
+  @media (max-width: 48rem) {
+    /* The phone's narrator sits in the bottom-right corner: the panel
+       leaves it that row, so it never lands on the cover. */
+    .arcade {
+      padding-top: calc(var(--header-h) + 1rem);
+      padding-bottom: calc(var(--narrator-h) + 2rem);
+    }
+
+    .phone-copy {
+      display: block;
+    }
+
+    .words > .body[data-narr-para],
+    .words .narr-anchor {
+      display: none;
+    }
+  }
+
+  /* A NOTE, not part of the story: the mono label voice, one step down in
+     size and ink, set off by a hairline above it. */
+  .notice {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--hairline);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+  }
+
+  /* ---------- phones ---------- */
+
+  @media (max-width: 48rem) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+
+  /* No keyboard, no game: the cabinet build has no touch input, and a
+     key map is noise on a phone. */
+  @media (hover: none) and (pointer: coarse) {
+    .start,
+    .foot {
+      display: none;
+    }
+
+    .mobile {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  const screen = document.getElementById('arcade-screen') as HTMLElement;
+  const play = document.getElementById('arcade-play') as HTMLButtonElement;
+  const playFull = document.getElementById(
+    'arcade-play-full'
+  ) as HTMLButtonElement;
+  const resume = document.getElementById('arcade-resume') as HTMLElement;
+  const fullscreen = document.getElementById(
+    'arcade-fullscreen'
+  ) as HTMLButtonElement;
+
+  let frame: HTMLIFrameElement | null = null;
+
+  const focusGame = () => frame?.contentWindow?.focus();
+
+  // Loads the game on first use; every later call just hands it the keys.
+  const start = () => {
+    if (frame) return focusGame();
+    frame = document.createElement('iframe');
+    frame.src = '/arcade/index.html';
+    frame.title = 'Space Explorer';
+    frame.allow = 'fullscreen; autoplay';
+    frame.addEventListener('load', focusGame);
+    screen.append(frame);
+    screen.classList.add('is-on');
+    fullscreen.hidden = !document.fullscreenEnabled;
+    // The page's narrator pauses for the game's own music.
+    document.dispatchEvent(new Event('arcade:start'));
+  };
+
+  // Full screen must be asked for inside the click itself. The game gets
+  // the keys whether or not the request is granted — a browser may refuse
+  // it, or never answer — and again once it lands.
+  const goFull = () => {
+    start();
+    focusGame();
+    if (!document.fullscreenElement)
+      screen.requestFullscreen?.().then(focusGame, () => {});
+  };
+
+  play.addEventListener('click', start);
+  playFull.addEventListener('click', goFull);
+  fullscreen.addEventListener('click', goFull);
+  if (!document.fullscreenEnabled) playFull.hidden = true;
+
+  // The game hears keys only while its frame has focus. When the page
+  // takes it back (a click outside, a scroll key, a tab switch), say so
+  // over the game; the next click on the frame hands it over again.
+  window.addEventListener('blur', () =>
+    // activeElement moves to the frame just after the blur, not during it.
+    setTimeout(() => {
+      if (frame && document.activeElement === frame) resume.hidden = true;
+    })
+  );
+  window.addEventListener('focus', () => {
+    if (frame) resume.hidden = false;
+  });
+</script>

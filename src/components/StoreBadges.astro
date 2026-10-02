@@ -1,72 +1,79 @@
 ---
 import { locales } from '../i18n/ui';
+import T from './T.astro';
+import { RELEASES, type ReleasedApp } from '../lib/releases';
 
 /**
- * The two store badges — Apple's and Google's OFFICIAL artwork, used
- * unmodified from their own asset packs (the black "Download on the
- * App Store" lockup; the colour "Get it on Google Play" badge),
- * localized per language the way every other string on the site is:
- * all three ship, CSS shows the one html[data-lang] names.
+ * One app's two store badges.
  *
- * Both programs require the badges to run at the SAME HEIGHT beside
- * each other and to keep clear space around them — Apple asks for 1/10
- * of the badge's height, Google for 1/4, so the gap here is the larger
- * of the two. The artwork is never recoloured, stretched or redrawn:
- * each SVG carries its own aspect (Apple 119.66x40, Google 238.96x70.87),
- * so only the height is set and the width follows.
+ * LIVE (a URL in lib/releases.ts): Apple's and Google's OFFICIAL artwork,
+ * used unmodified from their own asset packs, localized per language the
+ * way every other string on the site is — all three ship, CSS shows the
+ * one html[data-lang] names.
  *
- * SENTINEL: the hrefs point at google.com because NEITHER APP IS
- * PUBLISHED YET — enabled anyway, on Juan's call, to judge how live
- * badges look. Same sentinel as AUTHOR_URL in
- * packages/mobile-ui/src/author.ts: grep google.com before release and
- * swap each for its real store listing. Set an href to null and the
- * badge renders dimmed and inert instead.
+ * NOT YET (null): a "Coming soon" tag in the LANDING's own language — not
+ * a copy of the stores' badges, which their guidelines reserve for real
+ * listings. A hairline frame with the site's corner and no fill (so it
+ * can't be mistaken for the round, filled narrator), the store's name over
+ * a mono status label, and a small one-ink mark. It keeps the official
+ * badge's 48px height, so flipping to live never moves the row. It is not
+ * a link and doesn't pretend to be one.
+ *
+ * Both programs require the badges to run at the SAME HEIGHT beside each
+ * other and to keep clear space around them — Apple asks for 1/10 of the
+ * badge's height, Google for 1/4, so the gap here is the larger of the
+ * two. Official artwork is never recoloured, stretched or redrawn: each
+ * SVG carries its own aspect (Apple 119.66x40, Google 238.96x70.87), so
+ * only the height is set and the width follows.
  */
-const STORES = [
-  {
-    key: 'app-store',
-    name: 'App Store',
-    href: 'https://www.google.com' as string | null,
-  },
-  {
-    key: 'google-play',
-    name: 'Google Play',
-    href: 'https://www.google.com' as string | null,
-  },
-];
+type Props = { app: ReleasedApp };
 
-const BADGE_HEIGHT = 48;
+const { app } = Astro.props;
+
+const STORES = [
+  { key: 'app-store', name: 'App Store' },
+  { key: 'google-play', name: 'Google Play' },
+] as const;
 ---
 
 <div class="stores" data-reveal>
   {
-    STORES.map(store =>
-      store.href ? (
-        <a class="badge-link" href={store.href} aria-label={store.name}>
+    STORES.map(store => {
+      const href = RELEASES[app][store.key];
+      return href ? (
+        <a class="badge-link" href={href} aria-label={store.name}>
           {locales.map(l => (
             <img
               class="t badge"
               lang={l}
               src={`/media/badges/${store.key}-${l}.svg`}
               alt={store.name}
-              height={BADGE_HEIGHT}
+              height="48"
             />
           ))}
         </a>
       ) : (
-        <span class="badge-link is-inert" aria-disabled="true">
-          {locales.map(l => (
-            <img
-              class="t badge"
-              lang={l}
-              src={`/media/badges/${store.key}-${l}.svg`}
-              alt={store.name}
-              height={BADGE_HEIGHT}
-            />
-          ))}
+        <span class:list={['soon', store.key]}>
+          {store.key === 'app-store' ? (
+            <svg class="mark" viewBox="9.97 8.72 17.72 21.78" aria-hidden="true">
+              <path d="M24.76888,20.30068a4.94881,4.94881,0,0,1,2.35656-4.15206,5.06566,5.06566,0,0,0-3.99116-2.15768c-1.67924-.17626-3.30719,1.00483-4.1629,1.00483-.87227,0-2.18977-.98733-3.6085-.95814a5.31529,5.31529,0,0,0-4.47292,2.72787c-1.934,3.34842-.49141,8.26947,1.3612,10.97608.9269,1.32535,2.01018,2.8058,3.42763,2.7533,1.38706-.05753,1.9051-.88448,3.5794-.88448,1.65876,0,2.14479.88448,3.591.8511,1.48838-.02416,2.42613-1.33124,3.32051-2.66914a10.962,10.962,0,0,0,1.51842-3.09251A4.78205,4.78205,0,0,1,24.76888,20.30068Z" />
+              <path d="M22.03725,12.21089a4.87248,4.87248,0,0,0,1.11452-3.49062,4.95746,4.95746,0,0,0-3.20758,1.65961,4.63634,4.63634,0,0,0-1.14371,3.36139A4.09905,4.09905,0,0,0,22.03725,12.21089Z" />
+            </svg>
+          ) : (
+            <svg class="mark" viewBox="17.56 12.64 40.76 45.57" aria-hidden="true">
+              <path d="M36.6,34.41l-18.86,20.02s0,0,0,.01c.58,2.17,2.56,3.77,4.92,3.77.94,0,1.83-.26,2.58-.7l.06-.04,21.23-12.25-9.94-10.82Z" />
+              <path d="M55.68,31h-.02s-9.17-5.33-9.17-5.33l-10.33,9.19,10.36,10.36,9.12-5.26c1.6-.86,2.68-2.55,2.68-4.49s-1.07-3.61-2.65-4.47h0Z" />
+              <path d="M17.73,16.44c-.11.42-.17.86-.17,1.31v35.38c0,.45.06.89.17,1.31l19.51-19.51-19.51-18.49Z" />
+              <path d="M36.74,35.43l9.76-9.76-21.21-12.3c-.77-.46-1.67-.73-2.63-.73-2.36,0-4.34,1.6-4.92,3.78h0s19,19,19,19h0Z" />
+            </svg>
+          )}
+          <span class="soon-words">
+            <span class="soon-name">{store.name}</span>
+            <span class="soon-status"><T k="store.soon" /></span>
+          </span>
         </span>
-      )
-    )
+      );
+    })
   }
 </div>
 
@@ -92,17 +99,6 @@ const BADGE_HEIGHT = 48;
     opacity: 0.8;
   }
 
-  /* Dimmed and unpressable while the app has no listing — grey reads
-     as unavailable, which is exactly what is being said. */
-  .is-inert {
-    opacity: 0.45;
-    cursor: default;
-  }
-
-  .is-inert:hover {
-    opacity: 0.45;
-  }
-
   /* Both badges run at one height; each keeps its own aspect. Which
      language shows is the site's ONE localization mechanism (`.t` in
      global.css), not a second one invented here. */
@@ -110,5 +106,54 @@ const BADGE_HEIGHT = 48;
     height: 3rem;
     width: auto;
     max-width: none;
+  }
+
+  /* ---------- coming soon ----------
+     The site's vocabulary, not the stores': the hairline every surface
+     here wears, a 0.75rem corner (square enough to read as a tag, not as
+     one of the page's pills), no fill, and the mono label the section
+     eyebrows use for the status. */
+  .soon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 3rem;
+    padding: 0 1.125rem 0 1rem;
+    border: 1px solid var(--hairline);
+    border-radius: 0.75rem;
+    color: var(--ink);
+    cursor: default;
+    user-select: none;
+  }
+
+  /* Each mark's viewBox is its paths' MEASURED bounding box (getBBox),
+     not an estimate — a guessed one cut the apple's left side off. */
+  .mark {
+    flex: none;
+    height: 1.125rem;
+    width: auto;
+    fill: currentColor;
+  }
+
+  .soon-words {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .soon-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .soon-status {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
   }
 </style>
