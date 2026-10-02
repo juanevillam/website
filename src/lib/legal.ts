@@ -25,4 +25,4 @@ export const legalPaths = () =>
 
 export const CONTACT_EMAIL = 'juanesvillamendoza@gmail.com';
 export const AUTHOR_FULL_NAME = 'Juan Esteban Villa Mendoza';
-export const LEGAL_UPDATED = 'September 20, 2026';
+export const LEGAL_UPDATED = 'October 1, 2026';

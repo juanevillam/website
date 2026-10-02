@@ -1,5 +1,6 @@
 ---
 import Base from './Base.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
 /**
  * A document page — the legal and support pages the stores require.
@@ -23,6 +24,7 @@ const { title, app, updated } = Astro.props;
     <p class="label updated">Updated {updated}</p>
     <slot />
   </article>
+  <SiteFooter />
 </Base>
 
 <style is:global>

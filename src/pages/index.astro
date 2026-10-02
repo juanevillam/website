@@ -6,6 +6,9 @@ import StoryShowcase, {
 } from '../components/StoryShowcase.astro';
 import AppTile from '../components/AppTile.astro';
 import NarrationPlayer from '../components/NarrationPlayer.astro';
+import ArcadeSection from '../components/ArcadeSection.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import WorkCarousel from '../components/WorkCarousel.astro';
 import type { UIKey } from '../i18n/ui';
 
 // Media manifests — iPhone screenshots, all shot by Juan.
@@ -16,11 +19,13 @@ import type { UIKey } from '../i18n/ui';
 const shots = (
   app: string,
   size: [number, number],
-  entries: [name: string, title?: string, paras?: UIKey[]][]
+  entries: [name: string | [string, string], title?: string, paras?: UIKey[]][]
 ) =>
   entries.map(
     ([name, title, paras]): StorySlide => ({
-      src: `/media/${app}/${name}.png`,
+      src: Array.isArray(name)
+        ? [`/media/${app}/${name[0]}.png`, `/media/${app}/${name[1]}.png`]
+        : `/media/${app}/${name}.png`,
       width: size[0],
       height: size[1],
       title,
@@ -28,7 +33,9 @@ const shots = (
     })
   );
 
-// Four slides per app, in the order the story is told. Each manifest states
+// Three slides per app, in the order the story is told — the middle one
+// tells two neighbouring screens side by side (it was two slides until
+// 2026-10-01: two fewer scrolls per story). Each manifest states
 // its own pixel size, and it must match the files on disk: it reserves the
 // slot before the image lands. Both apps are shot on the same iPhone
 // (393x852pt at 3x) today, but a retake on another phone changes that.
@@ -37,8 +44,11 @@ const SHAPER_SLIDES = shots(
   [1179, 2556],
   [
     ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
-    ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
-    ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
+    [
+      ['ios-dark-player', 'ios-dark-shape'],
+      'Player and Shape',
+      ['shaper.s23.p1', 'shaper.s23.p2'],
+    ],
     ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
   ]
 );
@@ -48,8 +58,11 @@ const TOPPER_SLIDES = shots(
   [1179, 2556],
   [
     ['ios-dark-home', 'Home', ['topper.s1.p1', 'topper.s1.p2']],
-    ['ios-dark-explore', 'Explore', ['topper.s2.p1', 'topper.s2.p2']],
-    ['ios-dark-top-detail', 'Top', ['topper.s3.p1', 'topper.s3.p2']],
+    [
+      ['ios-dark-explore', 'ios-dark-top-detail'],
+      'Explore and Top',
+      ['topper.s23.p1', 'topper.s23.p2'],
+    ],
     ['ios-dark-profile', 'Profile', ['topper.s4.p1', 'topper.s4.p2']],
   ]
 );
@@ -58,8 +71,8 @@ const TOPPER_SLIDES = shots(
 <Base>
   <Hero />
 
-  <!-- Only the LAST story loops: a looping story rewinds the scroll to its
-       own opener at its end, so any story after it could never be reached. -->
+  <!-- No story loops: a looping story rewinds the scroll to its own opener
+       at its end, so the game after the stories could never be reached. -->
 
   <StoryShowcase
     id="shaper"
@@ -75,12 +88,21 @@ const TOPPER_SLIDES = shots(
     id="topper"
     name="Topper"
     pitch={['topper.problem', 'topper.solution']}
-    loop
+    enter="rise"
     slides={TOPPER_SLIDES}
     stores
   >
     <AppTile app="topper" size={76} slot="logo" />
   </StoryShowcase>
+
+  <!-- The page's foot: the game, playable here. -->
+  <ArcadeSection />
+
+  <!-- Everything else, secondary: one card per project. -->
+  <WorkCarousel />
+
+  <!-- Each app's legal and help pages, and Juan elsewhere. -->
+  <SiteFooter panel />
 
   <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
   <NarrationPlayer />

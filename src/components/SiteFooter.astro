@@ -1,0 +1,346 @@
+---
+import T from './T.astro';
+import { LEGAL_APPS } from '../lib/legal';
+import type { UIKey } from '../i18n/ui';
+
+/**
+ * The page's foot: each app's legal and help pages, and where to find
+ * Juan elsewhere. The stores ask for these URLs in their own consoles, and
+ * the apps link to them from Settings — this is where a PERSON finds them
+ * on the site. They used to sit in each story's opener; they moved here so
+ * the openers keep their room for the narrator. The game has none: it is
+ * not an app with accounts.
+ */
+const PAGES: { key: UIKey; page: string }[] = [
+  { key: 'legal.terms', page: 'terms-and-conditions' },
+  { key: 'legal.privacy', page: 'privacy-policy' },
+  { key: 'legal.support', page: 'support' },
+  { key: 'legal.delete', page: 'delete-account' },
+];
+
+type Props = {
+  /** On the landing the foot is a PANEL like every section above it —
+   *  full height, snapped — so the page ends on a section rather than a
+   *  strip that breaks the rhythm. A document page scrolls freely and
+   *  keeps the short foot. */
+  panel?: boolean;
+};
+
+const { panel = false } = Astro.props;
+
+// Public profiles only — the code is private, so no GitHub here.
+const SOCIAL = [
+  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/juanevillam' },
+  { name: 'Instagram', href: 'https://www.instagram.com/juanevillam' },
+];
+---
+
+<footer class:list={['site-footer', { 'is-panel': panel }]}>
+  <div class="inner">
+    {/* As a panel, the foot takes a section's composition: the name and
+        where to find Juan in the words' column, the apps' pages where a
+        section puts its screen. */}
+    {
+      panel && (
+        <div class="lead">
+          <h2 class="title">juanevillam</h2>
+          <ul class="social">
+            {SOCIAL.map(({ name, href }) => (
+              <li>
+                <a href={href} target="_blank" rel="noopener noreferrer">
+                  {name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+    <nav class="columns" aria-label="Footer">
+      {
+        LEGAL_APPS.map(app => (
+          // A native disclosure: on a phone each app is one row that opens
+          // to its pages; wide, the script holds them all open and the
+          // summary is just the column's label.
+          <details class="column app-pages" open>
+            <summary class="label">
+              {app.name}
+              <svg
+                class="chevron"
+                viewBox="0 0 12 12"
+                width="10"
+                height="10"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2.5 4.5 L6 8 L9.5 4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </summary>
+            <ul>
+              {PAGES.map(({ key, page }) => (
+                <li>
+                  <a href={`/${app.slug}/${page}`}>
+                    <T k={key} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))
+      }
+      {
+        !panel && (
+          <div class="column">
+            <span class="label">juanevillam</span>
+            <ul>
+              {SOCIAL.map(({ name, href }) => (
+                <li>
+                  <a href={href} target="_blank" rel="noopener noreferrer">
+                    {name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </nav>
+
+    <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
+  </div>
+</footer>
+
+<script>
+  // Wide, every app's pages stay open (the columns); on a phone they start
+  // closed, one row each. Re-synced when the width crosses the line.
+  const wide = window.matchMedia('(min-width: 48.01rem)');
+  const sync = () =>
+    document
+      .querySelectorAll<HTMLDetailsElement>('.app-pages')
+      .forEach(d => (d.open = wide.matches));
+  sync();
+  wide.addEventListener('change', sync);
+</script>
+
+<style>
+  /* The document pages' foot: short, under a hairline. */
+  .site-footer {
+    border-top: 1px solid var(--hairline);
+    padding: 6rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
+  }
+
+  .inner {
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  /* The landing's last panel: the stories' own inset at the top, the
+     copyright at the foot of the screen, no rule — a panel is set off by
+     being a panel. */
+  .site-footer.is-panel {
+    min-height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    border-top: none;
+    padding-top: var(--stage-top);
+    padding-bottom: var(--stage-bottom);
+  }
+
+  /* The section grid: words column | the rest, the copyright across the
+     foot. The first row starts a 2rem eyebrow box plus a 1.5rem step
+     down — exactly where every section's title line is. */
+  .is-panel .inner {
+    flex: 1;
+    width: 100%;
+    display: grid;
+    grid-template-columns: var(--screen-cols);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'lead columns'
+      '. .'
+      'name name';
+    column-gap: var(--space-4);
+    padding-top: 3.5rem;
+  }
+
+  /* The lead column is as tall as the apps' columns beside it, and its
+     links sit at its FOOT — so LinkedIn and Instagram land on the same
+     lines as the last two links of each app, with the name standing
+     clear above them. */
+  .lead {
+    grid-area: lead;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .is-panel .columns {
+    grid-area: columns;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    /* The label sits on the title's cap height rather than its top. */
+    padding-top: 0.5rem;
+  }
+
+  .is-panel .legal-name {
+    grid-area: name;
+    margin-top: 0;
+    padding-top: var(--space-4);
+  }
+
+  /* The stories' slide-title step. */
+  .title {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: var(--track-display);
+    line-height: 0.95;
+  }
+
+  /* Same size and pitch as the legal links, so the rows line up — set
+     apart by ink alone: full ink where the legal links are muted. The
+     underline is the hover, as on every link here. */
+  .social {
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
+
+  .social a {
+    color: var(--ink);
+  }
+
+  @media (max-width: 48rem) {
+    .is-panel .inner {
+      grid-template-columns: 1fr;
+      /* Hierarchy on a phone: who (name, links) at the top; the apps'
+         pages down at the foot with the copyright — reference, not the
+         first thing read. */
+      grid-template-rows: auto 1fr auto auto;
+      grid-template-areas:
+        'lead'
+        '.'
+        'columns'
+        'name';
+      padding-top: 2.75rem;
+    }
+
+    .is-panel .columns {
+      margin-top: var(--gap-block);
+      padding-top: 0;
+    }
+
+    .is-panel .legal-name {
+      padding-top: 1.5rem;
+    }
+
+    /* Stacked, the name needs its own air above the links. */
+    .social {
+      padding-top: 2rem;
+    }
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 2.5rem;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.875rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    font-size: 0.875rem;
+    color: var(--ink-2);
+    text-decoration-color: transparent;
+    transition:
+      color var(--dur-micro) var(--ease),
+      text-decoration-color var(--dur-micro) var(--ease);
+  }
+
+  a:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink-3);
+  }
+
+  .legal-name {
+    margin-top: var(--space-4);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* ---------- the apps' pages: columns wide, an accordion on a phone ----
+     Wide, the summary is the column's plain label and can't be toggled.
+     On a phone the two apps stack as rows under a hairline, each opening
+     to its four pages — four links side by side in two columns was a wall
+     of text on a narrow screen. */
+  summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .chevron {
+    display: none;
+    flex: none;
+    transition: transform var(--dur-micro) var(--ease);
+  }
+
+  @media (min-width: 48.01rem) {
+    summary {
+      pointer-events: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .columns {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .is-panel .columns {
+      grid-template-columns: 1fr;
+    }
+
+    .app-pages {
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .app-pages:first-child {
+      border-top: 1px solid var(--hairline);
+    }
+
+    summary {
+      min-height: 3rem;
+      cursor: pointer;
+    }
+
+    .chevron {
+      display: block;
+    }
+
+    .app-pages[open] .chevron {
+      transform: rotate(180deg);
+    }
+
+    .app-pages ul {
+      margin-top: 0;
+      padding-bottom: 1rem;
+    }
+  }
+</style>

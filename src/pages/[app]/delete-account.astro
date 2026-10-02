@@ -30,7 +30,9 @@ const { app } = Astro.props;
   </ul>
   <p>
     The deletion runs immediately: the app removes your uploaded media, your
-    data, and then the account itself.
+    data, and then the account itself. If you signed in with Apple, it also
+    revokes {app.name}'s access to your Apple Account, so the app disappears
+    from Settings → Apple Account → Sign in with Apple on your iPhone.
   </p>
 
   <h2>If you can't access the app</h2>

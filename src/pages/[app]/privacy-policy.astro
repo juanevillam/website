@@ -28,7 +28,9 @@ const social = app.content === 'tops';
     <li>
       <strong>Account.</strong> When you sign in, the app stores your email
       address, display name, and profile photo as provided by the sign-in
-      method you choose (Google, or email and password).
+      method you choose: Google, or Apple on iPhone. If you sign in with
+      Apple and choose to hide your email, the app only ever sees the
+      relay address Apple gives it.
     </li>
     {
       social ? (
