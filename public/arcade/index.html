@@ -25,6 +25,13 @@
         height: 100%;
       }
 
+      /* A finger on the game must never scroll, zoom or select. */
+      body {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
       canvas {
         display: block;
         outline: none;
@@ -34,6 +41,30 @@
   <body>
     <div id="game-root"></div>
     <script src="phaser.min.js"></script>
+    <script>
+      // THE SITE'S HANDLES — the phone layer (src/lib/arcade-touch.ts)
+      // needs two things the game keeps inside its own closure: which scene
+      // is running (the pause glyph follows the flight), and its sound (iOS lets a frame's audio
+      // start only inside a real tap, which happens out here). Both are
+      // caught as the game makes them; game.js itself stays the cabinet's.
+      (() => {
+        const Game = Phaser.Game;
+        Phaser.Game = class extends Game {
+          constructor(config) {
+            super(config);
+            window.__arcadeGame = this;
+          }
+        };
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC)
+          window.AudioContext = class extends AC {
+            constructor(...args) {
+              super(...args);
+              window.__arcadeAudio = this;
+            }
+          };
+      })();
+    </script>
     <script src="game.js"></script>
     <script>
       // The cabinet's keys are letters and Enter, but a browser still
