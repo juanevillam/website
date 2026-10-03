@@ -399,19 +399,21 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.5);
   }
 
-  /* The actions under the right thumb: FIRE in the corner, the other four
-     on ONE arc round it — the same distance from Fire's centre, the same
-     35° between neighbours, sweeping from its left to above it: Dash,
-     Missile, Shield, Overdrive. Each position comes from that one radius
+  /* The actions under the right thumb: FIRE near the corner, the other
+     four on ONE arc tight round it — the same distance from Fire's centre
+     (a 0.625rem gap to its edge), the same 47° between neighbours (the
+     least that keeps them off each other at that distance), sweeping from
+     just below its left round to its upper right: Dash, Missile, Shield,
+     Overdrive. Each position comes from that one radius
      and its angle, so no two can drift to uneven gaps again. The box is
      anchored to the screen's lower-right corner; every position is measured
      from there. */
   .touch-actions {
-    --fx: 3.75rem; /* Fire's centre, from the right edge */
+    --fx: 5.25rem; /* Fire's centre, from the right edge */
     --fy: 3.75rem; /* ...and from the bottom */
     --fr: 2.75rem; /* Fire's radius */
     --sr: 1.875rem; /* every other button's radius */
-    --ring: 6.75rem; /* centre to centre */
+    --ring: 5.25rem; /* centre to centre */
     position: absolute;
     right: max(0.5rem, env(safe-area-inset-right));
     bottom: max(0.5rem, env(safe-area-inset-bottom));
@@ -446,19 +448,19 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
   }
 
   .act-dash {
-    --a: 180deg;
+    --a: 195deg;
   }
 
   .act-missile {
-    --a: 145deg;
+    --a: 148deg;
   }
 
   .act-shield {
-    --a: 110deg;
+    --a: 101deg;
   }
 
   .act-over {
-    --a: 75deg;
+    --a: 54deg;
   }
 
   .act-over .label {

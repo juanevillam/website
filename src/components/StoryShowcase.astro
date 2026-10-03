@@ -987,15 +987,16 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
        sized by the WIDTH, two browsers that leave different heights
        (Safari's bars against Chrome's) still show the same phone. It
        stands on the box's FLOOR, right over its title — centred, the
-       leftover air split above and below it and read as a gap. */
+       leftover air split above and below it and read as a gap — and on
+       the words' LEFT edge, as every other block on the page is: centred
+       over left-set words it read as a second alignment. */
     .m-shot .shot {
       position: absolute;
       bottom: 0;
-      left: 50%;
+      left: 0;
       height: min(100%, 112vw);
       width: auto;
       max-width: none;
-      transform: translateX(-50%);
     }
 
     /* Room for three lines of copy whatever a card says, so the phone

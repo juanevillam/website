@@ -92,11 +92,14 @@ const voiced = narr.some(n => n.clip);
     tabindex="0"
     aria-roledescription="carousel"
     aria-label={id}
-    data-reveal
   >
     <!-- Every card in ONE grid cell: the stage is as tall as the tallest
-         card. -->
-    <div class="stage">
+         card. The entrance (data-reveal) is the STAGE's, not the
+         carousel's: a reveal moves its element by transform, and a
+         transformed ancestor captures a fixed child — the docked controls
+         stood off their place and jumped on a phone's first pass, until
+         the reveal ended. -->
+    <div class="stage" data-reveal>
       {
         items.map((p, i) => (
           <article
