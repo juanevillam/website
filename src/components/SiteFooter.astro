@@ -36,8 +36,10 @@ const { panel = false } = Astro.props;
 const clip = panel ? clipFor('footer') : null;
 const subs = subsFor('footer');
 
-// Public profiles only — the code is private, so no GitHub here.
+// Public profiles only. The apps' code is private, but the GitHub profile
+// is public and is where the game and the profile README live.
 const SOCIAL = [
+  { name: 'GitHub', href: 'https://github.com/juanevillam' },
   { name: 'LinkedIn', href: 'https://www.linkedin.com/in/juanevillam' },
   { name: 'Instagram', href: 'https://www.instagram.com/juanevillam' },
 ];
@@ -195,8 +197,8 @@ const SOCIAL = [
   }
 
   /* The lead column is as tall as the apps' columns beside it, and its
-     links sit at its FOOT — so LinkedIn and Instagram land on the same
-     lines as the last two links of each app, with the name standing
+     links sit at its FOOT — so GitHub, LinkedIn and Instagram land on the
+     same lines as the last three links of each app, with the name standing
      clear above them. */
   .lead {
     grid-area: lead;
@@ -239,8 +241,8 @@ const SOCIAL = [
   }
 
   /* The narrator closes the name's block, one step under Instagram,
-     without taking a row of the column: LinkedIn and Instagram stay level
-     with the apps' last two links. (Under the name itself, as the hero
+     without taking a row of the column: the profiles stay level with the
+     apps' last three links. (Under the name itself, as the hero
      has it, it stood on LinkedIn.) */
   .lead {
     position: relative;
