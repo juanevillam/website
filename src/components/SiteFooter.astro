@@ -2,6 +2,7 @@
 import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
 import type { UIKey } from '../i18n/ui';
+import { clipFor, subsFor } from '../lib/narration';
 
 /**
  * The page's foot: each app's legal and help pages, and where to find
@@ -28,6 +29,13 @@ type Props = {
 
 const { panel = false } = Astro.props;
 
+// The landing's goodbye: like the hero's hello, the wordmark carries a
+// clip with no paragraph on screen (`footer.m4a`, see lib/narration), and
+// the narrator parks under it — the page opens and closes on the same
+// name, the same voice, the same place.
+const clip = panel ? clipFor('footer') : null;
+const subs = subsFor('footer');
+
 // Public profiles only — the code is private, so no GitHub here.
 const SOCIAL = [
   { name: 'LinkedIn', href: 'https://www.linkedin.com/in/juanevillam' },
@@ -35,7 +43,10 @@ const SOCIAL = [
 ];
 ---
 
-<footer class:list={['site-footer', { 'is-panel': panel }]}>
+<footer
+  class:list={['site-footer', { 'is-panel': panel }]}
+  data-narr-panel={clip ? '' : null}
+>
   <div class="inner">
     {/* As a panel, the foot takes a section's composition: the name and
         where to find Juan in the words' column, the apps' pages where a
@@ -53,6 +64,19 @@ const SOCIAL = [
               </li>
             ))}
           </ul>
+          {clip && (
+            <>
+              <span
+                hidden
+                data-narr-para
+                data-clip-en={clip.en}
+                data-clip-es={clip.es}
+                data-subs-en={subs.en}
+                data-subs-es={subs.es}
+              />
+              <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
+            </>
+          )}
         </div>
       )
     }
@@ -212,6 +236,26 @@ const SOCIAL = [
 
   .social a {
     color: var(--ink);
+  }
+
+  /* The narrator closes the name's block, one step under Instagram,
+     without taking a row of the column: LinkedIn and Instagram stay level
+     with the apps' last two links. (Under the name itself, as the hero
+     has it, it stood on LinkedIn.) */
+  .lead {
+    position: relative;
+  }
+
+  .lead .narr-anchor {
+    position: absolute;
+    top: 100%;
+  }
+
+  /* A phone's narrator stays in its corner; the anchor takes no room. */
+  @media (max-width: 48rem) {
+    .lead .narr-anchor {
+      display: none;
+    }
   }
 
   @media (max-width: 48rem) {

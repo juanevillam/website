@@ -1,0 +1,627 @@
+---
+import T from './T.astro';
+import TL from './TL.astro';
+import DeckControls from './DeckControls.astro';
+import type { UIKey } from '../i18n/ui';
+import { clipFor, subsFor } from '../lib/narration';
+
+/**
+ * A PANEL DECK — one full panel holding a sideways deck of cards, each the
+ * game's own composition: words in the text column, a SCREEN in the rest,
+ * the game's width (`--screen-cols`, `--screen-w`). More Work is one
+ * (WorkCarousel), Events another (EventsDeck); a panel of the page that
+ * is a list of things is this, so they cannot drift apart.
+ *
+ * EVERY SCREEN IS 3:2 — one size for every card on the page (Juan,
+ * 2026-10-02: two sizes read as two systems, and the larger one won). A
+ * landing is a plain 1440 x 960 browser screenshot, untouched: whatever
+ * the page shows at that height, a section cut off at the foot included.
+ * Event photos — a phone's, upright — stand two to a frame, 3:4 each.
+ *
+ * The deck is the page's one deck (lib/deck.ts): ENDLESS, one card on
+ * stage, and a turn that brings the screen in first and the words after
+ * it. It turns by its arrows, dots, keys, and a finger's swipe.
+ *
+ * NARRATION: one clip per card, on its body paragraph, and ONE narrator
+ * that does not travel with the deck — the cards slide UNDER it. It parks
+ * one step under the current card's links, the way a story's narrator
+ * parks under its caption, so it rises and falls with how much the card
+ * says. Turning the deck while the voice runs plays the new card's clip;
+ * a clip ending turns the deck to the next card.
+ */
+
+/** A piece of a card's line of facts: written as is, or a key. */
+export type Segment = string | { k: UIKey };
+/** A paragraph — one built around a link (the name in the sentence takes
+ *  you to it), or one whose copy marks several (`[Cashea](cashea)`, TL). */
+type Linked = { before: UIKey; link: UIKey; after: UIKey; href: string };
+type Marked = { k: UIKey; links: Record<string, string> };
+export type Rich = UIKey | Linked | Marked;
+
+export type DeckItem = {
+  id: string;
+  name: string;
+  /** The line of facts under the name: groups joined by " · ", the parts
+   *  of a group by " – " (a role; a span of years; a place; a date). */
+  meta: Segment[][];
+  body: Rich;
+  /** The phone's version of the body: one short, whole thought. */
+  phone: Rich;
+  /** The body's narration clip, by convention (lib/narration). */
+  clip: string;
+  /** One 3:2 capture, 1440 x 960 (a string); upright photos (one, two
+   *  or more — two frames, cycling through three each at most); or
+   *  a screen of its own, passed in as the named slot `{ slot }`. */
+  image: string | string[] | { slot: string };
+  links: { label: Segment; href: string }[];
+};
+
+type Props = {
+  id: string;
+  /** The panel's eyebrow. */
+  title: UIKey;
+  items: DeckItem[];
+};
+
+const { id, title, items } = Astro.props;
+
+const narr = items.map(p => ({ clip: clipFor(p.clip), subs: subsFor(p.clip) }));
+
+// The photos of a card whose screen is photos.
+const photos = (p: DeckItem) => p.image as string[];
+
+// Screens of their own (the game's), rendered from the named slots.
+const slotted: Record<string, string> = {};
+for (const p of items)
+  if (typeof p.image === 'object' && !Array.isArray(p.image))
+    slotted[p.image.slot] = await Astro.slots.render(p.image.slot);
+const voiced = narr.some(n => n.clip);
+---
+
+<section class="panel-deck" id={id} data-narr-panel={voiced ? '' : null}>
+  <!-- An eyebrow, not a headline: the stars above open on big titles and
+       air; a panel like this is secondary, and a headline plus an intro
+       line stacked over the card is what made it read cramped. -->
+  <h2 class="inner label eyebrow">
+    <T k={title} />
+  </h2>
+
+  <div
+    class="carousel"
+    data-panel-deck
+    tabindex="0"
+    aria-roledescription="carousel"
+    aria-label={id}
+    data-reveal
+  >
+    <!-- Every card in ONE grid cell: the stage is as tall as the tallest
+         card. -->
+    <div class="stage">
+      {
+        items.map((p, i) => (
+          <article
+            class="card deck-card"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} / ${items.length}`}
+          >
+            <div class="words">
+              <h3 class="name" data-deck-part="text" style="--i: 1">{p.name}</h3>
+              <p class="label meta" data-deck-part="text" style="--i: 2">
+                {p.meta.map((group, g) => (
+                  <>
+                    {g > 0 && ' · '}
+                    {group.map((part, n) => (
+                      <>
+                        {n > 0 && ' – '}
+                        {typeof part === 'string' ? part : <T k={part.k} />}
+                      </>
+                    ))}
+                  </>
+                ))}
+              </p>
+              <p
+                class="body"
+                data-deck-part="text"
+                style="--i: 3"
+                data-narr-para
+                data-clip-en={narr[i].clip?.en}
+                data-clip-es={narr[i].clip?.es}
+                data-subs-en={narr[i].subs.en}
+                data-subs-es={narr[i].subs.es}
+              >
+                {typeof p.body === 'string' ? (
+                  <T k={p.body} />
+                ) : 'k' in p.body ? (
+                  <TL k={p.body.k} links={p.body.links} />
+                ) : (
+                  <>
+                    {/* No whitespace between the three parts: Astro keeps
+                        it, and it lands before the comma. */}
+                    <T k={p.body.before} /><a
+                      href={p.body.href}
+                      target="_blank"
+                      rel="noopener noreferrer"><T k={p.body.link} /></a
+                    ><T k={p.body.after} />
+                  </>
+                )}
+              </p>
+              <p class="body phone-copy" data-deck-part="text" style="--i: 3">
+                {typeof p.phone === 'string' ? (
+                  <T k={p.phone} />
+                ) : 'k' in p.phone ? (
+                  <TL k={p.phone.k} links={p.phone.links} />
+                ) : (
+                  <>
+                    <T k={p.phone.before} /><a
+                      href={p.phone.href}
+                      target="_blank"
+                      rel="noopener noreferrer"><T k={p.phone.link} /></a
+                    ><T k={p.phone.after} />
+                  </>
+                )}
+              </p>
+              {p.links.length > 0 && (
+                <ul class="links" data-deck-part="text" style="--i: 4">
+                  {p.links.map(link => (
+                    <li>
+                      <a href={link.href} target="_blank" rel="noopener noreferrer">
+                        {typeof link.label === 'string' ? link.label : <T k={link.label.k} />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {/* The narrator's place, kept EMPTY: it reserves the pill's
+                  box under the links, and the still anchor below moves to
+                  whichever card's slot is in front. */}
+              {voiced && <div class="narr-slot" aria-hidden="true" />}
+            </div>
+            {typeof p.image === 'object' && !Array.isArray(p.image) ? (
+              <div class="screen is-own" data-deck-part="picture">
+                <Fragment set:html={slotted[p.image.slot]} />
+              </div>
+            ) : typeof p.image === 'string' ? (
+              <div class="screen" data-deck-part="picture">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  width="1440"
+                  height="960"
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
+              </div>
+            ) : (
+              <div class="screen is-photos" data-deck-part="picture">
+                {/* Event photos are a phone's, upright: two columns in one
+                    frame, each cycling through its share (odd photos left,
+                    even right) — three across read as a contact sheet. One
+                    photo stands whole in the middle over a still blur of
+                    itself, in the same frame, so every event card is the
+                    same size. */}
+                {photos(p).length === 1 ? (
+                  <>
+                    <img class="fill" src={photos(p)[0]} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+                    <img class="whole" src={photos(p)[0]} alt={p.name} loading="lazy" decoding="async" draggable="false" />
+                  </>
+                ) : (
+                  [0, 1].map(c => {
+                    const layers = photos(p).filter((_, i) => i % 2 === c);
+                    return (
+                      <div class="photo-cell" style={`--col: ${c}`} data-n={layers.length}>
+                        {layers.map((src, k) => (
+                          <img
+                            src={src}
+                            alt={k === 0 ? p.name : ''}
+                            style={`--k: ${k}`}
+                            loading="lazy"
+                            decoding="async"
+                            draggable="false"
+                          />
+                        ))}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </article>
+        ))
+      }
+    </div>
+
+    {/* The one narrator's anchor, OUTSIDE the deck: it does not slide
+        with the cards. The script stands it on the current card's slot. */}
+    {
+      voiced && (
+        <div class="inner narr-static">
+          <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
+        </div>
+      )
+    }
+
+    {/* One card turns nowhere: no controls until there are two. */}
+    {
+      items.length > 1 && (
+        <div class="inner controls" data-dock>
+          <DeckControls names={items.map(p => p.name)} />
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  /* One full panel, snapped like the rest. The section carries no side
+     padding: the carousel runs edge to edge, and `.inner` blocks take the
+     page's gutter themselves. */
+  .panel-deck {
+    --gutter: clamp(1.25rem, 4vw, 2.5rem);
+    /* A card is exactly the content column — the same box the game's
+       grid uses — so its screen lands where the game's screen did. */
+    --card-w: min(var(--content-max), calc(100vw - var(--gutter) * 2));
+    min-height: 100svh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    /* Top-aligned on the stories' own inset, not centred: centring is
+       what stood it 108px lower than every story above it. */
+    padding: var(--stage-top) 0 var(--stage-bottom);
+    /* The page's edge is the only edge a card slides past. */
+    overflow-x: clip;
+  }
+
+  .inner {
+    width: var(--card-w);
+    margin: 0 auto;
+  }
+
+  /* The eyebrow stands where a story's small lockup stands, in the same
+     2rem box, so the card's name lands on a slide title's line. */
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    height: 2rem;
+  }
+
+  /* One step under the links — the 1.5rem every narrated block gives
+     its narrator. */
+  .narr-slot {
+    flex: none;
+    height: var(--narrator-h);
+    margin-top: 1.5rem;
+  }
+
+  /* Laid over the stage, in the words' column; the anchor inside rides
+     down to the current card's slot and eases there when the card
+     changes, so the narrator rises and falls instead of jumping. */
+  .carousel {
+    position: relative;
+  }
+
+  .narr-static {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+  }
+
+  .narr-static .narr-anchor {
+    margin-top: 0;
+    transform: translateY(var(--slot-y, 0px));
+    transition: transform calc(var(--beat) * 0.75) var(--ease);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .narr-static .narr-anchor {
+      transition: none;
+    }
+  }
+
+  /* ---------- the carousel ---------- */
+
+  /* The carousel takes the rest of the panel, so its controls can stand
+     at the panel's foot. */
+  .carousel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-top: 1.5rem;
+    outline: none;
+  }
+
+  /* A finger swipes it sideways; the browser keeps the vertical pan. */
+  .stage {
+    touch-action: pan-y;
+    display: grid;
+    justify-items: center;
+  }
+
+  /* The game's grid, card by card. Positions are the script's: each card
+     sits at its offset from the current one, a card's width plus a gap
+     apart. Neighbours step back so the current card is the one read. */
+  .card {
+    display: grid;
+    grid-template-columns: var(--screen-cols);
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+
+  /* The stories' caption rhythm: name, then its line of facts tight
+     under it, then the body one 1.25rem step down, the links one more,
+     and the narrator the 1.5rem every narrated block gives it. */
+  .words {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meta {
+    margin-top: 0.5rem;
+  }
+
+  .words .body,
+  .links {
+    margin-top: 1.25rem;
+  }
+
+  /* A step below the stars' titles — this panel is secondary. */
+  .name {
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 800;
+    letter-spacing: var(--track-heading);
+    line-height: 1.05;
+  }
+
+  .meta {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+
+  .links a {
+    color: var(--ink);
+  }
+
+  /* The game's screen width, at the page's one 3:2. */
+  .screen {
+    width: var(--screen-w);
+    justify-self: center;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    /* Half the stories' phone corner — a flat picture's (global.css). */
+    border-radius: var(--media-radius-flat);
+    background: var(--surface);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+  }
+
+  .screen img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: top;
+  }
+
+
+  /* A screen of its own (the game's cover): it places itself. */
+  .screen.is-own {
+    position: relative;
+  }
+
+  /* EVENT PHOTOS: the screen's own 3:2 frame — two upright 3:4 columns
+     of a phone's photos side by side. */
+  .screen.is-photos {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    background: var(--ground);
+  }
+
+  .photo-cell {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* One photo: whole, centred, over a still blur of itself — painted
+     once, never animated. */
+  .screen.is-photos .fill,
+  .screen.is-photos .whole {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  .screen.is-photos .fill {
+    object-fit: cover;
+    transform: scale(1.2);
+    filter: blur(28px) brightness(0.55);
+  }
+
+  .screen.is-photos .whole {
+    object-fit: contain;
+  }
+
+  .photo-cell img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Three photos to a frame: each holds a third of a slow cycle (~18s)
+     and hands over in a two-beat cross-fade; the right frame turns a beat
+     after the left. The delays are all negative, so every photo starts
+     mid-cycle in its place — and half a turn in, so the page opens on
+     the first photo held still, not on a hand-over. */
+  .photo-cell[data-n='3'] img {
+    animation: photo-cycle calc(var(--beat) * 30) linear infinite;
+    animation-delay: calc(
+      0s - var(--col) * var(--beat) - ((3 - var(--k)) * 10 + 5) * var(--beat)
+    );
+  }
+
+  @keyframes photo-cycle {
+    0%,
+    33.3% {
+      opacity: 1;
+    }
+    40%,
+    93.3% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .photo-cell img {
+      animation: none;
+    }
+
+    .photo-cell img:not(:first-child) {
+      display: none;
+    }
+  }
+
+  /* ---------- controls ---------- */
+
+  /* At the panel's FOOT and centred — the way the Sound Shaper opener
+     centres its narrator under everything — not tucked under the words,
+     where it crowded the narrator on every card with a full paragraph. */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: auto;
+    padding-top: var(--gap-block);
+  }
+
+  /* ---------- phones ---------- */
+
+  @media (max-width: 48rem) {
+    /* Screen on top, words under it. */
+    .card {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .screen {
+      order: -1;
+      width: 100%;
+    }
+
+    .words .body {
+      font-size: 0.9375rem;
+      line-height: 1.55;
+    }
+
+    .name {
+      font-size: 1.5rem;
+    }
+
+  }
+
+  /* ---------- phone ----------
+     The short line instead of the paragraph (which stays, hidden, for the
+     narration); the narrator sits in its corner there, so no card keeps
+     a slot for it and no anchor rides over the deck. */
+  .phone-copy {
+    display: none;
+  }
+
+  @media (max-width: 48rem) {
+    .phone-copy {
+      display: block;
+    }
+
+    /* The deck's controls share the bottom row with the phone's corner
+       narrator: arrows to the left, narrator to the right. */
+    /* Docked beside the narrator (data-dock, global.css): as wide as
+       the controls, so the box never lies over the narrator's own tap. */
+    .controls {
+      width: auto;
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    .words .body[data-narr-para],
+    .narr-slot,
+    .narr-static {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { createDeck } from '../lib/deck';
+
+  // Every panel deck on the page (More Work, Events) — one script for all.
+  for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
+    const cards = [...carousel.querySelectorAll<HTMLElement>('.card')];
+    const section = carousel.closest<HTMLElement>('section');
+    const paras = cards.map(c => c.querySelector<HTMLElement>('[data-narr-para]'));
+    const stillAnchor = carousel.querySelector<HTMLElement>('.narr-static .narr-anchor');
+
+    // Stand the still anchor on the current card's slot. Only the slot's
+    // HEIGHT is read: the card's sideways slide never moves it.
+    const standAnchor = () => {
+      const slot = cards[deck.current].querySelector<HTMLElement>('.narr-slot');
+      if (!stillAnchor || !slot) return;
+      const y = slot.getBoundingClientRect().top - carousel.getBoundingClientRect().top;
+      stillAnchor.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
+    };
+
+    const deck = createDeck({
+      cards,
+      controls: carousel.querySelector('[data-deck-controls]'),
+      keys: carousel,
+      swipe: carousel.querySelector<HTMLElement>('.stage'),
+      onChange: current => {
+        // A frame later: the first call comes while `deck` is still being
+        // made.
+        requestAnimationFrame(standAnchor);
+        // The narrator starts this panel on the card in front (its
+        // `data-narr-start`), and a running voice switches to it.
+        if (section) {
+          section.dataset.narrStart = String(current);
+          const para = paras[current];
+          if (para)
+            document.dispatchEvent(new CustomEvent('narr:select', { detail: para }));
+        }
+      },
+    });
+
+    // The voice moved on by itself (a clip ended): the deck follows it.
+    document.addEventListener('narr:para', e => {
+      const i = paras.indexOf((e as CustomEvent<HTMLElement>).detail);
+      if (i >= 0 && i !== deck.current) deck.go(i);
+    });
+
+    window.addEventListener('resize', standAnchor, { passive: true });
+    // Text can reflow once fonts settle; re-stand the anchor on it.
+    window.addEventListener('load', standAnchor);
+  }
+</script>

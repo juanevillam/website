@@ -4,31 +4,28 @@ import StoreBadges from './StoreBadges.astro';
 import AppTile from './AppTile.astro';
 import type { ReleasedApp } from '../lib/releases';
 import T from './T.astro';
+import DeckControls from './DeckControls.astro';
 import { clipFor, subsFor } from '../lib/narration';
 
 /**
- * One app = one continuous scene, no snapping anywhere.
+ * One app = two stops: the opener, then its slides.
  *
- * The opener is full-bleed: lockup, the pitch, a hairline, the action
- * row. As you scroll on, the scene DOCKS — it morphs into a floating
- * window (rounded, hairlined, elevated a step off the ground) and the
- * screenshots run inside it as a FILMSTRIP, translated continuously by
- * the scroll itself. Scrub the page and the strip scrubs with it; there
- * are no steps to land on, only positions.
+ * The opener is full-bleed: lockup, the pitch, the action row, with the
+ * first phone already waiting at the edge. One scroll walks that phone in
+ * and the words of the first slide up, and the icon + name — ONE lockup —
+ * FLIP from the opener's header to the slides' corner and park there.
  *
- * Captions crossfade with a short vertical drift as their shot centers.
- * The icon + name are ONE lockup that FLIPs from the opener header into
- * the window's caption corner and parks there.
+ * The slides are a DECK that turns SIDEWAYS (lib/deck.ts — More Work's
+ * slider), not more scroll: three more screens of vertical scrolling read
+ * as not getting anywhere (Juan, 2026-10-02). The page keeps one rhythm —
+ * section, section — and a story is one of them.
  *
  * Narration: Juan's voice, one clip per paragraph (see lib/narration).
  * A single shared Audio element tells the story as a pitch — paragraph
  * to paragraph, slide to slide, the page following the voice.
  */
 export type StorySlide = {
-  /** One screenshot — or two that SHARE one phone: a slide that tells two
-   *  neighbouring screens shows them in turn on the same phone, so it
-   *  looks like every other slide (same pixel size for both). */
-  src: string | [string, string];
+  src: string;
   width: number;
   height: number;
   /** Slide titles are ALWAYS English, in every locale — brand nouns. */
@@ -44,9 +41,6 @@ type Props = {
   /** The opener reads as a startup pitch — the problem, then the
    *  answer — one paragraph (and one narration clip) each. */
   pitch: UIKey[];
-  /** After the last slide the story walks back to its opener and
-   *  hands the scroll over — an endless deck. */
-  loop?: boolean;
   slides: StorySlide[];
   /** Show the App Store / Google Play slots (apps, not web products). */
   stores?: boolean;
@@ -68,20 +62,15 @@ const {
   id,
   name,
   pitch,
-  loop = false,
   slides,
   stores = false,
   enter = 'side',
   linkGroups = [],
 } = Astro.props;
 
-// The scroll rail: one viewport for the opener, one per screenshot —
-// and one more where the story walks its opening moves backwards and
-// hands the scroll back to the opener.
-const stepCount = slides.length + (loop ? 2 : 1);
-
 // Every narratable block, resolved against the clips on disk: the
-// opener's pitch is block 0, each slide's caption the block of its step.
+// opener's pitch is block 0, the whole deck block 1 — one paragraph after
+// another, card by card, the deck turning with the voice.
 const narrate = (keys: UIKey[]) =>
   keys.map(k => ({ k, clip: clipFor(k), subs: subsFor(k) }));
 const pitchParas = narrate(pitch);
@@ -97,20 +86,12 @@ const pitchMobile = pitch.map(mobileKey);
 const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : null));
 ---
 
-<section
-  class="story"
-  id={id}
-  data-story={id}
-  data-loop={loop ? '' : null}
-  data-enter={enter}
-  style={`--steps: ${stepCount}`}
->
-  <!-- Invisible scroll rail — gives the story its length and carries
-       each step's narration clip. No snapping: positions, not pages. -->
+<section class="story" id={id} data-story={id} data-enter={enter}>
+  <!-- Invisible scroll rail — two viewports, the opener's and the
+       deck's, and the story's length. -->
   <div class="steps" aria-hidden="true">
-    <div class="step" data-index="0" />
-    {slides.map((_, i) => <div class="step" data-index={i + 1} />)}
-    {loop && <div class="step" data-index={slides.length + 1} />}
+    <div class="step" />
+    <div class="step" />
   </div>
 
   <div class="stage">
@@ -199,86 +180,104 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       }
     </div>
 
-    <!-- The slides' scene, on the ground with the opener. -->
+    <!-- The slides' scene, on the ground with the opener: the lockup's
+         small anchor, then the deck — every card is the words and the
+         phone, sliding together. -->
     <div class="float">
-      <div class="float-grid">
-        <div class="col-text">
-        <div class="caption">
-          <div class="lockup-anchor-small" aria-hidden="true"></div>
+      <div class="deck-head">
+        <div class="lockup-anchor-small" aria-hidden="true"></div>
+      </div>
+      <div
+        class="deck"
+        tabindex="0"
+        aria-roledescription="carousel"
+        aria-label={name}
+        data-narr-block={slideParas.some(voiced) ? '1' : null}
+      >
+        <div class="deck-stage">
           {
             slides.map((slide, i) => (
-              <div
-                class="cap"
-                data-narr-block={voiced(slideParas[i]) ? String(i + 1) : null}
+              <article
+                class="card deck-card"
+                aria-roledescription="slide"
+                aria-label={`${i + 1} / ${slides.length}`}
               >
-                {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-                {slideParas[i].map(({ k, clip, subs }) => (
-                  <p
-                    class="body"
-                    data-narr-para
-                    data-clip-en={clip?.en}
-                    data-clip-es={clip?.es}
-                    data-subs-en={subs.en}
-                    data-subs-es={subs.es}
-                  >
-                    <T k={k} />
-                  </p>
-                ))}
-                {voiced(slideParas[i]) && (
-                  <div
-                    class="narr-anchor"
-                    data-narr-anchor
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
+                <div class="cap">
+                  {slide.title && (
+                    <h3 class="slide-title" data-deck-part="text" style="--i: 1">
+                      {slide.title}
+                    </h3>
+                  )}
+                  {slideParas[i].map(({ k, clip, subs }, n) => (
+                    <p
+                      class="body"
+                      data-deck-part="text"
+                      style={`--i: ${n + 2}`}
+                      data-narr-para
+                      data-card={i}
+                      data-clip-en={clip?.en}
+                      data-clip-es={clip?.es}
+                      data-subs-en={subs.en}
+                      data-subs-es={subs.es}
+                    >
+                      <T k={k} />
+                    </p>
+                  ))}
+                  {/* The narrator's place, kept EMPTY, as More Work's: the
+                      still anchor below moves to the card in front. */}
+                  {voiced(slideParas[i]) && (
+                    <div class="narr-slot" aria-hidden="true" />
+                  )}
+                </div>
+                {/* The glow is a rim on the shot itself, nothing more. */}
+                <div class="slot" style={`--ratio: ${slide.height / slide.width}`}>
+                  <div class="shot-wrap" data-deck-part="picture">
+                    <img
+                      class="halo"
+                      src={slide.src}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <img
+                      class="shot"
+                      src={slide.src}
+                      alt={`${name} screenshot`}
+                      width={slide.width}
+                      height={slide.height}
+                      loading="lazy"
+                      decoding="async"
+                      draggable="false"
+                    />
+                  </div>
+                </div>
+              </article>
             ))
           }
         </div>
 
-          <!-- Where the action row comes to rest on the slides. -->
-          <div class="actions-anchor-small" aria-hidden="true"></div>
-        </div>
+        {/* The one narrator's anchor, OUTSIDE the deck: it does not slide
+            with the cards. The script stands it on the current card's
+            slot. */}
+        {
+          slideParas.some(voiced) && (
+            <div class="narr-static">
+              <div class="narr-anchor" data-narr-anchor="1" aria-hidden="true" />
+            </div>
+          )
+        }
 
-        <!-- Every shot in one stack; the scroll cross-fades them. The
-             glow is a rim on the shot itself, nothing more. -->
-        <div class="shots">
-          {
-              slides.map(slide => (
-                <div
-                  class:list={['slot', { 'is-pair': Array.isArray(slide.src) }]}
-                >
-                  {/* One phone. A pair stacks its second screen over the
-                      first and cross-fades between them (see .layer-b). */}
-                  <div class="shot-wrap">
-                    {[slide.src].flat().map((src, layer) => {
-                      const imgs = (
-                        <>
-                          <img
-                            class="halo"
-                            src={src}
-                            alt=""
-                            aria-hidden="true"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <img
-                            class="shot"
-                            src={src}
-                            alt={`${name} screenshot`}
-                            width={slide.width}
-                            height={slide.height}
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </>
-                      );
-                      return layer === 0 ? imgs : <div class="layer-b">{imgs}</div>;
-                    })}
-                  </div>
-                </div>
-              ))
-            }
+        <!-- Where the action row comes to rest on the slides. -->
+        <div class="actions-anchor-small" aria-hidden="true"></div>
+
+        {/* The controls stand on the cards' left edge, in the words'
+            column, at the panel's FOOT — the line More Work's stand on, so
+            every deck on the page turns from the same height. Centred
+            there, as More Work has them, they sat on the phone; under the
+            longest caption they floated mid-panel. */}
+        <div class="deck-foot">
+          <DeckControls names={slides.map((sl, i) => sl.title ?? String(i + 1))} />
         </div>
       </div>
     </div>
@@ -300,105 +299,114 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   </div>
 
   <!-- THE PHONE'S STORY. Below 48rem the pinned stage above is not drawn
-       at all: a phone gets plain full-screen panels on native scroll-snap
-       — the opener, then one per slide, the screenshot large and the
-       words short. Nothing here moves with the scroll by script, which is
-       what made the stage drag on iOS. Each panel is a narrated block of
-       its own (data-narr-panel); its full paragraphs ride along hidden,
-       carrying the clips. -->
+       at all. A phone gets the same two stops as the desktop — the welcome,
+       then the deck — on native scroll-snap, and the walk between them is
+       a SCROLL-DRIVEN CSS animation (`animation-timeline`): the browser
+       runs it on the compositor, so it tracks the finger without the drag
+       the scripted stage had on iOS. A browser without scroll timelines
+       gets the two as plain snapped panels. The deck turns sideways through
+       the same deck as the desktop's (lib/deck.ts). The full paragraphs
+       ride along hidden, carrying the clips. -->
   <div class="m-story">
-    <section
-      class="m-panel m-opener"
-      data-narr-panel={voiced(pitchParas) ? '' : null}
-    >
-      <div class="m-lockup">
-        {/* Drawn at its phone size, not shrunk by CSS: the tile carries a
-            negative margin solved for its own size, and scaling the SVG
-            box cut the squircle off. Story ids are the tiles' app ids. */}
-        <AppTile app={id as 'shaper' | 'topper'} size={52} />
-        <span class="m-lockup-name">{name}</span>
-      </div>
-      {pitchMobile.map(k => (
-        <p class="body m-copy">
-          <T k={k} />
-        </p>
-      ))}
-      {stores && <StoreBadges app={id as ReleasedApp} />}
-      {pitchParas.map(({ clip, subs }) => (
-        <span
-          hidden
-          data-narr-para
-          data-clip-en={clip?.en}
-          data-clip-es={clip?.es}
-          data-subs-en={subs.en}
-          data-subs-es={subs.es}
-        />
-      ))}
-    </section>
-
-    {/* All the slides in ONE panel, swiped sideways — a panel per slide
-        made the page a long vertical climb. Native horizontal scroll-snap,
-        so the swipe is Safari's own. */}
-    <section
-      class="m-panel m-deck"
-      data-narr-panel={slideParas.some(voiced) ? '' : null}
-      data-narr-start="0"
-    >
-      <div class="m-track">
-        {slides.map((slide, i) => (
-          <article class="m-card" aria-label={`${i + 1} / ${slides.length}`}>
-            <div class:list={['m-shot', { 'is-pair': Array.isArray(slide.src) }]}>
-              <div class="shot-wrap">
-                {[slide.src].flat().map((src, layer) => {
-                  const img = (
-                    <img
-                      class="shot"
-                      src={src}
-                      alt={`${name} screenshot`}
-                      width={slide.width}
-                      height={slide.height}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  );
-                  return layer === 0 ? img : <div class="layer-b">{img}</div>;
-                })}
-              </div>
-            </div>
-            <div class="m-words">
-              <div class="m-lockup m-lockup-small">
-                <AppTile app={id as 'shaper' | 'topper'} size={24} />
-                <span class="m-lockup-name">{name}</span>
-              </div>
-              {slide.title && <h3 class="slide-title">{slide.title}</h3>}
-              {slideMobile[i] && (
-                <p class="body m-copy">
-                  <T k={slideMobile[i]!} />
-                </p>
-              )}
-            </div>
-            {/* This card's narration: its full paragraphs, hidden. `sub`
-                is the paragraph's place in the card (a two-screen card
-                shows the screen its paragraph is about). */}
-            {slideParas[i].map(({ clip, subs }, sub) => (
-              <span
-                hidden
-                data-narr-para
-                data-card={i}
-                data-sub={sub}
-                data-clip-en={clip?.en}
-                data-clip-es={clip?.es}
-                data-subs-en={subs.en}
-                data-subs-es={subs.es}
-              />
-            ))}
-          </article>
+    <div class="m-steps" aria-hidden="true">
+      <div class="m-step"></div>
+      <div class="m-step"></div>
+    </div>
+    <div class="m-sticky">
+      <section
+        class="m-panel m-welcome"
+        data-m-step="0"
+        data-narr-panel={voiced(pitchParas) ? '' : null}
+      >
+        <div class="m-lockup">
+          {/* Drawn at its phone size, not shrunk by CSS: the tile carries a
+              negative margin solved for its own size, and scaling the SVG
+              box cut the squircle off. Story ids are the tiles' app ids. */}
+          <AppTile app={id as 'shaper' | 'topper'} size={52} />
+          <span class="m-lockup-name">{name}</span>
+        </div>
+        {pitchMobile.map(k => (
+          <p class="body m-copy">
+            <T k={k} />
+          </p>
         ))}
-      </div>
-      <div class="m-dots" aria-hidden="true">
-        {slides.map(() => <span class="m-dot" />)}
-      </div>
-    </section>
+        {stores && <StoreBadges app={id as ReleasedApp} />}
+        {pitchParas.map(({ clip, subs }) => (
+          <span
+            hidden
+            data-narr-para
+            data-clip-en={clip?.en}
+            data-clip-es={clip?.es}
+            data-subs-en={subs.en}
+            data-subs-es={subs.es}
+          />
+        ))}
+      </section>
+
+      <section
+        class="m-panel m-deck"
+        data-m-step="1"
+        data-narr-panel={slideParas.some(voiced) ? '' : null}
+        data-narr-start="0"
+      >
+        {/* No lockup here: the welcome just said whose app this is, and on
+            a phone the height is the screenshot's. */}
+        <div class="m-stage" aria-roledescription="carousel" aria-label={name}>
+          {slides.map((slide, i) => (
+            <article
+              class="m-card deck-card"
+              aria-roledescription="slide"
+              aria-label={slide.title}
+            >
+              <div class="m-shot" data-deck-part="picture">
+                <img
+                  class="shot"
+                  src={slide.src}
+                  alt={`${name} screenshot`}
+                  width={slide.width}
+                  height={slide.height}
+                  decoding="async"
+                  draggable="false"
+                />
+              </div>
+              <div class="m-words">
+                {slide.title && (
+                  <h3 class="slide-title" data-deck-part="text" style="--i: 1">
+                    {slide.title}
+                  </h3>
+                )}
+                {slideMobile[i] && (
+                  <p class="body m-copy" data-deck-part="text" style="--i: 2">
+                    <T k={slideMobile[i]!} />
+                  </p>
+                )}
+              </div>
+              {slideParas[i].map(({ clip, subs }) => (
+                <span
+                  hidden
+                  data-narr-para
+                  data-card={i}
+                  data-clip-en={clip?.en}
+                  data-clip-es={clip?.es}
+                  data-subs-en={subs.en}
+                  data-subs-es={subs.es}
+                />
+              ))}
+            </article>
+          ))}
+        </div>
+
+      </section>
+    </div>
+
+    {/* The deck's controls, docked beside the corner narrator while the
+        deck holds the screen (data-dock, global.css). They live OUTSIDE
+        the stuck screen: a fixed control inside a sticky, animated layer
+        was drawn in place but missed its taps in Chrome on iPhone. A
+        sideways swipe turns the deck too. */}
+    <div class="m-controls" data-dock data-m-step="1">
+      <DeckControls names={slides.map((sl, i) => sl.title ?? String(i + 1))} />
+    </div>
   </div>
 </section>
 
@@ -415,7 +423,7 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
      read from the same four numbers, so nothing can drift apart. */
   .story {
     position: relative;
-    height: calc(var(--steps) * 100svh);
+    height: 200svh;
 
     /* --stage-top, --stage-bottom and --gap-block are the PAGE's (see
        global.css): every full panel — the game, More Work — stands on
@@ -425,31 +433,16 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     --text-wide: calc(100% * 6 / 13 * 0.81 * 1.5);
   }
 
-  @media (max-width: 48rem) {
-    .story {
-      --text-col: 100%;
-      --text-wide: 100%;
-    }
-  }
-
   .steps {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
 
-  /* Every step is a resting place, but only the OPENER insists on it:
-     a gentle scroll still lands slide by slide, while a hard flick may
-     pass several slides at once — a returning visitor's fingers shouldn't
-     have to pay for every screen. A flick never skips a whole app, since
-     each story's opener (and every panel) stops it. */
+  /* Both stops insist: the opener, and the deck — a page of panels. */
   .step {
     height: 100svh;
     scroll-snap-align: start;
-    scroll-snap-stop: normal;
-  }
-
-  .step:first-child {
     scroll-snap-stop: always;
   }
 
@@ -511,7 +504,9 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   /* While Juan is speaking a block, the page follows his voice: the
      paragraph being spoken holds full ink and the others step back —
      and any of them can be tapped to jump the voice there. */
-  [data-narr-block] .body {
+  /* (A deck's paragraphs take this beat in the deck's own transition
+     list — a second `transition` here would replace their entrance.) */
+  [data-narr-block] .body:not([data-deck-part]) {
     transition: color calc(var(--beat) / 2) var(--ease);
   }
 
@@ -544,13 +539,19 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     margin-top: 0;
   }
 
-  /* Both ends of the row's trip reserve the same box and stand one
-     step below the text they follow — which is what makes the gap
-     identical on the opener and on every slide. */
-  .actions-anchor-big,
-  .actions-anchor-small {
+  /* The row's box under the pitch, one step below it. */
+  .actions-anchor-big {
     height: 3rem;
     margin-top: var(--gap-block);
+  }
+
+  /* Where it is headed as it fades: the deck's foot, on the cards' left
+     edge. It is gone long before it gets there. */
+  .actions-anchor-small {
+    position: absolute;
+    left: calc(50% - var(--card-w) / 2);
+    bottom: 0;
+    height: 3rem;
   }
 
   /* The page foot: the legal and help pages, under one hairline at the
@@ -612,90 +613,72 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     text-decoration-color: var(--ink-3);
   }
 
-  /* ---------- the floating window ---------- */
+  /* ---------- the slides: a deck ---------- */
 
-  /* Driven by --f (0 = full-bleed and invisible chrome, 1 = docked):
-     the window pulls in from the stage edges, grows its corner and its
-     hairline, and lifts one surface step off the ground. */
-  /* The slides' scene: the same full-bleed stage the opener stands on —
-     no detached container, the screenshots live on the ground. */
-  /* Exactly the opener's box: the PADDING lives here and the grid
-     centres inside it, the way `.inner` centres inside `.intro-scene`.
-     When the grid carried both its own padding AND the max-width, it
-     sat 40px further in than the opener at any width past the cap. */
+  /* The opener's box exactly — its insets, and the cards one content
+     column wide in the middle of it. It covers the whole stage, the
+     opener beneath it included, so the layer is DEAF and only the deck
+     takes events back. Without that it silently eats every hover and click on the
+     opener. */
   .float {
+    --gutter: clamp(1.25rem, 4vw, 2.5rem);
+    --card-w: min(var(--content-max), calc(100vw - var(--gutter) * 2));
     position: absolute;
     inset: 0;
     z-index: 2;
-    padding: var(--stage-top) clamp(1.25rem, 4vw, 2.5rem) var(--stage-bottom);
-    /* The scene is ALWAYS there on desktop — the deck peeks in at the
-       opener's right edge (--peek) and only the text column waits for
-       --float-in. Phones keep the whole scene gated instead: a peeking
-       phone over a single-column opener is collision, not cinema. */
-    /* It covers the whole stage, including the opener beneath it — so
-       the layer is DEAF and only the captions take events back. Without
-       this it silently eats every hover and click on the opener. */
+    display: flex;
+    flex-direction: column;
+    padding: var(--stage-top) 0 var(--stage-bottom);
     pointer-events: none;
   }
 
-  .float-grid {
-    height: 100%;
-    max-width: var(--content-max);
+  /* Where the lockup parks: a 2rem row on the cards' left edge — the
+     place More Work's eyebrow stands — so the cards slide under it. */
+  .deck-head {
+    flex: none;
+    width: var(--card-w);
     margin: 0 auto;
+  }
+
+  .lockup-anchor-small {
+    height: 2rem;
+  }
+
+  /* The title stands one 1.5rem step under the lockup, as it always did. */
+  .deck {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 1.5rem;
+    outline: none;
+  }
+
+  .deck-stage {
+    touch-action: pan-y;
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  /* A card: the words in the text column, the phone in the rest. */
+  .card {
     display: grid;
     grid-template-columns: var(--text-col) 1fr;
     gap: var(--space-4);
+    min-height: 0;
   }
 
-  /* The text column: words at the top, the action row one step below
-     them — the same step the opener uses. */
-  .col-text {
+  /* The words wait for the opener to go; the phone is there from the
+     start (the peek). */
+  .cap {
     display: flex;
     flex-direction: column;
-    min-height: 0;
     opacity: var(--float-in, 0);
     will-change: opacity;
-  }
-
-  /* The words start at the phone's own top edge, which is also where
-     the opener's lockup sits — so the shared lockup barely travels
-     between the two (it was a 171px trip when this was centred). */
-  /* Every cap sits in the SAME grid cell, so the box is exactly as tall
-     as the tallest one at any width — no guessed min-height to keep in
-     sync, and the action row below never moves between slides.
-     `align-self` must not be set here: in a flex column it is the cross
-     axis, and `start` collapsed the column to its text's width. */
-  .caption {
-    position: relative;
-    z-index: 1;
-    display: grid;
-  }
-
-  /* The swap is a plain cross-fade, the way the system changes a label:
-     the new words come up through the old ones in one short beat. Going
-     out and then in (tried) blinked the column to black between them,
-     and that blink was the part that still read as an animation. */
-  .cap {
-    grid-area: 1 / 1;
-    /* Clear the small lockup parked above the captions. */
-    padding-top: 3.5rem;
-    opacity: 0;
-    pointer-events: none;
-    /* 50ms: the fastest a change still has a soft edge — below it the
-       eye can no longer tell it from a cut. */
-    transition: opacity calc(var(--beat) / 12) linear;
-  }
-
-  .cap.is-current {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cap,
-    .cap.is-current {
-      transition: none;
-    }
   }
 
   /* The slide title IS the opener's name size — one ladder, and one
@@ -715,103 +698,80 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     margin-top: 0.875rem;
   }
 
-  /* ---------- the filmstrip ---------- */
-
-  /* The strip lives in its OWN clipped pane, so a travelling shot can
-     never cross into the caption column and read through the words. */
-  /* The pane still clips a travelling shot out of the words' column,
-     but it fades at its edges instead of slicing — a hard cut was the
-     one thing that gave the seam away mid-move. */
-  /* The words take the comfortable inset under the header; the phone
-     does not need it, so the pane reclaims that space and the shot
-     runs as tall as the panel allows. */
-  /* Every shot stacks in one cell and the scroll cross-fades them.
-     Nothing travels, so nothing can be caught half-clipped — which is
-     what the sliding strip kept doing, and what the edge masks and
-     occluders existed to hide. */
-  .shots {
-    position: relative;
-    height: auto;
-    /* The pane runs from the header's bottom edge to the panel's, so
-       the phone's air is EQUAL top and bottom — the slot's padding is
-       the whole gap on both sides. Reclaiming half the top inset but
-       all of the bottom one is what left it hanging low. */
-    margin: calc(var(--header-h) - var(--stage-top)) 0
-      calc(var(--stage-bottom) * -1);
-    min-height: 0;
-    display: grid;
-    /* The PEEK: at the opener the whole deck stands off to the right,
-       cropped by the stage's edge — the story is already on stage
-       before it starts. Scrolling in walks it to its own column. */
-    transform: translateX(calc(var(--peek, 0) * 58%));
-    will-change: transform;
+  /* The narrator's place under the words — kept empty, see .narr-static. */
+  .narr-slot {
+    flex: none;
+    height: var(--narrator-h);
+    margin-top: 1.5rem;
   }
 
+  /* Laid over the deck, on the cards' left edge; the anchor inside rides
+     down to the current card's slot and eases there when the deck turns,
+     so the narrator rises and falls with the words instead of travelling
+     sideways with the cards. */
+  .narr-static {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: var(--card-w);
+    margin: 0 auto;
+    pointer-events: none;
+  }
 
+  .narr-static .narr-anchor {
+    margin-top: 0;
+    transform: translateY(var(--slot-y, 0px));
+    transition: transform calc(var(--beat) * 0.75) var(--ease);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .narr-static .narr-anchor {
+      transition: none;
+    }
+  }
+
+  /* The phone takes the comfortable insets back — it runs from the
+     header's bottom edge to the panel's, the slot's padding the gap on
+     both sides. The PEEK: at the opener it stands off to the right,
+     cropped by the stage's edge, and the first scroll walks it in. */
   .slot {
     position: relative;
-    z-index: 1;
-    grid-area: 1 / 1;
     min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* This padding IS the phone's gap, above and below alike. */
+    margin: calc(var(--header-h) - var(--stage-top) - 3.5rem) 0
+      calc(var(--stage-bottom) * -1);
     padding: 1.5rem 0;
-    opacity: 0;
-    will-change: opacity, transform;
+    transform: translateX(calc(var(--peek, 0) * 58%));
+    will-change: transform;
+    container-type: size;
   }
 
-  .slot:first-child {
-    opacity: 1;
-  }
-
+  /* As tall as the column allows — unless the column is the narrower
+     limit, as on a tablet held upright, where a height-only phone ran off
+     the page's edge. */
   .shot-wrap {
     position: relative;
-    height: 100%;
+    height: min(100cqh, 100cqw * var(--ratio));
   }
 
-  /* A slide with two screens keeps ONE phone, like every other slide:
-     the second screen lies over the first and the phone turns between
-     them on a SLOW clock — 24 beats round (~14s): each screen holds ~6s
-     and the cross-fade takes ~1.2s. Ten beats (3s a screen) was tried
-     and read as flicker. Two phones side by side were tried first and read as a
-     different kind of slide in the middle of the deck. While Juan's voice
-     tells the slide, the screen follows the paragraph instead
-     (data-screen, set by the narrator). */
-  .layer-b {
+  /* Laid over the deck on the cards' left edge, at its foot — which is
+     the panel's, less the stage inset every panel keeps. */
+  .deck-foot {
     position: absolute;
-    inset: 0;
-    animation: pair-swap calc(var(--beat) * 24) ease-in-out infinite;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: var(--card-w);
+    margin: 0 auto;
+    opacity: var(--float-in, 0);
+    pointer-events: none;
   }
 
-  .layer-b .shot {
-    height: 100%;
-  }
-
-  @keyframes pair-swap {
-    0%,
-    42% {
-      opacity: 0;
-    }
-    50%,
-    92% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-
-  .slot.is-pair[data-screen] .layer-b {
-    animation: none;
-    opacity: 0;
-    /* The same ~1.2s turn as the clock's. */
-    transition: opacity calc(var(--beat) * 2) ease-in-out;
-  }
-
-  .slot.is-pair[data-screen='1'] .layer-b {
-    opacity: 1;
+  .float:not(.is-dealt) .deck-foot :global(.deck-controls) {
+    pointer-events: none;
   }
 
   /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
@@ -836,17 +796,6 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     );
   }
 
-  /* A card away from the front: grey, and no halo at all — the halo is
-     the most expensive thing on the page to paint, and at 0.4 opacity
-     or less nobody sees it. */
-  .slot.is-away .shot {
-    filter: grayscale(1);
-  }
-
-  .slot.is-away .halo {
-    display: none;
-  }
-
   /* A phone's GPU pays for a 40px blur on every composited frame; the
      glow is decoration, so phones go without it. */
   @media (hover: none) and (pointer: coarse) {
@@ -868,11 +817,13 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
        1179:2556 ratio, whatever the column does. */
     max-width: none;
 
-    /* The corner is the PHONE'S, not the App Store's — 55pt on a 393pt
-       screen (14% / 6.46%), bottom corners cropped a beat tighter so a
+    /* The corner is the PHONE'S, not the App Store's — the page's one
+       media radius (--media-radius, global.css), which is set from this
+       very phone. The bottom corners crop a beat tighter (15.9 / 14) so a
        full-height sheet's dead corners never show. The hairline is
        Apple's dark-appearance treatment. No bezel, no fill. */
-    border-radius: 14% 14% 15.9% 15.9% / 6.46% 6.46% 7.35% 7.35%;
+    border-radius: var(--media-radius) var(--media-radius)
+      calc(var(--media-radius) * 1.136) calc(var(--media-radius) * 1.136);
     border: 1px solid var(--hairline);
   }
 
@@ -905,15 +856,6 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     height: 4.75rem;
   }
 
-  /* Shares the caps' cell rather than taking a row of its own — as a
-     second row it pushed the lockup below the body copy. */
-  .lockup-anchor-small {
-    grid-area: 1 / 1;
-    align-self: start;
-    justify-self: start;
-    height: 2rem;
-  }
-
   /* ---------- big screens ----------
      Past the container cap everything would just sit in the middle
      with growing margins, so the cap itself opens up and the phone
@@ -923,7 +865,6 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       --content-max: 82rem;
     }
 
-    .float-grid,
     .intro-scene .inner,
     .intro-foot {
       max-width: var(--content-max);
@@ -936,101 +877,9 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
      column. Same columns, same gaps as a side entrance — only the
      direction of travel changes. Desktop only: phones have no peek. */
   @media (min-width: 48.01rem) {
-    [data-enter='rise'] .shots {
+    [data-enter='rise'] .slot {
       transform: translateY(calc(var(--peek, 0) * 62%));
     }
-  }
-
-  /* ---------- phones ----------
-     One column, the phone on top and the words under it. The column
-     tokens already went full-width; what changes here is the ORDER,
-     the type, and how much copy is asked to carry the slide. */
-  @media (max-width: 48rem) {
-    .float-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: minmax(0, 1fr) auto;
-      gap: 1rem;
-    }
-
-    .col-text {
-      /* display: contents throws the box away, and its opacity with
-         it — the whole scene gates on --float-in here instead. */
-      display: contents;
-    }
-
-    .float {
-      opacity: var(--float-in, 0);
-      will-change: opacity;
-    }
-
-    .shots {
-      order: -1;
-      margin: 0;
-      /* No peek on a single column — the deck would stand on the
-         opener's own words. */
-      transform: none;
-    }
-
-    .caption {
-      order: 0;
-    }
-
-    /* The store row only shows on the opener — on a phone's slides its
-       reserved box (48px plus a block step) was taken straight out of the
-       phone's height. The anchor stays as the row's exit point, but takes
-       no room. */
-    .actions-anchor-small {
-      order: 1;
-      height: 0;
-      margin-top: 0;
-    }
-
-    /* A phone reads the headline and one line under it. The second
-       paragraph is the desk-sized detail — it would be a wall here.
-       While the voice runs, the line shown is the line being SPOKEN. */
-    .cap .body + .body {
-      display: none;
-    }
-
-    .cap.is-narrating .body:not(.is-spoken) {
-      display: none;
-    }
-
-    .cap.is-narrating .body.is-spoken {
-      display: block;
-    }
-
-    .slide-title {
-      font-size: clamp(1.75rem, 7vw, 2.25rem);
-    }
-
-    /* The small lockup is 2rem tall here too: 3.5rem puts the slide
-       title one 1.5rem step under it, as on desktop (2.75rem left 12px). */
-    .cap {
-      padding-top: 3.5rem;
-    }
-
-    .lockup {
-      gap: 0.75rem;
-      height: 3.25rem;
-    }
-
-    .lockup-anchor-big {
-      height: 3.25rem;
-    }
-
-    .lockup-name {
-      font-size: clamp(1.75rem, 8vw, 2.25rem);
-    }
-
-    .pitch {
-      gap: 1.25rem;
-    }
-
-    .intro-links {
-      gap: 2rem;
-    }
-
   }
 
   /* Short screens: the narrator's air halves, so three paragraphs, the
@@ -1041,27 +890,11 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     }
   }
 
-  /* Short phones: the pitch reads its first paragraph — and while the
-     voice runs, the one being spoken, as the slides do. */
-  @media (max-width: 48rem) and (max-height: 46rem) {
-    .pitch .body + .body {
-      display: none;
-    }
-
-    .pitch.is-narrating .body:not(.is-spoken) {
-      display: none;
-    }
-
-    .pitch.is-narrating .body.is-spoken {
-      display: block;
-    }
-  }
-
   /* ---------- the phone's story ----------
      Above 48rem it is not drawn; below, it IS the story and the pinned
-     stage is not. Every panel is one snapped screen sized for the space
-     a phone browser really leaves (svh: Safari's bars showing), with room
-     at the foot for the fixed narrator. */
+     stage is not. Each stop is one screen sized for the space a phone
+     browser really leaves (svh: Safari's bars showing), with room at the
+     foot for the docked controls and the narrator. */
   .m-story {
     display: none;
   }
@@ -1083,17 +916,9 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     .m-panel {
       position: relative;
       height: 100svh;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
       display: flex;
       flex-direction: column;
-      padding: calc(var(--header-h) + 1rem) clamp(1.25rem, 4vw, 2.5rem)
-        calc(var(--narrator-h) + 2rem);
-    }
-
-    .m-opener {
-      justify-content: center;
-      gap: 1.25rem;
+      padding: calc(var(--header-h) + 1rem) 0 calc(var(--narrator-h) + 2rem);
     }
 
     .m-lockup {
@@ -1109,13 +934,13 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       line-height: 0.95;
     }
 
-    .m-lockup-small {
-      gap: 0.5rem;
-    }
-
-    .m-lockup-small .m-lockup-name {
-      font-size: 1rem;
-      letter-spacing: var(--track-heading);
+    /* The welcome, as it was: the lockup, the pitch and the store row as
+       one group in the middle of the screen. */
+    .m-welcome {
+      justify-content: center;
+      gap: 1.25rem;
+      padding-left: clamp(1.25rem, 4vw, 2.5rem);
+      padding-right: clamp(1.25rem, 4vw, 2.5rem);
     }
 
     .m-copy {
@@ -1123,117 +948,197 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       line-height: 1.5;
     }
 
-    /* The screenshot takes every pixel the words leave. */
-    .m-shot {
+    /* Every card in one cell, one on stage at a time; a sideways swipe
+       turns it, so the browser keeps only the vertical pan. */
+    .m-stage {
+      --card-w: 100%;
       flex: 1;
       min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      touch-action: pan-y;
+    }
+
+    /* The deck takes the screen from the top: the header's two pills sit
+       in the corners, clear of a phone standing in the middle. */
+    .m-deck {
+      padding-top: calc(var(--float-gap) + env(safe-area-inset-top));
+    }
+
+    .m-card {
+      min-width: 0;
+      min-height: 0;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      padding: 0 clamp(1.25rem, 4vw, 2.5rem);
     }
 
-    .m-shot .shot-wrap {
+    /* The screenshot takes every pixel the words leave. It is placed
+       ABSOLUTELY in its box: a percentage height three containers deep
+       (grid → flex → image) resolved to nothing in WebKit, and the phones
+       vanished on every iPhone browser. */
+    .m-shot {
       position: relative;
-      height: 100%;
+      flex: 1;
+      min-height: 0;
     }
 
+    /* As tall as the box allows, up to a bit more than the screen's width:
+       sized by the WIDTH, two browsers that leave different heights
+       (Safari's bars against Chrome's) still show the same phone. It
+       stands on the box's FLOOR, right over its title — centred, the
+       leftover air split above and below it and read as a gap. */
     .m-shot .shot {
-      height: 100%;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      height: min(100%, 112vw);
       width: auto;
+      max-width: none;
+      transform: translateX(-50%);
     }
 
     /* Room for three lines of copy whatever a card says, so the phone
-       above is the same size on every card of the deck (measured: the
-       words run 119-167px across en/es/zh at 390px wide). */
+       above is the same size on every card of the deck. */
     .m-words {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      padding-top: 1.25rem;
-      min-height: 10.5rem;
+      gap: 0.5rem;
+      padding-top: 0.875rem;
+      min-height: 7.5rem;
     }
 
     .m-words .slide-title {
       font-size: clamp(1.75rem, 7vw, 2.25rem);
     }
+  }
 
-    /* The deck: one panel, the cards side by side in a native
-       horizontal scroller that snaps card by card. It runs edge to edge
-       of the panel's gutter; the dots stand at the foot, left of the
-       corner narrator. */
-    .m-deck {
-      padding-left: 0;
-      padding-right: 0;
+  /* THE WALK, on a scroll timeline: the story is two screens tall, the
+     two stops are its snap points, and one screen stays stuck in place
+     while the welcome steps back and the deck comes up through it. */
+  @supports (animation-timeline: view()) {
+    @media (max-width: 48rem) {
+      .m-story {
+        position: relative;
+        height: 200svh;
+        view-timeline: --m-story block;
+      }
+
+      .m-steps {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .m-step {
+        height: 100svh;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+      }
+
+      .m-sticky {
+        position: sticky;
+        top: 0;
+        height: 100svh;
+      }
+
+      .m-sticky > .m-panel {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* The welcome steps back and goes — its group lifts a little and
+         shrinks, the way the desktop's lockup leaves for its corner. */
+      .m-welcome {
+        animation: m-leave linear both;
+        animation-timeline: --m-story;
+        animation-range: contain 0% contain 45%;
+      }
+
+      /* The deck arrives once the welcome is mostly gone — the desktop's
+         own timing, opener out by 45%, words in from about 35% — and its
+         phone rises into place under it. Opacity and visibility only on the panel
+         itself: a transform there would capture the docked controls'
+         fixed position. */
+      .m-deck {
+        animation: m-arrive linear both;
+        animation-timeline: --m-story;
+        animation-range: contain 38% contain 80%;
+      }
+
+      .m-deck .m-stage {
+        animation: m-rise linear both;
+        animation-timeline: --m-story;
+        animation-range: contain 20% contain 100%;
+      }
     }
+  }
 
-    .m-track {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scroll-snap-type: x mandatory;
-      scrollbar-width: none;
+  @supports not (animation-timeline: view()) {
+    @media (max-width: 48rem) {
+      .m-steps {
+        display: none;
+      }
+
+      .m-panel {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+      }
     }
+  }
 
-    .m-track::-webkit-scrollbar {
-      display: none;
+  @keyframes m-leave {
+    to {
+      opacity: 0;
+      transform: translateY(-1.5rem) scale(0.97);
+      visibility: hidden;
     }
+  }
 
-    /* min-width: 0 — without it a flex item never shrinks below its
-       content, and the card grew to its paragraph's unwrapped width. */
-    .m-card {
-      flex: 0 0 100%;
-      min-width: 0;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+  @keyframes m-arrive {
+    from {
+      opacity: 0;
+      visibility: hidden;
     }
-
-    .m-dots {
-      position: absolute;
-      left: clamp(1.25rem, 4vw, 2.5rem);
-      bottom: calc(1rem + env(safe-area-inset-bottom) + var(--narrator-h) / 2);
-      transform: translateY(50%);
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .m-dot {
-      width: 0.4375rem;
-      height: 0.4375rem;
-      border-radius: 999px;
-      background: var(--ink-3);
-      opacity: 0.5;
-      transition: opacity var(--dur-micro) var(--ease);
-    }
-
-    .m-dot.is-current {
-      background: var(--ink);
+    to {
       opacity: 1;
+      visibility: visible;
     }
   }
 
-  .m-shot.is-pair[data-screen] .layer-b {
-    animation: none;
-    opacity: 0;
-    transition: opacity calc(var(--beat) * 2) ease-in-out;
+  @keyframes m-rise {
+    from {
+      transform: translateY(15%);
+    }
   }
 
-  .m-shot.is-pair[data-screen='1'] .layer-b {
-    opacity: 1;
+  @keyframes m-fade-out {
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  /* Reduced motion keeps the cross-fade and drops the travel. */
+  @media (prefers-reduced-motion: reduce) {
+    .m-welcome {
+      animation-name: m-fade-out;
+    }
+
+    .m-deck .m-stage {
+      animation: none;
+    }
   }
 </style>
 
 <script>
-  // ---------- the continuous controller ----------
-  // Everything is a pure function of the scroll position p (how many
-  // viewports deep the story is): the opener fades, the floating window
-  // docks (--f), the filmstrip translates 1:1 with p, the captions
-  // crossfade around their shot, the lockup FLIPs between its anchors.
-  // No steps, no snapping, no state machines — scrub and it scrubs.
+  import { createDeck, type Deck } from '../lib/deck';
+
+  // ---------- the controller ----------
+  // The walk from the opener to the deck is a pure function of the scroll
+  // position p (0 = the opener, 1 = the deck): the opener fades, the phone
+  // walks in from its peek, the words come up, the lockup FLIPs between
+  // its anchors. The deck itself turns sideways, by its own controls.
 
   const reduceMotion = window.matchMedia(
     '(prefers-reduced-motion: reduce)'
@@ -1262,7 +1167,18 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   // The layout is chosen once per load; crossing the line reloads.
   const phoneQuery = window.matchMedia('(max-width: 48rem)');
   const phone = phoneQuery.matches;
-  phoneQuery.addEventListener('change', () => location.reload());
+  // ...but never while the phone's game cabinet is open: turning the phone
+  // sideways to play crosses this line, and the reload would close the
+  // game. The cabinet reloads on its way out instead (`arcade:close`).
+  let relayout = false;
+  phoneQuery.addEventListener('change', () => {
+    if (document.documentElement.dataset.arcade === 'open') relayout = true;
+    else location.reload();
+  });
+  document.addEventListener('arcade:close', () => {
+    if (relayout && phoneQuery.matches !== phone) location.reload();
+    relayout = false;
+  });
 
   const smooth = (v: number) => v * v * (3 - 2 * v);
 
@@ -1306,24 +1222,19 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
 
   type Story = {
     root: HTMLElement;
-    /** Return step — the story loops back to its opener. */
-    loop: boolean;
     steps: HTMLElement[];
     stage: HTMLElement | null;
     intro: HTMLElement | null;
     float: HTMLElement | null;
-    slots: HTMLElement[];
-    shotsBox: HTMLElement | null;
-    caps: HTMLElement[];
+    deck: Deck | null;
     lockup: HTMLElement | null;
     anchorBig: HTMLElement | null;
     anchorSmall: HTMLElement | null;
     actions: HTMLElement | null;
     actionsBig: HTMLElement | null;
     actionsSmall: HTMLElement | null;
-    /** Narrated blocks by step: the opener's pitch is 0. */
+    /** Narrated blocks by step: the opener's pitch is 0, the deck 1. */
     blocks: (Narr | undefined)[];
-    current: number;
   };
 
   const narrator = document.querySelector<HTMLElement>('[data-narrator]');
@@ -1384,22 +1295,6 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   const paint = () => {
     for (const n of narrs) {
       const on = session?.block === n;
-      // A two-screen slide shows the screen its spoken paragraph is about.
-      const slot =
-        n.story && n.step > 0
-          ? n.story.slots[n.step - 1]
-          : n.panel
-            ? n.el.querySelector<HTMLElement>('.is-pair')
-            : null;
-      if (slot?.classList.contains('is-pair')) {
-        // In a phone deck the spoken paragraph must belong to the pair's
-        // own card; its `sub` says which of the two screens it is about.
-        const spoken = on && session ? session.block.paras[session.para] : null;
-        const card = slot.closest('.m-card');
-        if (spoken && (!card || spoken.closest('.m-card') === card))
-          slot.dataset.screen = spoken.dataset.sub ?? String(Math.min(session!.para, 1));
-        else delete slot.dataset.screen;
-      }
       n.el.classList.toggle('is-narrating', on);
       n.paras.forEach((p, i) =>
         p.classList.toggle('is-spoken', on && session?.para === i)
@@ -1576,7 +1471,10 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     const w = window.innerWidth;
     const h = window.innerHeight;
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    if (field.width !== Math.round(w * ratio)) {
+    // Height too: a phone browser's bars collapse on scroll and the
+    // viewport grows taller with the width unchanged — a canvas that kept
+    // its old height was stretched, and the horizon drew far down the page.
+    if (field.width !== Math.round(w * ratio) || field.height !== Math.round(h * ratio)) {
       field.width = Math.round(w * ratio);
       field.height = Math.round(h * ratio);
     }
@@ -1732,8 +1630,8 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     voice.src = src;
     voice.play().catch(() => stop());
     paint();
-    // Whatever shows this paragraph can follow the voice to it (the More
-    // Work deck turns to the card being told).
+    // Whatever shows this paragraph can follow the voice to it (a deck
+    // turns to the card being told).
     document.dispatchEvent(new CustomEvent('narr:para', { detail: p }));
   };
 
@@ -1794,25 +1692,44 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     }
   });
 
+  // The box a panel owns on the page. Usually its section; a phone
+  // story's two stops share one stuck screen, so each owns its STEP — the
+  // screen of scroll its walk takes — while the scroll timeline runs.
+  const boxOf = (el: HTMLElement): HTMLElement => {
+    const holder = el.closest<HTMLElement>('[data-m-step]');
+    if (holder) {
+      const step = holder
+        .closest('.m-story')
+        ?.querySelectorAll<HTMLElement>('.m-step')[Number(holder.dataset.mStep)];
+      if (step && step.getClientRects().length) return step;
+      // No scroll timeline: the stops are plain panels, each its own box.
+      return (
+        holder
+          .closest('.m-story')
+          ?.querySelector<HTMLElement>(`.m-panel[data-m-step="${holder.dataset.mStep}"]`) ??
+        holder
+      );
+    }
+    return el.closest<HTMLElement>('section') ?? el;
+  };
+
   const scrollToPanel = (panel: Narr) =>
     window.scrollTo({
-      top:
-        (panel.el.closest<HTMLElement>('section') ?? panel.el)
-          .getBoundingClientRect().top + window.scrollY,
+      top: boxOf(panel.el).getBoundingClientRect().top + window.scrollY,
       behavior: reduceMotion ? 'auto' : 'smooth',
     });
 
   // The page moved under a running voice — by hand or by the voice's own
-  // page turn. The voice goes where the page went; a step with nothing
-  // recorded (the loop's return) ends the pitch.
+  // page turn. The voice goes where the page went; a block with nothing
+  // recorded ends the pitch.
   const follow = (block: Narr | undefined) => {
     const para = block ? startOf(block) : -1;
     if (block && para >= 0) start(block, para);
     else stop();
   };
 
-  // A block turned to another paragraph by hand (the More Work deck): a
-  // running voice switches to it; a paused one will start there.
+  // A block turned to another paragraph by hand (a deck): a running voice
+  // switches to it; a paused one will start there.
   document.addEventListener('narr:select', e => {
     const p = (e as CustomEvent<HTMLElement>).detail;
     if (!session) return;
@@ -1896,14 +1813,11 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   ).map(root => {
     const story: Story = {
       root,
-      loop: 'loop' in root.dataset,
       steps: [...root.querySelectorAll<HTMLElement>('.step')],
       stage: root.querySelector<HTMLElement>('.stage'),
       intro: root.querySelector<HTMLElement>('.intro-scene'),
       float: root.querySelector<HTMLElement>('.float'),
-      slots: [...root.querySelectorAll<HTMLElement>('.slot')],
-      shotsBox: root.querySelector<HTMLElement>('.shots'),
-      caps: [...root.querySelectorAll<HTMLElement>('.cap')],
+      deck: null,
       lockup: root.querySelector<HTMLElement>('.lockup'),
       anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
       anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
@@ -1911,11 +1825,52 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       actionsBig: root.querySelector<HTMLElement>('.actions-anchor-big'),
       actionsSmall: root.querySelector<HTMLElement>('.actions-anchor-small'),
       blocks: [],
-      current: -1,
     };
     for (const el of root.querySelectorAll<HTMLElement>('[data-narr-block]')) {
       const step = Number(el.dataset.narrBlock);
       story.blocks[step] = collect(el, story, step);
+    }
+
+    // THE DECK. Its block is every card's paragraphs in order; it starts
+    // on the card in front, a running voice switches to it, and a clip
+    // that moves to another card's paragraph turns the deck there.
+    const deckEl = root.querySelector<HTMLElement>('.deck');
+    if (deckEl) {
+      const cards = [...deckEl.querySelectorAll<HTMLElement>('.card')];
+      const paras = [...deckEl.querySelectorAll<HTMLElement>('[data-narr-para]')];
+      const still = deckEl.querySelector<HTMLElement>('.narr-static .narr-anchor');
+      // Stand the still anchor on the current card's slot. Only the slot's
+      // HEIGHT is read: the card's sideways slide never moves it.
+      const standAnchor = () => {
+        const slot = cards[story.deck?.current ?? 0].querySelector('.narr-slot');
+        if (!still || !slot) return;
+        const y = slot.getBoundingClientRect().top - deckEl.getBoundingClientRect().top;
+        still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
+      };
+      story.deck = createDeck({
+        cards,
+        controls: deckEl.querySelector('[data-deck-controls]'),
+        keys: deckEl,
+        // A tablet's finger turns it too.
+        swipe: deckEl.querySelector<HTMLElement>('.deck-stage'),
+        onChange: current => {
+          // A frame later: the first call comes while the deck is still
+          // being made.
+          requestAnimationFrame(standAnchor);
+          const first = paras.find(p => p.dataset.card === String(current));
+          if (!first) return;
+          deckEl.dataset.narrStart = String(paras.indexOf(first));
+          document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
+        },
+      });
+      document.addEventListener('narr:para', e => {
+        const p = (e as CustomEvent<HTMLElement>).detail;
+        if (!deckEl.contains(p)) return;
+        const i = Number(p.dataset.card);
+        if (story.deck && i !== story.deck.current) story.deck.go(i);
+      });
+      window.addEventListener('resize', standAnchor, { passive: true });
+      window.addEventListener('load', standAnchor);
     }
     return story;
   });
@@ -1933,6 +1888,8 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     narrator.hidden = false;
     requestAnimationFrame(animateNarrator);
   }
+
+  const docks = phone ? [...document.querySelectorAll<HTMLElement>('[data-dock]')] : [];
 
   // The hero rides out as the first story rides in.
   const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
@@ -1959,8 +1916,7 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
     // screen — the same glide a story hands over with — and owns the
     // voice once it holds the middle of the screen.
     for (const n of panels) {
-      const section = n.el.closest<HTMLElement>('section') ?? n.el;
-      const rect = section.getBoundingClientRect();
+      const rect = boxOf(n.el).getBoundingClientRect();
       if (rect.bottom < 0 || rect.top > vh) continue;
       // In by how far it has come up, out by how far it has gone — the
       // story rule, so two panels in a row cross-fade it at their seam.
@@ -1977,162 +1933,51 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
       // ever seen unstyled when a story first scrolls in.
       if (!force && (rect.bottom < 0 || rect.top > vh)) continue;
 
-      const p = step(clamp(-rect.top / vh, 0, s.steps.length - 1));
+      const p = step(clamp(-rect.top / vh, 0, 1));
       const active = Math.round(p);
 
-      // Each step owns the narrator in a tent around its position; the
-      // loop's return step belongs to the opener it lands on. A story
+      // Each stop owns the narrator in a tent around its position. A story
       // lets go as it scrolls off, so whatever comes up under it — the
-      // next story, the game — takes the narrator over smoothly. Without
-      // this, a story whose bottom sat exactly on the screen's top edge
-      // still owned half the narrator and parked it mid-title.
+      // next story, the game — takes the narrator over smoothly; and a
+      // story coming up takes it by how far it has come in, so two meeting
+      // cross-fade it (out + in = 1 at the seam), the same glide the hero
+      // hands over with.
       const out = step(clamp(rect.bottom / vh, 0, 1));
-      // ...and a story coming up takes it by how far it has come in, so
-      // two stories meeting cross-fade it — out + in = 1 at the seam —
-      // the same glide the hero hands over with. (For the first story
-      // this IS the hero's hp.)
       const enter = step(clamp(1 - rect.top / vh, 0, 1));
-      for (let k = 0; k < s.steps.length; k++) {
+      for (let k = 0; k < 2; k++) {
         const own = Math.max(0, 1 - Math.abs(p - k));
-        const block =
-          s.loop && k === s.steps.length - 1 ? s.blocks[0] : s.blocks[k];
+        const block = s.blocks[k];
         if (own > 0 && block?.anchor)
           parks.push({ anchor: block.anchor, w: own * enter * out });
       }
       if (!showing) showing = s.blocks[active];
 
-      // THE RETURN. One step past the last slide runs the opening
-      // moves backwards — the float dissolves, the lockup and the
-      // store row glide home to their opener anchors, the pitch fades
-      // back in. Its end state IS the opener's, so when it lands the
-      // controller silently rewinds the scroll and the story loops.
-      const loopW = !s.loop
-        ? 0
-        : reduceMotion
-          ? p > s.steps.length - 1.5
-            ? 1
-            : 0
-          : smooth(clamp(p - (s.steps.length - 2), 0, 1));
-
-      // The opener fades as the slides arrive — and back in on the way
-      // home.
+      // The opener fades as the deck arrives.
       if (s.intro) {
-        const back = clamp((loopW - 0.55) * 2.2, 0, 1);
-        s.intro.style.opacity = String(
-          Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), back)
-        );
-        s.intro.style.pointerEvents =
-          p < 0.5 || loopW > 0.8 ? 'auto' : 'none';
+        s.intro.style.opacity = String(clamp(1 - p * 2.2, 0, 1));
+        s.intro.style.pointerEvents = p < 0.5 ? 'auto' : 'none';
       }
 
-      // The slides' scene arrives once the opener is mostly gone.
+      // The words arrive once the opener is mostly gone; the phone walks
+      // in from its peek across the whole step; the neighbours are dealt
+      // once the deck is the page.
       if (s.float) {
         s.float.style.setProperty(
           '--float-in',
-          reduceMotion
-            ? p >= 0.5 && loopW < 0.5
-              ? '1'
-              : '0'
-            : String(clamp((p - 0.35) * 2.4, 0, 1) * (1 - loopW))
+          reduceMotion ? (p >= 0.5 ? '1' : '0') : String(clamp((p - 0.35) * 2.4, 0, 1))
         );
-        // The deck's PEEK: parked off the right edge at the opener,
-        // walked into its column across the first step — and walked
-        // back out on the return, so the loop's landing state matches
-        // the opener it hands the scroll to.
-        const peek = reduceMotion
-          ? p < 0.5 || loopW >= 0.5
-            ? 1
-            : 0
-          : Math.max(1 - smooth(clamp(p, 0, 1)), loopW);
+        const peek = reduceMotion ? (p < 0.5 ? 1 : 0) : 1 - smooth(p);
         s.float.style.setProperty('--peek', peek.toFixed(4));
+        s.float.classList.toggle('is-dealt', p > 0.6);
       }
 
-      // THE DECK. The shots are a visible stack of cards: the ones
-      // still to come peek out behind the front one — edges showing,
-      // barely turned — and each step pulls the next card forward. A
-      // passed card lifts toward the viewer and fades, the way a card
-      // comes off the top of a deck.
-      {
-        const n = s.slots.length;
-        // The deck is CIRCULAR: past the last card the first one is
-        // simply next again. The return deals ONE more card instead of
-        // riffling backwards over the front one, so the opener's card
-        // arrives the same way every other card did — and the state it
-        // lands on is the opener's exactly.
-        const pos = clamp(p - 1, 0, s.steps.length - 2);
-        const paneW = s.shotsBox?.clientWidth ?? 0;
-
-        for (let i = 0; i < n; i++) {
-          const lin = reduceMotion ? i - Math.round(pos) : i - pos;
-          // Depth wrapped into [-0.5, n - 0.5): the card just dealt
-          // lifts off in front of the stack; everything else waits
-          // behind the front card, the dealt card rejoining at the
-          // BACK once its lift has fully faded.
-          const d = (((lin % n) + n + 0.5) % n) - 0.5;
-
-          let op: number, x: number, rot: number, sc: number;
-          if (d < 0) {
-            // Lifted off the top: scales up toward the viewer and
-            // fades, gone within half a step. No sideways travel, so
-            // it can never cross into the words' column.
-            const g = smooth(clamp(-d / 0.55, 0, 1));
-            op = 1 - g;
-            x = 0;
-            rot = -2 * g;
-            sc = 1 + 0.06 * g;
-          } else {
-            // Waiting in the stack: three edges visible behind the
-            // front card, each a small step over and a hair turned.
-            // Opacity reads the RAW depth, so a card sliding round to
-            // the back of the stack arrives from nothing instead of
-            // popping in at the last edge's strength.
-            // Muted hard: the card being read is the only one at full
-            // strength — the next one is a hint (0.4), the ones behind it
-            // barely there (0.2, 0.08), and none of them in colour.
-            const dd = Math.min(d, 3);
-            op = d <= 1 ? 1 - d * 0.6 : 0.4 * Math.pow(0.5, d - 1);
-            x = dd * paneW * 0.045;
-            rot = dd * 2.5;
-            sc = 1 - dd * 0.06;
-          }
-
-          s.slots[i].style.opacity = String(op);
-          // A STATE, not a per-frame value: a filter that changes every
-          // scroll frame re-rasterizes the card's 40px-blurred halo every
-          // frame — fine on a Mac, a slideshow on an iPhone. The card goes
-          // grey (and drops its halo) once it is more than half a step
-          // away, and comes back the same way.
-          s.slots[i].classList.toggle('is-away', Math.abs(d) > 0.5);
-          s.slots[i].style.transform =
-            `translateX(${x.toFixed(1)}px) ` +
-            `rotate(${rot.toFixed(2)}deg) ` +
-            `scale(${sc.toFixed(4)})`;
-          // Front card on top, the stack receding behind it.
-          s.slots[i].style.zIndex = String(100 - Math.round(d * 10));
-        }
-      }
-
-      // Captions change as an EVENT, not with the scroll. Every earlier
-      // version tied the words' opacity to the scroll position — a dip,
-      // a drift, a settle — so each pixel of a slow or hesitant scroll
-      // made them flicker, and read as noise beside the deck (which IS
-      // scroll-coupled, rightly: it is things moving). The words just
-      // hold, whole, until the next slide becomes the active one; then
-      // one short cross-fade (CSS, `is-current`) and they hold again.
-      for (let i = 0; i < s.caps.length; i++)
-        s.caps[i].classList.toggle('is-current', active === i + 1);
-
-      // The lockup FLIPs from the opener header to the window's caption
-      // corner and parks there — one element, never redrawn.
+      // The lockup FLIPs from the opener header to the deck's corner and
+      // parks there — one element, never redrawn.
+      const q = reduceMotion ? (p >= 0.5 ? 1 : 0) : smooth(p);
       if (s.lockup && s.stage && s.anchorBig && s.anchorSmall) {
         const stageRect = s.stage.getBoundingClientRect();
         const big = s.anchorBig.getBoundingClientRect();
         const small = s.anchorSmall.getBoundingClientRect();
-        const q = reduceMotion
-          ? p >= 0.5 && loopW < 0.5
-            ? 1
-            : 0
-          : smooth(clamp(p, 0, 1)) * (1 - loopW);
         const scale = 1 + (small.height / big.height - 1) * q;
         const x = big.left - stageRect.left + (small.left - big.left) * q;
         const y = big.top - stageRect.top + (small.top - big.top) * q;
@@ -2141,45 +1986,34 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
           `scale(${scale.toFixed(4)})`;
       }
 
-      // The action row makes the same trip, from under the opener's
-      // pitch to the foot of the slides' text column. It never scales:
-      // both store programs set a minimum badge height, so the badges
-      // keep the size they were measured at.
+      // The action row makes the same trip, toward the deck's foot. It
+      // never scales: both store programs set a minimum badge height, so
+      // the badges keep the size they were measured at. It belongs to the
+      // OPENER and leaves with it.
       if (s.actions && s.stage && s.actionsBig && s.actionsSmall) {
         const stageRect = s.stage.getBoundingClientRect();
         const big = s.actionsBig.getBoundingClientRect();
         const small = s.actionsSmall.getBoundingClientRect();
-        const q = reduceMotion
-          ? p >= 0.5 && loopW < 0.5
-            ? 1
-            : 0
-          : smooth(clamp(p, 0, 1)) * (1 - loopW);
         const x = big.left - stageRect.left + (small.left - big.left) * q;
         const y = big.top - stageRect.top + (small.top - big.top) * q;
         s.actions.style.transform =
           `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-        // The row belongs to the OPENER: it leaves with it and rides
-        // the return home with it.
-        const rowVis = reduceMotion
-          ? p < 0.5 || loopW > 0.5
-            ? 1
-            : 0
-          : Math.max(clamp(1 - clamp(p, 0, 1) * 2.2, 0, 1), loopW);
+        const rowVis = reduceMotion ? (p < 0.5 ? 1 : 0) : clamp(1 - p * 2.2, 0, 1);
         s.actions.style.opacity = String(rowVis);
         s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
       }
+    }
 
-      s.current = active;
-
-      // Land the loop. The return step ends as a pixel-perfect copy of
-      // the opener, so rewinding the scroll there is invisible — the
-      // next flick down simply tells the story again.
-      if (s.loop && p > s.steps.length - 1.002) {
-        window.scrollTo({
-          top: rect.top + window.scrollY,
-          behavior: 'auto',
-        });
-      }
+    // A phone deck's controls dock beside the corner narrator, and fade
+    // WITH the scroll — in as their deck comes onto the screen, out as it
+    // leaves. A class flipped at mid-screen cut them in and out.
+    for (const dock of docks) {
+      const r = boxOf(dock).getBoundingClientRect();
+      const shown = (Math.min(r.bottom, vh) - Math.max(r.top, 0)) / vh;
+      const o = clamp((shown - 0.45) / 0.4, 0, 1);
+      dock.style.opacity = o.toFixed(3);
+      dock.style.visibility = o < 0.02 ? 'hidden' : 'visible';
+      dock.style.pointerEvents = o < 0.6 ? 'none' : '';
     }
 
     if (session && running && showing !== session.block) follow(showing);
@@ -2222,42 +2056,34 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
   // Transitions switch on only AFTER the first placement, so nothing
   // animates in from nowhere on load.
   // ---------- the phone's decks ----------
-  // Which card is in front: by the track's own scroll. The narrator starts
-  // the panel there (data-narr-start = that card's first paragraph), a
-  // running voice switches to it, and a clip that ends turns the deck.
-  for (const deck of document.querySelectorAll<HTMLElement>('.m-deck')) {
-    const track = deck.querySelector<HTMLElement>('.m-track');
-    const cards = [...deck.querySelectorAll<HTMLElement>('.m-card')];
-    const dots = [...deck.querySelectorAll<HTMLElement>('.m-dot')];
-    const paras = [...deck.querySelectorAll<HTMLElement>('[data-narr-para]')];
-    if (!track || !cards.length) continue;
-    let front = -1;
-    const settle = () => {
-      const i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
-      if (i === front) return;
-      front = i;
-      dots.forEach((d, k) => d.classList.toggle('is-current', k === i));
-      const first = paras.find(p => p.dataset.card === String(i));
-      if (first) {
-        deck.dataset.narrStart = String(paras.indexOf(first));
-        document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
-      }
-    };
-    track.addEventListener('scroll', () => requestAnimationFrame(settle), {
-      passive: true,
-    });
-    document.addEventListener('narr:para', e => {
-      const p = (e as CustomEvent<HTMLElement>).detail;
-      if (!deck.contains(p)) return;
-      const i = Number(p.dataset.card);
-      if (i !== front)
-        track.scrollTo({
-          left: i * track.clientWidth,
-          behavior: reduceMotion ? 'auto' : 'smooth',
-        });
-    });
-    settle();
-  }
+  // The same deck as the desktop's, welcome first. The narrator starts the
+  // panel on the card in front (data-narr-start = that card's first
+  // paragraph), a running voice switches to it, and a clip that moves on
+  // to another card's paragraph turns the deck there.
+  if (phone)
+    for (const panel of document.querySelectorAll<HTMLElement>('.m-deck')) {
+      const stage = panel.querySelector<HTMLElement>('.m-stage');
+      const paras = [...panel.querySelectorAll<HTMLElement>('[data-narr-para]')];
+      const deck = createDeck({
+        cards: [...panel.querySelectorAll<HTMLElement>('.m-card')],
+        controls:
+          panel.closest('.m-story')?.querySelector<HTMLElement>('[data-deck-controls]') ?? null,
+        keys: null,
+        swipe: stage,
+        onChange: current => {
+          const first = paras.find(p => p.dataset.card === String(current));
+          if (!first) return;
+          panel.dataset.narrStart = String(paras.indexOf(first));
+          document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
+        },
+      });
+      document.addEventListener('narr:para', e => {
+        const p = (e as CustomEvent<HTMLElement>).detail;
+        if (!panel.contains(p)) return;
+        const i = Number(p.dataset.card);
+        if (i !== deck.current) deck.go(i);
+      });
+    }
 
   if (stepped)
     requestAnimationFrame(() =>
