@@ -173,8 +173,47 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     { passive: true }
   );
 
+  // The mark goes home. On the landing it already IS home, so instead of
+  // reloading the page (a visible refresh) it TELEPORTS: the page dips to
+  // the ground, the scroll jumps to the top unseen, and the hero comes
+  // up. A smooth scroll was tried first and replayed every section on
+  // the way — decks resetting, the narrator gliding past, the stories
+  // walking backwards. Drops any #section the URL picked up. Anywhere
+  // else it is a plain link; a modified click (new tab) is left alone.
+  document.querySelector('.mark-link')?.addEventListener('click', event => {
+    const e = event as MouseEvent;
+    if (location.pathname !== '/' || e.metaKey || e.ctrlKey || e.shiftKey || e.button)
+      return;
+    e.preventDefault();
+    if (location.hash) history.replaceState(null, '', '/');
+    const root = document.documentElement;
+    const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
+    root.classList.add('is-jumping');
+    const dip = parseFloat(getComputedStyle(root).getPropertyValue('--beat')) / 4 || 150;
+    // The hero's own entrance, wound back while the page is dark, so the
+    // wordmark ARRIVES the way it did on the first load rather than
+    // simply being there.
+    const hero = [...document.querySelectorAll<HTMLElement>('#top [data-reveal]')];
+    setTimeout(() => {
+      hero.forEach(el => {
+        el.style.transition = 'none';
+        el.classList.remove('is-in');
+      });
+      jump();
+      void document.body.offsetWidth;
+      hero.forEach(el => (el.style.transition = ''));
+      // A timer, not a frame: a page that stops drawing (a hidden tab)
+      // must never be left dipped.
+      setTimeout(() => {
+        root.classList.remove('is-jumping');
+        hero.forEach(el => el.classList.add('is-in'));
+      }, 16);
+    }, dip);
+  });
+
   // The Konami code — ↑ ↑ ↓ ↓ ← → ← → B A — from any page, the old way
-  // into a game: on the landing it scrolls to the game and presses Play.
+  // into a game: on the landing it opens the game over the page.
   // The game's own frame never sees these keys while it has focus.
   const KONAMI = [
     'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
@@ -186,10 +225,11 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     typed = key === KONAMI[typed] ? typed + 1 : key === KONAMI[0] ? 1 : 0;
     if (typed < KONAMI.length) return;
     typed = 0;
-    const game = document.getElementById('space-explorer');
-    if (!game) return void (location.href = '/#space-explorer');
-    game.scrollIntoView({ behavior: 'smooth' });
-    document.getElementById('arcade-play')?.click();
+    // The landing's game cabinet opens over the page wherever it is; any
+    // other page sends you to the landing's More Work, where it lives.
+    if (!document.getElementById('arcade-touch'))
+      return void (location.href = '/#more-work');
+    document.dispatchEvent(new Event('arcade:open'));
   });
 
   picker.addEventListener('change', () => {

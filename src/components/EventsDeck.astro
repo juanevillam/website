@@ -1,0 +1,59 @@
+---
+import PanelDeck, { type DeckItem } from './PanelDeck.astro';
+
+/**
+ * Events — where Juan has been, building and learning with other people:
+ * hackathons, talks, the events Salvalo takes him to. The site is the
+ * GitHub profile and the LinkedIn profile in one place, and this is the
+ * LinkedIn half's moments told in his own voice — paraphrased for the
+ * narrator, never the post pasted in.
+ *
+ * A panel deck (PanelDeck) like More Work, oldest first. Its screens are
+ * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
+ * most, each cycling through its share when there are more. A new event
+ * is one more entry here, at the end. The companies a card names link
+ * out (`[Cashea](cashea)` in the copy, TL).
+ */
+
+const LINKS = {
+  yummy: 'https://www.yummysuperapp.com/',
+  cashea: 'https://www.cashea.app/',
+  slash: 'https://www.slash.com/',
+};
+
+// In the order they happened, oldest first: the story reads forward —
+// the second one calls back to the first.
+const EVENTS: DeckItem[] = [
+  {
+    id: 'alegria',
+    name: 'AlegrIA Hackathon',
+    meta: [[{ k: 'events.hackathon' }], ['Caracas'], [{ k: 'events.alegria.when' }]],
+    body: { k: 'events.alegria.body', links: LINKS },
+    phone: { k: 'events.alegria.m', links: LINKS },
+    clip: 'events.alegria.body',
+    // The LinkedIn post's own order, 1 to 6 — shown in pairs (1–2, 3–4,
+    // 5–6): the left frame takes the odd ones, the right the even.
+    image: [
+      '/media/events/vibe-coding-hackathon/team-coding.jpg',
+      '/media/events/vibe-coding-hackathon/talk.jpg',
+      '/media/events/vibe-coding-hackathon/team-selfie.jpg',
+      '/media/events/vibe-coding-hackathon/mentor-call.jpg',
+      '/media/events/vibe-coding-hackathon/founder-call.jpg',
+      '/media/events/vibe-coding-hackathon/yummy-hq.jpg',
+    ],
+    links: [],
+  },
+  {
+    id: 'ilc',
+    name: 'ILC Talks: Liderar para Servir',
+    meta: [[{ k: 'events.talk' }], ['Barquisimeto'], [{ k: 'events.ilc.when' }]],
+    body: { k: 'events.ilc.body', links: LINKS },
+    phone: { k: 'events.ilc.m', links: LINKS },
+    clip: 'events.ilc.body',
+    image: ['/media/events/ilc-talks/stage.jpg'],
+    links: [],
+  },
+];
+---
+
+<PanelDeck id="events" title="events.title" items={EVENTS} />

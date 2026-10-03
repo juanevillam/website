@@ -1,0 +1,658 @@
+---
+import T from './T.astro';
+import type { UIKey } from '../i18n/ui';
+
+/**
+ * SPACE EXPLORER — the Platanus Hack 26 arcade entry, playable from its
+ * More Work card: this is the card's screen (the cover and Play) and the
+ * cabinet Play opens. It used to be a panel of its own; a page of six
+ * different layouts read as noise, so the game became one more card —
+ * the last one, an easter egg in plain sight (Juan, 2026-10-02). The
+ * Konami code (SiteHeader) still opens it from anywhere.
+ *
+ * Play opens the game OVER the whole page: as large as the window allows,
+ * 4:3, on black. (An ambient light beside it — a live thumbnail of the
+ * frame, stretched — was tried and dropped the same day: it stuttered on a
+ * Mac, and black is the more immersive frame anyway.) On a desk the
+ * keyboard plays it;
+ * on a phone, held sideways, a joystick and buttons laid over it do
+ * (lib/arcade-touch.ts). The game runs in an iframe (public/arcade/), so
+ * its window-level key listeners only hear keys while it has focus, and
+ * the 1.2 MB engine loads only when someone presses Play. The cabinet
+ * build itself has no touch input, and still does not.
+ */
+
+// The cabinet's own wiring (CABINET_KEYS in the game): one stick and six
+// buttons, mapped to the keyboard exactly as the dev cabinet maps them.
+const CONTROLS: { keys: string[]; k: UIKey }[] = [
+  { keys: ['W', 'A', 'S', 'D'], k: 'arcade.c.fly' },
+  { keys: ['U'], k: 'arcade.c.fire' },
+  { keys: ['I'], k: 'arcade.c.dash' },
+  { keys: ['O'], k: 'arcade.c.missile' },
+  { keys: ['J', 'L'], k: 'arcade.c.shield' },
+  { keys: ['K'], k: 'arcade.c.overdrive' },
+  { keys: ['Enter'], k: 'arcade.c.start' },
+];
+---
+
+<div class="cover-screen">
+  {/* The cover whole, 4:3 in the card's 3:2, over a still blur of
+      itself — the same treatment as an event's single photo. */}
+  <img class="cover-fill" src="/media/arcade/cover.png" alt="" aria-hidden="true" loading="lazy" decoding="async" />
+  <img
+    class="cover"
+    src="/media/arcade/cover.png"
+    alt="Space Explorer"
+    width="800"
+    height="600"
+    loading="lazy"
+    decoding="async"
+    draggable="false"
+  />
+  {/* The site's own pill — the header's and the narrator's recipe, the
+      narrator's play glyph, the mono label — not a button of its own. */}
+  <button class="house play" id="arcade-play" type="button">
+    <svg class="glyph" viewBox="0 0 16 16" aria-hidden="true">
+      <path fill="currentColor" d="M3.9 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L5.1 1.9c-.5-.3-1.2.1-1.2.7z"></path>
+    </svg>
+    <span class="label"><T k="arcade.play" /></span>
+  </button>
+</div>
+
+<!-- THE CABINET: the game over the whole page. On a phone it is held
+     sideways (upright, it asks to be turned) with our controls laid OVER
+     the game on their own frosted backdrop, so they never read as the
+     game's own HUD. -->
+<div class="touch" id="arcade-touch" hidden>
+  <div class="touch-screen" id="arcade-touch-screen">
+    <p class="house resume" id="arcade-resume" hidden>
+      <span class="label"><T k="arcade.resume" /></span>
+    </p>
+  </div>
+
+    <div class="touch-hud">
+      <button class="house tbtn touch-close" type="button" id="arcade-touch-close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18"></path>
+        </svg>
+        <span class="sr"><T k="arcade.close" /></span>
+      </button>
+
+      {/* Start on the title, pause and resume in flight: the glyph says
+          which one a press will do. */}
+      <button class="house tbtn touch-pause" type="button" data-key="Enter" id="arcade-touch-pause">
+        <svg class="glyph glyph-play" viewBox="0 0 16 16" aria-hidden="true">
+          <path fill="currentColor" d="M3.9 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L5.1 1.9c-.5-.3-1.2.1-1.2.7z"></path>
+        </svg>
+        <svg class="glyph glyph-pause" viewBox="0 0 16 16" aria-hidden="true">
+          <rect fill="currentColor" x="3.5" y="2.5" width="3" height="11" rx="1"></rect>
+          <rect fill="currentColor" x="9.5" y="2.5" width="3" height="11" rx="1"></rect>
+        </svg>
+        <span class="sr"><T k="arcade.c.start" /></span>
+      </button>
+
+      {/* The stick: the thumb lands anywhere in this zone and the base
+          comes to it. At rest the base waits in the corner. */}
+      <div class="stick-zone" id="arcade-stick" aria-label="W A S D">
+        <div class="house stick-base" id="arcade-stick-base">
+          <div class="stick-knob" id="arcade-stick-knob"></div>
+        </div>
+      </div>
+
+      <div class="touch-actions">
+        <button class="house act act-fire" type="button" data-key="u"><span class="label"><T k="arcade.c.fire" /></span></button>
+        <button class="house act act-missile" type="button" data-key="o"><span class="label"><T k="arcade.c.missile" /></span></button>
+        <button class="house act act-dash" type="button" data-key="i"><span class="label"><T k="arcade.c.dash" /></span></button>
+        <button class="house act act-shield" type="button" data-key="j"><span class="label"><T k="arcade.c.shield" /></span></button>
+        <button class="house act act-over" type="button" data-key="k"><span class="label"><T k="arcade.c.overdrive" /></span></button>
+      </div>
+    </div>
+
+
+  <button class="house tbtn desk-only desk-full" type="button" id="arcade-fullscreen">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path>
+    </svg>
+    <span class="sr"><T k="arcade.fullscreen" /></span>
+  </button>
+
+  <ul class="controls legend desk-only">
+    {
+      CONTROLS.map(c => (
+        <li>
+          <span class="keys">
+            {c.keys.map(key => (
+              <kbd>{key}</kbd>
+            ))}
+          </span>
+          <span class="label"><T k={c.k} /></span>
+        </li>
+      ))
+    }
+  </ul>
+
+    <p class="touch-rotate">
+      {/* A phone turning from upright to sideways: the upright one faint,
+          the sideways one solid, the turn drawn between them. */}
+      <svg viewBox="0 0 64 48" width="72" height="54" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="6" width="18" height="32" rx="3.5" opacity="0.35"></rect>
+        <rect x="22" y="22" width="36" height="20" rx="3.5"></rect>
+        <path d="M30 9.5a14 14 0 0 1 16 8"></path>
+        <path d="M47.5 12.5 46 17.5l-5-1.5"></path>
+      </svg>
+      <T k="arcade.rotate" />
+    </p>
+</div>
+
+<style>
+  /* ---------- the card's screen ---------- */
+
+  .cover-screen {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .cover-fill {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    transform: scale(1.2);
+    filter: blur(28px) brightness(0.55);
+  }
+
+  .cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
+  }
+
+  .play {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* THE SITE'S PILL — the header's and the narrator's recipe, exactly:
+     hairline border, the surface at 82% over a blur, ink-2 at rest and
+     full ink with a lighter border on hover (or while a finger holds it).
+     Every control of the game wears it: Play, close, Full Screen, pause,
+     the stick and the action buttons. Text is the site's mono label. */
+  .house {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: var(--float-h);
+    padding: 0 var(--float-pad);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    color: var(--ink-2);
+    font: inherit;
+    cursor: pointer;
+    transition:
+      color var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease);
+  }
+
+  .house:hover,
+  .house.is-held {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .house[hidden] {
+    display: none;
+  }
+
+  .house .label {
+    color: inherit;
+  }
+
+  /* The narrator's glyph, at the narrator's size in a header pill. */
+  .glyph {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Play is the one thing to press on the cover: full ink at rest. */
+  .play {
+    color: var(--ink);
+  }
+
+  /* When the page takes the keyboard back, the game keeps flying — say
+     how to hand it back, over the game, until the next click. */
+  .resume {
+    position: absolute;
+    /* The frame is appended after it, so it would otherwise cover it. */
+    z-index: 1;
+    left: 50%;
+    top: 1rem;
+    margin: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+    font-size: 0.875rem;
+  }
+
+  .controls li {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--legend-row);
+    gap: 0.5rem;
+  }
+
+  .keys {
+    display: inline-flex;
+    gap: 0.1875rem;
+  }
+
+  /* A key: the pill's material at a key's size, in the mono face. */
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.375rem;
+    border: 1px solid var(--hairline);
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  /* ---------- the phone's cabinet ---------- */
+
+  .touch {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #000;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .touch[hidden] {
+    display: none;
+  }
+
+  /* The game fills the screen's height, 4:3, in the middle — on a desk,
+     less the room its bar and its key legend take. */
+  .touch-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: min(100dvh - 9rem, (100vw - 4rem) * 3 / 4);
+    aspect-ratio: 4 / 3;
+    transform: translate(-50%, -50%);
+  }
+
+  .touch-screen :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Our controls, over the game: the site's own pills (see .house), the
+     same material as the header's, so they read as the page's — never as
+     the game's HUD. */
+  .touch-hud {
+    position: absolute;
+    inset: 0;
+    padding: max(0.75rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+
+  .touch-hud > * {
+    pointer-events: auto;
+  }
+
+  /* Over the game the pills hold no text selection or callout. */
+  .touch .house {
+    touch-action: none;
+  }
+
+  .touch-screen,
+  .touch-hud,
+  .touch-rotate {
+    z-index: 1;
+  }
+
+  .tbtn {
+    position: absolute;
+    width: var(--float-h);
+    padding: 0;
+  }
+
+  .touch-close {
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .touch-pause {
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .glyph-pause {
+    display: none;
+  }
+
+  .touch-pause.is-running .glyph-pause {
+    display: block;
+  }
+
+  .touch-pause.is-running .glyph-play {
+    display: none;
+  }
+
+  /* The stick, LOCKED in the lower-left corner, close to the edge: its
+     zone is the base plus a thumb's margin around it, and the base never
+     moves. */
+  .stick-zone {
+    position: absolute;
+    left: max(0.25rem, env(safe-area-inset-left));
+    bottom: max(0.25rem, env(safe-area-inset-bottom));
+    width: 9.5rem;
+    height: 9.5rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .stick-base {
+    width: 7.5rem;
+    height: 7.5rem;
+    padding: 0;
+    cursor: default;
+  }
+
+  /* The knob is the ink — the pill's own inversion. */
+  .stick-knob {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 999px;
+    background: var(--ink);
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.5);
+  }
+
+  /* The actions under the right thumb: FIRE in the corner, the other four
+     on ONE arc round it — the same distance from Fire's centre, the same
+     35° between neighbours, sweeping from its left to above it: Dash,
+     Missile, Shield, Overdrive. Each position comes from that one radius
+     and its angle, so no two can drift to uneven gaps again. The box is
+     anchored to the screen's lower-right corner; every position is measured
+     from there. */
+  .touch-actions {
+    --fx: 3.75rem; /* Fire's centre, from the right edge */
+    --fy: 3.75rem; /* ...and from the bottom */
+    --fr: 2.75rem; /* Fire's radius */
+    --sr: 1.875rem; /* every other button's radius */
+    --ring: 6.75rem; /* centre to centre */
+    position: absolute;
+    right: max(0.5rem, env(safe-area-inset-right));
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    width: 0;
+    height: 0;
+  }
+
+  .act {
+    position: absolute;
+    width: calc(var(--sr) * 2);
+    height: calc(var(--sr) * 2);
+    right: calc(var(--fx) - cos(var(--a)) * var(--ring) - var(--sr));
+    bottom: calc(var(--fy) + sin(var(--a)) * var(--ring) - var(--sr));
+    padding: 0;
+    text-align: center;
+  }
+
+  .act .label {
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+  }
+
+  .act-fire {
+    right: calc(var(--fx) - var(--fr));
+    bottom: calc(var(--fy) - var(--fr));
+    width: calc(var(--fr) * 2);
+    height: calc(var(--fr) * 2);
+  }
+
+  .act-fire .label {
+    font-size: 0.75rem;
+  }
+
+  .act-dash {
+    --a: 180deg;
+  }
+
+  .act-missile {
+    --a: 145deg;
+  }
+
+  .act-shield {
+    --a: 110deg;
+  }
+
+  .act-over {
+    --a: 75deg;
+  }
+
+  .act-over .label {
+    font-size: 0.5rem;
+  }
+
+  /* Upright: no game, just the ask to turn the phone. */
+  .touch-rotate {
+    display: none;
+  }
+
+  @media (orientation: portrait) {
+    .touch-screen,
+    .touch-hud > :not(.touch-close) {
+      visibility: hidden;
+    }
+
+    .touch-rotate {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem;
+      text-align: center;
+      color: var(--ink-2);
+    }
+
+    .touch-rotate svg {
+      color: var(--ink);
+    }
+  }
+
+  /* A touch screen: the game the whole height, our controls over it. */
+  .is-touch .touch-screen {
+    height: min(100dvh, 100vw * 3 / 4);
+  }
+
+  /* A desk: no touch controls — the keyboard plays. Close, Full Screen,
+     and the key legend at the foot. */
+  .touch:not(.is-touch) .touch-hud > :not(.touch-close),
+  .touch:not(.is-touch) .touch-rotate {
+    display: none;
+  }
+
+  .is-touch .desk-only {
+    display: none;
+  }
+
+  .desk-full {
+    position: absolute;
+    z-index: 1;
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .legend {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100vw - 2rem);
+    justify-content: center;
+    --legend-row: 2rem;
+  }
+
+  /* The portrait ask belongs to phones only. */
+  @media (orientation: portrait) {
+    .touch:not(.is-touch) .touch-screen {
+      visibility: visible;
+    }
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { createArcadeTouch } from '../lib/arcade-touch';
+
+  const play = document.getElementById('arcade-play') as HTMLButtonElement;
+  const resume = document.getElementById('arcade-resume') as HTMLElement;
+  const cabinet = document.getElementById('arcade-touch') as HTMLElement;
+  const cabinetScreen = document.getElementById('arcade-touch-screen') as HTMLElement;
+  const pauseBtn = document.getElementById('arcade-touch-pause') as HTMLElement;
+  const fullscreen = document.getElementById('arcade-fullscreen') as HTMLButtonElement;
+
+  // The cabinet is drawn inside its card, but it covers the WINDOW: a
+  // fixed layer inside a deck card (which moves by transform) would be
+  // held to the card. It lives at the page's root instead.
+  document.body.append(cabinet);
+
+  const touch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  cabinet.classList.toggle('is-touch', touch);
+  fullscreen.hidden = !document.fullscreenEnabled;
+
+  let frame: HTMLIFrameElement | null = null;
+  const focusGame = () => frame?.contentWindow?.focus();
+
+  // Wired once; the keys go to whichever game is open.
+  const layer = createArcadeTouch(() => frame);
+  let watch = 0;
+
+  // The pause glyph follows the game: play on the title and while paused,
+  // pause while flying. Enter is the game's own toggle, so the state is
+  // counted here and reset whenever the flight ends.
+  let paused = false;
+  const syncPause = () => {
+    const flying = layer.inFlight();
+    if (!flying) paused = false;
+    pauseBtn.classList.toggle('is-running', flying && !paused);
+  };
+
+  const open = () => {
+    if (frame) return focusGame();
+    cabinet.hidden = false;
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.dataset.arcade = 'open';
+    // The page's narrator pauses for the game's own music.
+    document.dispatchEvent(new Event('arcade:start'));
+    frame = document.createElement('iframe');
+    frame.src = '/arcade/index.html';
+    frame.title = 'Space Explorer';
+    frame.allow = 'fullscreen; autoplay';
+    cabinetScreen.append(frame);
+    frame.addEventListener('load', focusGame);
+    watch = window.setInterval(syncPause, 250);
+  };
+
+  const close = () => {
+    if (!frame) return;
+    clearInterval(watch);
+    layer.stop();
+    frame.remove();
+    frame = null;
+    resume.hidden = true;
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    cabinet.hidden = true;
+    document.documentElement.style.overflow = '';
+    delete document.documentElement.dataset.arcade;
+    document.dispatchEvent(new Event('arcade:close'));
+  };
+
+  if (touch) {
+    for (const el of cabinet.querySelectorAll<HTMLElement>('.act'))
+      layer.button(el, el.dataset.key!);
+    layer.button(pauseBtn, 'Enter', () => {
+      if (layer.inFlight()) paused = !paused;
+    });
+    layer.joystick(
+      document.getElementById('arcade-stick') as HTMLElement,
+      document.getElementById('arcade-stick-base') as HTMLElement,
+      document.getElementById('arcade-stick-knob') as HTMLElement
+    );
+  }
+
+  play.addEventListener('click', open);
+  document.getElementById('arcade-touch-close')?.addEventListener('click', close);
+  // Full screen must be asked for inside the click itself; the game keeps
+  // the keys whether or not it is granted.
+  fullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement)
+      cabinet.requestFullscreen?.().then(focusGame, () => {});
+    else document.exitFullscreen?.();
+    focusGame();
+  });
+  // The Konami code (SiteHeader) opens it from wherever the page is.
+  document.addEventListener('arcade:open', open);
+  // Escape closes it — while the page holds the keys (the game has its
+  // own; Enter is its pause).
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && frame && !document.fullscreenElement) close();
+  });
+
+  // The game hears keys only while its frame has focus. When the page
+  // takes it back (a click outside, a tab switch), say so over the game;
+  // the next click on the frame hands it over again.
+  window.addEventListener('blur', () =>
+    // activeElement moves to the frame just after the blur, not during it.
+    setTimeout(() => {
+      if (frame && document.activeElement === frame) resume.hidden = true;
+    })
+  );
+  window.addEventListener('focus', () => {
+    if (frame && !touch) resume.hidden = false;
+  });
+</script>

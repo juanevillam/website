@@ -6,9 +6,9 @@ import StoryShowcase, {
 } from '../components/StoryShowcase.astro';
 import AppTile from '../components/AppTile.astro';
 import NarrationPlayer from '../components/NarrationPlayer.astro';
-import ArcadeSection from '../components/ArcadeSection.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import WorkCarousel from '../components/WorkCarousel.astro';
+import EventsDeck from '../components/EventsDeck.astro';
 import type { UIKey } from '../i18n/ui';
 
 // Media manifests — iPhone screenshots, all shot by Juan.
@@ -19,13 +19,11 @@ import type { UIKey } from '../i18n/ui';
 const shots = (
   app: string,
   size: [number, number],
-  entries: [name: string | [string, string], title?: string, paras?: UIKey[]][]
+  entries: [name: string, title?: string, paras?: UIKey[]][]
 ) =>
   entries.map(
     ([name, title, paras]): StorySlide => ({
-      src: Array.isArray(name)
-        ? [`/media/${app}/${name[0]}.png`, `/media/${app}/${name[1]}.png`]
-        : `/media/${app}/${name}.png`,
+      src: `/media/${app}/${name}.png`,
       width: size[0],
       height: size[1],
       title,
@@ -33,9 +31,10 @@ const shots = (
     })
   );
 
-// Three slides per app, in the order the story is told — the middle one
-// tells two neighbouring screens side by side (it was two slides until
-// 2026-10-01: two fewer scrolls per story). Each manifest states
+// Four cards per app, in the order the story is told. They turn sideways
+// in one slider, so a fourth card costs no scroll — which is why Player
+// and Shape (Explore and Top) are two cards again rather than one card
+// that alternated two screens (2026-10-01 → 10-02). Each manifest states
 // its own pixel size, and it must match the files on disk: it reserves the
 // slot before the image lands. Both apps are shot on the same iPhone
 // (393x852pt at 3x) today, but a retake on another phone changes that.
@@ -44,11 +43,8 @@ const SHAPER_SLIDES = shots(
   [1179, 2556],
   [
     ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
-    [
-      ['ios-dark-player', 'ios-dark-shape'],
-      'Player and Shape',
-      ['shaper.s23.p1', 'shaper.s23.p2'],
-    ],
+    ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
+    ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
     ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
   ]
 );
@@ -58,11 +54,8 @@ const TOPPER_SLIDES = shots(
   [1179, 2556],
   [
     ['ios-dark-home', 'Home', ['topper.s1.p1', 'topper.s1.p2']],
-    [
-      ['ios-dark-explore', 'ios-dark-top-detail'],
-      'Explore and Top',
-      ['topper.s23.p1', 'topper.s23.p2'],
-    ],
+    ['ios-dark-explore', 'Explore', ['topper.s2.p1', 'topper.s2.p2']],
+    ['ios-dark-top-detail', 'Top', ['topper.s3.p1', 'topper.s3.p2']],
     ['ios-dark-profile', 'Profile', ['topper.s4.p1', 'topper.s4.p2']],
   ]
 );
@@ -95,11 +88,12 @@ const TOPPER_SLIDES = shots(
     <AppTile app="topper" size={76} slot="logo" />
   </StoryShowcase>
 
-  <!-- The page's foot: the game, playable here. -->
-  <ArcadeSection />
 
   <!-- Everything else, secondary: one card per project. -->
   <WorkCarousel />
+
+  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
+  <EventsDeck />
 
   <!-- Each app's legal and help pages, and Juan elsewhere. -->
   <SiteFooter panel />

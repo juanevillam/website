@@ -43,20 +43,21 @@ const STAND_IN: Record<string, string> = {
   'topper.solution': 'shaper.solution',
   'topper.s1.p1': 'shaper.s1.p1',
   'topper.s1.p2': 'shaper.s1.p2',
-  // The merged second slides (2026-10-01): until they are recorded, each
-  // borrows the old recordings closest to its two paragraphs.
-  'shaper.s23.p1': 'shaper.s2.p1',
-  'shaper.s23.p2': 'shaper.s3.p1',
-  'topper.s23.p1': 'shaper.s2.p1',
-  'topper.s23.p2': 'shaper.s3.p1',
+  'topper.s2.p1': 'shaper.s2.p1',
+  'topper.s2.p2': 'shaper.s2.p2',
+  'topper.s3.p1': 'shaper.s3.p1',
+  'topper.s3.p2': 'shaper.s3.p2',
   'topper.s4.p1': 'shaper.s4.p1',
   'topper.s4.p2': 'shaper.s4.p2',
   'arcade.p1': 'shaper.problem',
-  'arcade.p2': 'shaper.solution',
   'work.crol.body': 'shaper.s1.p1',
   'work.salvalo.body': 'shaper.s2.p1',
   'work.maktub.body': 'shaper.s3.p1',
   'work.andreina.body': 'shaper.s4.p1',
+  // The goodbye borrows the hello until Juan records it.
+  footer: 'hero',
+  'events.alegria.body': 'shaper.solution',
+  'events.ilc.body': 'shaper.problem',
 };
 
 const recorded = (key: string): Clip | null => {

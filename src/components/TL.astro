@@ -1,0 +1,39 @@
+---
+import { locales, ui, type UIKey } from '../i18n/ui';
+
+/**
+ * T with LINKS: one translated string whose copy marks its links inline,
+ * `[Cashea](cashea)`, each id resolved from `links`. Every locale keeps its
+ * own wording and word order around the same links — a sentence cut into
+ * before/link/after pieces could only ever hold one.
+ */
+type Props = {
+  k: UIKey;
+  links: Record<string, string>;
+};
+
+const { k, links } = Astro.props;
+
+const MARK = /(\[[^\]]+\]\([a-z0-9-]+\))/;
+const parts = (text: string) =>
+  text.split(MARK).map(seg => {
+    const m = seg.match(/^\[([^\]]+)\]\(([a-z0-9-]+)\)$/);
+    return m ? { text: m[1], href: links[m[2]] } : { text: seg };
+  });
+---
+
+{
+  locales.map(l => (
+    <span class="t" lang={l}>
+      {parts(ui[l][k]).map(p =>
+        p.href ? (
+          <a href={p.href} target="_blank" rel="noopener noreferrer">
+            {p.text}
+          </a>
+        ) : (
+          p.text
+        )
+      )}
+    </span>
+  ))
+}
