@@ -121,7 +121,7 @@ const SOCIAL = [
       }
       {
         !panel && (
-          <div class="column">
+          <div class="column profiles">
             <span class="label">juanevillam</span>
             <ul>
               {SOCIAL.map(({ name, href }) => (
@@ -218,14 +218,6 @@ const SOCIAL = [
     grid-area: name;
     margin-top: 0;
     padding-top: var(--space-4);
-  }
-
-  /* The stories' slide-title step. */
-  .title {
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    font-weight: 800;
-    letter-spacing: var(--track-display);
-    line-height: 0.95;
   }
 
   /* Same size and pitch as the legal links, so the rows line up — set
@@ -369,6 +361,12 @@ const SOCIAL = [
 
     .app-pages:first-child {
       border-top: 1px solid var(--hairline);
+    }
+
+    /* The landing's phone order: who first, the apps' pages under. */
+    .profiles {
+      order: -1;
+      margin-bottom: var(--gap-block);
     }
 
     summary {

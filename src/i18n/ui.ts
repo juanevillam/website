@@ -37,6 +37,12 @@ const en = {
   'legal.delete': 'Delete Account',
   'links.legal': 'Legal',
   'links.help': 'Help',
+  'legal.updated': 'Updated',
+  // The 404 page — a title that names what happened, a body that says
+  // what to do, and the way home.
+  'notFound.title': 'Page Not Found',
+  'notFound.body': "This page doesn't exist or has moved.",
+  'notFound.home': 'Go to Home',
 
   'shaper.problem':
     'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
@@ -187,6 +193,10 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': 'Eliminar cuenta',
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
+    'legal.updated': 'Actualizado',
+    'notFound.title': 'Página no encontrada',
+    'notFound.body': 'Esta página no existe o se movió.',
+    'notFound.home': 'Ir al inicio',
 
     'shaper.problem':
       'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
@@ -328,6 +338,10 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'legal.delete': '删除账户',
     'links.legal': '法律',
     'links.help': '帮助',
+    'legal.updated': '更新于',
+    'notFound.title': '找不到页面',
+    'notFound.body': '此页面不存在或已移动。',
+    'notFound.home': '前往首页',
 
     'shaper.problem':
       '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',

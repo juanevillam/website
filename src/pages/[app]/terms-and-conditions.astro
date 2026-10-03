@@ -1,9 +1,9 @@
 ---
 import Prose from '../../layouts/Prose.astro';
+import L from '../../components/L.astro';
 import {
   AUTHOR_FULL_NAME,
   CONTACT_EMAIL,
-  LEGAL_UPDATED,
   legalPaths,
   type LegalApp,
 } from '../../lib/legal';
@@ -15,62 +15,172 @@ const { app } = Astro.props;
 const social = app.content === 'tops';
 ---
 
-<Prose title="Terms and Conditions" app={app.name} updated={LEGAL_UPDATED}>
-  <p>
-    {app.name} is built and operated by {AUTHOR_FULL_NAME}. By creating an
-    account or using the app you agree to these terms.
-  </p>
-
-  <h2>Your content</h2>
-  <p>
-    What you {social ? 'create' : 'upload'} is yours. You give the app only
-    the permission it needs to store your {app.content} and show them back to
-    you{social ? ' and to other people using the app' : ''}. Only
-    {social ? 'create or upload' : 'upload'} content you have the right to
-    use{
-      !social &&
-        ' — the audio files you add must be yours to keep and listen to'
-    }.
-  </p>
-
-  <h2>Acceptable use</h2>
-  <p>
-    Don't use the app to store or share content that is illegal, infringes
-    someone else's rights, or harms other people. Accounts that do may be
-    suspended or removed{social ? ', along with the content' : ''}.
-  </p>
-  {
-    social && (
+<Prose
+  title={{
+    en: 'Terms and Conditions',
+    es: 'Términos y condiciones',
+    zh: '条款与条件',
+  }}
+  app={app.name}
+>
+  <L>
+    <Fragment slot="en">
       <p>
-        There is no tolerance for objectionable content or abusive people.
-        You can report a comment or a person, and block anyone, from inside
-        the app. Reports are reviewed within 24 hours, and content that breaks
-        these terms is removed, along with the account that posted it when
-        warranted.
+        {app.name} is built and operated by {AUTHOR_FULL_NAME}. By creating
+        an account or using the app you agree to these terms.
       </p>
-    )
-  }
 
-  <h2>The service</h2>
-  <p>
-    The app is provided free of charge, as is, without warranties of any
-    kind. I work to keep it reliable, but I can't guarantee uninterrupted
-    service, and features may change or be discontinued. You can delete your
-    account and all its data at any time — see the
-    <a href={`/${app.slug}/delete-account`}>account deletion page</a>.
-  </p>
+      <h2>Your content</h2>
+      <p>
+        What you {social ? 'create' : 'upload'} is yours. You give the app
+        only the permission it needs to store your {app.content} and show
+        them back to you{social ? ' and to other people using the app' : ''}.
+        Only {social ? 'create or upload' : 'upload'} content you have the
+        right to use{
+          !social &&
+            ' — the audio files you add must be yours to keep and listen to'
+        }.
+      </p>
 
-  <h2>Liability</h2>
-  <p>
-    To the extent the law allows, I'm not liable for indirect damages or for
-    loss of content caused by circumstances outside my control. Keep copies
-    of anything you can't afford to lose.
-  </p>
+      <h2>Acceptable use</h2>
+      <p>
+        Don't use the app to store or share content that is illegal,
+        infringes someone else's rights, or harms other people. Accounts that
+        do may be suspended or removed{social ? ', along with the content' : ''}.
+      </p>
+      {
+        social && (
+          <p>
+            There is no tolerance for objectionable content or abusive
+            people. You can report a comment or a person, and block anyone,
+            from inside the app. Reports are reviewed within 24 hours, and
+            content that breaks these terms is removed, along with the
+            account that posted it when warranted.
+          </p>
+        )
+      }
 
-  <h2>Contact</h2>
-  <p>
-    Questions about these terms:
-    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If these terms
-    change, the date above changes with it.
-  </p>
+      <h2>The service</h2>
+      <p>
+        The app is provided free of charge, as is, without warranties of any
+        kind. I work to keep it reliable, but I can't guarantee uninterrupted
+        service, and features may change or be discontinued. You can delete
+        your account and all its data at any time — see the
+        <a href={`/${app.slug}/delete-account`}>account deletion page</a>.
+      </p>
+
+      <h2>Liability</h2>
+      <p>
+        To the extent the law allows, I'm not liable for indirect damages or
+        for loss of content caused by circumstances outside my control. Keep
+        copies of anything you can't afford to lose.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about these terms:
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If these
+        terms change, the date above changes with it.
+      </p>
+    </Fragment>
+
+    <Fragment slot="es">
+      <p>
+        {app.name} la hace y la opera {AUTHOR_FULL_NAME}. Al crear una cuenta
+        o usar la app, aceptas estos términos.
+      </p>
+
+      <h2>Tu contenido</h2>
+      <p>
+        Lo que {social ? 'creas' : 'subes'} es tuyo. Le das a la app solo el
+        permiso que necesita para guardar tus {app.contentEs} y mostrártelos{social ? ' a ti y a otras personas que usan la app' : ''}.
+        {social ? 'Crea o sube' : 'Sube'} solo contenido que tengas derecho a
+        usar{
+          !social &&
+            ': los archivos de audio que añades deben ser tuyos para guardarlos y escucharlos'
+        }.
+      </p>
+
+      <h2>Uso aceptable</h2>
+      <p>
+        No uses la app para guardar o compartir contenido ilegal, que infrinja
+        los derechos de otra persona o que haga daño a otras personas. Las
+        cuentas que lo hagan pueden ser suspendidas o eliminadas{social ? ', junto con su contenido' : ''}.
+      </p>
+      {
+        social && (
+          <p>
+            No hay tolerancia para el contenido ofensivo ni para las personas
+            abusivas. Desde la app puedes denunciar un comentario o a una
+            persona, y bloquear a quien quieras. Las denuncias se revisan en
+            un plazo de 24 horas, y el contenido que incumple estos términos
+            se elimina, junto con la cuenta que lo publicó cuando corresponde.
+          </p>
+        )
+      }
+
+      <h2>El servicio</h2>
+      <p>
+        La app se ofrece de forma gratuita, tal cual, sin garantías de ningún
+        tipo. Trabajo para que sea fiable, pero no puedo garantizar un
+        servicio ininterrumpido, y las funciones pueden cambiar o dejar de
+        existir. Puedes eliminar tu cuenta y todos sus datos en cualquier
+        momento: consulta la
+        <a href={`/${app.slug}/delete-account`}>página de eliminación de cuenta</a>.
+      </p>
+
+      <h2>Responsabilidad</h2>
+      <p>
+        En la medida en que la ley lo permita, no soy responsable de daños
+        indirectos ni de la pérdida de contenido causada por circunstancias
+        ajenas a mi control. Guarda copias de todo lo que no puedas permitirte
+        perder.
+      </p>
+
+      <h2>Contacto</h2>
+      <p>
+        Preguntas sobre estos términos:
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Si estos
+        términos cambian, la fecha de arriba cambia con ellos.
+      </p>
+    </Fragment>
+
+    <Fragment slot="zh">
+      <p>
+        {app.name} 由 {AUTHOR_FULL_NAME} 打造和运营。创建账户或使用本应用，即表示你同意这些条款。
+      </p>
+
+      <h2>你的内容</h2>
+      <p>
+        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '以及使用该应用的其他人' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{!social && '——你添加的音频文件必须是你有权保存和收听的'}。
+      </p>
+
+      <h2>可接受的使用</h2>
+      <p>
+        不得使用本应用存储或分享违法、侵犯他人权利或伤害他人的内容。违反者的账户可能会被暂停或删除{social ? '，相关内容也会一并删除' : ''}。
+      </p>
+      {
+        social && (
+          <p>
+            我们对令人反感的内容和辱骂他人的行为零容忍。你可以在应用内举报评论或某个人，也可以屏蔽任何人。举报会在 24 小时内处理，违反这些条款的内容会被删除，必要时发布者的账户也会被删除。
+          </p>
+        )
+      }
+
+      <h2>服务</h2>
+      <p>
+        本应用免费提供，按“现状”提供，不附带任何形式的保证。我会尽力保持其可靠，但无法保证服务不中断，功能也可能变更或停止。你可以随时删除账户及其全部数据——请参阅<a href={`/${app.slug}/delete-account`}>账户删除页面</a>。
+      </p>
+
+      <h2>责任</h2>
+      <p>
+        在法律允许的范围内，我不对间接损失或因我无法控制的情况造成的内容丢失承担责任。请为你不能失去的内容保留副本。
+      </p>
+
+      <h2>联系方式</h2>
+      <p>
+        对这些条款有疑问：<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>。这些条款如有变更，上方日期会随之更新。
+      </p>
+    </Fragment>
+  </L>
 </Prose>
