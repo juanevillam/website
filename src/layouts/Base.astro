@@ -6,9 +6,11 @@ import '../styles/global.css';
 type Props = {
   /** Page title; the wordmark is the default (the one-pager). */
   title?: string;
+  /** Keep the page out of search results (the 404). */
+  noindex?: boolean;
 };
 
-const { title = ui.en['meta.title'] } = Astro.props;
+const { title = ui.en['meta.title'], noindex = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -20,6 +22,7 @@ const { title = ui.en['meta.title'] } = Astro.props;
     <meta name="description" content={ui.en['meta.description']} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={new URL('/', Astro.site)} />
+    {noindex && <meta name="robots" content="noindex" />}
     <meta property="og:title" content={ui.en['meta.title']} />
     <meta property="og:description" content={ui.en['meta.description']} />
     <meta property="og:type" content="website" />

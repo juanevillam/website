@@ -1,11 +1,7 @@
 ---
 import Prose from '../../layouts/Prose.astro';
-import {
-  CONTACT_EMAIL,
-  LEGAL_UPDATED,
-  legalPaths,
-  type LegalApp,
-} from '../../lib/legal';
+import L from '../../components/L.astro';
+import { CONTACT_EMAIL, legalPaths, type LegalApp } from '../../lib/legal';
 
 export const getStaticPaths = legalPaths;
 
@@ -13,28 +9,76 @@ type Props = { app: LegalApp };
 const { app } = Astro.props;
 ---
 
-<Prose title="Support" app={app.name} updated={LEGAL_UPDATED}>
-  <p>
-    Something in {app.name} not working, or something you wish it did? Write
-    me directly — I build and maintain the app myself, and I read everything.
-  </p>
+<Prose title={{ en: 'Support', es: 'Soporte', zh: '支持' }} app={app.name}>
+  <L>
+    <Fragment slot="en">
+      <p>
+        Something in {app.name} not working, or something you wish it did?
+        Write me directly — I build and maintain the app myself, and I read
+        everything.
+      </p>
 
-  <h2>Email</h2>
-  <p>
-    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-  </p>
-  <p>It helps if you include:</p>
-  <ul>
-    <li>your device and iOS or Android version,</li>
-    <li>the app version (Settings → About),</li>
-    <li>what you did, what you expected, and what happened instead.</li>
-  </ul>
+      <h2>Email</h2>
+      <p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+      <p>It helps if you include:</p>
+      <ul>
+        <li>your device and iOS or Android version,</li>
+        <li>the app version (Settings → About),</li>
+        <li>what you did, what you expected, and what happened instead.</li>
+      </ul>
 
-  <h2>Your account and data</h2>
-  <p>
-    To remove your account and everything in it, follow the
-    <a href={`/${app.slug}/delete-account`}>account deletion page</a>. The
-    <a href={`/${app.slug}/privacy-policy`}>privacy policy</a> says what the
-    app stores and where.
-  </p>
+      <h2>Your account and data</h2>
+      <p>
+        To remove your account and everything in it, follow the
+        <a href={`/${app.slug}/delete-account`}>account deletion page</a>.
+        The <a href={`/${app.slug}/privacy-policy`}>privacy policy</a> says
+        what the app stores and where.
+      </p>
+    </Fragment>
+
+    <Fragment slot="es">
+      <p>
+        ¿Algo en {app.name} no funciona, o hay algo que te gustaría que
+        hiciera? Escríbeme directamente: yo mismo hago y mantengo la app, y
+        leo todo.
+      </p>
+
+      <h2>Correo electrónico</h2>
+      <p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+      <p>Ayuda si incluyes:</p>
+      <ul>
+        <li>tu dispositivo y tu versión de iOS o Android,</li>
+        <li>la versión de la app (Ajustes → Acerca de),</li>
+        <li>qué hiciste, qué esperabas y qué pasó en su lugar.</li>
+      </ul>
+
+      <h2>Tu cuenta y tus datos</h2>
+      <p>
+        Para eliminar tu cuenta y todo lo que contiene, sigue la
+        <a href={`/${app.slug}/delete-account`}>página de eliminación de cuenta</a>.
+        La <a href={`/${app.slug}/privacy-policy`}>política de privacidad</a>
+        explica qué guarda la app y dónde.
+      </p>
+    </Fragment>
+
+    <Fragment slot="zh">
+      <p>
+        {app.name} 有什么地方出了问题，或者你希望它能做到什么？直接写信给我——这款应用由我亲自打造和维护，每一封信我都会读。
+      </p>
+
+      <h2>电子邮件</h2>
+      <p><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+      <p>如果能附上以下信息会很有帮助：</p>
+      <ul>
+        <li>你的设备，以及 iOS 或 Android 版本；</li>
+        <li>应用版本（设置 → 关于）；</li>
+        <li>你做了什么、预期会发生什么，以及实际发生了什么。</li>
+      </ul>
+
+      <h2>你的账户和数据</h2>
+      <p>
+        如需删除你的账户及其中的全部内容，请参阅<a href={`/${app.slug}/delete-account`}>账户删除页面</a>。<a href={`/${app.slug}/privacy-policy`}>隐私政策</a>说明了应用存储哪些数据以及存储在哪里。
+      </p>
+    </Fragment>
+  </L>
 </Prose>

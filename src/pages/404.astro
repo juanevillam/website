@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import T from '../components/T.astro';
+import { ui } from '../i18n/ui';
+
+/**
+ * Any URL the site doesn't have. Astro emits this as `dist/404.html`, and
+ * Cloudflare Pages serves it with a real 404 status for every unmatched
+ * path — without it, Pages assumes a single-page app and answers every
+ * typo with the landing page and a 200.
+ *
+ * Composed like the hero: one centred block on a full-height panel, the
+ * code where the wordmark stands. There is no 500 twin on purpose — the
+ * site is static output, so nothing renders at request time that could
+ * fail.
+ */
+---
+
+<Base title={`${ui.en['notFound.title']} — juanevillam`} noindex>
+  <section class="not-found">
+    <div class="inner" data-reveal>
+      <p class="display code">404</p>
+      <h1 class="title"><T k="notFound.title" /></h1>
+      <p class="body"><T k="notFound.body" /></p>
+      <a class="home" href="/"><T k="notFound.home" /></a>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  /* One panel, nothing to snap between. */
+  html {
+    scroll-snap-type: none;
+  }
+</style>
+
+<style>
+  .not-found {
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--header-h) clamp(1.25rem, 4vw, 2.5rem) 0;
+  }
+
+  .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .title {
+    margin-top: var(--space-1);
+  }
+
+  .body {
+    margin-top: 0.75rem;
+  }
+
+  .home {
+    margin-top: 2rem;
+  }
+</style>

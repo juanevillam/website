@@ -155,6 +155,18 @@ html[data-lang='zh'] .t[lang='zh'] {
   display: inline;
 }
 
+/* The block twin (L.astro): whole passages, one per language. */
+.tb {
+  display: none;
+}
+
+html:not([data-lang]) .tb[lang='en'],
+html[data-lang='en'] .tb[lang='en'],
+html[data-lang='es'] .tb[lang='es'],
+html[data-lang='zh'] .tb[lang='zh'] {
+  display: block;
+}
+
 /* The site pages, not free-scrolls — every section is a full-height panel
    the viewport snaps to, the way an app screens its content. Scenes are
    still coupled to the scroll position; the snap decides where it rests. */
@@ -233,11 +245,14 @@ a:hover {
   line-height: 1;
 }
 
-.heading {
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  font-weight: 700;
-  letter-spacing: var(--track-heading);
-  line-height: 1.15;
+/* The section-title step: a story's slide title, the footer's name, a
+   document's title. Same weight and tracking as the display, a size
+   down. */
+.title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: var(--track-display);
+  line-height: 0.95;
 }
 
 .body {

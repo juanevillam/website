@@ -1,9 +1,9 @@
 ---
 import Prose from '../../layouts/Prose.astro';
+import L from '../../components/L.astro';
 import {
   AUTHOR_FULL_NAME,
   CONTACT_EMAIL,
-  LEGAL_UPDATED,
   legalPaths,
   type LegalApp,
 } from '../../lib/legal';
@@ -15,84 +15,240 @@ const { app } = Astro.props;
 const social = app.content === 'tops';
 ---
 
-<Prose title="Privacy Policy" app={app.name} updated={LEGAL_UPDATED}>
-  <p>
-    {app.name} is built and operated by {AUTHOR_FULL_NAME} ("I", "me"). This
-    policy says what data the app handles, where it lives, and how you remove
-    it. The short version: the app collects the minimum it needs to work,
-    shows no ads, runs no third-party analytics, and never sells data.
-  </p>
+<Prose
+  title={{
+    en: 'Privacy Policy',
+    es: 'Política de privacidad',
+    zh: '隐私政策',
+  }}
+  app={app.name}
+>
+  <L>
+    <Fragment slot="en">
+      <p>
+        {app.name} is built and operated by {AUTHOR_FULL_NAME} ("I", "me").
+        This policy says what data the app handles, where it lives, and how
+        you remove it. The short version: the app collects the minimum it
+        needs to work, shows no ads, runs no third-party analytics, and never
+        sells data.
+      </p>
 
-  <h2>What the app collects</h2>
-  <ul>
-    <li>
-      <strong>Account.</strong> When you sign in, the app stores your email
-      address, display name, and profile photo as provided by the sign-in
-      method you choose: Google, or Apple on iPhone. If you sign in with
-      Apple and choose to hide your email, the app only ever sees the
-      relay address Apple gives it.
-    </li>
-    {
-      social ? (
+      <h2>What the app collects</h2>
+      <ul>
         <li>
-          <strong>Content you create.</strong> Your profile (username, name,
-          photo), your tops and their items, images and emoji you attach,
-          descriptions, comments, reactions, and who you follow or block.
-          Profiles and tops are visible to other people using the app.
+          <strong>Account.</strong> When you sign in, the app stores your
+          email address, display name, and profile photo as provided by the
+          sign-in method you choose: Google, or Apple on iPhone. If you sign
+          in with Apple and choose to hide your email, the app only ever sees
+          the relay address Apple gives it.
         </li>
-      ) : (
+        {
+          social ? (
+            <li>
+              <strong>Content you create.</strong> Your profile (username,
+              name, photo), your tops and their items, images and emoji you
+              attach, descriptions, comments, reactions, and who you follow
+              or block. Profiles and tops are visible to other people using
+              the app.
+            </li>
+          ) : (
+            <li>
+              <strong>Content you add.</strong> The MP3 files you upload,
+              their artwork, titles and subtitles, and the shapes and clips
+              you save. Your library is private to your account — nothing in{' '}
+              {app.name} is shown to other people.
+            </li>
+          )
+        }
+      </ul>
+
+      <h2>Where it lives</h2>
+      <ul>
         <li>
-          <strong>Content you add.</strong> The MP3 files you upload, their
-          artwork, titles and subtitles, and the shapes and clips you save.
-          Your library is private to your account — nothing in {app.name} is
-          shown to other people.
+          <strong>Google Firebase</strong> — authentication and the app's
+          database.
         </li>
-      )
-    }
-  </ul>
-
-  <h2>Where it lives</h2>
-  <ul>
-    <li>
-      <strong>Google Firebase</strong> — authentication and the app's
-      database.
-    </li>
-    <li>
-      <strong>Cloudinary</strong> — the media you upload (stored under an
-      identifier tied to your account, so only your account can replace or
-      delete it).
-    </li>
-    {
-      !social && (
         <li>
-          <strong>Your device</strong> — {app.name} mirrors your library
-          locally so playback and shaping work without internet.
+          <strong>Cloudinary</strong> — the media you upload (stored under an
+          identifier tied to your account, so only your account can replace
+          or delete it).
         </li>
-      )
-    }
-  </ul>
+        {
+          !social && (
+            <li>
+              <strong>Your device</strong> — {app.name} mirrors your library
+              locally so playback and shaping work without internet.
+            </li>
+          )
+        }
+      </ul>
 
-  <h2>What it's used for</h2>
-  <p>
-    Solely to run the app: signing you in, storing your {app.content}, and
-    syncing them to your device{social ? ' and to the people you share with' : ''}.
-    There is no advertising, no analytics SDK, no tracking across apps, and no
-    sale or sharing of personal data with third parties beyond the two
-    services above.
-  </p>
+      <h2>What it's used for</h2>
+      <p>
+        Solely to run the app: signing you in, storing your {app.content},
+        and syncing them to your device{social ? ' and to the people you share with' : ''}.
+        There is no advertising, no analytics SDK, no tracking across apps,
+        and no sale or sharing of personal data with third parties beyond the
+        two services above.
+      </p>
 
-  <h2>Deleting your data</h2>
-  <p>
-    You can delete your account from inside the app (Settings → your account →
-    Delete Account). That permanently removes your account, your {app.content},
-    and your uploaded media. There's also a
-    <a href={`/${app.slug}/delete-account`}>step-by-step page</a>, and you can
-    email me instead if you can't access the app.
-  </p>
+      <h2>Deleting your data</h2>
+      <p>
+        You can delete your account from inside the app (Settings → your
+        account → Delete Account). That permanently removes your account,
+        your {app.content}, and your uploaded media. There's also a
+        <a href={`/${app.slug}/delete-account`}>step-by-step page</a>, and you
+        can email me instead if you can't access the app.
+      </p>
 
-  <h2>Contact</h2>
-  <p>
-    Questions about this policy: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-    If this policy changes, the date above changes with it.
-  </p>
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy:
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If this policy
+        changes, the date above changes with it.
+      </p>
+    </Fragment>
+
+    <Fragment slot="es">
+      <p>
+        {app.name} la hace y la opera {AUTHOR_FULL_NAME} ("yo"). Esta
+        política explica qué datos maneja la app, dónde se guardan y cómo
+        eliminarlos. En resumen: la app recopila lo mínimo que necesita para
+        funcionar, no muestra anuncios, no usa analítica de terceros y nunca
+        vende datos.
+      </p>
+
+      <h2>Qué recopila la app</h2>
+      <ul>
+        <li>
+          <strong>Cuenta.</strong> Cuando inicias sesión, la app guarda tu
+          correo electrónico, tu nombre y tu foto de perfil tal como los
+          proporciona el método de inicio de sesión que elijas: Google, o
+          Apple en iPhone. Si inicias sesión con Apple y eliges ocultar tu
+          correo, la app solo ve la dirección de reenvío que Apple le da.
+        </li>
+        {
+          social ? (
+            <li>
+              <strong>Contenido que creas.</strong> Tu perfil (nombre de
+              usuario, nombre, foto), tus tops y sus elementos, las imágenes y
+              los emojis que adjuntas, las descripciones, los comentarios, las
+              reacciones, y a quién sigues o bloqueas. Los perfiles y los tops
+              son visibles para otras personas que usan la app.
+            </li>
+          ) : (
+            <li>
+              <strong>Contenido que añades.</strong> Los archivos MP3 que
+              subes, su ilustración, títulos y subtítulos, y los ajustes de
+              sonido y los clips que guardas. Tu biblioteca es privada para tu
+              cuenta: nada en {app.name} se muestra a otras personas.
+            </li>
+          )
+        }
+      </ul>
+
+      <h2>Dónde se guarda</h2>
+      <ul>
+        <li>
+          <strong>Google Firebase</strong>: la autenticación y la base de
+          datos de la app.
+        </li>
+        <li>
+          <strong>Cloudinary</strong>: los archivos que subes (guardados bajo
+          un identificador vinculado a tu cuenta, para que solo tu cuenta
+          pueda reemplazarlos o eliminarlos).
+        </li>
+        {
+          !social && (
+            <li>
+              <strong>Tu dispositivo</strong>: {app.name} guarda una copia de
+              tu biblioteca en el teléfono para que la reproducción y los
+              ajustes funcionen sin internet.
+            </li>
+          )
+        }
+      </ul>
+
+      <h2>Para qué se usa</h2>
+      <p>
+        Solo para que la app funcione: iniciar tu sesión, guardar tus{' '}
+        {app.contentEs} y sincronizarlos con tu dispositivo{social ? ' y con las personas con quienes los compartes' : ''}.
+        No hay publicidad, ni SDK de analítica, ni rastreo entre apps, ni
+        venta o cesión de datos personales a terceros más allá de los dos
+        servicios anteriores.
+      </p>
+
+      <h2>Eliminar tus datos</h2>
+      <p>
+        Puedes eliminar tu cuenta desde la app (Ajustes → tu cuenta →
+        Eliminar cuenta). Eso elimina de forma permanente tu cuenta, tus{' '}
+        {app.contentEs} y los archivos que subiste. También hay una
+        <a href={`/${app.slug}/delete-account`}>página con los pasos</a>, y
+        puedes escribirme por correo si no puedes acceder a la app.
+      </p>
+
+      <h2>Contacto</h2>
+      <p>
+        Preguntas sobre esta política:
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Si esta
+        política cambia, la fecha de arriba cambia con ella.
+      </p>
+    </Fragment>
+
+    <Fragment slot="zh">
+      <p>
+        {app.name} 由 {AUTHOR_FULL_NAME}（“我”）打造和运营。本政策说明应用处理哪些数据、数据存储在哪里，以及如何删除。简而言之：应用只收集运行所需的最少数据，不展示广告，不使用第三方分析，也从不出售数据。
+      </p>
+
+      <h2>应用收集的内容</h2>
+      <ul>
+        <li>
+          <strong>账户。</strong>你登录时，应用会存储你所选登录方式提供的电子邮件地址、显示名称和头像：Google，或在 iPhone 上使用 Apple。如果你使用 Apple 登录并选择隐藏邮件地址，应用只会看到 Apple 提供的转发地址。
+        </li>
+        {
+          social ? (
+            <li>
+              <strong>你创建的内容。</strong>你的个人资料（用户名、名称、照片）、你的榜单及其条目、你添加的图片和表情符号、描述、评论、反应，以及你关注或屏蔽的人。个人资料和榜单对使用该应用的其他人可见。
+            </li>
+          ) : (
+            <li>
+              <strong>你添加的内容。</strong>你上传的 MP3 文件及其插图、标题和副标题，以及你保存的声音设置和片段。你的资料库只属于你的账户——{app.name} 中的任何内容都不会展示给其他人。
+            </li>
+          )
+        }
+      </ul>
+
+      <h2>存储位置</h2>
+      <ul>
+        <li>
+          <strong>Google Firebase</strong>——身份验证和应用的数据库。
+        </li>
+        <li>
+          <strong>Cloudinary</strong>——你上传的媒体（存储在与你的账户绑定的标识下，因此只有你的账户可以替换或删除它们）。
+        </li>
+        {
+          !social && (
+            <li>
+              <strong>你的设备</strong>——{app.name} 会在本地保存你的资料库，让播放和声音调整无需联网也能使用。
+            </li>
+          )
+        }
+      </ul>
+
+      <h2>用途</h2>
+      <p>
+        仅用于运行应用：让你登录、存储你的{app.contentZh}，并将其同步到你的设备{social ? '以及你分享的对象' : ''}。没有广告，没有分析 SDK，没有跨应用追踪，除上述两项服务外，也不会向第三方出售或共享个人数据。
+      </p>
+
+      <h2>删除你的数据</h2>
+      <p>
+        你可以在应用内删除账户（设置 → 你的账户 → 删除账户）。这会永久删除你的账户、你的{app.contentZh}以及你上传的媒体。也可以参阅<a href={`/${app.slug}/delete-account`}>分步说明页面</a>；如果无法访问应用，也可以给我发电子邮件。
+      </p>
+
+      <h2>联系方式</h2>
+      <p>
+        对本政策有疑问：<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>。本政策如有变更，上方日期会随之更新。
+      </p>
+    </Fragment>
+  </L>
 </Prose>

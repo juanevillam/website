@@ -1,3 +1,5 @@
+import type { Locale } from '../i18n/ui';
+
 /**
  * The two published apps and the facts their legal pages share. The URL
  * shape (juanevillam.com/{slug}/{page}) is the one the apps' `legalUrl`
@@ -10,11 +12,15 @@ export const LEGAL_APPS = [
     name: 'Sound Shaper',
     /** What the person's content is, in that app's own noun. */
     content: 'sounds' as const,
+    contentEs: 'sonidos',
+    contentZh: '音频',
   },
   {
     slug: 'topper',
     name: 'Topper',
     content: 'tops' as const,
+    contentEs: 'tops',
+    contentZh: '榜单',
   },
 ];
 
@@ -25,4 +31,11 @@ export const legalPaths = () =>
 
 export const CONTACT_EMAIL = 'juanesvillamendoza@gmail.com';
 export const AUTHOR_FULL_NAME = 'Juan Esteban Villa Mendoza';
-export const LEGAL_UPDATED = 'October 1, 2026';
+/** ISO date; each language formats it its own way (see `legalDate`). */
+export const LEGAL_UPDATED = '2026-10-01';
+
+export const legalDate = (locale: Locale) =>
+  new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
+    dateStyle: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(LEGAL_UPDATED));

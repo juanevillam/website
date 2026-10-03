@@ -1,0 +1,12 @@
+---
+/**
+ * A whole BLOCK of copy in all three languages — T's twin for content too
+ * long or too structured for a string table (the legal pages). Each
+ * locale is a named slot; CSS shows the one html[data-lang] names, so the
+ * page re-renders in place exactly as T does.
+ */
+---
+
+<div class="tb" lang="en"><slot name="en" /></div>
+<div class="tb" lang="es"><slot name="es" /></div>
+<div class="tb" lang="zh"><slot name="zh" /></div>
