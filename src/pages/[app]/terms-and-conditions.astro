@@ -34,7 +34,7 @@ const social = app.content === 'tops';
       <p>
         What you {social ? 'create' : 'upload'} is yours. You give the app
         only the permission it needs to store your {app.content} and show
-        them back to you{social ? ' and to other people using the app' : ''}.
+        them back to you{social ? ', and to other people for what you make public' : ''}.
         Only {social ? 'create or upload' : 'upload'} content you have the
         right to use{
           !social &&
@@ -52,7 +52,7 @@ const social = app.content === 'tops';
         social && (
           <p>
             There is no tolerance for objectionable content or abusive
-            people. You can report a comment or a person, and block anyone,
+            people. You can report a top, a comment or a person, and block anyone,
             from inside the app. Reports are reviewed within 24 hours, and
             content that breaks these terms is removed, along with the
             account that posted it when warranted.
@@ -93,7 +93,7 @@ const social = app.content === 'tops';
       <h2>Tu contenido</h2>
       <p>
         Lo que {social ? 'creas' : 'subes'} es tuyo. Le das a la app solo el
-        permiso que necesita para guardar tus {app.contentEs} y mostrártelos{social ? ' a ti y a otras personas que usan la app' : ''}.
+        permiso que necesita para guardar tus {app.contentEs} y mostrártelos{social ? ', y a otras personas en lo que haces público' : ''}.
         {social ? 'Crea o sube' : 'Sube'} solo contenido que tengas derecho a
         usar{
           !social &&
@@ -111,8 +111,8 @@ const social = app.content === 'tops';
         social && (
           <p>
             No hay tolerancia para el contenido ofensivo ni para las personas
-            abusivas. Desde la app puedes denunciar un comentario o a una
-            persona, y bloquear a quien quieras. Las denuncias se revisan en
+            abusivas. Desde la app puedes denunciar un top, un comentario o a
+            una persona, y bloquear a quien quieras. Las denuncias se revisan en
             un plazo de 24 horas, y el contenido que incumple estos términos
             se elimina, junto con la cuenta que lo publicó cuando corresponde.
           </p>
@@ -152,7 +152,7 @@ const social = app.content === 'tops';
 
       <h2>你的内容</h2>
       <p>
-        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '以及使用该应用的其他人' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{!social && '——你添加的音频文件必须是你有权保存和收听的'}。
+        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '（以及将你公开的内容展示给其他人）' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{!social && '——你添加的音频文件必须是你有权保存和收听的'}。
       </p>
 
       <h2>可接受的使用</h2>
@@ -162,7 +162,7 @@ const social = app.content === 'tops';
       {
         social && (
           <p>
-            我们对令人反感的内容和辱骂他人的行为零容忍。你可以在应用内举报评论或某个人，也可以屏蔽任何人。举报会在 24 小时内处理，违反这些条款的内容会被删除，必要时发布者的账户也会被删除。
+            我们对令人反感的内容和辱骂他人的行为零容忍。你可以在应用内举报榜单、评论或某个人，也可以屏蔽任何人。举报会在 24 小时内处理，违反这些条款的内容会被删除，必要时发布者的账户也会被删除。
           </p>
         )
       }

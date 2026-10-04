@@ -32,7 +32,7 @@ export const legalPaths = () =>
 export const CONTACT_EMAIL = 'juanesvillamendoza@gmail.com';
 export const AUTHOR_FULL_NAME = 'Juan Esteban Villa Mendoza';
 /** ISO date; each language formats it its own way (see `legalDate`). */
-export const LEGAL_UPDATED = '2026-10-01';
+export const LEGAL_UPDATED = '2026-10-03';
 
 export const legalDate = (locale: Locale) =>
   new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
