@@ -7,6 +7,11 @@ export const getStaticPaths = legalPaths;
 
 type Props = { app: LegalApp };
 const { app } = Astro.props;
+const social = app.content === 'tops';
+// The steps follow each app's real entry: Topper's account lives on the
+// Profile tab, Sound Shaper's behind its Settings banner. Re-authentication
+// runs on both of Topper's platforms and on Sound Shaper's iOS; Sound
+// Shaper's Android asks for a fresh sign-in only when the session is stale.
 ---
 
 <Prose
@@ -20,27 +25,37 @@ const { app } = Astro.props;
   <L>
     <Fragment slot="en">
       <p>
-        Deleting your {app.name} account permanently removes the account
-        itself, your {app.content}, and every file you uploaded. This can't be
-        undone.
+        Deleting your {app.name} account permanently removes the account and
+        everything in it. This can't be undone.
       </p>
 
       <h2>From inside the app</h2>
       <ul>
-        <li>Open <strong>Settings</strong>.</li>
-        <li>Open your account.</li>
-        <li>
-          Tap <strong>Delete Account</strong> and confirm. You may be asked to
-          sign in again first — deleting an account requires a recent
-          sign-in.
-        </li>
+        {
+          social ? (
+            <>
+              <li>Open the <strong>Profile</strong> tab.</li>
+              <li>Tap the <strong>Account</strong> button at the top right.</li>
+            </>
+          ) : (
+            <>
+              <li>On Home, open <strong>Settings</strong>.</li>
+              <li>Tap your name at the top.</li>
+            </>
+          )
+        }
+        <li>Tap <strong>Delete Account</strong> and confirm.</li>
       </ul>
       <p>
-        The deletion runs immediately: the app removes your uploaded media,
-        your data, and then the account itself. If you signed in with Apple,
-        it also revokes {app.name}'s access to your Apple Account, so the app
-        disappears from Settings → Apple Account → Sign in with Apple on your
-        iPhone.
+        {
+          social
+            ? "Before anything is deleted, the app asks you to sign in again to confirm it's you."
+            : "On iPhone, the app first asks you to sign in again to confirm it's you. On Android, if you signed in a while ago, it asks you to sign out, sign back in and try again."
+        }{' '}
+        Then the deletion runs right away: your uploaded files, then your
+        data, then the account itself. If you signed in with Apple, {app.name}
+        is also removed from the apps that use Sign in with Apple on your
+        Apple Account.
       </p>
 
       <h2>If you can't access the app</h2>
@@ -52,10 +67,35 @@ const { app } = Astro.props;
 
       <h2>What is deleted</h2>
       <ul>
-        <li>Your account (sign-in identity, email, name, photo).</li>
-        <li>Everything you created in the app — your {app.content}.</li>
-        <li>Your uploaded media.</li>
+        <li>Your account: your sign-in, email, name and photo.</li>
+        {
+          social ? (
+            <>
+              <li>Your profile and username.</li>
+              <li>
+                Every top you made — including those in Recently Deleted — with
+                its items and their images.
+              </li>
+              <li>Your comments, reactions, follows and blocks.</li>
+              <li>Your trophies.</li>
+            </>
+          ) : (
+            <>
+              <li>Every sound you added, with its audio and artwork.</li>
+              <li>Your clips.</li>
+              <li>Your trophies.</li>
+            </>
+          )
+        }
       </ul>
+      {
+        social && (
+          <p>
+            Reports you sent about other people's content are kept, so they
+            can still be reviewed.
+          </p>
+        )
+      }
       <p>
         Details on what the app stores are in the
         <a href={`/${app.slug}/privacy-policy`}>privacy policy</a>.
@@ -64,27 +104,37 @@ const { app } = Astro.props;
 
     <Fragment slot="es">
       <p>
-        Eliminar tu cuenta de {app.name} borra de forma permanente la cuenta,
-        tus {app.contentEs} y todos los archivos que subiste. No se puede
-        deshacer.
+        Eliminar tu cuenta de {app.name} borra de forma permanente la cuenta y
+        todo lo que contiene. No se puede deshacer.
       </p>
 
       <h2>Desde la app</h2>
       <ul>
-        <li>Abre <strong>Ajustes</strong>.</li>
-        <li>Abre tu cuenta.</li>
-        <li>
-          Toca <strong>Eliminar cuenta</strong> y confirma. Puede que primero
-          te pida iniciar sesión de nuevo: eliminar una cuenta requiere un
-          inicio de sesión reciente.
-        </li>
+        {
+          social ? (
+            <>
+              <li>Abre la pestaña <strong>Perfil</strong>.</li>
+              <li>Toca el botón <strong>Cuenta</strong> arriba a la derecha.</li>
+            </>
+          ) : (
+            <>
+              <li>En el inicio, abre <strong>Ajustes</strong>.</li>
+              <li>Toca tu nombre, arriba del todo.</li>
+            </>
+          )
+        }
+        <li>Toca <strong>Eliminar cuenta</strong> y confirma.</li>
       </ul>
       <p>
-        La eliminación es inmediata: la app borra los archivos que subiste,
-        tus datos y, por último, la cuenta. Si iniciaste sesión con Apple,
-        también revoca el acceso de {app.name} a tu Cuenta de Apple, así que la
-        app desaparece de Ajustes → Cuenta de Apple → Iniciar sesión con Apple
-        en tu iPhone.
+        {
+          social
+            ? 'Antes de borrar nada, la app te pide iniciar sesión de nuevo para confirmar que eres tú.'
+            : 'En iPhone, la app primero te pide iniciar sesión de nuevo para confirmar que eres tú. En Android, si iniciaste sesión hace tiempo, te pide cerrar sesión, volver a iniciarla e intentarlo de nuevo.'
+        }{' '}
+        Después la eliminación es inmediata: primero los archivos que subiste,
+        luego tus datos y, por último, la cuenta. Si iniciaste sesión con
+        Apple, {app.name} también desaparece de las apps que usan Iniciar
+        sesión con Apple en tu Cuenta de Apple.
       </p>
 
       <h2>Si no puedes acceder a la app</h2>
@@ -96,10 +146,35 @@ const { app } = Astro.props;
 
       <h2>Qué se elimina</h2>
       <ul>
-        <li>Tu cuenta (identidad de inicio de sesión, correo, nombre, foto).</li>
-        <li>Todo lo que creaste en la app: tus {app.contentEs}.</li>
-        <li>Los archivos que subiste.</li>
+        <li>Tu cuenta: tu inicio de sesión, correo, nombre y foto.</li>
+        {
+          social ? (
+            <>
+              <li>Tu perfil y tu nombre de usuario.</li>
+              <li>
+                Todos los tops que hiciste, incluidos los de Eliminados
+                recientemente, con sus elementos y sus imágenes.
+              </li>
+              <li>Tus comentarios, reacciones, seguidos y bloqueos.</li>
+              <li>Tus trofeos.</li>
+            </>
+          ) : (
+            <>
+              <li>Todos los sonidos que añadiste, con su audio e ilustración.</li>
+              <li>Tus clips.</li>
+              <li>Tus trofeos.</li>
+            </>
+          )
+        }
       </ul>
+      {
+        social && (
+          <p>
+            Las denuncias que enviaste sobre contenido de otras personas se
+            conservan para poder revisarlas.
+          </p>
+        )
+      }
       <p>
         Los detalles de lo que guarda la app están en la
         <a href={`/${app.slug}/privacy-policy`}>política de privacidad</a>.
@@ -108,19 +183,32 @@ const { app } = Astro.props;
 
     <Fragment slot="zh">
       <p>
-        删除你的 {app.name} 账户会永久删除账户本身、你的{app.contentZh}以及你上传的所有文件。此操作无法撤销。
+        删除你的 {app.name} 账户会永久删除账户及其中的所有内容。此操作无法撤销。
       </p>
 
       <h2>在应用内删除</h2>
       <ul>
-        <li>打开<strong>设置</strong>。</li>
-        <li>打开你的账户。</li>
-        <li>
-          轻点<strong>删除账户</strong>并确认。系统可能会先要求你重新登录——删除账户需要近期登录过。
-        </li>
+        {
+          social ? (
+            <>
+              <li>打开<strong>个人资料</strong>标签页。</li>
+              <li>轻点右上角的<strong>账户</strong>按钮。</li>
+            </>
+          ) : (
+            <>
+              <li>在首页打开<strong>设置</strong>。</li>
+              <li>轻点顶部你的名字。</li>
+            </>
+          )
+        }
+        <li>轻点<strong>删除账户</strong>并确认。</li>
       </ul>
       <p>
-        删除会立即执行：应用会先删除你上传的媒体，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，应用还会撤销 {app.name} 对你 Apple 账户的访问权限，因此它会从 iPhone 上的“设置 → Apple 账户 → 通过 Apple 登录”中消失。
+        {
+          social
+            ? '删除任何内容之前，应用会要求你重新登录以确认是你本人。'
+            : '在 iPhone 上，应用会先要求你重新登录以确认是你本人。在 Android 上，如果你登录已久，应用会请你退出登录、重新登录后再试一次。'
+        }随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除。
       </p>
 
       <h2>如果你无法访问应用</h2>
@@ -130,10 +218,27 @@ const { app } = Astro.props;
 
       <h2>会删除哪些内容</h2>
       <ul>
-        <li>你的账户（登录身份、电子邮件、名称、照片）。</li>
-        <li>你在应用中创建的所有内容——你的{app.contentZh}。</li>
-        <li>你上传的媒体。</li>
+        <li>你的账户：登录身份、电子邮件、名称和照片。</li>
+        {
+          social ? (
+            <>
+              <li>你的个人资料和用户名。</li>
+              <li>你创建的所有榜单（包括“最近删除”中的），连同其中的条目和图片。</li>
+              <li>你的评论、反应、关注和屏蔽。</li>
+              <li>你的奖杯。</li>
+            </>
+          ) : (
+            <>
+              <li>你添加的所有音频，连同音频文件和插图。</li>
+              <li>你的片段。</li>
+              <li>你的奖杯。</li>
+            </>
+          )
+        }
       </ul>
+      {
+        social && <p>你就他人内容提交的举报会被保留，以便继续审核。</p>
+      }
       <p>
         关于应用存储哪些数据，详见<a href={`/${app.slug}/privacy-policy`}>隐私政策</a>。
       </p>
