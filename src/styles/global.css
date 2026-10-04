@@ -11,6 +11,9 @@
   --ink: #f5f5f5;
   --ink-2: #a3a3a3;
   --ink-3: #737373;
+  /* Running text — a step lighter than --ink-2, which reads fine on a
+     label but tires the eye across a paragraph (Ana, 2026-10-04). */
+  --ink-body: #bdbdbd;
   --surface: #161616;
   --hairline: #262626;
 
@@ -256,7 +259,8 @@ a:hover {
 }
 
 .body {
-  color: var(--ink-2);
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  color: var(--ink-body);
   max-width: var(--measure);
 }
 
