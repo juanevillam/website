@@ -65,25 +65,25 @@ const en = {
   'shaper.s4.p2':
     'Save them as clips you can loop anytime. Each clip stays attached to its song, and you can edit it, delete it or play it again whenever you want.',
   'topper.problem':
-    'My favorite games, movies and songs lived in my head as rankings I changed every week, and the only place to share them was a group chat, where they scrolled away within the hour.',
+    "I made tops of everything — movies, video games, even my favorite Pokémon — and I actually used them: before watching a new movie I'd check it against my top and already know whether I'd like it. They lived in Google Keep notes, where moving one thing up a spot meant cutting and pasting by hand.",
   'topper.solution':
-    'An app for tops of anything: rank what you love, follow people whose taste you trust, and settle the order in the comments. Like Letterboxd, but for every list you would make.',
+    "An app where your tops live in one place, reorder with a drag, and the tops of the people you follow are always up to date — I stopped asking my brother whether his were still the same. Letterboxd already existed, but it wasn't mine, and when something is this personal I like it to work exactly the way I want.",
   'topper.s1.p1':
-    'The app opens on your tops, each one showing its number one as the cover.',
+    'The app opens on your tops, each with its number one as the cover, so you know every list at a glance.',
   'topper.s1.p2':
-    'Below, the tops of the people you follow — their whole order, not just a like, so you see exactly where their taste and yours part ways.',
+    'Below, the tops of the people you follow, always in their latest version: if my brother changes his games top, I see it there without having to ask.',
   'topper.s2.p1':
-    'Explore is where you find people worth following, and the tops of everyone else.',
+    'Explore is where you find people and their tops. Search looks inside every item too: type a movie and every top that ranks it shows up.',
   'topper.s2.p2':
-    'Search looks inside every item too, so typing a game finds every top that ranks it.',
+    "It's what I used to do with my notes: before watching a new movie, search it, see which movies it shares tops with, and if they sit near your favorites you already know you'll like it.",
   'topper.s3.p1':
-    'A top is a list you reorder with a drag; the podium moves with you.',
+    'This is the main screen of the app: one top, and its items you reorder with a drag. What used to be cutting and pasting in Keep is now moving it with your finger.',
   'topper.s3.p2':
-    'Others tap Agree or Could Be Better, and the comments take care of the rest.',
+    'Each item is a name and a photo. And others can upvote or downvote your top, and comment on it.',
   'topper.s4.p1':
-    'Your profile is every top you have made, with its top three in view.',
+    "Your profile holds every top you've made — movies, video games, Pokémon, whatever you want — each with its top three in view.",
   'topper.s4.p2':
-    'And trophies, PlayStation-style, that unlock as you use the app, all the way to the platinum.',
+    'And PlayStation-style trophies that unlock as you use the app, all the way to the platinum. All my apps live in one monorepo and share that module: an easter egg for anyone who plays PlayStation, and a detail that makes the app more mine.',
 
   // Space Explorer — the Platanus arcade entry, playable at the landing's foot.
   // The control keys are the cabinet's own; the action names are Apple-voice
@@ -141,17 +141,17 @@ const en = {
   'shaper.s4.m':
     'Pick the exact seconds you love and save them as a clip you can loop anytime.',
   'topper.problem.m':
-    'My favorite games, movies and songs lived in my head as rankings that changed every week, and in a group chat they were gone within the hour.',
+    'I kept tops of movies, video games and Pokémon in Google Keep, and reordering them meant cutting and pasting by hand.',
   'topper.solution.m':
-    'So I built Topper: rank anything you love, follow people whose taste you trust, and settle the order in the comments. Like Letterboxd, for any list.',
+    "So I built Topper: tops you reorder with a drag, and the tops of the people you follow, always up to date. Letterboxd existed, but it wasn't mine.",
   'topper.s1.m':
-    'The app opens on your tops. Below them, the full rankings of the people you follow.',
+    'The app opens on your tops. Below them, the tops of the people you follow, always in their latest version.',
   'topper.s2.m':
-    'Explore finds people worth following, and search finds every top that ranks a game, movie or song.',
+    'Explore finds people and their tops, and search finds every top that ranks a movie, a game or a Pokémon.',
   'topper.s3.m':
-    'Reorder a top by dragging, and others can tap Agree or Could Be Better.',
+    'The main screen: reorder a top by dragging. Others can upvote or downvote it, and comment.',
   'topper.s4.m':
-    "Your profile holds every top you've made, and PlayStation-style trophies up to the platinum.",
+    "Your profile holds every top you've made, plus PlayStation-style trophies up to the platinum — an easter egg all my apps share.",
   'arcade.m.before': 'A 3D space shooter that fits in 50 KB, made for ',
   'arcade.m.after': ' — and the easter egg I always wanted for this site.',
   'work.crol.m.after':
@@ -219,25 +219,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.p2':
       'Guárdalos como clips para repetir en loop cuando quieras. Cada clip queda guardado con su canción, y puedes editarlo, eliminarlo o volver a escucharlo en cualquier momento.',
     'topper.problem':
-      'Mis juegos, películas y canciones favoritas vivían en mi cabeza como rankings que cambiaba cada semana, y el único lugar para compartirlos era un chat de grupo, donde se perdían en una hora.',
+      'Hacía tops de todo — películas, videojuegos, hasta mis Pokémon favoritos — y los usaba de verdad: antes de ver una película nueva la cruzaba con mi top y ya sabía si me iba a gustar. Vivían en notas de Google Keep, donde subir algo un puesto era cortar y pegar a mano.',
     'topper.solution':
-      'Una app de tops de lo que sea: ordenas lo que te encanta, sigues a gente con buen gusto y el orden se discute en los comentarios. Como Letterboxd, pero para cualquier lista que harías.',
+      'Una app donde tus tops viven en un solo lugar, se reordenan arrastrando, y los de la gente que sigues están siempre al día — dejé de preguntarle a mi hermano si los suyos seguían igual. Letterboxd ya existía, pero no era mío, y cuando algo es así de personal me gusta que funcione exactamente como yo quiero.',
     'topper.s1.p1':
-      'La app abre en tus tops, cada uno con su número uno como portada.',
+      'La app abre en tus tops, cada uno con su número uno de portada, así reconoces cada lista de un vistazo.',
     'topper.s1.p2':
-      'Debajo, los tops de las personas que sigues — su orden completo, no solo un like, así ves exactamente dónde su gusto y el tuyo se separan.',
+      'Debajo, los tops de la gente que sigues, siempre en su última versión: si mi hermano cambia su top de juegos, lo veo ahí sin tener que preguntarle.',
     'topper.s2.p1':
-      'Explorar es donde encuentras gente que vale la pena seguir, y los tops de todos los demás.',
+      'En Explorar encuentras gente y sus tops. La búsqueda también mira dentro de cada elemento: escribes una película y aparecen todos los tops que la tienen.',
     'topper.s2.p2':
-      'La búsqueda también mira dentro de cada elemento: escribes un juego y aparecen todos los tops que lo tienen.',
+      'Es lo que yo hacía con mis notas: antes de ver una película nueva, la buscas, ves con qué otras películas comparte top, y si están cerca de tus favoritas ya sabes que te va a gustar.',
     'topper.s3.p1':
-      'Un top es una lista que reordenas arrastrando; el podio se mueve contigo.',
+      'Esta es la pantalla principal de la app: un top y sus elementos, que reordenas arrastrando. Lo que en Keep era cortar y pegar, aquí es moverlo con el dedo.',
     'topper.s3.p2':
-      'Los demás tocan De acuerdo o Podría mejorar, y los comentarios hacen el resto.',
+      'Cada elemento es un nombre y una foto. Y los demás pueden votar tu top hacia arriba o hacia abajo, y comentarlo.',
     'topper.s4.p1':
-      'Tu perfil son todos los tops que has hecho, con sus tres primeros a la vista.',
+      'En tu perfil están todos los tops que has hecho — películas, videojuegos, Pokémon, lo que quieras — cada uno con sus tres primeros a la vista.',
     'topper.s4.p2':
-      'Y trofeos, al estilo PlayStation, que se desbloquean mientras usas la app, hasta llegar al platino.',
+      'Y trofeos al estilo PlayStation, que se desbloquean mientras usas la app hasta llegar al platino. Todas mis apps viven en un mismo monorepo y comparten ese módulo: un easter egg para quien juega PlayStation, y un detalle que hace la app más mía.',
     'arcade.play': 'Jugar',
     'arcade.fullscreen': 'Pantalla completa',
     'arcade.resume': 'Haz clic en el juego para jugar.',
@@ -290,17 +290,17 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.m':
       'Elige los segundos exactos que te encantan y guárdalos como un clip para repetir cuando quieras.',
     'topper.problem.m':
-      'Mis juegos, películas y canciones favoritas vivían en mi cabeza como rankings que cambiaban cada semana, y en el chat de grupo se perdían en una hora.',
+      'Tenía tops de películas, videojuegos y Pokémon en Google Keep, y reordenarlos era cortar y pegar a mano.',
     'topper.solution.m':
-      'Así que hice Topper: ordenas lo que te encanta, sigues a gente con buen gusto y el orden se discute en los comentarios. Como Letterboxd, para cualquier lista.',
+      'Así que hice Topper: tops que reordenas arrastrando, y los de la gente que sigues, siempre al día. Letterboxd existía, pero no era mío.',
     'topper.s1.m':
-      'La app abre en tus tops. Debajo, los rankings completos de la gente que sigues.',
+      'La app abre en tus tops. Debajo, los de la gente que sigues, siempre en su última versión.',
     'topper.s2.m':
-      'En Explorar encuentras gente que vale la pena seguir, y la búsqueda halla cada top con un juego, película o canción.',
+      'En Explorar encuentras gente y sus tops, y la búsqueda halla cada top con una película, un juego o un Pokémon.',
     'topper.s3.m':
-      'Reordena un top arrastrando, y los demás pueden tocar De acuerdo o Podría mejorar.',
+      'La pantalla principal: reordenas un top arrastrando. Los demás pueden votarlo hacia arriba o hacia abajo, y comentar.',
     'topper.s4.m':
-      'Tu perfil guarda todos tus tops, y trofeos estilo PlayStation hasta el platino.',
+      'Tu perfil guarda todos tus tops, y trofeos estilo PlayStation hasta el platino — un easter egg que comparten todas mis apps.',
     'arcade.m.before':
       'Un shooter espacial en 3D que cabe en 50 KB, hecho para el ',
     'arcade.m.after': ' — y el easter egg que siempre quise para esta página.',
@@ -364,20 +364,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s4.p2':
       '把它们存成片段，随时循环播放。每个片段都跟着它的歌曲保存，你可以随时编辑、删除或再次播放。',
     'topper.problem':
-      '我最爱的游戏、电影和歌曲，一直以排名的形式留在脑子里，每周都在变；唯一能分享的地方是群聊，不到一小时就被刷走了。',
+      '我什么都做榜单——电影、电子游戏，甚至我最喜欢的宝可梦——而且真的会用：看一部新电影之前，先拿它对照我的榜单，还没看就知道自己会不会喜欢。这些榜单都存在 Google Keep 的笔记里，想把某一项往前挪一位，就得手动剪切、粘贴。',
     'topper.solution':
-      '一个什么都能排的榜单应用：给你喜欢的东西排序，关注品味值得信赖的人，在评论里争论谁该排第一。就像 Letterboxd，但适用于你会列的每一份清单。',
-    'topper.s1.p1': '打开应用先看到你的榜单，每个都以第一名作为封面。',
+      '一个让你的榜单都待在同一个地方的应用：拖动就能重新排序，你关注的人的榜单也永远是最新的——我再也不用问我弟弟他的榜单变了没有。Letterboxd 早就有了，但它不是我的；这么私人的事情，我喜欢它完全按我想要的方式运作。',
+    'topper.s1.p1':
+      '打开应用先看到你的榜单，每个都以第一名作为封面，一眼就能认出是哪一份。',
     'topper.s1.p2':
-      '下面是你关注的人的榜单——完整的排序，而不只是一个赞，让你清楚看到他们的品味和你在哪里分道扬镳。',
-    'topper.s2.p1': '“探索”里能找到值得关注的人，以及其他所有人的榜单。',
+      '下面是你关注的人的榜单，永远是最新版本：我弟弟改了他的游戏榜单，我在这里就能看到，不用再去问他。',
+    'topper.s2.p1':
+      '在“探索”里能找到其他人和他们的榜单。搜索也会查看每个条目：输入一部电影，所有收录它的榜单都会出现。',
     'topper.s2.p2':
-      '搜索也会查看每个条目：输入一款游戏，就能找到所有收录它的榜单。',
-    'topper.s3.p1': '榜单就是一份拖动即可重新排序的清单；领奖台随你而动。',
-    'topper.s3.p2': '其他人可以轻点“赞同”或“可以更好”，剩下的交给评论。',
-    'topper.s4.p1': '你的个人资料就是你做过的所有榜单，前三名一目了然。',
+      '这就是我以前用笔记做的事：看一部新电影之前，先搜一下它，看看它和哪些电影在同一份榜单里；如果它们离你最爱的那些很近，你就知道自己会喜欢。',
+    'topper.s3.p1':
+      '这是应用的主屏幕：一份榜单和它的条目，拖动即可重新排序。以前在 Keep 里要剪切粘贴，现在用手指一拖就好。',
+    'topper.s3.p2':
+      '每个条目就是一个名字和一张照片。其他人可以给你的榜单点赞或点踩，并发表评论。',
+    'topper.s4.p1':
+      '你的个人资料收录你做过的所有榜单——电影、电子游戏、宝可梦，想做什么都行——每份的前三名都一目了然。',
     'topper.s4.p2':
-      '还有 PlayStation 风格的奖杯，随着你使用应用逐一解锁，直到白金。',
+      '还有 PlayStation 风格的奖杯，随着你使用应用逐一解锁，直到白金。我所有的应用都在同一个 monorepo 里，共用这个模块：给玩 PlayStation 的人一个彩蛋，也让这个应用更像我自己的。',
     'arcade.play': '开始游戏',
     'arcade.fullscreen': '全屏',
     'arcade.resume': '点击游戏即可游玩。',
@@ -428,15 +433,16 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '这个应用存在的理由：预设或五段均衡器、实时变速，以及保持原调、回声等音效。',
     'shaper.s4.m': '选出你最爱的那几秒，存成片段，随时循环。',
     'topper.problem.m':
-      '我最爱的游戏、电影和歌曲在我脑中排成每周都在变的榜单，发到群聊里，一小时就被刷没了。',
+      '我把电影、电子游戏和宝可梦的榜单存在 Google Keep 里，每次重新排序都得手动剪切、粘贴。',
     'topper.solution.m':
-      '于是我做了 Topper：给你喜爱的任何东西排名，关注品味可信的人，在评论里决出顺序。就像 Letterboxd，但适用于任何榜单。',
-    'topper.s1.m': '应用一打开就是你的榜单，下面是你关注的人的完整排名。',
+      '于是我做了 Topper：拖动即可排序的榜单，还有你关注的人永远最新的榜单。Letterboxd 早就有了，但它不是我的。',
+    'topper.s1.m': '应用一打开就是你的榜单，下面是你关注的人永远最新的榜单。',
     'topper.s2.m':
-      '在“探索”里找到值得关注的人；搜索能找出收录某款游戏、电影或歌曲的每个榜单。',
-    'topper.s3.m': '拖动即可为榜单重新排序，其他人可以轻点“赞同”或“可以更好”。',
+      '在“探索”里找到其他人和他们的榜单；搜索能找出收录某部电影、某款游戏或某只宝可梦的每个榜单。',
+    'topper.s3.m':
+      '主屏幕：拖动即可为榜单重新排序。其他人可以点赞或点踩，并发表评论。',
     'topper.s4.m':
-      '你的个人资料收录你做过的所有榜单，还有一路解锁到白金的 PlayStation 风格奖杯。',
+      '你的个人资料收录你做过的所有榜单，还有一路解锁到白金的 PlayStation 风格奖杯——我所有应用共用的彩蛋。',
     'arcade.m.before': '一款只有 50 KB 的 3D 太空射击游戏，为 ',
     'arcade.m.after': '而做——也是我一直想给这个网站的彩蛋。',
     'work.crol.m.after':
