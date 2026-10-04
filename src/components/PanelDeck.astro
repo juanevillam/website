@@ -579,7 +579,7 @@ const voiced = narr.some(n => n.clip);
 </style>
 
 <script>
-  import { createDeck } from '../lib/deck';
+  import { createDeck, watchSlots } from '../lib/deck';
 
   // Every panel deck on the page (More Work, Events) — one script for all.
   for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
@@ -624,7 +624,7 @@ const voiced = narr.some(n => n.clip);
     });
 
     window.addEventListener('resize', standAnchor, { passive: true });
-    // Text can reflow once fonts settle; re-stand the anchor on it.
-    window.addEventListener('load', standAnchor);
+    // Late fonts, a language switch: whatever reflows the words.
+    watchSlots(cards, standAnchor);
   }
 </script>
