@@ -23,8 +23,13 @@ import sharp from 'sharp';
  * counted by AREA — the near-black chrome of a dark screenshot and its
  * white text say nothing about it, and are dropped. A hue has to cover a
  * real share of the picture to count, so a dark settings screen is not
- * lit green by its one switch: weighting by saturation did exactly that.
- * The largest hues, at least 40° apart, are the scene. Every screen with
+ * lit green by its one switch. Among the hues that do, a capture or
+ * photo is led by the hue covering the most of it; a DARK app screen by
+ * the most colourful (summed chroma, saturation × brightness) — so a red
+ * cover beats the dim brown around it, and two dark screens with warm and cool covers stop
+ * landing on the same pair. The top hues, at least 40° apart, are the
+ * scene, and each keeps part of its own saturation (a muted amber stays
+ * quieter than a red), between SAT_LO and SAT_HI. Every screen with
  * colour lights the page at ONE strength — scaling it by how much of the
  * picture was colour left a dark app screen barely lit beside a bright
  * website, and the panels stopped reading as one system (Juan,
@@ -37,6 +42,8 @@ const MIN_HUE_GAP = 2; // bins — 40°
 
 /** A hue counts once it covers this share of the picture. */
 const MIN_COVER = 0.01;
+/** A picture less than this much colour is a dark screen (see `rank`). */
+const DARK_SCREEN = 0.25;
 
 export type Scene = { colours: string[]; strength: number };
 
@@ -58,12 +65,15 @@ const hsv = (r: number, g: number, b: number) => {
 
 const hex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
 
-const SAT = 0.7;
+/** The light's saturation range: a picture's dullest counted hue (0.2)
+ *  maps to SAT_LO, a fully saturated one to SAT_HI. */
+const SAT_LO = 0.45;
+const SAT_HI = 0.85;
 const LIGHT = 0.5;
 
-/** A hue at the scene's one saturation and lightness, as hex. */
-const rgbOfHue = (h: number) => {
-  const c = (1 - Math.abs(2 * LIGHT - 1)) * SAT;
+/** A hue at the scene's one lightness and the given saturation, as hex. */
+const rgbOf = (h: number, sat: number) => {
+  const c = (1 - Math.abs(2 * LIGHT - 1)) * sat;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = LIGHT - c / 2;
   const [r, g, b] = [
@@ -85,8 +95,16 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const bins = Array.from({ length: BINS }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+  const bins = Array.from({ length: BINS }, () => ({
+    w: 0,
+    s: 0,
+    c: 0,
+    r: 0,
+    g: 0,
+    b: 0,
+  }));
   let pixels = 0;
+  let chromatic = 0;
   for (const s of srcs) {
     const file = fileURLToPath(new URL(`../../public${s}`, import.meta.url));
     const { data, info } = await sharp(file)
@@ -101,9 +119,12 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
       const b = data[i + 2];
       const { h, s: sat, v } = hsv(r, g, b);
       if (v < 0.15 || sat < 0.2) continue;
+      chromatic++;
       const w = 1;
       const bin = bins[Math.floor(h / (360 / BINS)) % BINS];
       bin.w += w;
+      bin.s += sat;
+      bin.c += sat * v;
       bin.r += r * w;
       bin.g += g * w;
       bin.b += b * w;
@@ -112,17 +133,20 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
 
   const ranked = bins
     .map((bin, i) => ({ ...bin, i }))
-    .filter(bin => bin.w > 0)
-    .sort((a, b) => b.w - a.w);
-  const top = ranked[0]?.w ?? 0;
+    .filter(bin => bin.w >= pixels * MIN_COVER);
+  // How a hue earns its place depends on the picture. A dark app screen is
+  // black chrome around a few small covers, and there the most COLOURFUL
+  // hue is the one the eye takes from it — a red cover over the dim brown
+  // around it. A capture or a photo is colour edge to edge, and there the
+  // one that covers the most IS the picture (Salvalo's navy, not its orange
+  // button).
+  const dark = chromatic < pixels * DARK_SCREEN;
+  const rank = (bin: (typeof ranked)[number]) => (dark ? bin.c : bin.w);
+  ranked.sort((a, b) => rank(b) - rank(a));
+  const top = ranked[0] ? rank(ranked[0]) : 0;
   const picked: typeof ranked = [];
   for (const bin of ranked) {
-    if (
-      picked.length === MAX_COLOURS ||
-      bin.w < pixels * MIN_COVER ||
-      bin.w < top * 0.2
-    )
-      break;
+    if (picked.length === MAX_COLOURS || rank(bin) < top * 0.2) break;
     const far = picked.every(p => {
       const d = Math.abs(p.i - bin.i);
       return Math.min(d, BINS - d) >= MIN_HUE_GAP;
@@ -130,14 +154,15 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
     if (far) picked.push(bin);
   }
 
-  // Only the HUE is the picture's. An average of a bin's pixels comes out
-  // muted (a red cover and its dark shadows average to brick), and two
-  // muted hues washed together over the ground read as mud — so every
-  // colour is stood at one saturation and one lightness, and the page's
-  // light is a set of clean hues at one strength.
+  // The HUE is the picture's, and part of its saturation. An average of a
+  // bin's pixels comes out muted (a red cover and its dark shadows average
+  // to brick), and muted hues washed together over the ground read as mud
+  // — so each colour stands at one lightness, and at a saturation that
+  // keeps its rank against the others without ever going dull.
   const colours = picked.map(bin => {
     const { h } = hsv(bin.r / bin.w, bin.g / bin.w, bin.b / bin.w);
-    return rgbOfHue(h);
+    const t = Math.min(1, Math.max(0, (bin.s / bin.w - 0.2) / 0.6));
+    return rgbOf(h, SAT_LO + (SAT_HI - SAT_LO) * t);
   });
   const strength = colours.length ? 1 : 0;
   const scene = { colours, strength };
