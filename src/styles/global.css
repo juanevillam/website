@@ -391,8 +391,8 @@ html.is-jumping body {
    ARRIVING: the parts stand on the far side (`.is-arriving`, no
    transition), then come in one after another — the picture first, the
    words after it — with the text sharpening out of a light blur. The
-   picture never blurs: it carries the stories' halo, and a filter changing
-   over a 40px blur repaints it every frame. */
+   picture never blurs: a filter changing over a whole screenshot repaints
+   it every frame. */
 .deck-card {
   --drift: 2.5rem;
   grid-area: 1 / 1;
@@ -582,3 +582,104 @@ html.is-stepped [data-narrator] {
       border-color var(--dur-micro) var(--ease) !important;
   }
 }
+
+/* ---------- the scene ----------
+   The light a picture lends the page (lib/scene): behind every section,
+   over only the ground, a slow wash of the current screen's own hues —
+   strongest on the media's side, gone before it reaches the words, so the
+   copy keeps the plain ground's contrast. Each colour is a registered
+   property, so a turn of the deck or a new section FADES the light from
+   one room to the next instead of cutting it. Grain dithers the long,
+   dark ramp so it never bands into rings (the room light's lesson). */
+@property --scene-a {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --scene-b {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --scene-c {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --scene-k {
+  syntax: '<number>';
+  /* Inherited, so the grain (::after) can follow the light's strength. */
+  inherits: true;
+  initial-value: 0;
+}
+
+.scene {
+  /* One fixed place for every panel — the media's side. Following the
+     picture (a peeking phone, a rising one) was tried and read as a
+     deformed, cut-off light (Juan, 2026-10-04); a story's opener simply
+     lends no light, and the room lights when the first slide lands. */
+  --scene-x: 70%;
+  --scene-y: 48%;
+  /* Its width. A 3:2 screen is wide and short, so the light spills out
+     above, below and beside it — a glow behind a monitor. */
+  --scene-rx: 34%;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* Close around the media, not across the page (Juan, 2026-10-04: the
+       first pass was too big — light, not a painting). */
+    radial-gradient(
+      var(--scene-rx) 46% at var(--scene-x) var(--scene-y),
+      color-mix(in oklab, var(--scene-a) calc(22% * var(--scene-k)), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      calc(var(--scene-rx) * 0.65) 30% at calc(var(--scene-x) + var(--scene-rx) * 0.35)
+        calc(var(--scene-y) + 26%),
+      color-mix(in oklab, var(--scene-b) calc(14% * var(--scene-k)), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      calc(var(--scene-rx) * 0.7) 28% at calc(var(--scene-x) - var(--scene-rx) * 0.24)
+        calc(var(--scene-y) - 28%),
+      color-mix(in oklab, var(--scene-c) calc(10% * var(--scene-k)), transparent),
+      transparent 72%
+    );
+  transition:
+    --scene-a calc(var(--beat) * 2) var(--ease),
+    --scene-b calc(var(--beat) * 2) var(--ease),
+    --scene-c calc(var(--beat) * 2) var(--ease),
+    --scene-k calc(var(--beat) * 2) var(--ease);
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Grain only where there is light to dither — the plain ground has
+     nothing to band. */
+  opacity: calc(var(--scene-k) * 0.07);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* A story's phone stands the whole height of the panel and hides the
+   light's middle, so at a screen's width the light could only show beside
+   it, and read as a ring round the phone (Juan, 2026-10-04). Wider, it
+   reads as the same glow the screens cast. */
+.scene[data-kind='phone'] {
+  --scene-rx: 52%;
+}
+
+/* A phone stacks the media over the words: the light stands at the top. */
+@media (max-width: 48rem) {
+  .scene {
+    --scene-x: 50%;
+    --scene-y: 18%;
+  }
+}
+
