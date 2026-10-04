@@ -9,9 +9,8 @@ type Props = { app: LegalApp };
 const { app } = Astro.props;
 const social = app.content === 'tops';
 // The steps follow each app's real entry: Topper's account lives on the
-// Profile tab, Sound Shaper's behind its Settings banner. Re-authentication
-// runs on both of Topper's platforms and on Sound Shaper's iOS; Sound
-// Shaper's Android asks for a fresh sign-in only when the session is stale.
+// Profile tab, Sound Shaper's behind its Settings banner. Both apps run
+// `useDeleteAccount` on both platforms, which re-authenticates first.
 ---
 
 <Prose
@@ -47,12 +46,8 @@ const social = app.content === 'tops';
         <li>Tap <strong>Delete Account</strong> and confirm.</li>
       </ul>
       <p>
-        {
-          social
-            ? "Before anything is deleted, the app asks you to sign in again to confirm it's you."
-            : "On iPhone, the app first asks you to sign in again to confirm it's you. On Android, if you signed in a while ago, it asks you to sign out, sign back in and try again."
-        }{' '}
-        Then the deletion runs right away: your uploaded files, then your
+        Before anything is deleted, the app asks you to sign in again to
+        confirm it's you. Then the deletion runs right away: your uploaded files, then your
         data, then the account itself. If you signed in with Apple, {app.name}
         is also removed from the apps that use Sign in with Apple on your
         Apple Account.
@@ -126,12 +121,8 @@ const social = app.content === 'tops';
         <li>Toca <strong>Eliminar cuenta</strong> y confirma.</li>
       </ul>
       <p>
-        {
-          social
-            ? 'Antes de borrar nada, la app te pide iniciar sesión de nuevo para confirmar que eres tú.'
-            : 'En iPhone, la app primero te pide iniciar sesión de nuevo para confirmar que eres tú. En Android, si iniciaste sesión hace tiempo, te pide cerrar sesión, volver a iniciarla e intentarlo de nuevo.'
-        }{' '}
-        Después la eliminación es inmediata: primero los archivos que subiste,
+        Antes de borrar nada, la app te pide iniciar sesión de nuevo para
+        confirmar que eres tú. Después la eliminación es inmediata: primero los archivos que subiste,
         luego tus datos y, por último, la cuenta. Si iniciaste sesión con
         Apple, {app.name} también desaparece de las apps que usan Iniciar
         sesión con Apple en tu Cuenta de Apple.
@@ -204,11 +195,7 @@ const social = app.content === 'tops';
         <li>轻点<strong>删除账户</strong>并确认。</li>
       </ul>
       <p>
-        {
-          social
-            ? '删除任何内容之前，应用会要求你重新登录以确认是你本人。'
-            : '在 iPhone 上，应用会先要求你重新登录以确认是你本人。在 Android 上，如果你登录已久，应用会请你退出登录、重新登录后再试一次。'
-        }随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除。
+        删除任何内容之前，应用会要求你重新登录以确认是你本人。随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除。
       </p>
 
       <h2>如果你无法访问应用</h2>
