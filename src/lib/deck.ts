@@ -148,3 +148,28 @@ export const createDeck = ({
     },
   };
 };
+
+/**
+ * Calls `fn` (once a frame at most) whenever the words above any card's
+ * narrator slot change size. The still anchor stands on the slot's
+ * HEIGHT, and that height moves on more than a turn or a resize: a
+ * language switch re-sets every paragraph (Spanish runs longer, Chinese
+ * shorter), and late fonts reflow them too. Watching the words catches
+ * all of it — a `data-lang` listener would catch only one.
+ */
+export const watchSlots = (cards: HTMLElement[], fn: () => void) => {
+  let queued = false;
+  const ro = new ResizeObserver(() => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      fn();
+    });
+  });
+  for (const card of cards) {
+    const slot = card.querySelector<HTMLElement>('.narr-slot');
+    for (const el of slot?.parentElement?.children ?? [])
+      if (el !== slot) ro.observe(el);
+  }
+};

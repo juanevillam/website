@@ -1133,7 +1133,7 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
 </style>
 
 <script>
-  import { createDeck, type Deck } from '../lib/deck';
+  import { createDeck, watchSlots, type Deck } from '../lib/deck';
 
   // ---------- the controller ----------
   // The walk from the opener to the deck is a pure function of the scroll
@@ -1871,7 +1871,8 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
         if (story.deck && i !== story.deck.current) story.deck.go(i);
       });
       window.addEventListener('resize', standAnchor, { passive: true });
-      window.addEventListener('load', standAnchor);
+      // Late fonts, a language switch: whatever reflows the words.
+      watchSlots(cards, standAnchor);
     }
     return story;
   });
