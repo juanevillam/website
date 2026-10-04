@@ -39,12 +39,108 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
     </script>
   </head>
   <body>
+    <!-- The light the current screen lends the page (lib/scene). -->
+    <div class="scene" aria-hidden="true"></div>
     <SiteHeader />
     <main>
       <slot />
     </main>
 
     <script>
+      // THE SCENE: whichever screen holds the middle of the viewport lends
+      // the page its colours (lib/scene). A story's opener and its slides
+      // share one box, so only a dealt deck lights it; a phone's
+      // stacked panels are told apart by the scroll step they own; in any
+      // deck only the card in front counts.
+      const scene = document.querySelector<HTMLElement>('.scene');
+      const lit = [...document.querySelectorAll<HTMLElement>('[data-scene]')];
+      const holds = (el: HTMLElement, y: number) => {
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.top <= y && r.bottom > y;
+      };
+      const showing = (el: HTMLElement, y: number) => {
+        if (el.classList.contains('deck-card') && !el.classList.contains('is-current'))
+          return false;
+        const story = el.closest<HTMLElement>('[data-story]');
+        const float = story?.querySelector('.float');
+        // A story's slides light the page once the deck is dealt — the
+        // opener lends no light of its own.
+        if (float && !el.closest('.m-story'))
+          return float.classList.contains('is-dealt') && holds(story!, y);
+        const panel = el.closest<HTMLElement>('.m-panel');
+        if (panel) {
+          const step = panel
+            .closest('.m-story')
+            ?.querySelectorAll<HTMLElement>('.m-step')[Number(panel.dataset.mStep)];
+          return holds(step && step.getClientRects().length ? step : panel, y);
+        }
+        return holds(el.closest('section') ?? el, y);
+      };
+      // A frame of cycling photos (Events) is lit by the photo each column
+      // is SHOWING — the most opaque one mid-crossfade — so the light turns
+      // with the pictures, the way it turns with the deck.
+      const photosOf = (card: HTMLElement) => {
+        const cells = [...card.querySelectorAll<HTMLElement>('.photo-cell')];
+        if (!cells.length) return card.dataset.scene;
+        const shown = cells.map(cell => {
+          let best: HTMLElement | undefined;
+          let most = -1;
+          for (const img of cell.querySelectorAll<HTMLElement>('[data-scene-photo]')) {
+            const o = Number(getComputedStyle(img).opacity);
+            if (o > most) [best, most] = [img, o];
+          }
+          return (best?.dataset.scenePhoto ?? '|0').split('|');
+        });
+        const lists = shown.map(([h]) => h.split(' ').filter(Boolean));
+        const hues: string[] = [];
+        for (let i = 0; i < 3; i++)
+          for (const list of lists)
+            if (list[i] && !hues.includes(list[i]) && hues.length < 3) hues.push(list[i]);
+        const k = Math.max(...shown.map(([, k]) => Number(k)));
+        return `${hues.join(' ')}|${k}`;
+      };
+      let last: string | undefined;
+      const light = () => {
+        if (!scene) return;
+        const y = innerHeight / 2;
+        const now = lit.find(el => el.getClientRects().length && showing(el, y));
+        const value = now && photosOf(now);
+        if (value === last) return;
+        last = value;
+        // "#a #b|0.8": the hues, then how strongly they light the page. The
+        // hues of a screen with none stay as they were, so the light FADES
+        // to the ground instead of turning grey on its way out.
+        const [hues = '', k = '0'] = value?.split('|') ?? [];
+        const [a, b = a, c = b] = hues.split(' ').filter(Boolean);
+        if (a) {
+          scene.style.setProperty('--scene-a', a);
+          scene.style.setProperty('--scene-b', b);
+          scene.style.setProperty('--scene-c', c);
+        }
+        scene.style.setProperty('--scene-k', k);
+        // A story's phone and a panel's screen hide the light differently
+        // (global.css): the light keeps the shape of the last picture
+        // while it fades out of every lit block.
+        if (now) scene.dataset.kind = now.closest('[data-story]') ? 'phone' : 'screen';
+      };
+      if (scene && lit.length) {
+        // Cheap enough to ask often: a deck can turn by itself (the voice
+        // moving on), so a scroll listener alone would miss it.
+        let queued = false;
+        const ask = () => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(() => {
+            queued = false;
+            light();
+          });
+        };
+        addEventListener('scroll', ask, { passive: true });
+        addEventListener('resize', ask, { passive: true });
+        setInterval(light, 200);
+        light();
+      }
+
       // Scroll entrances: reveal once, then let the element live untouched.
       const io = new IntersectionObserver(
         entries => {

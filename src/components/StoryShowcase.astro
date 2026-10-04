@@ -6,6 +6,7 @@ import type { ReleasedApp } from '../lib/releases';
 import T from './T.astro';
 import DeckControls from './DeckControls.astro';
 import { clipFor, subsFor } from '../lib/narration';
+import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
  * One app = two stops: the opener, then its slides.
@@ -84,6 +85,11 @@ const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 const pitchMobile = pitch.map(mobileKey);
 const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : null));
+
+// The light each slide lends the page (lib/scene). The opener lends none:
+// the room lights when the first slide lands, the way it does coming out
+// of the hero.
+const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr)));
 ---
 
 <section class="story" id={id} data-story={id} data-enter={enter}>
@@ -201,6 +207,7 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
                 class="card deck-card"
                 aria-roledescription="slide"
                 aria-label={`${i + 1} / ${slides.length}`}
+                data-scene={scenes[i]}
               >
                 <div class="cap">
                   {slide.title && (
@@ -229,17 +236,10 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
                     <div class="narr-slot" aria-hidden="true" />
                   )}
                 </div>
-                {/* The glow is a rim on the shot itself, nothing more. */}
+                {/* No glow of its own: the page's scene light (lib/scene)
+                    is the shot's light, the same as every other panel's. */}
                 <div class="slot" style={`--ratio: ${slide.height / slide.width}`}>
                   <div class="shot-wrap" data-deck-part="picture">
-                    <img
-                      class="halo"
-                      src={slide.src}
-                      alt=""
-                      aria-hidden="true"
-                      loading="lazy"
-                      decoding="async"
-                    />
                     <img
                       class="shot"
                       src={slide.src}
@@ -357,6 +357,7 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
               class="m-card deck-card"
               aria-roledescription="slide"
               aria-label={slide.title}
+              data-scene={scenes[i]}
             >
               <div class="m-shot" data-deck-part="picture">
                 <img
@@ -772,36 +773,6 @@ const slideMobile = slides.map(sl => (sl.paras?.[0] ? mobileKey(sl.paras[0]) : n
 
   .float:not(.is-dealt) .deck-foot :global(.deck-controls) {
     pointer-events: none;
-  }
-
-  /* The gradient the image casts. Blurring a sharp-edged bitmap leaves
-     a visible rectangle and banding, which is what read as cheap — so
-     the halo is masked to an ellipse that fades to nothing well before
-     its own edge, blurred far heavier, and kept dim. What's left is
-     light in the shot's own colors, with no shape of its own. */
-  .halo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    transform: scale(1.12);
-    filter: blur(40px) saturate(1.6) brightness(1.1);
-    opacity: 0.8;
-    mask-image: radial-gradient(
-      ellipse 60% 55% at 50% 50%,
-      #000 0%,
-      rgba(0, 0, 0, 0.6) 45%,
-      transparent 75%
-    );
-  }
-
-  /* A phone's GPU pays for a 40px blur on every composited frame; the
-     glow is decoration, so phones go without it. */
-  @media (hover: none) and (pointer: coarse) {
-    .halo {
-      display: none;
-    }
   }
 
   .shot {

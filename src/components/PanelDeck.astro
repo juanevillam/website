@@ -4,6 +4,7 @@ import TL from './TL.astro';
 import DeckControls from './DeckControls.astro';
 import type { UIKey } from '../i18n/ui';
 import { clipFor, subsFor } from '../lib/narration';
+import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
  * A PANEL DECK — one full panel holding a sideways deck of cards, each the
@@ -54,6 +55,9 @@ export type DeckItem = {
    *  a screen of its own, passed in as the named slot `{ slot }`. */
   image: string | string[] | { slot: string };
   links: { label: Segment; href: string }[];
+  /** The picture whose colours light the page (lib/scene), for a screen
+   *  of its own — a capture or photos light it by themselves. */
+  scene?: string;
 };
 
 type Props = {
@@ -76,6 +80,20 @@ for (const p of items)
   if (typeof p.image === 'object' && !Array.isArray(p.image))
     slotted[p.image.slot] = await Astro.slots.render(p.image.slot);
 const voiced = narr.some(n => n.clip);
+
+// The light each card lends the page (lib/scene).
+const scenes = await Promise.all(
+  items.map(p => {
+    const src = typeof p.image === 'string' || Array.isArray(p.image) ? p.image : p.scene;
+    return src ? sceneOf(src).then(sceneAttr) : undefined;
+  })
+);
+// ...and each event photo its own: two cycle in a frame, so the light
+// follows the ones showing instead of the card's average.
+const photoScenes: Record<string, string> = {};
+for (const p of items)
+  if (Array.isArray(p.image) && p.image.length > 1)
+    for (const src of p.image) photoScenes[src] = sceneAttr(await sceneOf(src));
 ---
 
 <section class="panel-deck" id={id} data-narr-panel={voiced ? '' : null}>
@@ -106,6 +124,7 @@ const voiced = narr.some(n => n.clip);
             class="card deck-card"
             aria-roledescription="slide"
             aria-label={`${i + 1} / ${items.length}`}
+            data-scene={scenes[i]}
           >
             <div class="words">
               <h3 class="name" data-deck-part="text" style="--i: 1">{p.name}</h3>
@@ -218,6 +237,7 @@ const voiced = narr.some(n => n.clip);
                             src={src}
                             alt={k === 0 ? p.name : ''}
                             style={`--k: ${k}`}
+                            data-scene-photo={photoScenes[src]}
                             loading="lazy"
                             decoding="async"
                             draggable="false"
