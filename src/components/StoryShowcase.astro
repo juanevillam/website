@@ -1165,6 +1165,21 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
 
   const voice = new Audio();
   voice.preload = 'auto';
+  // What the OS shows for the voice (Dynamic Island, Lock Screen). With no
+  // metadata Safari falls back to the favicon, whose rounded tile has
+  // transparent corners that the Lock Screen paints white. The artwork is
+  // the same mark, square and opaque, because the OS rounds it itself.
+  if ('mediaSession' in navigator)
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: document.title,
+      artwork: [
+        {
+          src: '/media/brand/now-playing.jpg',
+          sizes: '512x512',
+          type: 'image/jpeg',
+        },
+      ],
+    });
   // Dev only: lets a check drive the narrator SILENTLY — the analyser
   // still hears the voice (bars, subtitles, field all run), the speakers
   // do not. Never shipped.
@@ -1619,6 +1634,24 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
     voice.play().catch(() => stop());
     paint();
   };
+
+  // The voice is heard THROUGH the AudioContext, and iOS suspends that the
+  // moment the page goes to the background while the <audio> element keeps
+  // running — so the Dynamic Island showed a clip advancing in silence. The
+  // narration follows the page's scroll anyway, so it pauses with the page.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && running) pause();
+  });
+
+  // The system's own controls (Lock Screen, Dynamic Island) go through the
+  // session, never straight to the element, so the pill and the graph stay
+  // in step with them.
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('play', () => {
+      if (session) resume();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => pause());
+  }
 
   const scrollToStep = (story: Story, index: number) => {
     const top =
