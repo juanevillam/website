@@ -118,6 +118,10 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
           scene.style.setProperty('--scene-c', c);
         }
         scene.style.setProperty('--scene-k', k);
+        // A phone draws the light as the picture's own glow (global.css
+        // `--media-glow`), so the hues go where every picture inherits them.
+        if (a) document.documentElement.style.setProperty('--glow', a);
+        document.documentElement.style.setProperty('--glow-k', k);
         // A story's phone and a panel's screen hide the light differently
         // (global.css): the light keeps the shape of the last picture
         // while it fades out of every lit block.

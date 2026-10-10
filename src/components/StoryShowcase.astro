@@ -237,7 +237,9 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
                   )}
                 </div>
                 {/* No glow of its own: the page's scene light (lib/scene)
-                    is the shot's light, the same as every other panel's. */}
+                    is the shot's light, the same as every other panel's.
+                    (A phone has no room light; its pictures glow instead —
+                    `--media-glow`, global.css.) */}
                 <div class="slot" style={`--ratio: ${slide.height / slide.width}`}>
                   <div class="shot-wrap" data-deck-part="picture">
                     <img
@@ -827,21 +829,6 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
     height: 4.75rem;
   }
 
-  /* ---------- big screens ----------
-     Past the container cap everything would just sit in the middle
-     with growing margins, so the cap itself opens up and the phone
-     grows with it. */
-  @media (min-width: 100rem) {
-    .story {
-      --content-max: 82rem;
-    }
-
-    .intro-scene .inner,
-    .intro-foot {
-      max-width: var(--content-max);
-    }
-  }
-
   /* ---------- rising ----------
      The other way in: the deck waits below the stage's bottom edge, its
      top showing under the opener, and the first step lifts it into its
@@ -905,10 +892,15 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
       line-height: 0.95;
     }
 
-    /* The welcome, as it was: the lockup, the pitch and the store row as
-       one group in the middle of the screen. */
+    /* The welcome: the lockup, the pitch and the store row as one group,
+       centred across the screen as everything on a phone is, and starting
+       where every panel's content starts — a phone reads top to bottom
+       (Juan, 2026-10-05). */
     .m-welcome {
-      justify-content: center;
+      justify-content: flex-start;
+      padding-top: calc(var(--media-top-m) + env(safe-area-inset-top));
+      align-items: center;
+      text-align: center;
       gap: 1.25rem;
       padding-left: clamp(1.25rem, 4vw, 2.5rem);
       padding-right: clamp(1.25rem, 4vw, 2.5rem);
@@ -930,10 +922,11 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
       touch-action: pan-y;
     }
 
-    /* The deck takes the screen from the top: the header's two pills sit
-       in the corners, clear of a phone standing in the middle. */
+    /* The deck reads from the top: its phone starts on the line every
+       panel's picture starts on (--media-top-m), the words follow it, and
+       the spare height falls below them, over the controls. */
     .m-deck {
-      padding-top: calc(var(--float-gap) + env(safe-area-inset-top));
+      padding-top: calc(var(--media-top-m) + env(safe-area-inset-top));
     }
 
     .m-card {
@@ -944,39 +937,50 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
       padding: 0 clamp(1.25rem, 4vw, 2.5rem);
     }
 
-    /* The screenshot takes every pixel the words leave. It is placed
-       ABSOLUTELY in its box: a percentage height three containers deep
-       (grid → flex → image) resolved to nothing in WebKit, and the phones
-       vanished on every iPhone browser. */
+    /* The screenshot's box is the phone's own height — its BASIS, never
+       a percentage: a percentage height three containers deep (grid →
+       flex → image) resolved to nothing in WebKit, and the phones
+       vanished on every iPhone browser. It shrinks when a short screen
+       leaves less, and the phone inside is placed ABSOLUTELY to fill it.
+       Sized by the WIDTH, two browsers that leave different heights
+       (Safari's bars against Chrome's) still show the same phone. */
     .m-shot {
       position: relative;
-      flex: 1;
+      flex: 0 1 112vw;
       min-height: 0;
     }
 
-    /* As tall as the box allows, up to a bit more than the screen's width:
-       sized by the WIDTH, two browsers that leave different heights
-       (Safari's bars against Chrome's) still show the same phone. It
-       stands on the box's FLOOR, right over its title — centred, the
-       leftover air split above and below it and read as a gap — and on
-       the words' LEFT edge, as every other block on the page is: centred
-       over left-set words it read as a second alignment. */
+    /* The card is ONE centred column, phone and words together (Juan,
+       2026-10-05): one phone per screen is the subject, the way a product
+       page shows a device on a phone. A centred phone over LEFT-set words
+       read as a second alignment, so the words centre with it. */
     .m-shot .shot {
       position: absolute;
-      bottom: 0;
+      top: 0;
       left: 0;
-      height: min(100%, 112vw);
+      right: 0;
+      margin-inline: auto;
+      height: 100%;
       width: auto;
       max-width: none;
+      box-shadow:
+        var(--media-glow),
+        0 2rem 4rem rgba(0, 0, 0, 0.55),
+        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+      transition: box-shadow calc(var(--beat) * 2) var(--ease);
     }
 
     /* Room for three lines of copy whatever a card says, so the phone
-       above is the same size on every card of the deck. */
+       above is the same size on every card of the deck. One step under
+       the picture — the page's one picture-to-title gap on a phone
+       (--media-gap-m, global.css). */
     .m-words {
       display: flex;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       gap: 0.5rem;
-      padding-top: 0.875rem;
+      padding-top: var(--media-gap-m);
       min-height: 7.5rem;
     }
 
@@ -1475,7 +1479,10 @@ const scenes = await Promise.all(slides.map(sl => sceneOf(sl.src).then(sceneAttr
 
     g.lineWidth = 1;
     for (const strand of STRANDS) {
-      g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.07 + 0.16 * loudness)).toFixed(4)})`;
+      // Secondary to the words on screen: at full voice it peaked at 23%
+      // of the ink and pulled the eye off the page (Juan, 2026-10-05) —
+      // it now peaks at 13%, still plainly moving with the voice.
+      g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.04 + 0.09 * loudness)).toFixed(4)})`;
       g.beginPath();
       for (let x = 0; x <= w; x += 5) {
         const u = x / w;

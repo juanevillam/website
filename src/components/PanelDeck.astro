@@ -545,20 +545,57 @@ for (const p of items)
   /* ---------- phones ---------- */
 
   @media (max-width: 48rem) {
-    /* Screen on top, words under it. */
+    /* Screen on top, words under it, one centred column (Juan,
+       2026-10-05). Every card shares ONE grid cell, so the cell is the
+       tallest card's height; without `align-content: start` that spare
+       height went into the rows and stood each card's words a different
+       distance under its screen (16, 28 and 53px measured in More Work). */
     .card {
       grid-template-columns: 1fr;
-      gap: 1rem;
+      align-content: start;
+      gap: var(--media-gap-m);
+    }
+
+    .eyebrow {
+      justify-content: center;
+    }
+
+    /* Over the screen, which now stands ABOVE the words but still comes
+       after them in the source — so it painted later, and its contact
+       shadow (2rem down, 4rem blur) lay over the name and the first line,
+       dimming a #f5f5f5 title to ~#d9d9d9 (measured). */
+    .words {
+      position: relative;
+      z-index: 1;
+      align-items: center;
+      text-align: center;
+    }
+
+    .links {
+      justify-content: center;
     }
 
     .screen {
       order: -1;
       width: 100%;
+      box-shadow:
+        var(--media-glow),
+        0 2rem 4rem rgba(0, 0, 0, 0.55),
+        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+      transition: box-shadow calc(var(--beat) * 2) var(--ease);
     }
 
     .words .body {
       font-size: 1rem;
       line-height: 1.55;
+    }
+
+    /* A phone's caption steps: the name and its facts tight (0.5rem),
+       then each group one 1rem step — the 1.25rem a wide card uses read
+       as a gap under the facts' small mono line. */
+    .words .body,
+    .links {
+      margin-top: 1rem;
     }
 
     .name {

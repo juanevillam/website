@@ -120,16 +120,16 @@
 
 @media (max-width: 48rem) {
   :root {
-    --stage-top: calc(4rem + 4svh - 3px);
+    /* A phone reads top to bottom, so a panel starts near the top (Juan,
+       2026-10-05): its eyebrow half a step under the pills. It started
+       94px down, under 38px of nothing; standing it ON the pills' line
+       (20px) was too high — the picture crowded the chrome. */
+    --stage-top: calc(var(--header-h) + 0.5rem);
     --stage-bottom: 1.25rem;
     --gap-block: 1.5rem;
-  }
-}
-
-@media (min-width: 100rem) {
-  :root {
-    --stage-top: calc(8rem - 3px);
-    --gap-block: 3rem;
+    /* Where every panel's PICTURE starts — under the eyebrow and its
+       1.5rem step (PanelDeck), and the stories' phones on the same line. */
+    --media-top-m: calc(var(--stage-top) + 3.5rem);
   }
 }
 
@@ -174,6 +174,17 @@ html[data-lang='zh'] .tb[lang='zh'] {
    the viewport snaps to, the way an app screens its content. Scenes are
    still coupled to the scroll position; the snap decides where it rests. */
 html {
+  /* THE PAGE GROWS AS ONE PICTURE past the screen it was composed on —
+     a 13" MacBook Air full-screen, 1470 x 956. The stories' phones are
+     sized by the viewport's height and everything else in rem, so on a
+     larger screen (or the same one zoomed out to 80%) the phones grew
+     while the words and the 1100px column stood still: the phone dwarfed
+     its caption, and a project's capture sat small at the top of an
+     empty panel, its controls ~480px under it (Juan, 2026-10-05). Scaling
+     the rem by whichever side grows less keeps the 100% composition at
+     any size. It never shrinks below the reader's own default, and stops
+     at twice it. */
+  font-size: clamp(100%, min(1.0884vw, 1.6736vh), 200%);
   scroll-snap-type: y mandatory;
   /* No scrollbar, on Juan's call: the page is snapped full-height
      panels, so the bar measures a distance nobody is reading. Note it
@@ -616,6 +627,17 @@ html.is-stepped [data-narrator] {
   initial-value: 0;
 }
 
+/* The phone's picture-to-title gap, one for every deck on the page. */
+:root {
+  --media-gap-m: 1.5rem;
+  /* Soft from its first pixel: a wide blur pulled IN by a negative
+     spread reaches as far as the first pass (2.5rem blur, +0.125rem) but
+     starts faint at the picture's edge instead of as a lit rim — that one
+     read too strong (Juan, 2026-10-05). */
+  --media-glow: 0 0 3.5rem -0.5rem
+    color-mix(in oklab, var(--glow, transparent) calc(24% * var(--glow-k, 0)), transparent);
+}
+
 .scene {
   /* One fixed place for every panel — the media's side. Following the
      picture (a peeking phone, a rising one) was tried and read as a
@@ -675,11 +697,15 @@ html.is-stepped [data-narrator] {
   --scene-rx: 52%;
 }
 
-/* A phone stacks the media over the words: the light stands at the top. */
+/* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of
+   the width, so a wash around it could only show as a wide band above and
+   below — it took the screen over and hung off the picture (Juan,
+   2026-10-05). The light is the PICTURE'S OWN GLOW instead: a soft edge
+   of the same hues, hugging its outline (`--media-glow`, on the phones
+   and the panels' screens). The hues reach it on the root (Base.astro). */
 @media (max-width: 48rem) {
   .scene {
-    --scene-x: 50%;
-    --scene-y: 18%;
+    display: none;
   }
 }
 
