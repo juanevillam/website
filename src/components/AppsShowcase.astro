@@ -10,42 +10,38 @@ import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
  * THE APPS — every app the landing tells, in ONE panel (2026-10-11). Two
- * stories took four screens of scroll and a third took six, before the
- * page reached anything else; the section is now one screen however many
- * apps it holds, and each app still tells its whole story: a WELCOME card
- * (the pitch — the problem, then the answer — and the store row) and its
- * four cards.
+ * stories took four screens of scroll and a third would have taken six
+ * before the page reached anything else; the section is now one screen
+ * however many apps it holds, and each app still tells its whole story: a
+ * WELCOME card (the pitch — the problem, then the answer — and the store
+ * row) and its four cards.
  *
- * THREE LAYOUTS of the same cards, so Juan can choose by looking:
+ * TABS, chosen over two other layouts built beside it the same day: one
+ * deck that chained every app's cards with chapters above it, and tiles
+ * that opened full screen. A deck inside a deck was never one of them —
+ * two sideways swipes nested on a phone fight for the same gesture.
  *
- *  - `chain` (the landing) — ONE deck: Sound Shaper's five cards, then
- *    Topper's, then Booker's. Past an app's last card the next app's
- *    welcome comes in. Chapters at the top — one per app — say which app
- *    is in front, fill as its cards go by, and jump to its welcome.
- *  - `tabs` — a segmented control picks the app; the deck below holds only
- *    that app's five cards.
- *  - `cards` — the apps side by side as tiles; one opens full screen over
- *    the page with its deck.
- *
- * A deck inside a deck was the first idea and is not one of them: two
- * sideways swipes nested on a phone fight for the same gesture.
+ * THE SWITCHER FLOATS AT THE HEADER'S HEIGHT, centred between its pills
+ * and built by their recipe (Juan, 2026-10-11): standing in the panel, it
+ * took a row from the phone. It shows while the panel holds the screen and
+ * goes with it. The picked app's pill is a grey lozenge that SLIDES to the
+ * tab you pick, and the app's deck slides in from that side.
  *
  * Every card is the page's deck card (lib/deck.ts, `.deck-card` in
- * global.css), so the turn is the one More Work and Events turn with.
+ * global.css), so a turn is the one More Work and Events turn with.
  *
  * NARRATION: the section is one narrated PANEL — every paragraph of every
  * app, in order — under ONE still narrator that the cards slide under (the
- * More Work arrangement). A clip ending moves the voice to the next
- * paragraph, and whatever shows that paragraph follows it: the deck turns,
- * the tab switches, the tile opens. The director (scripts/director.ts)
- * runs the session; this file only maps paragraphs to cards.
+ * More Work arrangement). A clip ending moves the voice on, and whatever
+ * shows the next paragraph follows it: the deck turns, and past an app's
+ * last card the tab switches. The director (scripts/director.ts) runs the
+ * session; this file only maps paragraphs to cards.
  */
 type Props = {
   apps: AppStory[];
-  layout: 'chain' | 'tabs' | 'cards';
 };
 
-const { apps, layout } = Astro.props;
+const { apps } = Astro.props;
 
 const narrate = (k: UIKey) => ({ k, clip: clipFor(k), subs: subsFor(k) });
 
@@ -54,10 +50,9 @@ const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
 type Card =
-  | { kind: 'welcome'; app: number; paras: UIKey[] }
+  | { kind: 'welcome'; paras: UIKey[] }
   | {
       kind: 'slide';
-      app: number;
       paras: UIKey[];
       title: string;
       src: string;
@@ -66,15 +61,13 @@ type Card =
       scene: string;
     };
 
-// The cards of every app, in telling order, numbered across the whole
-// section — `data-card` is that number, whichever deck holds the card.
-const cards: Card[] = [];
-for (const [a, app] of apps.entries()) {
-  cards.push({ kind: 'welcome', app: a, paras: app.pitch });
+// Each app's cards, in telling order: its welcome, then its slides.
+const decks: Card[][] = [];
+for (const app of apps) {
+  const cards: Card[] = [{ kind: 'welcome', paras: app.pitch }];
   for (const slide of app.slides)
     cards.push({
       kind: 'slide',
-      app: a,
       paras: slide.paras,
       title: slide.title,
       src: slide.src,
@@ -82,136 +75,57 @@ for (const [a, app] of apps.entries()) {
       height: slide.height,
       scene: sceneAttr(await sceneOf(slide.src)),
     });
+  decks.push(cards);
 }
-const numbered = cards.map((card, n) => ({ ...card, n }));
-const voiced = cards.some(c => c.paras.some(k => clipFor(k)));
-
-// The chain is ONE deck of every card; the other two hold a deck per app.
-const decks =
-  layout === 'chain'
-    ? [{ app: -1, cards: numbered }]
-    : apps.map((_, a) => ({ app: a, cards: numbered.filter(c => c.app === a) }));
+const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 ---
 
 <section
   class="apps"
   id="apps"
-  data-apps={layout}
+  data-apps
   data-narr-panel={voiced ? '' : null}
   data-phone-scene
 >
-  <div class="inner head">
+  <!-- The switcher, floating at the header's height (see the docblock). -->
+  <div class="switcher" role="tablist" aria-label="Apps" data-switcher>
+    <span class="lozenge" aria-hidden="true"></span>
     {
-      layout === 'chain' && (
-        <nav class="chapters" aria-label="Apps">
-          {apps.map((app, a) => (
-            <button class="chapter" type="button" data-chapter={a}>
-              <AppTile app={app.id} size={28} />
-              <span class="chapter-name">{app.name}</span>
-              <span class="chapter-bar" aria-hidden="true">
-                <i />
-              </span>
-            </button>
-          ))}
-        </nav>
-      )
-    }
-    {
-      layout !== 'chain' && (
-        <h2 class="label eyebrow">
-          <T k="apps.title" />
-        </h2>
-      )
-    }
-    {
-      layout === 'tabs' && (
-        <div class="seg" role="tablist">
-          {apps.map((app, a) => (
-            <button class="seg-tab" type="button" role="tab" data-tab={a}>
-              <AppTile app={app.id} size={22} />
-              <span class="seg-name">{app.name}</span>
-            </button>
-          ))}
-        </div>
-      )
+      apps.map((app, a) => (
+        <button
+          class="tab"
+          type="button"
+          role="tab"
+          data-tab={a}
+          aria-selected={a === 0 ? 'true' : 'false'}
+        >
+          <AppTile app={app.id} size={22} />
+          <span class="tab-name">{app.name}</span>
+        </button>
+      ))
     }
   </div>
 
-  {
-    layout === 'cards' && (
-      <div class="inner overview" data-reveal>
-        {apps.map((app, a) => (
-          <button class="tile" type="button" data-open={a}>
-            <span class="tile-head">
-              <AppTile app={app.id} size={48} />
-              <span class="tile-name">{app.name}</span>
-              <span class="tile-plus" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                  <path
-                    d="M12 5v14M5 12h14"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              </span>
-            </span>
-            <span class="tile-line">
-              <T k={mobileKey(app.pitch[0])} />
-            </span>
-            <span class="tile-peek">
-              <img
-                src={app.slides[0].src}
-                alt=""
-                width={app.slides[0].width}
-                height={app.slides[0].height}
-                loading="lazy"
-                decoding="async"
-                draggable="false"
-              />
-            </span>
-          </button>
-        ))}
-        <div class="overview-narr">
-          {voiced && <div class="narr-anchor" data-narr-anchor aria-hidden="true" />}
-        </div>
-      </div>
-    )
-  }
-
-  <div class:list={['decks', layout === 'cards' && 'sheet']} data-decks>
+  <div class="decks" data-decks>
     {
-      layout === 'cards' && (
-        <button class="sheet-close" type="button" data-close>
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path
-              d="M6 6l12 12M18 6 6 18"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-          <span class="sr">Close</span>
-        </button>
-      )
-    }
-
-    {
-      decks.map(deck => (
-        <div
-          class="carousel"
-          data-apps-deck={deck.app}
-          tabindex="0"
-          aria-roledescription="carousel"
-          aria-label={deck.app < 0 ? 'Apps' : apps[deck.app].name}
-        >
-          <div class="stage" data-reveal>
-            {deck.cards.map(card => {
-              const app = apps[card.app];
-              return (
+      decks.map((cards, a) => {
+        const app = apps[a];
+        return (
+          <div
+            class="carousel"
+            data-apps-deck={a}
+            hidden={a !== 0}
+            tabindex="0"
+            role="tabpanel"
+            aria-roledescription="carousel"
+            aria-label={app.name}
+          >
+            <div class="stage">
+              {cards.map((card, c) => (
                 <article
                   class:list={['card', 'deck-card', `is-${card.kind}`]}
                   aria-roledescription="slide"
+                  aria-label={`${c + 1} / ${cards.length}`}
                   data-scene={card.kind === 'slide' ? card.scene : null}
                 >
                   <div class="words">
@@ -237,8 +151,8 @@ const decks =
                         data-deck-part="text"
                         style={`--i: ${i + 2}`}
                         data-narr-para
-                        data-card={card.n}
-                        data-app={card.app}
+                        data-card={c}
+                        data-app={a}
                         data-clip-en={clip?.en}
                         data-clip-es={clip?.es}
                         data-subs-en={subs.en}
@@ -266,7 +180,7 @@ const decks =
 
                   {card.kind === 'welcome' ? (
                     /* The welcome's picture is the APP ITSELF — its icon,
-                       large, the cover of its chapter — so the first phone
+                       large, the cover of its story — so the first phone
                        is not shown twice in a row. */
                     <div class="emblem" data-deck-part="picture">
                       <AppTile app={app.id} size={220} />
@@ -286,32 +200,28 @@ const decks =
                     </div>
                   )}
                 </article>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          <div class="inner controls" data-dock>
-            <DeckControls
-              names={deck.cards.map(c =>
-                c.kind === 'slide' ? `${apps[c.app].name} — ${c.title}` : apps[c.app].name
-              )}
-            />
+            <div class="inner controls" data-dock>
+              <DeckControls
+                names={cards.map(c => (c.kind === 'slide' ? c.title : app.name))}
+              />
+            </div>
           </div>
-        </div>
-      ))
+        );
+      })
     }
 
     {/* The ONE narrator's anchor, outside every deck: the cards slide
-        under it, and the script stands it on the front card's slot. In the
-        `cards` layout it moves between the overview and the open sheet. */}
+        under it, and the script stands it on the front card's slot. */}
     {
-      voiced && layout !== 'cards' && (
+      voiced && (
         <div class="inner narr-static">
           <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
         </div>
       )
     }
-    {voiced && layout === 'cards' && <div class="inner narr-static" />}
   </div>
 </section>
 
@@ -319,9 +229,9 @@ const decks =
   .apps {
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
     --card-w: min(var(--content-max), calc(100vw - var(--gutter) * 2));
-    /* The phone's height: the panel, less its insets, the head row and
-       the controls' row. */
-    --shot-h: calc(100svh - var(--stage-top) - var(--stage-bottom) - 9rem);
+    /* The phone's height: the panel, less its insets and the controls'
+       row — nothing above it now that the switcher floats. */
+    --shot-h: calc(100svh - var(--stage-top) - var(--stage-bottom) - 5rem);
     min-height: 100svh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
@@ -336,151 +246,142 @@ const decks =
     margin: 0 auto;
   }
 
-  /* ---------- the head row ---------- */
-
-  .head {
+  /* ---------- the switcher ----------
+     The header's pill recipe — its height, hairline, ground and blur — at
+     the header's height, centred between its two pills. Shown only while
+     the panel holds the screen (the script toggles .is-shown). */
+  .switcher {
+    --pad: 0.1875rem;
+    position: fixed;
+    top: var(--float-gap);
+    left: 50%;
+    z-index: 11;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-height: 2.5rem;
+    height: var(--float-h);
+    padding: var(--pad);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    transform: translate(-50%, -0.75rem);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity calc(var(--beat) / 2) var(--ease),
+      transform calc(var(--beat) / 2) var(--ease),
+      border-color var(--dur-micro) var(--ease),
+      visibility 0s linear calc(var(--beat) / 2);
   }
 
-  .eyebrow {
-    display: flex;
-    align-items: center;
-    height: 2rem;
+  .switcher.is-shown {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity calc(var(--beat) / 2) var(--ease),
+      transform calc(var(--beat) / 2) var(--ease),
+      border-color var(--dur-micro) var(--ease),
+      visibility 0s;
   }
 
-  /* Chapters: one per app, the one in front lit and filling as its cards
-     go by — the deck's progress, told per app instead of as fifteen dots. */
-  .chapters {
-    display: flex;
-    gap: 0.5rem;
+  .switcher:hover {
+    border-color: var(--ink-3);
   }
 
-  .chapter {
+  /* The picked tab's ground: a grey lozenge that slides and stretches to
+     whichever tab is picked — the script sets its box. */
+  .lozenge {
+    position: absolute;
+    top: var(--pad);
+    bottom: var(--pad);
+    left: 0;
+    width: var(--w, 0px);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 13%, transparent);
+    transform: translateX(var(--x, 0px));
+    transition:
+      transform calc(var(--beat) * 0.75) var(--ease),
+      width calc(var(--beat) * 0.75) var(--ease);
+  }
+
+  .lozenge.is-still {
+    transition: none;
+  }
+
+  .tab {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.625rem;
-    height: var(--float-h);
-    padding: 0 1rem 0 0.375rem;
-    border: 1px solid transparent;
+    gap: 0.5rem;
+    height: 100%;
+    padding: 0 0.875rem 0 0.4375rem;
+    border: none;
     border-radius: 999px;
     background: none;
     color: var(--ink-3);
     font: inherit;
-    cursor: pointer;
-    transition:
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease),
-      background var(--dur-micro) var(--ease);
-  }
-
-  .chapter :global(svg) {
-    opacity: 0.45;
-    transition: opacity var(--dur-micro) var(--ease);
-  }
-
-  .chapter:hover {
-    color: var(--ink-2);
-  }
-
-  .chapter.is-current {
-    color: var(--ink);
-    border-color: var(--hairline);
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-  }
-
-  .chapter.is-current :global(svg) {
-    opacity: 1;
-  }
-
-  .chapter-name {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    letter-spacing: var(--track-heading);
-    white-space: nowrap;
-  }
-
-  .chapter-bar {
-    position: absolute;
-    left: 1rem;
-    right: 1rem;
-    bottom: 0.3rem;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--hairline);
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity var(--dur-micro) var(--ease);
-  }
-
-  .chapter.is-current .chapter-bar {
-    opacity: 1;
-  }
-
-  .chapter-bar i {
-    display: block;
-    height: 100%;
-    width: calc(var(--fill, 0) * 100%);
-    background: var(--ink);
-    transition: width var(--beat) var(--ease);
-  }
-
-  /* Tabs: the header pills' recipe, the picked one filled in ink. */
-  .seg {
-    display: flex;
-    padding: 0.25rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-  }
-
-  .seg-tab {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    height: 2.25rem;
-    padding: 0 1rem 0 0.375rem;
-    border: none;
-    border-radius: 999px;
-    background: none;
-    color: var(--ink-2);
-    font: inherit;
     font-size: 0.875rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
     cursor: pointer;
-    transition:
-      background var(--dur-micro) var(--ease),
-      color var(--dur-micro) var(--ease);
+    transition: color var(--dur-micro) var(--ease);
   }
 
-  .seg-tab[aria-selected='true'] {
-    background: var(--ink);
-    color: var(--ground);
+  .tab :global(svg) {
+    opacity: 0.55;
+    transition: opacity var(--dur-micro) var(--ease);
+  }
+
+  .tab:hover {
+    color: var(--ink-2);
+  }
+
+  .tab[aria-selected='true'] {
+    color: var(--ink);
+  }
+
+  .tab[aria-selected='true'] :global(svg) {
+    opacity: 1;
   }
 
   /* ---------- the decks ---------- */
 
+  /* Every app's deck in one cell, so the leaving one and the arriving one
+     cross in place instead of stacking. */
   .decks {
     position: relative;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin-top: 1.5rem;
+    display: grid;
   }
 
   .carousel {
-    flex: 1;
+    grid-area: 1 / 1;
     display: flex;
     flex-direction: column;
     outline: none;
+    transition:
+      opacity calc(var(--beat) / 2) var(--ease),
+      transform calc(var(--beat) * 0.75) var(--ease);
   }
 
   .carousel[hidden] {
     display: none;
+  }
+
+  /* Changing app: the deck leaving drifts out the way the switch went and
+     fades; the one arriving stands on the far side, then comes in. */
+  .carousel.is-leaving {
+    opacity: 0;
+    transform: translateX(calc(var(--dir, 1) * -4rem));
+    pointer-events: none;
+    transition-duration: var(--dur-micro), calc(var(--beat) / 2);
+  }
+
+  .carousel.is-arriving {
+    opacity: 0;
+    transform: translateX(calc(var(--dir, 1) * 4rem));
+    transition: none;
   }
 
   .stage {
@@ -559,7 +460,6 @@ const decks =
     margin-top: 0.875rem;
   }
 
-  /* The welcome's pitch reads in longer rows. */
   .is-welcome .body {
     max-width: none;
   }
@@ -619,160 +519,25 @@ const decks =
     transition: transform calc(var(--beat) * 0.75) var(--ease);
   }
 
+  /* Centred at the panel's foot, the way More Work's stand. */
   .controls {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     margin-top: auto;
     padding-top: 1.5rem;
   }
 
-  /* The chain's progress is the chapters; fifteen dots would only repeat
-     it, smaller. */
-  [data-apps='chain'] .controls :global(.dots) {
-    display: none;
-  }
-
-  /* ---------- cards: the overview and its sheet ---------- */
-
-  .overview {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    margin-top: 1.5rem;
-    flex: 1;
-  }
-
-  .tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    height: calc(100svh - var(--stage-top) - var(--stage-bottom) - 8rem);
-    padding: 1.5rem 1.5rem 0;
-    overflow: hidden;
-    border: 1px solid var(--hairline);
-    border-radius: var(--media-radius-flat);
-    background: var(--surface);
-    color: var(--ink);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition:
-      transform calc(var(--beat) / 2) var(--ease),
-      border-color var(--dur-micro) var(--ease);
-  }
-
-  .tile:hover {
-    transform: translateY(-4px);
-    border-color: var(--ink-3);
-  }
-
-  .tile-head {
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-  }
-
-  .tile-name {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: var(--track-heading);
-  }
-
-  .tile-plus {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    margin-left: auto;
-    border-radius: 999px;
-    background: var(--hairline);
-    color: var(--ink-2);
-  }
-
-  .tile-line {
-    margin-top: 1rem;
-    color: var(--ink-body);
-    font-size: 0.9375rem;
-    line-height: 1.55;
-  }
-
-  .tile-peek {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    justify-content: center;
-    margin-top: 1.5rem;
-    overflow: hidden;
-  }
-
-  .tile-peek img {
-    width: 72%;
-    height: auto;
-    max-width: none;
-    align-self: flex-start;
-    border: 1px solid var(--hairline);
-    border-radius: calc(var(--media-radius) * 0.8);
-  }
-
-  .overview-narr {
-    grid-column: 1 / -1;
-  }
-
-  /* The sheet: the open app, over the whole page, on the ground. */
-  .sheet {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    margin: 0;
-    padding: var(--stage-top) 0 var(--stage-bottom);
-    background: color-mix(in srgb, var(--ground) 94%, transparent);
-    backdrop-filter: blur(24px);
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity calc(var(--beat) / 2) var(--ease),
-      visibility 0s linear calc(var(--beat) / 2);
-  }
-
-  .sheet.is-open {
-    opacity: 1;
-    visibility: visible;
-    transition:
-      opacity calc(var(--beat) / 2) var(--ease),
-      visibility 0s;
-  }
-
-  .sheet-close {
-    position: absolute;
-    top: calc(var(--float-gap) + 3.5rem);
-    right: var(--gutter);
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    width: var(--float-h);
-    height: var(--float-h);
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    color: var(--ink);
-    cursor: pointer;
-  }
-
-  .sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .narr-static .narr-anchor,
-    .chapter-bar i {
+    .lozenge,
+    .carousel {
       transition: none;
+    }
+
+    .carousel.is-leaving,
+    .carousel.is-arriving {
+      transform: none;
     }
   }
 
@@ -780,39 +545,27 @@ const decks =
 
   @media (max-width: 48rem) {
     .apps {
-      --shot-h: min(112vw, calc(100svh - var(--stage-top) - 19rem));
+      --shot-h: min(112vw, calc(100svh - var(--stage-top) - 16rem));
     }
 
-    .head {
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .chapter {
-      padding: 0 0.375rem;
-    }
-
-    .chapter-name,
-    .seg-name {
-      display: none;
-    }
-
-    .chapter-bar {
-      left: 0.5rem;
-      right: 0.5rem;
-      bottom: 0.15rem;
-    }
-
-    .seg-tab {
-      padding: 0 0.625rem;
-    }
-
+    /* A step of air under the switcher, which stands on the panel's top
+       line on a phone. */
     .decks {
       margin-top: 1rem;
     }
 
+    /* Icons only: three apps fit between the header's two pills. */
+    .tab {
+      padding: 0 0.4375rem;
+    }
+
+    .tab-name {
+      display: none;
+    }
+
     /* One centred column: the picture on top, the words under it. */
-    .card {
+    .card,
+    .is-welcome {
       grid-template-columns: 1fr;
       align-content: start;
       gap: var(--media-gap-m);
@@ -889,95 +642,50 @@ const decks =
       margin-top: 0;
       padding-top: 0;
     }
-
-    .overview {
-      grid-template-columns: 1fr;
-      gap: 0.875rem;
-    }
-
-    .tile {
-      height: auto;
-      padding-bottom: 1.25rem;
-    }
-
-    .tile-peek {
-      display: none;
-    }
-
-    /* The sheet covers the header, so its ✕ takes the header's corner. */
-    .sheet-close {
-      top: calc(var(--float-gap) + env(safe-area-inset-top));
-    }
   }
 </style>
 
 <script>
   import { createDeck, watchSlots, type Deck } from '../lib/deck';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-apps]')) {
-    const layout = root.dataset.apps as 'chain' | 'tabs' | 'cards';
+  const root = document.querySelector<HTMLElement>('[data-apps]');
+  if (root) {
     const decksEl = root.querySelector<HTMLElement>('[data-decks]')!;
-    const carousels = [...root.querySelectorAll<HTMLElement>('[data-apps-deck]')];
+    const switcher = root.querySelector<HTMLElement>('[data-switcher]')!;
+    const lozenge = switcher.querySelector<HTMLElement>('.lozenge')!;
+    const tabs = [...switcher.querySelectorAll<HTMLElement>('[data-tab]')];
     const paras = [...root.querySelectorAll<HTMLElement>('[data-narr-para]')];
-    const chapters = [...root.querySelectorAll<HTMLElement>('[data-chapter]')];
-    const tabs = [...root.querySelectorAll<HTMLElement>('[data-tab]')];
-    const anchor = root.querySelector<HTMLElement>('[data-narr-anchor]');
-    const still = decksEl.querySelector<HTMLElement>('.narr-static');
-
-    // What every card is: its number across the section and its app.
-    const meta = (card: HTMLElement) => {
-      const p = card.querySelector<HTMLElement>('[data-narr-para]');
-      return { n: Number(p?.dataset.card), app: Number(p?.dataset.app) };
-    };
+    const still = decksEl.querySelector<HTMLElement>('.narr-static .narr-anchor');
 
     type Held = { el: HTMLElement; cards: HTMLElement[]; deck: Deck };
     const held: Held[] = [];
     let active = 0;
-
-    const front = () => {
-      const h = held[layout === 'chain' ? 0 : active];
-      return h?.cards[h.deck.current];
-    };
+    // How long a leaving deck stays drawn: its fade, and a margin.
+    const LEAVE_MS = 320;
 
     // Stand the still anchor on the front card's slot.
     const standAnchor = () => {
-      const slot = front()?.querySelector<HTMLElement>('.narr-slot');
-      if (!still?.firstElementChild || !slot) return;
+      const h = held[active];
+      const slot = h?.cards[h.deck.current]?.querySelector<HTMLElement>('.narr-slot');
+      if (!still || !slot) return;
       const y = slot.getBoundingClientRect().top - decksEl.getBoundingClientRect().top;
-      (still.firstElementChild as HTMLElement).style.setProperty('--slot-y', `${y.toFixed(1)}px`);
+      still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
     };
 
-    // The chapters follow the card in front: which app, and how far in.
-    const markChapters = (card: HTMLElement) => {
-      const { n, app } = meta(card);
-      const cards = held[0].cards;
-      const first = cards.findIndex(c => meta(c).app === app);
-      const count = cards.filter(c => meta(c).app === app).length;
-      const at = cards.findIndex(c => meta(c).n === n);
-      chapters.forEach((ch, a) => {
-        ch.classList.toggle('is-current', a === app);
-        ch.toggleAttribute('aria-current', a === app);
-        ch.style.setProperty('--fill', a === app ? String((at - first + 1) / count) : '0');
-      });
-    };
-
+    // The narrator starts this panel on the card in front, and a running
+    // voice switches to it.
     const select = (card: HTMLElement | undefined) => {
       if (!card) return;
       requestAnimationFrame(standAnchor);
-      if (layout === 'chain') markChapters(card);
-      // The narrator starts this panel on the card in front, and a running
-      // voice switches to it.
       const first = card.querySelector<HTMLElement>('[data-narr-para]');
       if (!first) return;
       root.dataset.narrStart = String(paras.indexOf(first));
       document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
     };
 
-    for (const el of carousels) {
+    for (const el of root.querySelectorAll<HTMLElement>('[data-apps-deck]')) {
       const cards = [...el.querySelectorAll<HTMLElement>('.deck-card')];
-      const h = {} as Held;
-      h.el = el;
-      h.cards = cards;
+      const h = { el, cards } as Held;
       h.deck = createDeck({
         cards,
         controls: el.querySelector('[data-deck-controls]'),
@@ -986,83 +694,95 @@ const decks =
         onChange: current => {
           // The first call comes while the deck is still being made.
           requestAnimationFrame(() => {
-            if (held.indexOf(h) === (layout === 'chain' ? 0 : active)) select(cards[current]);
+            if (held.indexOf(h) === active) select(cards[current]);
           });
         },
       });
       held.push(h);
     }
 
-    // Tabs and cards: one app's deck at a time, opened on its welcome.
-    const sheet = layout === 'cards' ? decksEl : null;
-    const overviewSpot = root.querySelector<HTMLElement>('.overview-narr');
+    // The lozenge stands under the picked tab — measured, since every
+    // app's name is its own width.
+    const placeLozenge = (animate = true) => {
+      const tab = tabs[active];
+      if (!tab) return;
+      lozenge.classList.toggle('is-still', !animate);
+      lozenge.style.setProperty('--x', `${tab.offsetLeft}px`);
+      lozenge.style.setProperty('--w', `${tab.offsetWidth}px`);
+    };
 
-    const show = (a: number, fromStart = true) => {
+    // Changing app: the old deck drifts out the way the switch went, the
+    // new one comes in from the other side, opened on its welcome — or,
+    // when the voice carried the page here, on the card being told.
+    const show = (a: number, card?: number) => {
+      if (a === active) return;
+      const dir = a > active ? 1 : -1;
+      const from = held[active];
+      const to = held[a];
       active = a;
-      held.forEach((h, i) => (h.el.hidden = i !== a));
+
       tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === a)));
-      const h = held[a];
-      if (fromStart && h.deck.current !== 0) h.deck.go(0, -1);
-      else select(h.cards[h.deck.current]);
-      h.el.focus({ preventScroll: true });
+      placeLozenge();
+
+      from.el.style.setProperty('--dir', String(dir));
+      from.el.classList.add('is-leaving');
+      setTimeout(() => {
+        from.el.classList.remove('is-leaving');
+        if (held[active] !== from) from.el.hidden = true;
+      }, LEAVE_MS);
+
+      to.el.style.setProperty('--dir', String(dir));
+      to.el.classList.remove('is-leaving');
+      to.el.hidden = false;
+      to.el.classList.add('is-arriving');
+      void to.el.offsetWidth;
+      to.el.classList.remove('is-arriving');
+
+      const target = card ?? 0;
+      if (to.deck.current !== target)
+        to.deck.go(target, target > to.deck.current ? 1 : -1);
+      else select(to.cards[target]);
     };
 
-    const open = (a: number, fromStart = true) => {
-      if (!sheet) return;
-      if (anchor && still) still.append(anchor);
-      sheet.classList.add('is-open');
-      document.documentElement.style.overflow = 'hidden';
-      show(a, fromStart);
-    };
+    tabs.forEach((t, a) => t.addEventListener('click', () => show(a)));
 
-    const close = () => {
-      if (!sheet) return;
-      sheet.classList.remove('is-open');
-      document.documentElement.style.overflow = '';
-      if (anchor && overviewSpot) overviewSpot.append(anchor);
+    // The switcher shows while the panel holds the screen — the middle of
+    // the viewport inside it — and goes with it.
+    const watch = () => {
+      const r = root.getBoundingClientRect();
+      const mid = innerHeight / 2;
+      switcher.classList.toggle('is-shown', r.top < mid && r.bottom > mid);
     };
-
-    if (layout === 'chain') {
-      chapters.forEach((ch, a) =>
-        ch.addEventListener('click', () => {
-          const cards = held[0].cards;
-          const i = cards.findIndex(c => meta(c).app === a);
-          if (i >= 0 && i !== held[0].deck.current) held[0].deck.go(i);
-        })
-      );
-      select(held[0].cards[0]);
-    } else if (layout === 'tabs') {
-      tabs.forEach((t, a) => t.addEventListener('click', () => show(a)));
-      show(0);
-    } else {
-      held.forEach((h, i) => (h.el.hidden = i !== 0));
-      root.querySelectorAll<HTMLElement>('[data-open]').forEach(b =>
-        b.addEventListener('click', () => open(Number(b.dataset.open)))
-      );
-      root.querySelector('[data-close]')?.addEventListener('click', close);
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && sheet?.classList.contains('is-open')) close();
-      });
-      root.dataset.narrStart = '0';
-    }
+    addEventListener('scroll', watch, { passive: true });
+    addEventListener('resize', () => {
+      watch();
+      placeLozenge(false);
+      standAnchor();
+    });
+    watch();
+    // Fonts settle the tabs' widths after the first paint.
+    placeLozenge(false);
+    document.fonts?.ready.then(() => placeLozenge(false));
 
     // The voice moved on by itself: whatever shows its paragraph follows —
-    // the deck turns, the tab switches, the sheet opens.
+    // the deck turns, and past an app's last card the tab switches.
     document.addEventListener('narr:para', e => {
       const p = (e as CustomEvent<HTMLElement>).detail;
       if (!root.contains(p)) return;
-      const card = p.closest<HTMLElement>('.deck-card');
       const a = Number(p.dataset.app);
-      if (!card) return;
-      if (layout === 'tabs' && a !== active) show(a, false);
-      if (layout === 'cards' && (!sheet?.classList.contains('is-open') || a !== active))
-        open(a, false);
-      const h = held[layout === 'chain' ? 0 : a];
-      const i = h.cards.indexOf(card);
-      if (i >= 0 && i !== h.deck.current) h.deck.go(i);
+      const c = Number(p.dataset.card);
+      if (a !== active) {
+        show(a, c);
+        return;
+      }
+      const h = held[a];
+      if (c !== h.deck.current) h.deck.go(c);
     });
 
-    window.addEventListener('resize', standAnchor, { passive: true });
-    watchSlots(held.flatMap(h => h.cards), standAnchor);
+    select(held[0].cards[0]);
+    watchSlots(
+      held.flatMap(h => h.cards),
+      standAnchor
+    );
   }
 </script>

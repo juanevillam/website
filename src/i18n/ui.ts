@@ -86,7 +86,6 @@ const en = {
     'And PlayStation-style trophies that unlock as you use the app, all the way to the platinum. All my apps live in one monorepo and share that module: an easter egg for anyone who plays PlayStation, and a detail that makes the app more mine.',
   // DRAFT (2026-10-11) — Booker's story, written from what the app does
   // today; Juan rewrites it in his own words and records it.
-  'apps.title': 'My Apps',
   'booker.problem':
     "I read on Kindle and highlight what matters. To get a book back I'd go to my highlights, but Kindle buries them, and the PDFs I exported to rescue them read like documents, not like books.",
   'booker.solution':
@@ -273,7 +272,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'En tu perfil están todos los tops que has hecho — películas, videojuegos, Pokémon, lo que quieras — cada uno con sus tres primeros a la vista.',
     'topper.s4.p2':
       'Y trofeos al estilo PlayStation, que se desbloquean mientras usas la app hasta llegar al platino. Todas mis apps viven en un mismo monorepo y comparten ese módulo: un easter egg para quien juega PlayStation, y un detalle que hace la app más mía.',
-    'apps.title': 'Mis apps',
     'booker.problem':
       'Leo en Kindle y resalto lo importante. Para retomar un libro volvía a mis resaltados, pero Kindle los entierra, y los PDF que exportaba para rescatarlos se leían como documentos, no como libros.',
     'booker.solution':
@@ -451,7 +449,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '你的个人资料收录你做过的所有榜单——电影、电子游戏、宝可梦，想做什么都行——每份的前三名都一目了然。',
     'topper.s4.p2':
       '还有 PlayStation 风格的奖杯，随着你使用应用逐一解锁，直到白金。我所有的应用都在同一个 monorepo 里，共用这个模块：给玩 PlayStation 的人一个彩蛋，也让这个应用更像我自己的。',
-    'apps.title': '我的应用',
     'booker.problem':
       '我在 Kindle 上读书，划出重要的段落。想重温一本书时我会回去看这些高亮，可 Kindle 把它们埋得很深，而我导出来抢救它们的 PDF 读起来像文件，不像书。',
     'booker.solution':
