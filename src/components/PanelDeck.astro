@@ -371,6 +371,8 @@ for (const p of items)
     grid-template-columns: var(--screen-cols);
     gap: var(--space-4);
     align-items: start;
+    /* The screen leans toward the pointer (lib/tilt). */
+    perspective: 1600px;
   }
 
 
@@ -440,6 +442,11 @@ for (const p of items)
     object-position: top;
   }
 
+
+  /* The pointer tilt — the game's own screen stays level: it is played. */
+  .screen:not(.is-own) {
+    rotate: var(--tilt-rot, none);
+  }
 
   /* A screen of its own (the game's cover): it places itself. */
   .screen.is-own {
@@ -637,6 +644,7 @@ for (const p of items)
 
 <script>
   import { createDeck, watchSlots } from '../lib/deck';
+  import { followPointer } from '../lib/tilt';
 
   // Every panel deck on the page (More Work, Events) — one script for all.
   for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
@@ -683,5 +691,11 @@ for (const p of items)
     window.addEventListener('resize', standAnchor, { passive: true });
     // Late fonts, a language switch: whatever reflows the words.
     watchSlots(cards, standAnchor);
+
+    // The card's screen leans toward the pointer anywhere over the panel.
+    if (section)
+      followPointer(section, () =>
+        cards[deck.current]?.querySelector<HTMLElement>('.screen:not(.is-own)')
+      );
   }
 </script>

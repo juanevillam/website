@@ -204,12 +204,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                        skims past one story can judge the next by its UI
                        (Juan, 2026-10-11). It opens out as the card lands. */
                     <div class="slot" data-deck-part="picture">
-                      <div class="tilt" data-tilt>
                       <div class="fan" style={`--n: ${card.shots.length}`}>
                         {card.shots.map((shot, i) => (
                           <img
                             class="shot fan-shot"
-                            style={`--k: ${i - (card.shots.length - 1) / 2}; z-index: ${card.shots.length - i}`}
+                            style={`--k: ${i - (card.shots.length - 1) / 2}; z-index: ${i + 1}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
                             width={shot.width}
@@ -220,11 +219,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                           />
                         ))}
                       </div>
-                      </div>
                     </div>
                   ) : (
                     <div class="slot" data-deck-part="picture">
-                      <div class="tilt" data-tilt>
                       <img
                         class="shot"
                         src={card.src}
@@ -235,7 +232,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         decoding="async"
                         draggable="false"
                       />
-                      </div>
                     </div>
                   )}
                 </article>
@@ -542,17 +538,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      read as a different picture from the cards after it), pivoting on one
      point at their foot, each turned a few degrees by its place from the
      middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
-     overlapping, every screen's top still in view. The FIRST card's phone
-     is on top and the rest tuck under it to the right, so the fan reads
-     left to right, the way the deck does. Closed while the card
+     overlapping, every screen's top still in view. The LAST card's phone
+     is on top and the rest tuck under it to the LEFT (Juan, 2026-10-11):
+     what shows of each one is then its leading edge — the screen's own
+     content — not the status bar's icons down its trailing side. The fan
+     holds still under the pointer; a tilted fan read as broken. Closed while the card
      is away; it opens as the card lands. */
   .fan {
     --fan-h: var(--shot-h);
     --fan-w: calc(var(--fan-h) * 1179 / 2556);
     /* How far apart neighbours stand at the foot, in phone widths, and how
        far each turns. */
-    --spread: 0.26;
-    --tilt: 4deg;
+    --spread: 0.2;
+    --tilt: 3deg;
     position: relative;
     width: 100%;
     height: var(--shot-h);
@@ -560,9 +558,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
   .fan-shot {
     position: absolute;
-    /* A step right of the column's middle: the fan opens toward the
-       page's edge, clear of the words. */
-    left: calc(50% + var(--fan-nudge, 1.5rem));
+    left: 50%;
     top: calc((var(--shot-h) - var(--fan-h)) / 2);
     height: var(--fan-h);
     margin-left: calc(var(--fan-w) / -2);
@@ -572,41 +568,18 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transition-delay: calc(var(--beat) / 4);
   }
 
-  /* Under the pointer the fan opens a touch further and its phones part
-     by depth — each slides with the pointer by its place in the fan. */
   .deck-card.is-current .fan-shot {
-    transform: translateX(
-        calc(
-          var(--k) * var(--fan-w) * (var(--spread) + var(--hover, 0) * 0.04) +
-            var(--tx, 0) * (var(--k) + 2) * 4px
-        )
-      )
-      rotate(calc(var(--k) * (var(--tilt) + var(--hover, 0) * 1deg)));
+    transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
+      rotate(calc(var(--k) * var(--tilt)));
   }
 
-  /* ---------- the tilt ----------
-     Every picture in the panel leans toward the pointer — a slight 3D
-     turn that follows the mouse across the whole panel and settles back
-     when it leaves (the script sets --tx / --ty in -1…1). Pointer-only:
-     a touch screen has no hover to follow. */
-  .tilt {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    transform: perspective(1600px) rotateY(calc(var(--tx, 0) * 7deg))
-      rotateX(calc(var(--ty, 0) * -5deg));
-    transition: transform var(--beat) var(--ease);
+  /* A slide's phone leans toward the pointer (lib/tilt). */
+  .is-slide .slot {
+    perspective: 1600px;
   }
 
-  /* Following, the fan's phones answer at once — the opening delay is
-     for the card landing, not for the pointer. */
-  .tilt.is-following .fan-shot {
-    transition-duration: calc(var(--beat) / 2);
-    transition-delay: 0s;
-  }
-
-  .tilt.is-following {
-    transition: transform calc(var(--beat) / 3) linear;
+  .is-slide .shot {
+    rotate: var(--tilt-rot, none);
   }
 
   /* ---------- the narrator's still anchor ---------- */
@@ -642,9 +615,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       transition: none;
     }
 
-    .tilt {
-      transform: none;
-    }
 
     .carousel.is-leaving,
     .carousel.is-arriving {
@@ -696,7 +666,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     /* A phone's fan stands over the words, smaller: the screen is the
        width the four have to share. */
     .is-welcome .fan {
-      --fan-nudge: 0px;
       --fan-h: min(58vw, 27svh);
       --spread: 0.3;
       --tilt: 4deg;
@@ -764,6 +733,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
 <script>
   import { createDeck, watchSlots, type Deck } from '../lib/deck';
+  import { followPointer } from '../lib/tilt';
 
   const root = document.querySelector<HTMLElement>('[data-apps]');
   if (root) {
@@ -896,43 +866,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (c !== h.deck.current) h.deck.go(c);
     });
 
-    // THE TILT: the front card's picture leans toward the pointer while it
-    // moves over the panel, and settles back when it leaves.
-    const pointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-    const still3d = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (pointer && !still3d) {
-      let frame = 0;
-      let last: HTMLElement | null = null;
-      const lean = (e: PointerEvent) => {
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(() => {
-          const h = held[active];
-          const tilt = h.cards[h.deck.current]?.querySelector<HTMLElement>('[data-tilt]');
-          if (!tilt) return;
-          if (last && last !== tilt) settle(last);
-          last = tilt;
-          const r = tilt.getBoundingClientRect();
-          const clamp = (v: number) => Math.max(-1, Math.min(1, v));
-          const tx = clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth / 2));
-          const ty = clamp((e.clientY - (r.top + r.height / 2)) / (innerHeight / 2));
-          tilt.classList.add('is-following');
-          tilt.style.setProperty('--tx', tx.toFixed(3));
-          tilt.style.setProperty('--ty', ty.toFixed(3));
-          tilt.style.setProperty('--hover', '1');
-        });
-      };
-      const settle = (tilt: HTMLElement) => {
-        tilt.classList.remove('is-following');
-        tilt.style.setProperty('--tx', '0');
-        tilt.style.setProperty('--ty', '0');
-        tilt.style.setProperty('--hover', '0');
-      };
-      root.addEventListener('pointermove', lean);
-      root.addEventListener('pointerleave', () => {
-        cancelAnimationFrame(frame);
-        if (last) settle(last);
-      });
-    }
+    // A slide's phone leans toward the pointer; the welcome's fan holds
+    // still.
+    followPointer(root, () => {
+      const h = held[active];
+      const card = h.cards[h.deck.current];
+      return card?.classList.contains('is-slide')
+        ? card.querySelector<HTMLElement>('.shot')
+        : null;
+    });
 
     select(held[0].cards[0]);
     // Placed now as well as on the next frame, and again once fonts and
