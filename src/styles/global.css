@@ -77,7 +77,13 @@
   --header-h: calc(var(--float-gap) + var(--float-h));
   --space-section: clamp(6rem, 14vh, var(--space-9));
   --measure: 65ch;
-  --content-max: 68.75rem; /* 1100px */
+  /* The page's width, and the air between a panel's words and its picture.
+     Widened 2026-10-11 (Juan): at 1100px the words started well in from
+     the edge and the picture stopped short of it, so a wide screen held a
+     narrow column. The gap between the two columns grows with it — 1.5x
+     the ratio's 4. */
+  --content-max: 80rem; /* 1280px */
+  --column-gap: calc(var(--space-4) * 1.5);
   /* THE MEDIA CORNER — one radius for every picture on the page: the
      stories' phones, More Work's screenshots, the events' photos, the
      game's cover. It is the phone's own: an iPhone screen's corner (55pt
