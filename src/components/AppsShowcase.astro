@@ -400,7 +400,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     flex-direction: column;
     outline: none;
     transition:
-      opacity calc(var(--beat) / 3) var(--ease),
+      opacity calc(var(--beat) / 2) var(--ease),
       transform calc(var(--beat) / 2) var(--ease);
   }
 
@@ -412,14 +412,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      fades; the one arriving stands on the far side, then comes in. */
   .carousel.is-leaving {
     opacity: 0;
-    transform: translateX(calc(var(--dir, 1) * -4rem));
+    transform: translateX(calc(var(--dir, 1) * -2rem));
     pointer-events: none;
-    transition-duration: var(--dur-micro), calc(var(--beat) / 2);
   }
 
   .carousel.is-arriving {
     opacity: 0;
-    transform: translateX(calc(var(--dir, 1) * 4rem));
+    transform: translateX(calc(var(--dir, 1) * 2rem));
     transition: none;
   }
 
@@ -799,6 +798,32 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       margin-top: 0.875rem;
     }
   }
+
+  /* SHORT DESKS (a 720pt laptop window): the welcome's two paragraphs, the
+     store row and the narrator under them reached past the deck's arrows.
+     The pitch steps down a size and its gaps tighten. */
+  @media (min-width: 48.01rem) and (max-height: 50rem) {
+    .is-welcome .body {
+      font-size: 0.9375rem;
+      line-height: 1.55;
+    }
+
+    .is-welcome .words .body {
+      margin-top: 0.875rem;
+    }
+
+    .is-welcome .words .body + .body {
+      margin-top: 0.625rem;
+    }
+
+    .is-welcome .store-row :global(.stores) {
+      margin-top: 1.25rem;
+    }
+
+    .is-welcome .narr-slot {
+      margin-top: 1rem;
+    }
+  }
 </style>
 
 <script>
@@ -949,9 +974,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       lozenge.style.setProperty('--w', `${tab.offsetWidth}px`);
     };
 
-    // Changing app: the old deck drifts out the way the switch went, the
-    // new one comes in from the other side, opened on its welcome — or,
-    // when the voice carried the page here, on the card being told.
+    // CHANGING APP IS ONE MOVE (Juan, 2026-10-11). The old deck drifts out
+    // the way the switch went while the new one drifts in from the other
+    // side, together, on one curve — and the new deck is ALREADY standing on
+    // its welcome (or, when the voice carried the page here, on the card
+    // being told), fan open. Replaying the card's entrance and the fan on
+    // top of the deck's own move read as a gallop, two beats where there
+    // should be one, and flicking between tabs replayed it every time.
     const show = (a: number, card?: number) => {
       if (a === active) return;
       const dir = a > active ? 1 : -1;
@@ -961,6 +990,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
       tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === a)));
       placeLozenge();
+
+      // Turned while still hidden, so the turn draws nothing.
+      const target = card ?? 0;
+      if (to.deck.current !== target) to.deck.go(target);
 
       from.el.style.setProperty('--dir', String(dir));
       from.el.classList.add('is-leaving');
@@ -975,21 +1008,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       to.el.classList.add('is-arriving');
       void to.el.offsetWidth;
       to.el.classList.remove('is-arriving');
-
-      // The card lands every time, whether or not the deck has to turn to
-      // it — a tab opened for the first time plays the same entrance as one
-      // coming back.
-      const target = card ?? 0;
-      if (to.deck.current !== target)
-        to.deck.go(target, target > to.deck.current ? 1 : -1);
-      else {
-        const landing = to.cards[target];
-        landing.style.setProperty('--dir', String(dir));
-        landing.classList.add('is-arriving');
-        void landing.offsetWidth;
-        landing.classList.remove('is-arriving');
-        select(landing);
-      }
+      select(to.cards[target]);
     };
 
     tabs.forEach((t, a) => t.addEventListener('click', () => show(a)));
