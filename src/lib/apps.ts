@@ -66,17 +66,14 @@ export const APPS: AppStory[] = [
     ]),
   },
   {
-    // STAND-IN SHOTS (2026-10-11): Topper's screenshots until Juan takes
-    // Booker's. Replace with `shots('booker', …)` once they are in
-    // public/media/booker/.
     id: 'booker',
     name: 'Booker',
     pitch: ['booker.problem', 'booker.solution'],
-    slides: shots('topper', [
+    slides: shots('booker', [
       ['ios-dark-home', 'Library', ['booker.s1.p1', 'booker.s1.p2']],
-      ['ios-dark-top-detail', 'Book', ['booker.s2.p1', 'booker.s2.p2']],
-      ['ios-dark-explore', 'Reader', ['booker.s3.p1', 'booker.s3.p2']],
-      ['ios-dark-profile', 'Export', ['booker.s4.p1', 'booker.s4.p2']],
+      ['ios-dark-book', 'Book', ['booker.s2.p1', 'booker.s2.p2']],
+      ['ios-dark-reader', 'Reader', ['booker.s3.p1', 'booker.s3.p2']],
+      ['ios-dark-chapter', 'Chapter', ['booker.s4.p1', 'booker.s4.p2']],
     ]),
   },
 ];
