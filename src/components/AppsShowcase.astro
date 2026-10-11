@@ -49,8 +49,51 @@ const narrate = (k: UIKey) => ({ k, clip: clipFor(k), subs: subsFor(k) });
 const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
+/**
+ * THE COLLAGE — each welcome's four screens laid into one square like
+ * photographs pinned to a board (Juan, 2026-10-11): one large, one turned
+ * on its side, one only a corner, one tucked over another. Every app has
+ * ITS OWN arrangement, so the three welcomes don't repeat each other the
+ * way three fans did. A leaf is its centre in the square (%), its height
+ * as a share of the square's side, its turn, and its stacking order; the
+ * first is the first card's screen.
+ */
+type Leaf = { x: number; y: number; h: number; r: number; z: number };
+const COLLAGES: Leaf[][] = [
+  // Sound Shaper: large on the left, one on its side top-right, one
+  // climbing in from the bottom-right, a corner peeking over the top.
+  [
+    { x: 31, y: 54, h: 90, r: -4, z: 3 },
+    { x: 74, y: 27, h: 62, r: 90, z: 2 },
+    { x: 79, y: 76, h: 62, r: 7, z: 4 },
+    { x: 97, y: 2, h: 48, r: -12, z: 1 },
+  ],
+  // Topper: the mirror's cousin — large on the right, one on its side
+  // along the bottom-left, a smaller one high on the left, a corner below.
+  [
+    { x: 67, y: 47, h: 90, r: 3, z: 3 },
+    { x: 26, y: 76, h: 64, r: -90, z: 4 },
+    { x: 22, y: 24, h: 56, r: -7, z: 2 },
+    { x: 3, y: 97, h: 46, r: 13, z: 1 },
+  ],
+  // Booker: one standing straight in the middle, two leaning out either
+  // side behind it, one on its side across the top edge.
+  [
+    { x: 50, y: 57, h: 84, r: 0, z: 4 },
+    { x: 15, y: 40, h: 70, r: -11, z: 2 },
+    { x: 85, y: 42, h: 70, r: 11, z: 3 },
+    { x: 50, y: 3, h: 62, r: 90, z: 1 },
+  ],
+];
+
 type Card =
-  | { kind: 'welcome'; paras: UIKey[] }
+  | {
+      kind: 'welcome';
+      paras: UIKey[];
+      /** The app's four screens, for its collage. */
+      shots: { src: string; width: number; height: number; title: string }[];
+      scene: string;
+    }
   | {
       kind: 'slide';
       paras: UIKey[];
@@ -64,7 +107,21 @@ type Card =
 // Each app's cards, in telling order: its welcome, then its slides.
 const decks: Card[][] = [];
 for (const app of apps) {
-  const cards: Card[] = [{ kind: 'welcome', paras: app.pitch }];
+  // The welcome's collage holds every card's screen, and lights the page
+  // with all of them together.
+  const cards: Card[] = [
+    {
+      kind: 'welcome',
+      paras: app.pitch,
+      shots: app.slides.map(({ src, width, height, title }) => ({
+        src,
+        width,
+        height,
+        title,
+      })),
+      scene: sceneAttr(await sceneOf(app.slides.map(slide => slide.src))),
+    },
+  ];
   for (const slide of app.slides)
     cards.push({
       kind: 'slide',
@@ -126,7 +183,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                   class:list={['card', 'deck-card', `is-${card.kind}`]}
                   aria-roledescription="slide"
                   aria-label={`${c + 1} / ${cards.length}`}
-                  data-scene={card.kind === 'slide' ? card.scene : null}
+                  data-scene={card.scene}
                 >
                   <div class="words">
                     {card.kind === 'welcome' ? (
@@ -178,6 +235,28 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {voiced && <div class="narr-slot" aria-hidden="true" />}
                   </div>
 
+                  {card.kind === 'welcome' && (
+                    <div class="slot" data-deck-part="picture">
+                      <div class="collage">
+                        {card.shots.map((shot, i) => {
+                          const leaf = COLLAGES[a % COLLAGES.length][i];
+                          return leaf ? (
+                            <img
+                              class="leaf"
+                              style={`--x: ${leaf.x}%; --y: ${leaf.y}%; --h: ${leaf.h}%; --r: ${leaf.r}deg; z-index: ${leaf.z}`}
+                              src={shot.src}
+                              alt={`${app.name} — ${shot.title}`}
+                              width={shot.width}
+                              height={shot.height}
+                              loading="lazy"
+                              decoding="async"
+                              draggable="false"
+                            />
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {card.kind === 'slide' && (
                     <div class="slot" data-deck-part="picture">
                       <img
@@ -394,25 +473,47 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     align-items: start;
   }
 
-  /* THE WELCOME IS WORDS ALONE, CENTRED (Juan, 2026-10-11). A fan of the
-     app's phones, a diagonal magazine run and a coverflow were each built
-     in its picture's place and none convinced: the cards after it show
-     every screen, so the welcome is the pitch — lockup, problem, answer,
-     store row — standing in the middle of the panel, in no light of its
-     own. */
+  /* The welcome's pitch reads in a wider column (1.2x); the collage
+     stands in the rest. */
   .is-welcome {
-    grid-template-columns: minmax(0, 44rem);
-    justify-content: center;
-    align-self: center;
-    text-align: center;
+    grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.2) 1fr;
   }
 
-  .is-welcome .words {
+  /* ---------- the collage ----------
+     A square as tall as a slide's phone — no wider than its column — that
+     crops the leaves at its edges, so a screen can show only a corner. Each
+     leaf stands on its centre at its height and turn (`COLLAGES`); the
+     corner is the phone's own, as a share of the leaf. */
+  .collage {
+    position: relative;
+    width: min(100%, var(--shot-h));
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--media-radius-flat);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+  }
+
+  .leaf {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    height: var(--h);
+    width: auto;
+    max-width: none;
+    border: 1px solid var(--hairline);
+    border-radius: 14% / 6.45%;
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%) rotate(var(--r));
+  }
+
+  /* The collage stands in the middle of the phone's height. */
+  .is-welcome .slot {
     align-items: center;
-  }
-
-  .is-welcome .store-row :global(.stores) {
-    justify-content: center;
+    height: var(--shot-h);
   }
 
   /* An icon keeps its drawn size; a flex row would squeeze the SVG. */
@@ -598,6 +699,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       margin-top: 0;
     }
 
+    /* A phone's collage stands over the words, smaller. */
+    .is-welcome .slot {
+      height: auto;
+    }
+
+    .collage {
+      width: min(76vw, 30svh);
+    }
+
     .shot {
       box-shadow:
         var(--media-glow),
@@ -655,6 +765,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      667pt tall the store row ran under the arrows. Everything steps down
      a notch so the column clears them. */
   @media (max-width: 48rem) and (max-height: 46rem) {
+    .collage {
+      width: min(62vw, 24svh);
+    }
+
     .card,
     .is-welcome {
       gap: 1rem;
@@ -733,13 +847,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (!still || !slot) return;
       const y = slot.getBoundingClientRect().top - decksEl.getBoundingClientRect().top;
       still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
-      // Sideways too: under a slide's words it stands on their left edge;
-      // the welcome is centred, so its narrator stands centred under it.
+      // Sideways too: on the words' left edge.
       const base = (still.parentElement ?? decksEl).getBoundingClientRect().left;
-      const r = slot.getBoundingClientRect();
-      const x = card.classList.contains('is-welcome')
-        ? r.left + r.width / 2 - still.offsetWidth / 2 - base
-        : r.left - base;
+      const x = slot.getBoundingClientRect().left - base;
       still.style.setProperty('--slot-x', `${x.toFixed(1)}px`);
     };
 
