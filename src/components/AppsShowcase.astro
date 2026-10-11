@@ -39,9 +39,19 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  */
 type Props = {
   apps: AppStory[];
+  /**
+   * How a welcome shows its app's four screens. `fan` is the landing's; the
+   * other two stand on their own routes (/magazine, /coverflow) for Juan to
+   * compare (2026-10-11):
+   *  - `magazine` — an endless diagonal run of tilted phones, top-right to
+   *    bottom-left, two in view at a time, like a magazine spread.
+   *  - `coverflow` — the four on a slow 3D carousel: one in front, its
+   *    neighbours turned away beside it, stepping on by itself.
+   */
+  welcome?: 'fan' | 'magazine' | 'coverflow';
 };
 
-const { apps } = Astro.props;
+const { apps, welcome = 'fan' } = Astro.props;
 
 const narrate = (k: UIKey) => ({ k, clip: clipFor(k), subs: subsFor(k) });
 
@@ -104,6 +114,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   class="apps"
   id="apps"
   data-apps
+  data-welcome={welcome}
   data-narr-panel={voiced ? '' : null}
   data-phone-scene
 >
@@ -203,6 +214,46 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                        a little apart: the app at a glance, so someone who
                        skims past one story can judge the next by its UI
                        (Juan, 2026-10-11). It opens out as the card lands. */
+                    welcome === 'magazine' ? (
+                      <div class="slot" data-deck-part="picture">
+                        <div class="mag">
+                          {/* Twice over, so the run loops without a seam. */}
+                          <div class="mag-track">
+                            {[...card.shots, ...card.shots].map((shot, i) => (
+                              <img
+                                class="shot mag-shot"
+                                src={shot.src}
+                                alt={i < card.shots.length ? `${app.name} — ${shot.title}` : ''}
+                                aria-hidden={i < card.shots.length ? undefined : 'true'}
+                                width={shot.width}
+                                height={shot.height}
+                                loading="lazy"
+                                decoding="async"
+                                draggable="false"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : welcome === 'coverflow' ? (
+                      <div class="slot" data-deck-part="picture">
+                        <div class="flow" data-flow style={`--n: ${card.shots.length}`}>
+                          {card.shots.map((shot, i) => (
+                            <img
+                              class:list={['shot', 'flow-shot', i === 0 && 'is-lead']}
+                              data-flow-i={i}
+                              src={shot.src}
+                              alt={`${app.name} — ${shot.title}`}
+                              width={shot.width}
+                              height={shot.height}
+                              loading="lazy"
+                              decoding="async"
+                              draggable="false"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
                     <div class="slot" data-deck-part="picture">
                       <div class="fan" style={`--n: ${card.shots.length}`}>
                         {card.shots.map((shot, i) => (
@@ -220,6 +271,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         ))}
                       </div>
                     </div>
+                    )
                   ) : (
                     <div class="slot" data-deck-part="picture">
                       <img
@@ -432,7 +484,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .card {
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    gap: var(--space-4);
+    gap: var(--column-gap);
     align-items: start;
   }
 
@@ -607,6 +659,116 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     visibility: hidden;
   }
 
+  /* ---------- the magazine ----------
+     An endless run of the app's phones down a diagonal — top-right to
+     bottom-left — each turned with the line, about two in view at a time,
+     the column fading out at both ends. The track is the shots twice over
+     and slides by exactly one set per loop, so it never shows a seam. */
+  .mag {
+    --mag-h: calc(var(--shot-h) * 0.62);
+    --mag-gap: 1.75rem;
+    position: relative;
+    width: 100%;
+    height: var(--shot-h);
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      #000 18%,
+      #000 82%,
+      transparent
+    );
+  }
+
+  .mag-track {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--mag-gap);
+    transform: translate(-50%, -50%) rotate(22deg);
+  }
+
+  .mag-shot {
+    height: var(--mag-h);
+    border-radius: calc(var(--media-radius) * 0.62);
+    animation: mag-run calc(var(--beat) * 28) linear infinite;
+  }
+
+  /* Down the column by one set: four phones and their gaps. */
+  @keyframes mag-run {
+    from {
+      translate: 0 calc((var(--mag-h) + var(--mag-gap)) * -4);
+    }
+    to {
+      translate: 0 0;
+    }
+  }
+
+  /* ---------- the coverflow ----------
+     The four phones on a ring: one in front at the slides' size, the one
+     before and after it turned away to either side, the fourth behind. It
+     steps on by itself (the script moves `.is-front`). */
+  .flow {
+    --flow-h: calc(var(--shot-h) * 0.86);
+    --flow-w: calc(var(--flow-h) * 1179 / 2556);
+    position: relative;
+    width: 100%;
+    height: var(--shot-h);
+    perspective: 1800px;
+  }
+
+  .flow-shot {
+    position: absolute;
+    left: 50%;
+    top: calc((var(--shot-h) - var(--flow-h)) / 2);
+    height: var(--flow-h);
+    margin-left: calc(var(--flow-w) / -2);
+    border-radius: calc(var(--media-radius) * 0.86);
+    transition:
+      transform calc(var(--beat) * 1.25) var(--ease),
+      opacity calc(var(--beat) * 1.25) var(--ease),
+      filter calc(var(--beat) * 1.25) var(--ease);
+    /* Behind, until the script places it. */
+    transform: translateZ(-30rem);
+    opacity: 0;
+  }
+
+  .flow-shot.is-front {
+    z-index: 3;
+    transform: none;
+    opacity: 1;
+  }
+
+  .flow-shot.is-next,
+  .flow-shot.is-prev {
+    z-index: 2;
+    opacity: 0.85;
+    filter: brightness(0.55);
+  }
+
+  .flow-shot.is-next {
+    transform: translateX(calc(var(--flow-w) * 0.62)) translateZ(-12rem)
+      rotateY(-38deg);
+  }
+
+  .flow-shot.is-prev {
+    transform: translateX(calc(var(--flow-w) * -0.62)) translateZ(-12rem)
+      rotateY(38deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mag-shot {
+      animation: none;
+    }
+
+    .flow-shot {
+      transition: none;
+    }
+  }
+
   /* A slide's phone leans toward the pointer (lib/tilt). */
   .is-slide .slot {
     perspective: 1600px;
@@ -705,6 +867,26 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       --spread: 0.18;
       --tilt: 4deg;
       height: calc(var(--fan-h) * 1.12);
+    }
+
+    /* The magazine and the coverflow take the fan's box on a phone. */
+    .is-welcome .mag,
+    .is-welcome .flow {
+      height: calc(min(58vw, 27svh) * 1.12);
+    }
+
+    .is-welcome .mag {
+      --mag-h: min(40vw, 19svh);
+      --mag-gap: 0.875rem;
+    }
+
+    .is-welcome .flow {
+      --flow-h: min(58vw, 27svh);
+    }
+
+    .is-welcome .flow-shot {
+      top: 0;
+      border-radius: calc(var(--media-radius) * 0.52);
     }
 
     /* The phone's corner at this phone's size (a slide's is 112vw). */
@@ -875,9 +1057,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      * arriving is revealed in its place when the copy lands.
      */
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // A welcome hands off its lead phone (the fan's, or the coverflow's
+    // when Home is in front); the magazine's run is moving and has none.
     const phoneOf = (card: HTMLElement) =>
-      card.querySelector<HTMLElement>('.fan-shot.is-lead') ??
-      card.querySelector<HTMLElement>('.is-slide .shot, .slot .shot');
+      card.classList.contains('is-welcome')
+        ? card.querySelector<HTMLElement>(
+            '.fan-shot.is-lead, .flow-shot.is-lead.is-front'
+          )
+        : card.querySelector<HTMLElement>('.slot .shot');
     const pose = (img: HTMLElement) => {
       const r = img.getBoundingClientRect();
       const m = new DOMMatrix(getComputedStyle(img).transform);
@@ -1055,6 +1242,31 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         ? card.querySelector<HTMLElement>('.shot')
         : null;
     });
+
+    // THE COVERFLOW steps on by itself while its card is in front and the
+    // page is looking at the panel; the first phone leads, so a turn to
+    // the first card can still hand Home off when it is in front.
+    for (const flow of root.querySelectorAll<HTMLElement>('[data-flow]')) {
+      const leaves = [...flow.querySelectorAll<HTMLElement>('.flow-shot')];
+      const n = leaves.length;
+      let front = 0;
+      const place = () =>
+        leaves.forEach((l, i) => {
+          const d = (i - front + n) % n;
+          l.classList.toggle('is-front', d === 0);
+          l.classList.toggle('is-next', d === 1);
+          l.classList.toggle('is-prev', d === n - 1);
+        });
+      place();
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+        setInterval(() => {
+          const card = flow.closest<HTMLElement>('.deck-card');
+          if (!card?.classList.contains('is-current') || document.hidden) return;
+          if (!flow.closest<HTMLElement>('[data-apps-deck]')?.offsetParent) return;
+          front = (front + 1) % n;
+          place();
+        }, 2600);
+    }
 
     // WARM THE HIDDEN APPS. A deck that is not in front is `hidden`, so its
     // lazy screenshots are neither fetched nor decoded until its tab is

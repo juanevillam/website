@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from './Hero.astro';
+import AppsShowcase from './AppsShowcase.astro';
+import NarrationPlayer from './NarrationPlayer.astro';
+import SiteFooter from './SiteFooter.astro';
+import WorkCarousel from './WorkCarousel.astro';
+import EventsDeck from './EventsDeck.astro';
+import { APPS } from '../lib/apps';
+
+/**
+ * THE ONE-PAGER. The landing (`/`) shows each app's welcome as a fan;
+ * `/magazine` and `/coverflow` stand two other welcomes beside it so Juan
+ * can choose by looking (2026-10-11). Once he has, the losers go.
+ */
+type Props = {
+  welcome: 'fan' | 'magazine' | 'coverflow';
+};
+
+const { welcome } = Astro.props;
+---
+
+<Base noindex={welcome !== 'fan'}>
+  <Hero />
+
+  <!-- Juan's apps, the page's main subject: every one in one panel. -->
+  <AppsShowcase apps={APPS} welcome={welcome} />
+
+  <!-- Everything else, secondary: one card per project. -->
+  <WorkCarousel />
+
+  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
+  <EventsDeck />
+
+  <!-- Each app's legal and help pages, and Juan elsewhere. -->
+  <SiteFooter panel />
+
+  <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
+  <NarrationPlayer />
+</Base>
