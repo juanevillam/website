@@ -50,7 +50,13 @@ const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
 type Card =
-  | { kind: 'welcome'; paras: UIKey[]; src: string; width: number; height: number }
+  | {
+      kind: 'welcome';
+      paras: UIKey[];
+      /** Every card's phone, fanned out — the app at a glance. */
+      shots: { src: string; width: number; height: number; title: string }[];
+      scene: string;
+    }
   | {
       kind: 'slide';
       paras: UIKey[];
@@ -64,15 +70,19 @@ type Card =
 // Each app's cards, in telling order: its welcome, then its slides.
 const decks: Card[][] = [];
 for (const app of apps) {
-  // The welcome waits with the first card's phone at the panel's edge.
-  const first = app.slides[0];
+  // The welcome fans out every card's phone, and lights the page with
+  // all of them together.
   const cards: Card[] = [
     {
       kind: 'welcome',
       paras: app.pitch,
-      src: first.src,
-      width: first.width,
-      height: first.height,
+      shots: app.slides.map(({ src, width, height, title }) => ({
+        src,
+        width,
+        height,
+        title,
+      })),
+      scene: sceneAttr(await sceneOf(app.slides.map(slide => slide.src))),
     },
   ];
   for (const slide of app.slides)
@@ -136,7 +146,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                   class:list={['card', 'deck-card', `is-${card.kind}`]}
                   aria-roledescription="slide"
                   aria-label={`${c + 1} / ${cards.length}`}
-                  data-scene={card.kind === 'slide' ? card.scene : null}
+                  data-scene={card.scene}
                 >
                   <div class="words">
                     {card.kind === 'welcome' ? (
@@ -188,18 +198,34 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {voiced && <div class="narr-slot" aria-hidden="true" />}
                   </div>
 
-                  {/* The welcome's picture is the first card's phone PEEKING
-                      in at the panel's edge — the stories' opener, as it
-                      was before the apps shared a panel. The next turn
-                      walks it into its column. */}
-                  <div class="slot" data-deck-part="picture">
-                    <div class="peek">
+                  {card.kind === 'welcome' ? (
+                    /* THE FAN — every card's phone, tilted left to right,
+                       a little apart: the app at a glance, so someone who
+                       skims past one story can judge the next by its UI
+                       (Juan, 2026-10-11). It opens out as the card lands. */
+                    <div class="slot" data-deck-part="picture">
+                      <div class="fan" style={`--n: ${card.shots.length}`}>
+                        {card.shots.map((shot, i) => (
+                          <img
+                            class="shot fan-shot"
+                            style={`--k: ${i - (card.shots.length - 1) / 2}`}
+                            src={shot.src}
+                            alt={`${app.name} — ${shot.title}`}
+                            width={shot.width}
+                            height={shot.height}
+                            loading="lazy"
+                            decoding="async"
+                            draggable="false"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div class="slot" data-deck-part="picture">
                       <img
                         class="shot"
                         src={card.src}
-                        alt={
-                          card.kind === 'slide' ? `${app.name} — ${card.title}` : ''
-                        }
+                        alt={`${app.name} — ${card.title}`}
                         width={card.width}
                         height={card.height}
                         loading="lazy"
@@ -207,7 +233,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         draggable="false"
                       />
                     </div>
-                  </div>
+                  )}
                 </article>
               ))}
             </div>
@@ -407,10 +433,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     align-items: start;
   }
 
-  /* The welcome's pitch reads in the opener's wider column (1.5x), so two
-     paragraphs and the store row still stand inside the panel. */
+  /* The welcome's pitch reads in a wider column (1.2x), so two paragraphs
+     and the store row stand inside the panel — and no wider, so the fan
+     beside it has room to open (1.5x crowded the four phones together). */
   .is-welcome {
-    grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.5) 1fr;
+    grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.2) 1fr;
   }
 
   /* An icon keeps its drawn size; a flex row would squeeze the SVG. */
@@ -506,16 +533,38 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
   }
 
-  .peek {
-    display: flex;
-    justify-content: center;
+  /* ---------- the fan ----------
+     Four phones from one pivot below the fan's foot, each turned by its
+     place from the middle (--k: -1.5 … 1.5) and slid that way, so the
+     outer ones lean out and drop a little — a hand of cards. Closed while
+     the card is away; it opens as the card lands. */
+  .fan {
+    --fan-h: calc(var(--shot-h) * 0.56);
+    --fan-w: calc(var(--fan-h) * 1179 / 2556);
+    /* How far apart neighbours stand, in phone widths. */
+    --spread: 0.55;
+    position: relative;
     width: 100%;
+    height: var(--shot-h);
   }
 
-  /* The welcome's phone stands off to the right, cropped by the page's
-     edge (the panel clips sideways) — the stories' opener peek. */
-  .is-welcome .peek {
-    transform: translateX(58%);
+  .fan-shot {
+    position: absolute;
+    left: 50%;
+    top: calc((var(--shot-h) - var(--fan-h)) / 2);
+    height: var(--fan-h);
+    margin-left: calc(var(--fan-w) / -2);
+    /* The phone's corner, at the fan's scale. */
+    border-radius: calc(var(--media-radius) * 0.56);
+    transform-origin: 50% 120%;
+    transform: rotate(0deg);
+    transition: transform calc(var(--beat) * 1.5) var(--ease);
+    transition-delay: calc(var(--beat) / 4);
+  }
+
+  .deck-card.is-current .fan-shot {
+    transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
+      rotate(calc(var(--k) * 5deg));
   }
 
   /* ---------- the narrator's still anchor ---------- */
@@ -546,7 +595,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   @media (prefers-reduced-motion: reduce) {
     .narr-static .narr-anchor,
     .lozenge,
-    .carousel {
+    .carousel,
+    .fan-shot {
       transition: none;
     }
 
@@ -597,10 +647,16 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       order: -1;
     }
 
-    /* A phone's welcome is the words alone, as the stories' was: the
-       lockup, the pitch and the store row from the top. */
-    .is-welcome .slot {
-      display: none;
+    /* A phone's fan stands over the words, smaller: the screen is the
+       width the four have to share. */
+    .is-welcome .fan {
+      --fan-h: min(58vw, 27svh);
+      --spread: 0.5;
+      height: calc(var(--fan-h) * 1.12);
+    }
+
+    .is-welcome .fan-shot {
+      top: 0;
     }
 
     .shot {
