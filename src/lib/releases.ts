@@ -20,7 +20,7 @@
  * — is tracked in docs/phase-c-release.md, not here.
  */
 export type Store = 'app-store' | 'google-play';
-export type ReleasedApp = 'shaper' | 'topper';
+export type ReleasedApp = 'shaper' | 'topper' | 'booker';
 
 export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
   shaper: {
@@ -28,6 +28,10 @@ export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
     'google-play': null,
   },
   topper: {
+    'app-store': null,
+    'google-play': null,
+  },
+  booker: {
     'app-store': null,
     'google-play': null,
   },

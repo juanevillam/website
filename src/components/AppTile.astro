@@ -8,7 +8,7 @@
  * Constants are BrandTile's; when that file retunes, retune this.
  */
 type Props = {
-  app: 'topper' | 'shaper';
+  app: 'topper' | 'shaper' | 'booker';
   size?: number;
 };
 
@@ -101,6 +101,11 @@ const shadowId = `tile-shadow-${app}`;
         <>
           <path d="M10 28V15.5l8.5 7L24 11l5.5 11.5 8.5-7V28z" />
           <path d="M10 34.5h28" />
+        </>
+      ) : app === 'booker' ? (
+        <>
+          <path d="M24 14 Q16 9.5 9 11 V34 Q16 32 24 37.5 Z" />
+          <path d="M24 14 Q32 9.5 39 11 V34 Q32 32 24 37.5 Z" />
         </>
       ) : (
         <path d="M10 16.5v15M17 11.5v25M24 16v16M31 8v32M38 14v20" />
