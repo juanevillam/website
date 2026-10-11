@@ -84,6 +84,29 @@ const en = {
     "Your profile holds every top you've made — movies, video games, Pokémon, whatever you want — each with its top three in view.",
   'topper.s4.p2':
     'And PlayStation-style trophies that unlock as you use the app, all the way to the platinum. All my apps live in one monorepo and share that module: an easter egg for anyone who plays PlayStation, and a detail that makes the app more mine.',
+  // DRAFT (2026-10-11) — Booker's story, written from what the app does
+  // today; Juan rewrites it in his own words and records it.
+  'apps.title': 'My Apps',
+  'booker.problem':
+    "I read on Kindle and highlight what matters. To get a book back I'd go to my highlights, but Kindle buries them, and the PDFs I exported to rescue them read like documents, not like books.",
+  'booker.solution':
+    'An app where every book is my own summary — the big idea first, then my highlights, chapter by chapter — and it reads like a book: pages that turn, the theme and the text size I want. No AI writes anything in it; every word is mine.',
+  'booker.s1.p1':
+    'My books on a shelf, each with its cover. A series stacks into one tile, and I sort by what I opened last, the title, the author or the year.',
+  'booker.s1.p2':
+    'A book I delete waits in Recently Deleted until I delete it for good.',
+  'booker.s2.p1':
+    'Every book has its page: the cover, the author, the year and its genres, and one button to start reading — or to continue where I left off.',
+  'booker.s2.p2':
+    'Under it, the chapters, each with its highlights and the page of the printed edition they came from.',
+  'booker.s3.p1':
+    "The reader turns pages like a book — Apple's own page curl — or slides them, or scrolls them.",
+  'booker.s3.p2':
+    'Four page themes — light, dark, sepia and paper — and the text size I want. It remembers the exact passage where I stopped, not a page number.',
+  'booker.s4.p1':
+    'Any book, or every book at once, as a PDF set the way it reads in the app: the cover, the summary, then every highlight.',
+  'booker.s4.p2':
+    'In the theme I choose — dark for me, light for my mom. All of it is made on the phone.',
 
   // Space Explorer — the Platanus arcade entry, playable at the landing's foot.
   // The control keys are the cabinet's own; the action names are Apple-voice
@@ -152,6 +175,18 @@ const en = {
     'The main screen: reorder a top by dragging. Others can upvote or downvote it, and comment.',
   'topper.s4.m':
     "Your profile holds every top you've made, plus PlayStation-style trophies up to the platinum — an easter egg all my apps share.",
+  'booker.problem.m':
+    'Kindle buries my highlights, and the PDFs I exported to rescue them read like documents, not like books.',
+  'booker.solution.m':
+    'So I built Booker: my own summary of every book — the big idea, then my highlights — read like a book. No AI; every word is mine.',
+  'booker.s1.m':
+    'My books on a shelf, with series stacked into one tile, sorted the way I want.',
+  'booker.s2.m':
+    "Each book's page: cover, author, year and genres, and one button to start or continue reading.",
+  'booker.s3.m':
+    'Pages that curl like a book, four themes, and it remembers the exact passage where I stopped.',
+  'booker.s4.m':
+    'Any book, or all of them, as a PDF in the theme I choose — made on the phone.',
   'arcade.m.before': 'A 3D space shooter that fits in 50 KB, made for ',
   'arcade.m.after': ' — and the easter egg I always wanted for this site.',
   'work.crol.m.after':
@@ -238,6 +273,27 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'En tu perfil están todos los tops que has hecho — películas, videojuegos, Pokémon, lo que quieras — cada uno con sus tres primeros a la vista.',
     'topper.s4.p2':
       'Y trofeos al estilo PlayStation, que se desbloquean mientras usas la app hasta llegar al platino. Todas mis apps viven en un mismo monorepo y comparten ese módulo: un easter egg para quien juega PlayStation, y un detalle que hace la app más mía.',
+    'apps.title': 'Mis apps',
+    'booker.problem':
+      'Leo en Kindle y resalto lo importante. Para retomar un libro volvía a mis resaltados, pero Kindle los entierra, y los PDF que exportaba para rescatarlos se leían como documentos, no como libros.',
+    'booker.solution':
+      'Una app donde cada libro es mi propio resumen — primero la gran idea, después mis resaltados, capítulo por capítulo — y se lee como un libro: páginas que pasan, el tema y el tamaño de letra que quiero. Ninguna IA escribe nada: cada palabra es mía.',
+    'booker.s1.p1':
+      'Mis libros en una estantería, cada uno con su portada. Una serie se apila en un solo mosaico, y ordeno por lo último que abrí, el título, el autor o el año.',
+    'booker.s1.p2':
+      'Un libro que borro espera en Eliminados recientemente hasta que lo elimino para siempre.',
+    'booker.s2.p1':
+      'Cada libro tiene su página: la portada, el autor, el año y sus géneros, y un botón para empezar a leer — o seguir donde lo dejé.',
+    'booker.s2.p2':
+      'Debajo, los capítulos, cada uno con sus resaltados y la página de la edición impresa de donde salieron.',
+    'booker.s3.p1':
+      'El lector pasa las páginas como un libro — el doblez de página de Apple — o las desliza, o las desplaza.',
+    'booker.s3.p2':
+      'Cuatro temas de página — claro, oscuro, sepia y papel — y el tamaño de letra que quiero. Recuerda el pasaje exacto donde me quedé, no un número de página.',
+    'booker.s4.p1':
+      'Cualquier libro, o todos a la vez, como un PDF compuesto igual que se lee en la app: la portada, el resumen y después cada resaltado.',
+    'booker.s4.p2':
+      'En el tema que elijo — oscuro para mí, claro para mi mamá. Todo se hace en el teléfono.',
     'arcade.play': 'Jugar',
     'arcade.fullscreen': 'Pantalla completa',
     'arcade.resume': 'Haz clic en el juego para jugar.',
@@ -301,6 +357,18 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'La pantalla principal: reordenas un top arrastrando. Los demás pueden votarlo hacia arriba o hacia abajo, y comentar.',
     'topper.s4.m':
       'Tu perfil guarda todos tus tops, y trofeos estilo PlayStation hasta el platino — un easter egg que comparten todas mis apps.',
+    'booker.problem.m':
+      'Kindle entierra mis resaltados, y los PDF que exportaba para rescatarlos se leían como documentos, no como libros.',
+    'booker.solution.m':
+      'Así que hice Booker: mi propio resumen de cada libro — la gran idea, después mis resaltados — leído como un libro. Sin IA; cada palabra es mía.',
+    'booker.s1.m':
+      'Mis libros en una estantería, con las series apiladas en un mosaico, ordenados como quiero.',
+    'booker.s2.m':
+      'La página de cada libro: portada, autor, año y géneros, y un botón para empezar o seguir leyendo.',
+    'booker.s3.m':
+      'Páginas que se doblan como un libro, cuatro temas, y recuerda el pasaje exacto donde me quedé.',
+    'booker.s4.m':
+      'Cualquier libro, o todos, como PDF en el tema que elijo — hecho en el teléfono.',
     'arcade.m.before':
       'Un shooter espacial en 3D que cabe en 50 KB, hecho para el ',
     'arcade.m.after': ' — y el easter egg que siempre quise para esta página.',
@@ -383,6 +451,26 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '你的个人资料收录你做过的所有榜单——电影、电子游戏、宝可梦，想做什么都行——每份的前三名都一目了然。',
     'topper.s4.p2':
       '还有 PlayStation 风格的奖杯，随着你使用应用逐一解锁，直到白金。我所有的应用都在同一个 monorepo 里，共用这个模块：给玩 PlayStation 的人一个彩蛋，也让这个应用更像我自己的。',
+    'apps.title': '我的应用',
+    'booker.problem':
+      '我在 Kindle 上读书，划出重要的段落。想重温一本书时我会回去看这些高亮，可 Kindle 把它们埋得很深，而我导出来抢救它们的 PDF 读起来像文件，不像书。',
+    'booker.solution':
+      '一个应用，每本书都是我自己写的摘要——先是核心思想，再是我的高亮，一章一章——读起来像一本书：会翻动的书页，我想要的主题和字号。里面没有任何 AI 写的内容，每个字都是我的。',
+    'booker.s1.p1':
+      '我的书摆在书架上，每本都有封面。同一系列叠成一格，我可以按最近打开、书名、作者或年份排序。',
+    'booker.s1.p2': '删除的书会留在“最近删除”里，直到我永久删除它。',
+    'booker.s2.p1':
+      '每本书都有自己的页面：封面、作者、年份和类型，还有一个按钮开始阅读——或者从上次停下的地方继续。',
+    'booker.s2.p2':
+      '下面是各个章节，每章都有它的高亮，以及它们在印刷版中的页码。',
+    'booker.s3.p1':
+      '阅读器像书一样翻页——用的是 Apple 自己的卷页效果——也可以滑动或滚动。',
+    'booker.s3.p2':
+      '四种页面主题——浅色、深色、棕褐色和纸张——还有我想要的字号。它记住的是我停下的确切段落，而不是页码。',
+    'booker.s4.p1':
+      '任何一本书，或者一次全部，都能导出为 PDF，排版和在应用里读到的一样：封面、摘要，然后是每条高亮。',
+    'booker.s4.p2':
+      '用我选的主题——我自己用深色，给我妈妈用浅色。全部在手机上完成。',
     'arcade.play': '开始游戏',
     'arcade.fullscreen': '全屏',
     'arcade.resume': '点击游戏即可游玩。',
@@ -443,6 +531,16 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '主屏幕：拖动即可为榜单重新排序。其他人可以点赞或点踩，并发表评论。',
     'topper.s4.m':
       '你的个人资料收录你做过的所有榜单，还有一路解锁到白金的 PlayStation 风格奖杯——我所有应用共用的彩蛋。',
+    'booker.problem.m':
+      'Kindle 把我的高亮埋得很深，而我导出来抢救它们的 PDF 读起来像文件，不像书。',
+    'booker.solution.m':
+      '所以我做了 Booker：每本书都是我自己的摘要——核心思想，再是我的高亮——读起来像一本书。没有 AI，每个字都是我的。',
+    'booker.s1.m': '我的书摆在书架上，系列叠成一格，按我想要的方式排序。',
+    'booker.s2.m':
+      '每本书的页面：封面、作者、年份和类型，一个按钮开始或继续阅读。',
+    'booker.s3.m': '像书一样卷动的书页，四种主题，还会记住我停下的确切段落。',
+    'booker.s4.m':
+      '任何一本书或全部，都能导出为我选的主题的 PDF——在手机上完成。',
     'arcade.m.before': '一款只有 50 KB 的 3D 太空射击游戏，为 ',
     'arcade.m.after': '而做——也是我一直想给这个网站的彩蛋。',
     'work.crol.m.after':
