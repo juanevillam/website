@@ -70,13 +70,12 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     transition: transform calc(var(--beat) / 2) var(--ease);
   }
 
-  /* On a phone the pills step out of the way while you read down the
-     page and come back the moment you scroll up — the screen is too
-     small to keep chrome over the screenshots. */
-  @media (max-width: 48rem) {
-    .site-header.is-tucked {
-      transform: translateY(calc(-100% - var(--float-gap)));
-    }
+  /* The pills step out of the way while you read down the page and come
+     back the moment you scroll up. Phones only at first (the screen was
+     too small to keep chrome over the screenshots); every screen since
+     Juan asked for it on the desk too (2026-10-11). */
+  .site-header.is-tucked {
+    transform: translateY(calc(-100% - var(--float-gap)));
   }
 
   /* With no scrim behind them they carry their own ground, or they
@@ -157,7 +156,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
   picker.value = localStorage.getItem('lang') || 'en';
   show(picker.value);
 
-  // Tuck the header on a phone while scrolling down; any scroll up (or
+  // Tuck the header while scrolling down; any scroll up (or
   // the top of the page) brings it back. A class flip, never per-frame
   // styling — the transform runs on the GPU.
   const header = document.querySelector<HTMLElement>('.site-header');
