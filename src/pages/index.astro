@@ -1,5 +1,29 @@
 ---
-import Landing from '../components/Landing.astro';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import AppsShowcase from '../components/AppsShowcase.astro';
+import NarrationPlayer from '../components/NarrationPlayer.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import WorkCarousel from '../components/WorkCarousel.astro';
+import EventsDeck from '../components/EventsDeck.astro';
+import { APPS } from '../lib/apps';
 ---
 
-<Landing layout="chain" />
+<Base>
+  <Hero />
+
+  <!-- Juan's apps, the page's main subject: every one in one panel. -->
+  <AppsShowcase apps={APPS} />
+
+  <!-- Everything else, secondary: one card per project. -->
+  <WorkCarousel />
+
+  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
+  <EventsDeck />
+
+  <!-- Each app's legal and help pages, and Juan elsewhere. -->
+  <SiteFooter panel />
+
+  <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
+  <NarrationPlayer />
+</Base>
