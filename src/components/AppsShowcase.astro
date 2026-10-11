@@ -207,7 +207,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       <div class="fan" style={`--n: ${card.shots.length}`}>
                         {card.shots.map((shot, i) => (
                           <img
-                            class="shot fan-shot"
+                            class:list={['shot', 'fan-shot', i === 0 && 'is-lead']}
                             style={`--k: ${(card.shots.length - 1) / 2 - i}; --z: ${card.shots.length - i}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
@@ -588,6 +588,24 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transition: none;
   }
 
+  /* THE HAND-OFF (see the script): while the welcome's lead phone and the
+     first card's phone trade places, the one arriving stands in its final
+     place at once, hidden — a flying copy draws the trip — and the one
+     leaving is gone at once, since it is the one that flies. */
+  .deck-card.is-handoff [data-deck-part='picture'],
+  .deck-card.is-handoff .fan-shot.is-lead {
+    transition: none;
+  }
+
+  .deck-card.is-handoff [data-deck-part='picture'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .is-flying {
+    visibility: hidden;
+  }
+
   /* A slide's phone leans toward the pointer (lib/tilt). */
   .is-slide .slot {
     perspective: 1600px;
@@ -786,15 +804,96 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
     };
 
+    /**
+     * THE HAND-OFF — the welcome's lead phone (Home, Library) IS the first
+     * card's phone, so it travels between them instead of one leaving and
+     * the other arriving (Juan, 2026-10-11): the narrator's glide between
+     * its anchors, made for a picture. A copy flies from where the phone
+     * stands to where it will stand — turning out of the fan's lean,
+     * scaling to its size there — while both real ones are hidden; the one
+     * arriving is revealed in its place when the copy lands.
+     */
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const phoneOf = (card: HTMLElement) =>
+      card.querySelector<HTMLElement>('.fan-shot.is-lead') ??
+      card.querySelector<HTMLElement>('.is-slide .shot, .slot .shot');
+    const pose = (img: HTMLElement) => {
+      const r = img.getBoundingClientRect();
+      const m = new DOMMatrix(getComputedStyle(img).transform);
+      return {
+        x: r.left + r.width / 2,
+        y: r.top + r.height / 2,
+        w: img.offsetWidth,
+        h: img.offsetHeight,
+        turn: (Math.atan2(m.b, m.a) * 180) / Math.PI,
+      };
+    };
+    const handOff = (from: HTMLElement, to: HTMLElement) => {
+      if (reduced) return;
+      const a = phoneOf(from);
+      const b = phoneOf(to);
+      if (!a || !b || !a.offsetHeight) return;
+      const start = pose(a);
+      to.classList.add('is-handoff');
+      const end = pose(b);
+      a.classList.add('is-flying');
+      b.classList.add('is-flying');
+
+      const look = getComputedStyle(a);
+      const ghost = a.cloneNode() as HTMLImageElement;
+      ghost.removeAttribute('class');
+      ghost.removeAttribute('style');
+      Object.assign(ghost.style, {
+        position: 'fixed',
+        left: `${start.x - start.w / 2}px`,
+        top: `${start.y - start.h / 2}px`,
+        width: `${start.w}px`,
+        height: `${start.h}px`,
+        margin: '0',
+        maxWidth: 'none',
+        zIndex: '20',
+        pointerEvents: 'none',
+        borderRadius: look.borderRadius,
+        border: look.border,
+        boxShadow: look.boxShadow,
+      });
+      document.body.append(ghost);
+      const scale = end.h / start.h;
+      const flight = ghost.animate(
+        [
+          { transform: `rotate(${start.turn}deg)` },
+          {
+            transform:
+              `translate(${end.x - start.x}px, ${end.y - start.y}px) ` +
+              `scale(${scale}) rotate(${end.turn}deg)`,
+          },
+        ],
+        { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
+      );
+      const land = () => {
+        ghost.remove();
+        a.classList.remove('is-flying');
+        b.classList.remove('is-flying');
+        to.classList.remove('is-handoff');
+      };
+      flight.onfinish = land;
+      flight.oncancel = land;
+    };
+
     for (const el of root.querySelectorAll<HTMLElement>('[data-apps-deck]')) {
       const cards = [...el.querySelectorAll<HTMLElement>('.deck-card')];
       const h = { el, cards } as Held;
+      let previous = 0;
       h.deck = createDeck({
         cards,
         controls: el.querySelector('[data-deck-controls]'),
         keys: el,
         swipe: el.querySelector<HTMLElement>('.stage'),
         onChange: current => {
+          // Welcome ⇄ first card: the lead phone flies between them.
+          if (h.deck && previous + current === 1 && previous !== current)
+            handOff(cards[previous], cards[current]);
+          previous = current;
           // The first call comes while the deck is still being made.
           requestAnimationFrame(() => {
             if (held.indexOf(h) === active) select(cards[current]);
