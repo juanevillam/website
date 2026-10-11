@@ -689,12 +689,15 @@ html.is-stepped [data-narrator] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* A story's phone stands the whole height of the panel and hides the
-   light's middle, so at a screen's width the light could only show beside
-   it, and read as a ring round the phone (Juan, 2026-10-04). Wider, it
-   reads as the same glow the screens cast. */
+/* A PHONE IS NARROWER THAN A SCREEN, SO ITS LIGHT IS TOO (Juan,
+   2026-10-11). The light keeps the proportion More Work's screens give
+   theirs — a 3:2 screen ~620px wide under a 34% light — so a ~310px phone
+   (and the fan, a little wider) takes about 24%. It was 52%, set when a
+   story's phone hid the light's middle and a screen-wide light read as a
+   ring round it; at that width the apps' light ran far past the phone and
+   read as too intense for so small a picture. */
 .scene[data-kind='phone'] {
-  --scene-rx: 52%;
+  --scene-rx: 24%;
 }
 
 /* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of
