@@ -264,11 +264,12 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .apps {
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
     --card-w: min(var(--content-max), calc(100vw - var(--gutter) * 2));
-    /* THE PHONE STANDS FROM THE HEADER'S FOOT TO THE CONTROLS' ROW — the
-       stories' own reach (Juan, 2026-10-11: inside the words' insets it
-       read as a small rectangle). The slot is pulled up to the header's
-       foot to make the room. */
-    --shot-top: calc(var(--header-h) + 1rem);
+    /* THE PHONE STANDS A STEP ABOVE THE WORDS' LINE, down to the controls'
+       row (Juan, 2026-10-11): inside the words' insets it read as a small
+       rectangle, and pulled up to the header's foot as too big. The slot
+       is pulled up that step to make the room; the width follows the
+       screenshot's own ratio. */
+    --shot-top: calc(var(--stage-top) - 1.5rem);
     --shot-h: calc(100svh - var(--shot-top) - var(--stage-bottom) - 5rem);
     min-height: 100svh;
     scroll-snap-align: start;
