@@ -572,8 +572,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     z-index: var(--z);
     transform-origin: 50% 100%;
     transform: rotate(0deg);
-    transition: transform calc(var(--beat) * 1.5) var(--ease);
-    transition-delay: calc(var(--beat) / 4);
+    /* Quick — a detail as the card lands, not a show (Juan, 2026-10-11:
+       at a beat and a half it read as slow). */
+    transition: transform calc(var(--beat) * 0.6) var(--ease);
+    transition-delay: calc(var(--beat) / 12);
   }
 
   .deck-card.is-current .fan-shot {
@@ -761,6 +763,40 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       width: auto;
       margin-top: 0;
       padding-top: 0;
+    }
+  }
+
+  /* SHORT PHONES (an SE, a phone with Safari's bars showing): the welcome's
+     fan, lockup, pitch and store row are one column over the controls,
+     and at 667pt tall the store row ran under the arrows. Everything
+     steps down a notch so the column clears them. */
+  @media (max-width: 48rem) and (max-height: 46rem) {
+    .is-welcome .fan {
+      --fan-h: min(50vw, 21svh);
+      height: calc(var(--fan-h) * 1.05);
+    }
+
+    .card,
+    .is-welcome {
+      gap: 1rem;
+    }
+
+    .lockup.big {
+      padding-top: 0;
+    }
+
+    .lockup.big .lockup-name {
+      font-size: 1.625rem;
+    }
+
+    .words .body {
+      margin-top: 0.5rem;
+      font-size: 0.9375rem;
+      line-height: 1.45;
+    }
+
+    .store-row :global(.stores) {
+      margin-top: 0.875rem;
     }
   }
 </style>
