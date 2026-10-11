@@ -443,8 +443,8 @@ for (const p of items)
   }
 
 
-  /* The pointer tilt — the game's own screen stays level: it is played. */
-  .screen:not(.is-own) {
+  /* The pointer tilt — every screen, the game's cabinet included. */
+  .screen {
     rotate: var(--tilt-rot, none);
   }
 
@@ -695,7 +695,7 @@ for (const p of items)
     // The card's screen leans toward the pointer anywhere over the panel.
     if (section)
       followPointer(section, () =>
-        cards[deck.current]?.querySelector<HTMLElement>('.screen:not(.is-own)')
+        cards[deck.current]?.querySelector<HTMLElement>('.screen')
       );
   }
 </script>

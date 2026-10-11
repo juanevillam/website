@@ -208,7 +208,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         {card.shots.map((shot, i) => (
                           <img
                             class="shot fan-shot"
-                            style={`--k: ${i - (card.shots.length - 1) / 2}; z-index: ${i + 1}`}
+                            style={`--k: ${(card.shots.length - 1) / 2 - i}; z-index: ${card.shots.length - i}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
                             width={shot.width}
@@ -264,9 +264,12 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .apps {
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
     --card-w: min(var(--content-max), calc(100vw - var(--gutter) * 2));
-    /* The phone's height: the panel, less its insets and the controls'
-       row — nothing above it now that the switcher floats. */
-    --shot-h: calc(100svh - var(--stage-top) - var(--stage-bottom) - 5rem);
+    /* THE PHONE STANDS FROM THE HEADER'S FOOT TO THE CONTROLS' ROW — the
+       stories' own reach (Juan, 2026-10-11: inside the words' insets it
+       read as a small rectangle). The slot is pulled up to the header's
+       foot to make the room. */
+    --shot-top: calc(var(--header-h) + 1rem);
+    --shot-h: calc(100svh - var(--shot-top) - var(--stage-bottom) - 5rem);
     min-height: 100svh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
@@ -396,8 +399,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     flex-direction: column;
     outline: none;
     transition:
-      opacity calc(var(--beat) / 2) var(--ease),
-      transform calc(var(--beat) * 0.75) var(--ease);
+      opacity calc(var(--beat) / 3) var(--ease),
+      transform calc(var(--beat) / 2) var(--ease);
   }
 
   .carousel[hidden] {
@@ -519,6 +522,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .slot {
     display: flex;
     justify-content: center;
+    margin-top: calc(var(--shot-top) - var(--stage-top));
   }
 
   .shot {
@@ -538,18 +542,20 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      read as a different picture from the cards after it), pivoting on one
      point at their foot, each turned a few degrees by its place from the
      middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
-     overlapping, every screen's top still in view. The LAST card's phone
-     is on top and the rest tuck under it to the LEFT (Juan, 2026-10-11):
-     what shows of each one is then its leading edge — the screen's own
-     content — not the status bar's icons down its trailing side. The fan
-     holds still under the pointer; a tilted fan read as broken. Closed while the card
-     is away; it opens as the card lands. */
+     overlapping, every screen's top still in view. The FIRST card's phone
+     (Home, Library) stands on the RIGHT, on top, and the rest tuck under
+     it to the LEFT in order (Juan, 2026-10-11): what shows of each is then
+     its leading edge — the screen's own content — not the status bar's
+     icons down its trailing side. Tight on purpose: a compact fan of many
+     leaves, not four phones spread across the page. It holds still under
+     the pointer (a tilted fan read as broken), closes while the card is
+     away, and opens as the card lands. */
   .fan {
     --fan-h: var(--shot-h);
     --fan-w: calc(var(--fan-h) * 1179 / 2556);
     /* How far apart neighbours stand at the foot, in phone widths, and how
        far each turns. */
-    --spread: 0.2;
+    --spread: 0.12;
     --tilt: 3deg;
     position: relative;
     width: 100%;
@@ -571,6 +577,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .deck-card.is-current .fan-shot {
     transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
       rotate(calc(var(--k) * var(--tilt)));
+  }
+
+  /* Arriving — a turn or a tab — the fan stands closed for a frame, so it
+     opens every time the card lands, not only the first. */
+  .deck-card.is-arriving .fan-shot {
+    transform: rotate(0deg);
+    transition: none;
   }
 
   /* A slide's phone leans toward the pointer (lib/tilt). */
@@ -661,13 +674,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
     .slot {
       order: -1;
+      margin-top: 0;
     }
 
     /* A phone's fan stands over the words, smaller: the screen is the
        width the four have to share. */
     .is-welcome .fan {
       --fan-h: min(58vw, 27svh);
-      --spread: 0.3;
+      --spread: 0.18;
       --tilt: 4deg;
       height: calc(var(--fan-h) * 1.12);
     }
@@ -825,10 +839,20 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       void to.el.offsetWidth;
       to.el.classList.remove('is-arriving');
 
+      // The card lands every time, whether or not the deck has to turn to
+      // it — a tab opened for the first time plays the same entrance as one
+      // coming back.
       const target = card ?? 0;
       if (to.deck.current !== target)
         to.deck.go(target, target > to.deck.current ? 1 : -1);
-      else select(to.cards[target]);
+      else {
+        const landing = to.cards[target];
+        landing.style.setProperty('--dir', String(dir));
+        landing.classList.add('is-arriving');
+        void landing.offsetWidth;
+        landing.classList.remove('is-arriving');
+        select(landing);
+      }
     };
 
     tabs.forEach((t, a) => t.addEventListener('click', () => show(a)));

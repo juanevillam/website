@@ -33,7 +33,13 @@ import sharp from 'sharp';
  * colour lights the page at ONE strength — scaling it by how much of the
  * picture was colour left a dark app screen barely lit beside a bright
  * website, and the panels stopped reading as one system (Juan,
- * 2026-10-04). A grey screen lends no light at all.
+ * 2026-10-04).
+ *
+ * A GREY SCREEN STILL LIGHTS THE PAGE — in a neutral, near-white light
+ * (Juan, 2026-10-11). It used to lend none, so turning from a coloured
+ * slide to a grey one put the light out and the next one lit it again: the
+ * room flickered on and off down a deck. Every picture lights its room;
+ * one with no hue of its own lights it white, a step dimmer.
  */
 
 const BINS = 18;
@@ -46,6 +52,10 @@ const MIN_COVER = 0.01;
 const DARK_SCREEN = 0.25;
 
 export type Scene = { colours: string[]; strength: number };
+
+/** The light of a picture with no hue of its own: near-white, dimmer. */
+const NEUTRAL_LIGHT = '#d4d4d4';
+const NEUTRAL_STRENGTH = 0.7;
 
 const cache = new Map<string, Scene>();
 
@@ -164,8 +174,9 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
     const t = Math.min(1, Math.max(0, (bin.s / bin.w - 0.2) / 0.6));
     return rgbOf(h, SAT_LO + (SAT_HI - SAT_LO) * t);
   });
-  const strength = colours.length ? 1 : 0;
-  const scene = { colours, strength };
+  const scene = colours.length
+    ? { colours, strength: 1 }
+    : { colours: [NEUTRAL_LIGHT], strength: NEUTRAL_STRENGTH };
   cache.set(key, scene);
   return scene;
 };
