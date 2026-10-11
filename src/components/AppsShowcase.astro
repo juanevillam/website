@@ -208,7 +208,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         {card.shots.map((shot, i) => (
                           <img
                             class="shot fan-shot"
-                            style={`--k: ${i - (card.shots.length - 1) / 2}`}
+                            style={`--k: ${i - (card.shots.length - 1) / 2}; z-index: ${card.shots.length - i}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
                             width={shot.width}
@@ -347,9 +347,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
     height: 100%;
-    padding: 0 0.875rem 0 0.4375rem;
+    padding: 0 1.25rem 0 0.75rem;
     border: none;
     border-radius: 999px;
     background: none;
@@ -538,7 +538,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      read as a different picture from the cards after it), pivoting on one
      point at their foot, each turned a few degrees by its place from the
      middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
-     overlapping, every screen's top still in view. Closed while the card
+     overlapping, every screen's top still in view. The FIRST card's phone
+     is on top and the rest tuck under it to the right, so the fan reads
+     left to right, the way the deck does. Closed while the card
      is away; it opens as the card lands. */
   .fan {
     --fan-h: var(--shot-h);
@@ -623,7 +625,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
     /* Icons only: three apps fit between the header's two pills. */
     .tab {
-      padding: 0 0.4375rem;
+      padding: 0 0.75rem;
     }
 
     .tab-name {
@@ -852,6 +854,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     });
 
     select(held[0].cards[0]);
+    // Placed now as well as on the next frame, and again once fonts and
+    // images have settled the words' height.
+    standAnchor();
+    document.fonts?.ready.then(standAnchor);
+    addEventListener('load', standAnchor);
     watchSlots(
       held.flatMap(h => h.cards),
       standAnchor
