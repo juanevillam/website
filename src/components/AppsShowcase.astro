@@ -204,11 +204,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                        skims past one story can judge the next by its UI
                        (Juan, 2026-10-11). It opens out as the card lands. */
                     <div class="slot" data-deck-part="picture">
-                      <div class="fan" style={`--n: ${card.shots.length}`}>
+                      <div class="fan" data-fan style={`--n: ${card.shots.length}`}>
                         {card.shots.map((shot, i) => (
                           <img
                             class="shot fan-shot"
-                            style={`--k: ${(card.shots.length - 1) / 2 - i}; z-index: ${card.shots.length - i}`}
+                            style={`--k: ${(card.shots.length - 1) / 2 - i}; --z: ${card.shots.length - i}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
                             width={shot.width}
@@ -556,8 +556,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     --fan-w: calc(var(--fan-h) * 1179 / 2556);
     /* How far apart neighbours stand at the foot, in phone widths, and how
        far each turns. */
-    --spread: 0.12;
-    --tilt: 3deg;
+    --spread: 0.08;
+    --tilt: 2.5deg;
     position: relative;
     width: 100%;
     height: var(--shot-h);
@@ -569,10 +569,35 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     top: calc((var(--shot-h) - var(--fan-h)) / 2);
     height: var(--fan-h);
     margin-left: calc(var(--fan-w) / -2);
+    z-index: var(--z);
     transform-origin: 50% 100%;
     transform: rotate(0deg);
-    transition: transform calc(var(--beat) * 1.5) var(--ease);
-    transition-delay: calc(var(--beat) / 4);
+    transition:
+      transform calc(var(--beat) * 1.5) var(--ease) calc(var(--beat) / 4),
+      filter calc(var(--beat) / 2) var(--ease),
+      opacity calc(var(--beat) / 2) var(--ease);
+  }
+
+  /* QUICK LOOK — under the pointer one leaf comes to the front, as it
+     stands, and the rest step back into a dim, soft backdrop: every
+     screen of the app can be looked at from the welcome, without turning
+     the deck (Juan, 2026-10-11). The script picks the leaf by where the
+     pointer is across the fan, not by what is on top, so the leaf that
+     came forward never blocks the way to the next. */
+  .fan.is-looking .fan-shot {
+    filter: brightness(0.45) blur(3px);
+    transition-delay: 0s;
+  }
+
+  .fan.is-looking .fan-shot.is-looked {
+    z-index: calc(var(--n) + 1);
+    filter: none;
+  }
+
+  .deck-card.is-current .fan.is-looking .fan-shot.is-looked {
+    transform: translateY(-0.75rem)
+      translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
+      rotate(calc(var(--k) * var(--tilt)));
   }
 
   .deck-card.is-current .fan-shot {
@@ -900,6 +925,32 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         ? card.querySelector<HTMLElement>('.shot')
         : null;
     });
+
+    // QUICK LOOK on every welcome fan: the leaf under the pointer, by its
+    // band across the fan (the leftmost band is the last card's phone).
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches)
+      for (const fan of root.querySelectorAll<HTMLElement>('[data-fan]')) {
+        const leaves = [...fan.querySelectorAll<HTMLElement>('.fan-shot')];
+        const look = (e: PointerEvent) => {
+          const boxes = leaves.map(l => l.getBoundingClientRect());
+          const left = Math.min(...boxes.map(b => b.left));
+          const right = Math.max(...boxes.map(b => b.right));
+          if (e.clientX < left || e.clientX > right) return clear();
+          const band = Math.min(
+            leaves.length - 1,
+            Math.floor(((e.clientX - left) / (right - left)) * leaves.length)
+          );
+          const pick = leaves.length - 1 - band;
+          fan.classList.add('is-looking');
+          leaves.forEach((l, i) => l.classList.toggle('is-looked', i === pick));
+        };
+        const clear = () => {
+          fan.classList.remove('is-looking');
+          leaves.forEach(l => l.classList.remove('is-looked'));
+        };
+        fan.addEventListener('pointermove', look);
+        fan.addEventListener('pointerleave', clear);
+      }
 
     select(held[0].cards[0]);
     // Placed now as well as on the next frame, and again once fonts and
