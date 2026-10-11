@@ -534,15 +534,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* ---------- the fan ----------
-     Four phones from one pivot below the fan's foot, each turned by its
-     place from the middle (--k: -1.5 … 1.5) and slid that way, so the
-     outer ones lean out and drop a little — a hand of cards. Closed while
-     the card is away; it opens as the card lands. */
+     Four phones AT THE SLIDES' OWN SIZE (Juan, 2026-10-11: a smaller fan
+     read as a different picture from the cards after it), pivoting on one
+     point at their foot, each turned a few degrees by its place from the
+     middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
+     overlapping, every screen's top still in view. Closed while the card
+     is away; it opens as the card lands. */
   .fan {
-    --fan-h: calc(var(--shot-h) * 0.56);
+    --fan-h: var(--shot-h);
     --fan-w: calc(var(--fan-h) * 1179 / 2556);
-    /* How far apart neighbours stand, in phone widths. */
-    --spread: 0.55;
+    /* How far apart neighbours stand at the foot, in phone widths, and how
+       far each turns. */
+    --spread: 0.2;
+    --tilt: 3deg;
     position: relative;
     width: 100%;
     height: var(--shot-h);
@@ -554,9 +558,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     top: calc((var(--shot-h) - var(--fan-h)) / 2);
     height: var(--fan-h);
     margin-left: calc(var(--fan-w) / -2);
-    /* The phone's corner, at the fan's scale. */
-    border-radius: calc(var(--media-radius) * 0.56);
-    transform-origin: 50% 120%;
+    transform-origin: 50% 100%;
     transform: rotate(0deg);
     transition: transform calc(var(--beat) * 1.5) var(--ease);
     transition-delay: calc(var(--beat) / 4);
@@ -564,7 +566,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
   .deck-card.is-current .fan-shot {
     transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
-      rotate(calc(var(--k) * 5deg));
+      rotate(calc(var(--k) * var(--tilt)));
   }
 
   /* ---------- the narrator's still anchor ---------- */
@@ -651,12 +653,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
        width the four have to share. */
     .is-welcome .fan {
       --fan-h: min(58vw, 27svh);
-      --spread: 0.5;
+      --spread: 0.3;
+      --tilt: 4deg;
       height: calc(var(--fan-h) * 1.12);
     }
 
+    /* The phone's corner at this phone's size (a slide's is 112vw). */
     .is-welcome .fan-shot {
       top: 0;
+      border-radius: calc(var(--media-radius) * 0.52);
     }
 
     .shot {
