@@ -204,6 +204,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                        skims past one story can judge the next by its UI
                        (Juan, 2026-10-11). It opens out as the card lands. */
                     <div class="slot" data-deck-part="picture">
+                      <div class="tilt" data-tilt>
                       <div class="fan" style={`--n: ${card.shots.length}`}>
                         {card.shots.map((shot, i) => (
                           <img
@@ -219,9 +220,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                           />
                         ))}
                       </div>
+                      </div>
                     </div>
                   ) : (
                     <div class="slot" data-deck-part="picture">
+                      <div class="tilt" data-tilt>
                       <img
                         class="shot"
                         src={card.src}
@@ -232,6 +235,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         decoding="async"
                         draggable="false"
                       />
+                      </div>
                     </div>
                   )}
                 </article>
@@ -547,8 +551,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     --fan-w: calc(var(--fan-h) * 1179 / 2556);
     /* How far apart neighbours stand at the foot, in phone widths, and how
        far each turns. */
-    --spread: 0.2;
-    --tilt: 3deg;
+    --spread: 0.26;
+    --tilt: 4deg;
     position: relative;
     width: 100%;
     height: var(--shot-h);
@@ -556,7 +560,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
   .fan-shot {
     position: absolute;
-    left: 50%;
+    /* A step right of the column's middle: the fan opens toward the
+       page's edge, clear of the words. */
+    left: calc(50% + var(--fan-nudge, 1.5rem));
     top: calc((var(--shot-h) - var(--fan-h)) / 2);
     height: var(--fan-h);
     margin-left: calc(var(--fan-w) / -2);
@@ -566,9 +572,41 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transition-delay: calc(var(--beat) / 4);
   }
 
+  /* Under the pointer the fan opens a touch further and its phones part
+     by depth — each slides with the pointer by its place in the fan. */
   .deck-card.is-current .fan-shot {
-    transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
-      rotate(calc(var(--k) * var(--tilt)));
+    transform: translateX(
+        calc(
+          var(--k) * var(--fan-w) * (var(--spread) + var(--hover, 0) * 0.04) +
+            var(--tx, 0) * (var(--k) + 2) * 4px
+        )
+      )
+      rotate(calc(var(--k) * (var(--tilt) + var(--hover, 0) * 1deg)));
+  }
+
+  /* ---------- the tilt ----------
+     Every picture in the panel leans toward the pointer — a slight 3D
+     turn that follows the mouse across the whole panel and settles back
+     when it leaves (the script sets --tx / --ty in -1…1). Pointer-only:
+     a touch screen has no hover to follow. */
+  .tilt {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    transform: perspective(1600px) rotateY(calc(var(--tx, 0) * 7deg))
+      rotateX(calc(var(--ty, 0) * -5deg));
+    transition: transform var(--beat) var(--ease);
+  }
+
+  /* Following, the fan's phones answer at once — the opening delay is
+     for the card landing, not for the pointer. */
+  .tilt.is-following .fan-shot {
+    transition-duration: calc(var(--beat) / 2);
+    transition-delay: 0s;
+  }
+
+  .tilt.is-following {
+    transition: transform calc(var(--beat) / 3) linear;
   }
 
   /* ---------- the narrator's still anchor ---------- */
@@ -602,6 +640,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     .carousel,
     .fan-shot {
       transition: none;
+    }
+
+    .tilt {
+      transform: none;
     }
 
     .carousel.is-leaving,
@@ -654,6 +696,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     /* A phone's fan stands over the words, smaller: the screen is the
        width the four have to share. */
     .is-welcome .fan {
+      --fan-nudge: 0px;
       --fan-h: min(58vw, 27svh);
       --spread: 0.3;
       --tilt: 4deg;
@@ -852,6 +895,44 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       const h = held[a];
       if (c !== h.deck.current) h.deck.go(c);
     });
+
+    // THE TILT: the front card's picture leans toward the pointer while it
+    // moves over the panel, and settles back when it leaves.
+    const pointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const still3d = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (pointer && !still3d) {
+      let frame = 0;
+      let last: HTMLElement | null = null;
+      const lean = (e: PointerEvent) => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          const h = held[active];
+          const tilt = h.cards[h.deck.current]?.querySelector<HTMLElement>('[data-tilt]');
+          if (!tilt) return;
+          if (last && last !== tilt) settle(last);
+          last = tilt;
+          const r = tilt.getBoundingClientRect();
+          const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+          const tx = clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth / 2));
+          const ty = clamp((e.clientY - (r.top + r.height / 2)) / (innerHeight / 2));
+          tilt.classList.add('is-following');
+          tilt.style.setProperty('--tx', tx.toFixed(3));
+          tilt.style.setProperty('--ty', ty.toFixed(3));
+          tilt.style.setProperty('--hover', '1');
+        });
+      };
+      const settle = (tilt: HTMLElement) => {
+        tilt.classList.remove('is-following');
+        tilt.style.setProperty('--tx', '0');
+        tilt.style.setProperty('--ty', '0');
+        tilt.style.setProperty('--hover', '0');
+      };
+      root.addEventListener('pointermove', lean);
+      root.addEventListener('pointerleave', () => {
+        cancelAnimationFrame(frame);
+        if (last) settle(last);
+      });
+    }
 
     select(held[0].cards[0]);
     // Placed now as well as on the next frame, and again once fonts and
