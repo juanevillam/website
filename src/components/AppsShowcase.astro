@@ -1056,6 +1056,44 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         : null;
     });
 
+    // WARM THE HIDDEN APPS. A deck that is not in front is `hidden`, so its
+    // lazy screenshots are neither fetched nor decoded until its tab is
+    // picked — and then all of them land at once, mid-transition, and the
+    // first switch to each app stuttered while every later one was smooth
+    // (Juan, 2026-10-11). Once the page has loaded and the browser is idle,
+    // each hidden picture is fetched and decoded, one at a time, so the
+    // first switch draws from memory like the rest.
+    const idle = (fn: () => void) =>
+      'requestIdleCallback' in window
+        ? requestIdleCallback(fn, { timeout: 2000 })
+        : setTimeout(fn, 200);
+    const warm = () => {
+      // The deck in front first (its later cards are lazy too), then the
+      // others in tab order.
+      const queue = [held[active], ...held.filter((_, i) => i !== active)].flatMap(h => [
+        ...h.el.querySelectorAll<HTMLImageElement>('img'),
+      ]);
+      const next = () => {
+        const img = queue.shift();
+        if (!img) return;
+        img.loading = 'eager';
+        img
+          .decode()
+          .catch(() => {})
+          .finally(() => idle(next));
+      };
+      idle(next);
+    };
+    // Not on a connection the person asked to spare: ~5 MB of screenshots
+    // is theirs to spend by picking a tab.
+    const spare = (
+      navigator as Navigator & { connection?: { saveData?: boolean } }
+    ).connection?.saveData;
+    if (!spare) {
+      if (document.readyState === 'complete') warm();
+      else addEventListener('load', warm, { once: true });
+    }
+
     select(held[0].cards[0]);
     // Placed now as well as on the next frame, and again once fonts and
     // images have settled the words' height.
