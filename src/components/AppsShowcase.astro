@@ -53,7 +53,7 @@ type Card =
   | {
       kind: 'welcome';
       paras: UIKey[];
-      /** Every card's phone, fanned out — the app at a glance. */
+      /** Every card's phone, in a row — the app at a glance. */
       shots: { src: string; width: number; height: number; title: string }[];
       scene: string;
     }
@@ -70,8 +70,8 @@ type Card =
 // Each app's cards, in telling order: its welcome, then its slides.
 const decks: Card[][] = [];
 for (const app of apps) {
-  // The welcome fans out every card's phone, and lights the page with
-  // all of them together.
+  // The welcome stands every card's phone in a row, and lights the page
+  // with all of them together.
   const cards: Card[] = [
     {
       kind: 'welcome',
@@ -130,15 +130,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     {
       decks.map((cards, a) => {
         const app = apps[a];
-        // How the fan opens — a different way per app, so the three
-        // welcomes are not one picture three times (Juan, 2026-10-11): the
-        // lead on the left with the rest to its right (Sound Shaper),
-        // mirrored (Topper), or the lead upright in the MIDDLE with the
-        // rest alternating out to both sides behind it (Booker).
-        const fanK = (i: number, n: number) =>
-          a % 3 === 2
-            ? (i % 2 ? -1 : 1) * Math.ceil(i / 2)
-            : (a % 3 === 1 ? 1 : -1) * ((n - 1) / 2 - i);
+        // The row reads from the lead (Home, Library) on: left to right
+        // for Sound Shaper and Booker, right to left for Topper, so the
+        // welcomes alternate.
+        const mirrored = a % 2 === 1;
         return (
           <div
             class="carousel"
@@ -208,25 +203,29 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                   </div>
 
                   {card.kind === 'welcome' ? (
-                    /* THE FAN — every card's phone, tilted left to right,
-                       a little apart: the app at a glance, so someone who
-                       skims past one story can judge the next by its UI
-                       (Juan, 2026-10-11). It opens out as the card lands. */
+                    /* THE ROW — every card's phone, whole and upright, side
+                       by side in the page's 3:2 frame: the app at a glance,
+                       so someone who skims past one story can judge the
+                       next by its UI, in the same rectangle as More Work
+                       and Events (Juan, 2026-10-11). The lead is the first
+                       card's own phone, and flies there on the turn. */
                     <div class="slot" data-deck-part="picture">
-                      <div class="fan" style={`--n: ${card.shots.length}`}>
-                        {card.shots.map((shot, i) => (
-                          <img
-                            class:list={['shot', 'fan-shot', i === 0 && 'is-lead']}
-                            style={`--k: ${fanK(i, card.shots.length)}; --z: ${card.shots.length - i}`}
-                            src={shot.src}
-                            alt={`${app.name} — ${shot.title}`}
-                            width={shot.width}
-                            height={shot.height}
-                            loading="lazy"
-                            decoding="async"
-                            draggable="false"
-                          />
-                        ))}
+                      <div class="reel">
+                        <div class:list={['reel-row', mirrored && 'is-mirrored']}>
+                          {card.shots.map((shot, i) => (
+                            <img
+                              class:list={['reel-shot', i === 0 && 'is-lead']}
+                              style={`--i: ${i}`}
+                              src={shot.src}
+                              alt={`${app.name} — ${shot.title}`}
+                              width={shot.width}
+                              height={shot.height}
+                              loading="lazy"
+                              decoding="async"
+                              draggable="false"
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -446,8 +445,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* The welcome's pitch reads in a wider column (1.2x), so two paragraphs
-     and the store row stand inside the panel — and no wider, so the fan
-     beside it has room to open (1.5x crowded the four phones together). */
+     and the store row stand inside the panel. */
   .is-welcome {
     grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.2) 1fr;
   }
@@ -546,55 +544,69 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
   }
 
-  /* ---------- the fan ----------
-     Four phones AT THE SLIDES' OWN SIZE (Juan, 2026-10-11: a smaller fan
-     read as a different picture from the cards after it), pivoting on one
-     point at their foot, each turned a few degrees by its place from the
-     middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
-     overlapping, every screen's top still in view. The FIRST card's phone
-     (Home, Library) stands on top at one end and the rest tuck under it
-     in order: on the LEFT, opening rightward, for Sound Shaper; mirrored
-     for Topper; and upright in the middle for Booker, the rest fanning out
-     to both sides (Juan, 2026-10-11), so no two welcomes repeat. Tight on purpose: a compact fan of many
-     leaves, not four phones spread across the page. It holds still under
-     the pointer (a tilted fan read as broken), closes while the card is
-     away, and opens as the card lands. */
-  .fan {
-    --fan-h: var(--shot-h);
-    --fan-w: calc(var(--fan-h) * 1179 / 2556);
-    /* How far apart neighbours stand at the foot, in phone widths, and how
-       far each turns. */
-    --spread: 0.08;
-    --tilt: 2.5deg;
+  /* ---------- the row ----------
+     More Work's screen exactly — its width, 3:2, hairline, flat corner,
+     ground and shadow — standing on the line its screens' tops do, and
+     leaning toward the pointer as they do. Inside, the four phones at one
+     size, whole, with one gap between them and round the row; their
+     sizes come from the frame's own width (a size container), and their
+     corner is the slides' phone corner as a share of the phone. They rise
+     in, one after the other, as the card lands. */
+  .is-welcome .slot {
+    /* More Work's eyebrow row (2rem) and the step under it (1.5rem). */
+    margin-top: 3.5rem;
+    perspective: 1600px;
+  }
+
+  .reel {
     position: relative;
-    width: 100%;
-    height: var(--shot-h);
+    width: var(--screen-w);
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    container-type: size;
+    border: 1px solid var(--hairline);
+    border-radius: var(--media-radius-flat);
+    background: var(--surface);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    rotate: var(--tilt-rot, none);
   }
 
-  .fan-shot {
+  /* In the frame's own units: a container's units measure it only for
+     what is inside it. */
+  .reel-row {
+    --gap: 3cqw;
     position: absolute;
-    left: 50%;
-    top: calc((var(--shot-h) - var(--fan-h)) / 2);
-    height: var(--fan-h);
-    margin-left: calc(var(--fan-w) / -2);
-    z-index: var(--z);
-    transform-origin: 50% 100%;
-    transform: rotate(0deg);
-    /* Quick — a detail as the card lands, not a show (Juan, 2026-10-11:
-       at a beat and a half it read as slow). */
-    transition: transform calc(var(--beat) * 0.6) var(--ease);
-    transition-delay: calc(var(--beat) / 12);
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap);
   }
 
-  .deck-card.is-current .fan-shot {
-    transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
-      rotate(calc(var(--k) * var(--tilt)));
+  .reel-row.is-mirrored {
+    flex-direction: row-reverse;
   }
 
-  /* Arriving — a turn or a tab — the fan stands closed for a frame, so it
-     opens every time the card lands, not only the first. */
-  .deck-card.is-arriving .fan-shot {
-    transform: rotate(0deg);
+  .reel-shot {
+    flex: none;
+    width: calc((100cqw - var(--gap) * 5) / 4);
+    height: auto;
+    max-width: none;
+    border: 1px solid var(--hairline);
+    border-radius: 16.5% 16.5% 18.75% 18.75% / 7.6% 7.6% 8.65% 8.65%;
+    transition:
+      transform calc(var(--beat) * 0.6) var(--ease),
+      opacity calc(var(--beat) * 0.6) var(--ease);
+    transition-delay: calc(var(--beat) / 12 * (var(--i) + 1));
+  }
+
+  /* Arriving — a turn or a tab — the row stands a step low and clear for
+     a frame, so it rises in every time the card lands. */
+  .deck-card.is-arriving .reel-shot {
+    transform: translateY(1rem);
+    opacity: 0;
     transition: none;
   }
 
@@ -603,7 +615,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      place at once, hidden — a flying copy draws the trip — and the one
      leaving is gone at once, since it is the one that flies. */
   .deck-card.is-handoff [data-deck-part='picture'],
-  .deck-card.is-handoff .fan-shot.is-lead {
+  .deck-card.is-handoff .reel-shot.is-lead {
     transition: none;
   }
 
@@ -654,7 +666,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     .narr-static .narr-anchor,
     .lozenge,
     .carousel,
-    .fan-shot {
+    .reel-shot {
       transition: none;
     }
 
@@ -707,19 +719,18 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       margin-top: 0;
     }
 
-    /* A phone's fan stands over the words, smaller: the screen is the
-       width the four have to share. */
-    .is-welcome .fan {
-      --fan-h: min(58vw, 27svh);
-      --spread: 0.18;
-      --tilt: 4deg;
-      height: calc(var(--fan-h) * 1.12);
+    /* A phone's row stands over the words at the column's width, as More
+       Work's screen does, no taller than a third of the screen. */
+    .is-welcome .slot {
+      margin-top: 0;
     }
 
-    /* The phone's corner at this phone's size (a slide's is 112vw). */
-    .is-welcome .fan-shot {
-      top: 0;
-      border-radius: calc(var(--media-radius) * 0.52);
+    .reel {
+      width: min(100%, 45svh);
+      box-shadow:
+        var(--media-glow),
+        0 2rem 4rem rgba(0, 0, 0, 0.55),
+        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
     }
 
     .shot {
@@ -775,13 +786,12 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* SHORT PHONES (an SE, a phone with Safari's bars showing): the welcome's
-     fan, lockup, pitch and store row are one column over the controls,
+     row, lockup, pitch and store row are one column over the controls,
      and at 667pt tall the store row ran under the arrows. Everything
      steps down a notch so the column clears them. */
   @media (max-width: 48rem) and (max-height: 46rem) {
-    .is-welcome .fan {
-      --fan-h: min(50vw, 21svh);
-      height: calc(var(--fan-h) * 1.05);
+    .reel {
+      width: min(100%, 36svh);
     }
 
     .card,
@@ -879,13 +889,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      * card's phone, so it travels between them instead of one leaving and
      * the other arriving (Juan, 2026-10-11): the narrator's glide between
      * its anchors, made for a picture. A copy flies from where the phone
-     * stands to where it will stand — turning out of the fan's lean,
-     * scaling to its size there — while both real ones are hidden; the one
+     * stands to where it will stand — growing out of the row to its size
+     * there — while both real ones are hidden; the one
      * arriving is revealed in its place when the copy lands.
      */
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const phoneOf = (card: HTMLElement) =>
-      card.querySelector<HTMLElement>('.fan-shot.is-lead') ??
+      card.querySelector<HTMLElement>('.reel-shot.is-lead') ??
       card.querySelector<HTMLElement>('.is-slide .shot, .slot .shot');
     const pose = (img: HTMLElement) => {
       const r = img.getBoundingClientRect();
@@ -987,7 +997,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // the way the switch went while the new one drifts in from the other
     // side, together, on one curve — and the new deck is ALREADY standing on
     // its welcome (or, when the voice carried the page here, on the card
-    // being told), fan open. Replaying the card's entrance and the fan on
+    // being told), its row in place. Replaying the card's entrance and the row on
     // top of the deck's own move read as a gallop, two beats where there
     // should be one, and flicking between tabs replayed it every time.
     const show = (a: number, card?: number) => {
@@ -1055,14 +1065,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (c !== h.deck.current) h.deck.go(c);
     });
 
-    // A slide's phone leans toward the pointer; the welcome's fan holds
-    // still.
+    // A slide's phone leans toward the pointer, and so does the welcome's
+    // frame, as More Work's screens do.
     followPointer(root, () => {
       const h = held[active];
-      const card = h.cards[h.deck.current];
-      return card?.classList.contains('is-slide')
-        ? card.querySelector<HTMLElement>('.shot')
-        : null;
+      return h.cards[h.deck.current]?.querySelector<HTMLElement>('.reel, .is-slide .shot');
     });
 
     // WARM THE HIDDEN APPS. A deck that is not in front is `hidden`, so its
