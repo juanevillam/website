@@ -18,8 +18,9 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * landing is a plain 1440 x 960 browser screenshot, untouched: whatever
  * the page shows at that height, a section cut off at the foot included.
  * Event photos — a phone's, upright — stand two to a frame, 3:4 each.
- * An event's VIDEO (a phone's too, silent) always takes the left frame
- * and plays on its own; the photos cycle in the right one. A card may ask
+ * An event's VIDEO (a phone's too, silent) is one turn of the RIGHT
+ * frame, its last, and holds it until it ends (Juan, 2026-10-11: shown
+ * all the time, it read as the card's only picture). A card may ask
  * for ONE frame instead, showing one picture at a time. Every picture
  * keeps its own aspect ratio — whole, over a blur of itself, never
  * cropped to the frame (Juan, 2026-10-11).
@@ -87,15 +88,14 @@ const isVideo = (m: Media) => m.endsWith('.mp4');
 // itself by its poster.
 const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
 
-// The frames of a card whose screen is photos: one, or two — a video
-// takes the left one and the photos share the right; otherwise odd photos
-// go left, even right.
+// The frames of a card whose screen is photos: one, or two — odd photos
+// left, even right, and a video at the end of the right one.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
   if (p.oneFrame || all.length === 1) return [all];
-  const video = all.find(isVideo);
-  if (video) return [[video], all.filter(m => m !== video)];
-  return [0, 1].map(c => all.filter((_, i) => i % 2 === c));
+  const photos = all.filter(m => !isVideo(m));
+  const [left, right] = [0, 1].map(c => photos.filter((_, i) => i % 2 === c));
+  return [left, [...right, ...all.filter(isVideo)]];
 };
 
 // Screens of their own (the game's), rendered from the named slots.

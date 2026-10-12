@@ -11,8 +11,9 @@ import PanelDeck, { type DeckItem } from './PanelDeck.astro';
  * A panel deck (PanelDeck) like More Work, oldest first. Its screens are
  * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
  * most, each cycling through its share when there are more, every one
- * whole. A VIDEO (silent, its poster beside it as .jpg) holds the left
- * frame; `oneFrame` shows a card's pictures one at a time instead. A new event
+ * whole. A VIDEO (silent, its poster beside it as .jpg) is one turn of
+ * the RIGHT frame, its last; `oneFrame` shows a card's pictures one at a
+ * time instead. A new event
  * is one more entry here, at the end. The companies a card names link
  * out (`[Cashea](cashea)` in the copy, TL).
  */
@@ -22,6 +23,7 @@ const LINKS = {
   cashea: 'https://www.cashea.app/',
   slash: 'https://www.slash.com/',
   salvalo: 'https://salvalo.app',
+  ok101: 'https://ok101fm.net/',
 };
 
 // In the order they happened, oldest first: the story reads forward —
@@ -34,8 +36,7 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.alegria.body', links: LINKS },
     phone: { k: 'events.alegria.m', links: LINKS },
     clip: 'events.alegria.body',
-    // The video holds the left frame; the photos cycle in the right one,
-    // in the LinkedIn post's order.
+    // The LinkedIn post's order; the video is the right frame's last turn.
     image: [
       '/media/events/vibe-coding-hackathon/caracas.mp4',
       '/media/events/vibe-coding-hackathon/team-coding.jpg',
@@ -56,23 +57,26 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.ilc.body', links: LINKS },
     phone: { k: 'events.ilc.m', links: LINKS },
     clip: 'events.ilc.body',
-    // One frame, one picture at a time: the talk, then the stage.
-    image: ['/media/events/ilc-talks/talk.mp4', '/media/events/ilc-talks/stage.jpg'],
+    // One frame, one picture at a time: the stage, then the talk.
+    image: ['/media/events/ilc-talks/stage.jpg', '/media/events/ilc-talks/talk.mp4'],
     oneFrame: true,
     links: [],
   },
   {
     id: 'radio',
-    name: 'OK 101.1 FM',
+    name: 'OK 101.5 FM',
     meta: [[{ k: 'events.interview' }], ['Barquisimeto'], [{ k: 'events.radio.when' }]],
     body: { k: 'events.radio.body', links: LINKS },
     phone: { k: 'events.radio.m', links: LINKS },
     clip: 'events.radio.body',
+    // One frame: the studio selfie is sideways, and an upright frame
+    // shrank it to a strip.
     image: [
-      '/media/events/ok101-radio/on-air.mp4',
-      '/media/events/ok101-radio/good-bye.jpg',
       '/media/events/ok101-radio/setup.jpg',
+      '/media/events/ok101-radio/good-bye.jpg',
+      '/media/events/ok101-radio/on-air.mp4',
     ],
+    oneFrame: true,
     links: [],
   },
 ];
