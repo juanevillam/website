@@ -61,39 +61,43 @@ const mobileKey = (k: string) =>
  * screen, which shows the top of it — the part that says what it is.
  * The pieces stand in columns that add up to the square's inner width
  * exactly, and every column runs at least to the bottom edge, so nothing
- * but the gaps shows the ground.
+ * but the gaps shows the ground. A LYING screen only ever sits at the
+ * top: the bottom edge would cut it along a side. And the sizes are kept
+ * as even as four pieces with no side cut allow (Juan: no giant beside a
+ * tiny one) — the full-width lying screen and even columns are how.
  *
  * A piece is a fraction of the square's side: where its box starts and
  * its LONG side (a standing screen's height, a lying one's width). The
- * numbers are solved from the gap (0.025) and the screens' ratio
+ * numbers are solved from the gap (0.0125 — half its first value: the
+ * square read padded) and the screens' ratio
  * (1179 / 2556) — change one and re-solve the column it stands in. Every
  * app has its own arrangement so the three welcomes don't repeat.
  */
 type Piece = { shot: number; x: number; y: number; len: number; dir: 'v' | 'h' };
 const COLLAGES: Piece[][] = [
-  // Sound Shaper: a narrow column of two (player, shape) beside a wide
-  // one — the clip editor lying across its top, the library under it.
+  // Sound Shaper: the player lying across the whole top; the library, the
+  // shape sheet and the clip editor standing under it, narrowing.
   [
-    { shot: 1, x: 0.025, y: 0.025, len: 0.6504, dir: 'v' },
-    { shot: 2, x: 0.025, y: 0.7004, len: 0.6504, dir: 'v' },
-    { shot: 3, x: 0.35, y: 0.025, len: 0.625, dir: 'h' },
-    { shot: 0, x: 0.35, y: 0.3383, len: 1.355, dir: 'v' },
+    { shot: 1, x: 0.0125, y: 0.0125, len: 0.975, dir: 'h' },
+    { shot: 0, x: 0.0125, y: 0.4747, len: 0.8672, dir: 'v' },
+    { shot: 2, x: 0.425, y: 0.4747, len: 0.6504, dir: 'v' },
+    { shot: 3, x: 0.7375, y: 0.4747, len: 0.542, dir: 'v' },
   ],
-  // Topper: explore lying across the whole top; home large below it on
-  // the left; the profile lying above a top on the right.
+  // Topper: two even columns, each a screen lying over one standing —
+  // explore over home, the profile over a top.
   [
-    { shot: 1, x: 0.025, y: 0.025, len: 0.95, dir: 'h' },
-    { shot: 0, x: 0.025, y: 0.4882, len: 1.1924, dir: 'v' },
-    { shot: 3, x: 0.6, y: 0.4882, len: 0.375, dir: 'h' },
-    { shot: 2, x: 0.6, y: 0.6862, len: 0.813, dir: 'v' },
+    { shot: 1, x: 0.0125, y: 0.0125, len: 0.48, dir: 'h' },
+    { shot: 0, x: 0.0125, y: 0.2464, len: 1.0406, dir: 'v' },
+    { shot: 3, x: 0.505, y: 0.0125, len: 0.4825, dir: 'h' },
+    { shot: 2, x: 0.505, y: 0.2476, len: 1.046, dir: 'v' },
   ],
   // Booker: the shelf standing tall on the left; the book's page and a
   // chapter lying one over the other on the right, the reader under them.
   [
-    { shot: 0, x: 0.025, y: 0.025, len: 1.1273, dir: 'v' },
-    { shot: 1, x: 0.57, y: 0.025, len: 0.405, dir: 'h' },
-    { shot: 3, x: 0.57, y: 0.2368, len: 0.405, dir: 'h' },
-    { shot: 2, x: 0.57, y: 0.4486, len: 0.878, dir: 'v' },
+    { shot: 0, x: 0.0125, y: 0.0125, len: 0.9973, dir: 'v' },
+    { shot: 1, x: 0.485, y: 0.0125, len: 0.5025, dir: 'h' },
+    { shot: 3, x: 0.485, y: 0.2568, len: 0.5025, dir: 'h' },
+    { shot: 2, x: 0.485, y: 0.5011, len: 1.0894, dir: 'v' },
   ],
 ];
 
