@@ -12,7 +12,8 @@ import PanelDeck, { type DeckItem } from './PanelDeck.astro';
  * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
  * most, each cycling through its share when there are more, every one
  * whole; three or fewer take one frame, one at a time. A VIDEO (silent,
- * its poster beside it as .jpg) is always the last turn of its frame. A new event
+ * its poster beside it as .jpg) comes after the photos in one frame, and
+ * goes to the right frame, after one of its photos, in two. A new event
  * is one more entry here, at the end. The companies a card names link
  * out (`[Cashea](cashea)` in the copy, TL).
  */
@@ -43,18 +44,19 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.alegria.body', links: LINKS },
     phone: { k: 'events.alegria.m', links: LINKS },
     clip: 'events.alegria.body',
-    // The LinkedIn post's order; the video is the right frame's last turn.
+    // The LinkedIn post's order: the right frame runs Víctor's talk, Pedro's
+    // call, Yummy HQ, then the team on film.
     image: [
-      // Juan filming the team.
-      '/media/events/vibe-coding-hackathon/team-record.mp4',
       '/media/events/vibe-coding-hackathon/team-coding.jpg',
       // Víctor Cárdenas's founder talk (Slash).
       '/media/events/vibe-coding-hackathon/talk.jpg',
       '/media/events/vibe-coding-hackathon/team-selfie.jpg',
       // The founder call with Pedro Vallenilla (Cashea).
-      '/media/events/vibe-coding-hackathon/founder-call.jpg',
+      '/media/events/vibe-coding-hackathon/founder-call.mp4',
       // Juan at the photo stand in Yummy's offices, the purple motorcycle.
       '/media/events/vibe-coding-hackathon/yummy-hq.jpg',
+      // Juan filming the team.
+      '/media/events/vibe-coding-hackathon/team-record.mp4',
     ],
     links: [],
   },
