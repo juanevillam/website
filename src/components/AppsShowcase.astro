@@ -50,52 +50,55 @@ const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
 /**
- * THE COLLAGE — each welcome's four screens, standing, in a STAIR
- * (Juan, 2026-10-11): their tops step along a diagonal, each screen whole
- * at its own ratio and a different size, the leading screen the largest —
- * Sound Shaper's player, Topper's home, Booker's reader. The frame's top
- * and sides are a margin the same as the gap between screens, never a
- * cut; every screen runs to the bottom edge, which is the only one that
- * may cut (it takes the home bar at most), and the frame's own ground
- * shows above the lower steps — the diagonal reads because of it.
+ * THE COLLAGE — each welcome's four screens COVERING the frame (Juan,
+ * 2026-10-11): nothing of the frame's ground shows but the hairline gaps
+ * between the screens — a stair that left the ground showing above its
+ * lower steps read as holes. Each screen appears once, whole and at its
+ * own ratio, standing or lying on its side (`h`, top to the left), all at
+ * different sizes, and the screen that leads each app is the largest:
+ * Sound Shaper's player, Topper's home, Booker's reader.
+ *
+ * The frame's top and sides are a margin as wide as the gaps, never a
+ * cut; only the bottom edge may cut, so a screen lying down only ever sits
+ * at the top. The screens stand in columns that add up to the frame's
+ * inner width exactly and every column reaches the bottom edge. A column's
+ * pieces share its width, so a column holds one standing screen (wide
+ * enough to reach the bottom alone) or a lying one over a standing one.
  *
  * THE FRAME IS MORE WORK'S AND EVENTS' (Juan, 2026-10-11): the same 3:2
  * screen, at the same width, corner, edge and ground, so every picture
  * beside a block of words on the page is one standard size.
  *
  * A piece is a fraction of the frame's WIDTH (its height is 2/3 of it):
- * where its box starts and its height. A column's width is the least
- * that still reaches the bottom from where its step starts, and the slack
- * goes to the leading screen — solved from the gap (0.0125) and the
- * screens' ratio (1179 / 2556); change a step and re-solve the row. Every
- * app has its own stair: down, up, and a peak.
+ * where its box starts and its LONG side. The numbers are solved from the
+ * gap (0.0125) and the screens' ratio (1179 / 2556); change a column and
+ * re-solve it.
  */
 type Piece = { shot: number; x: number; y: number; len: number; dir: 'v' | 'h' };
 const COLLAGES: Piece[][] = [
-  // Sound Shaper: a stair down to the right, from the PLAYER (the
-  // largest) through the library and the shape sheet to the clip editor.
+  // Sound Shaper: the library, the PLAYER (the largest), and the clip
+  // editor lying over the shape sheet.
   [
-    { shot: 1, x: 0.0125, y: 0.0125, len: 0.7694, dir: 'v' },
-    { shot: 0, x: 0.3799, y: 0.13, len: 0.541, dir: 'v' },
-    { shot: 2, x: 0.642, y: 0.25, len: 0.421, dir: 'v' },
-    { shot: 3, x: 0.8487, y: 0.37, len: 0.301, dir: 'v' },
+    { shot: 0, x: 0.0125, y: 0.0125, len: 0.6569, dir: 'v' },
+    { shot: 1, x: 0.328, y: 0.0125, len: 0.7523, dir: 'v' },
+    { shot: 3, x: 0.6875, y: 0.0125, len: 0.3, dir: 'h' },
+    { shot: 2, x: 0.6875, y: 0.1634, len: 0.6504, dir: 'v' },
   ],
-  // Topper: the stair the other way, climbing to HOME (the largest) on the
-  // right through the profile, a top and explore.
+  // Topper: two columns, each a screen lying over one standing — explore
+  // over HOME (the largest), the profile over a top.
   [
-    { shot: 3, x: 0.0125, y: 0.34, len: 0.331, dir: 'v' },
-    { shot: 2, x: 0.1777, y: 0.22, len: 0.451, dir: 'v' },
-    { shot: 1, x: 0.3982, y: 0.11, len: 0.561, dir: 'v' },
-    { shot: 0, x: 0.6695, y: 0.0125, len: 0.6894, dir: 'v' },
+    { shot: 1, x: 0.0125, y: 0.0125, len: 0.58, dir: 'h' },
+    { shot: 0, x: 0.0125, y: 0.2925, len: 1.2574, dir: 'v' },
+    { shot: 3, x: 0.605, y: 0.0125, len: 0.3825, dir: 'h' },
+    { shot: 2, x: 0.605, y: 0.2014, len: 0.8292, dir: 'v' },
   ],
-  // Booker: a peak — the READER (the largest) highest, the shelf a step
-  // down to its left, the book's page and a chapter stepping down to its
-  // right.
+  // Booker, Sound Shaper's mirror: the book's page lying over the shelf,
+  // the READER (the largest), and a chapter.
   [
-    { shot: 0, x: 0.0125, y: 0.22, len: 0.451, dir: 'v' },
-    { shot: 2, x: 0.233, y: 0.0125, len: 0.6894, dir: 'v' },
-    { shot: 1, x: 0.5635, y: 0.13, len: 0.541, dir: 'v' },
-    { shot: 3, x: 0.8256, y: 0.32, len: 0.351, dir: 'v' },
+    { shot: 1, x: 0.0125, y: 0.0125, len: 0.3, dir: 'h' },
+    { shot: 0, x: 0.0125, y: 0.1634, len: 0.6504, dir: 'v' },
+    { shot: 2, x: 0.325, y: 0.0125, len: 0.7523, dir: 'v' },
+    { shot: 3, x: 0.6845, y: 0.0125, len: 0.6569, dir: 'v' },
   ],
 ];
 
