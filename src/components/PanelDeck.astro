@@ -86,11 +86,13 @@ const isVideo = (m: Media) => m.endsWith('.mp4');
 // itself by its poster.
 const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
 
-// The frames of a card whose screen is photos: one, or two — odd photos
-// left, even right, and a video at the end of the right one.
+// The frames of a card whose screen is photos: three pictures or fewer
+// take ONE frame, one at a time (two frames of one picture each read as
+// static, Juan, 2026-10-11); more take two — odd photos left, even right —
+// and a video always ends its frame's turn, the right one's when split.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
-  if (all.length === 1) return [all];
+  if (all.length <= 3) return [[...all.filter(m => !isVideo(m)), ...all.filter(isVideo)]];
   const photos = all.filter(m => !isVideo(m));
   const [left, right] = [0, 1].map(c => photos.filter((_, i) => i % 2 === c));
   return [left, [...right, ...all.filter(isVideo)]];
