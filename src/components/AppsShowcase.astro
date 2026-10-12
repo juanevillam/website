@@ -979,6 +979,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       const hidden = r.bottom - frame.getBoundingClientRect().bottom;
       return hidden > 0 ? (hidden / r.height) * img.offsetHeight : 0;
     };
+    // A length written in the landing phone's pixels, in the copy's own —
+    // which the flight scales by `scale`.
+    const unscaled = (css: string, scale: number) =>
+      css.replace(/(-?[\d.]+)px/g, (_, n) => `${(Number(n) / scale).toFixed(2)}px`);
+    // While a copy flies, nothing leans toward the pointer: the phone it
+    // lands on stands level, so the copy (always level) meets it exactly,
+    // and leans in from there once it is revealed.
+    let flying = false;
+    // The cut as a clip: only the bottom edge cuts, by `cut` pixels, and
+    // every other side — and the bottom too, when nothing is cut — reaches
+    // far out, or the clip would take the phone's shadow with it.
+    const clipTo = (cut: number) =>
+      `inset(-300px -300px ${cut > 0.5 ? cut.toFixed(1) : -300}px -300px)`;
     const handOff = (from: HTMLElement, to: HTMLElement) => {
       if (reduced) return;
       const a = phoneOf(from);
@@ -991,6 +1004,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       a.classList.add('is-flying');
       b.classList.add('is-flying');
 
+      flying = true;
       const look = getComputedStyle(a);
       const ghost = a.cloneNode() as HTMLImageElement;
       ghost.removeAttribute('class');
@@ -1013,22 +1027,32 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       const scale = end.h / start.h;
       // The cut is drawn in the copy's own pixels, which the flight scales.
       const cutTo = cutOf(b) / scale;
+      // It wears the look of where it leaves and lands as the landing
+      // phone's — its corner and its shadow — so nothing changes as the
+      // real one is revealed: a collage screen carries no shadow and a
+      // slide's phone a deep one, and the two corners differ.
+      const goal = getComputedStyle(b);
       const flight = ghost.animate(
         [
           {
             transform: `rotate(${start.turn}deg)`,
-            clipPath: `inset(0 0 ${cutFrom.toFixed(1)}px 0)`,
+            clipPath: clipTo(cutFrom),
+            borderRadius: look.borderRadius,
+            boxShadow: look.boxShadow,
           },
           {
             transform:
               `translate(${end.x - start.x}px, ${end.y - start.y}px) ` +
               `scale(${scale}) rotate(${end.turn}deg)`,
-            clipPath: `inset(0 0 ${cutTo.toFixed(1)}px 0)`,
+            clipPath: clipTo(cutTo),
+            borderRadius: unscaled(goal.borderRadius, scale),
+            boxShadow: unscaled(goal.boxShadow, scale),
           },
         ],
         { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
       );
       const land = () => {
+        flying = false;
         ghost.remove();
         a.classList.remove('is-flying');
         b.classList.remove('is-flying');
@@ -1146,6 +1170,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // The picture in front leans toward the pointer: a slide's phone, or a
     // welcome's frame.
     followPointer(root, () => {
+      if (flying) return null;
       const h = held[active];
       return h.cards[h.deck.current]?.querySelector<HTMLElement>('.collage, .slot .shot');
     });
