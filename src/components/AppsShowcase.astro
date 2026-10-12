@@ -50,43 +50,53 @@ const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
 /**
- * THE COLLAGE — each welcome's four screens laid into one square as a
- * MOSAIC (Juan, 2026-10-11): a 6 x 6 grid the four tiles fill completely,
- * a hairline of ground between them and none showing anywhere else. No
- * tile turns; one is large, one a narrow strip, one shows only its top
- * half — each screen fills its tile and is cut where the tile ends, so
- * every tile shows a real part of the app. Every app has ITS OWN layout
- * so the three welcomes don't repeat each other. A tile is its grid area
- * (column start/end, row start/end) and which part of the screen it
- * keeps; the first tile is the first card's screen.
+ * THE COLLAGE — each welcome's screens as a WALL OF PHONES behind a
+ * square window (Juan, 2026-10-11). Every screen keeps its own shape and
+ * all stand at one size, in upright columns a hairline apart; each column
+ * runs on past the window's edges, as if the wall went on forever, and
+ * each starts at its own height, so the window is always full and never
+ * shows a row of tops lined up. Nothing is cropped inside a phone and
+ * nothing turns — the window's edges are the only cut, which is what lets
+ * a column show half a phone.
+ *
+ * Every app has ITS OWN wall so the three welcomes don't repeat each
+ * other: how wide a column is (a share of the window — more, narrower
+ * columns for a busier wall; a share that does not divide evenly leaves a
+ * column half outside the window), where each column starts (a share of a
+ * phone's height, upward), and the order each column runs the screens in.
  */
-type Tile = { area: string; at: string };
-const COLLAGES: Tile[][] = [
-  // Sound Shaper: the library tall on the left; the player across the top
-  // right; the shape sheet and a strip of the clip editor under it.
-  [
-    { area: '1 / 1 / 7 / 4', at: 'top' },
-    { area: '1 / 4 / 4 / 7', at: '50% 22%' },
-    { area: '4 / 4 / 7 / 6', at: 'top' },
-    { area: '4 / 6 / 7 / 7', at: '50% 40%' },
-  ],
-  // Topper: home tall on the right; explore across the top left; a top
-  // and a slice of the profile beneath it.
-  [
-    { area: '1 / 4 / 7 / 7', at: 'top' },
-    { area: '1 / 1 / 3 / 4', at: '50% 18%' },
-    { area: '3 / 1 / 7 / 3', at: 'top' },
-    { area: '3 / 3 / 7 / 4', at: '50% 30%' },
-  ],
-  // Booker: the shelf in a big square at the bottom left; the book's page
-  // and the reader side by side above it; a chapter as a tall strip down
-  // the right.
-  [
-    { area: '3 / 1 / 7 / 5', at: '50% 12%' },
-    { area: '1 / 1 / 3 / 3', at: '50% 40%' },
-    { area: '1 / 3 / 3 / 5', at: '50% 30%' },
-    { area: '1 / 5 / 7 / 7', at: 'left top' },
-  ],
+type Wall = { width: number; columns: { from: number; order: number[] }[] };
+const COLLAGES: Wall[] = [
+  // Sound Shaper: three columns, stepped — a sliver past the right edge,
+  // so the window is never short of a phone.
+  {
+    width: 0.33,
+    columns: [
+      { from: 0.18, order: [0, 1, 2] },
+      { from: 0.62, order: [2, 3, 0] },
+      { from: 0.36, order: [1, 0, 3] },
+    ],
+  },
+  // Topper: two and a half wider columns, the last cut by the window.
+  {
+    width: 0.4,
+    columns: [
+      { from: 0.48, order: [1, 0, 2] },
+      { from: 0.08, order: [0, 3, 1] },
+      { from: 0.3, order: [2, 1, 3] },
+    ],
+  },
+  // Booker: four narrow columns alternating high and low, the fourth
+  // half outside.
+  {
+    width: 0.255,
+    columns: [
+      { from: 0.08, order: [0, 2, 1] },
+      { from: 0.56, order: [1, 3, 0] },
+      { from: 0.2, order: [3, 0, 2] },
+      { from: 0.66, order: [2, 1, 3] },
+    ],
+  },
 ];
 
 type Card =
@@ -240,23 +250,30 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
                   {card.kind === 'welcome' && (
                     <div class="slot" data-deck-part="picture">
-                      <div class="collage">
-                        {card.shots.map((shot, i) => {
-                          const tile = COLLAGES[a % COLLAGES.length][i];
-                          return tile ? (
-                            <img
-                              class="tile"
-                              style={`grid-area: ${tile.area}; object-position: ${tile.at}`}
-                              src={shot.src}
-                              alt={`${app.name} — ${shot.title}`}
-                              width={shot.width}
-                              height={shot.height}
-                              loading="lazy"
-                              decoding="async"
-                              draggable="false"
-                            />
-                          ) : null;
-                        })}
+                      <div
+                        class="collage"
+                        style={`--col: ${COLLAGES[a % COLLAGES.length].width}`}
+                      >
+                        {COLLAGES[a % COLLAGES.length].columns.map((column, c) => (
+                          <div class="wall-col" style={`--c: ${c}; --from: ${column.from}`}>
+                            {column.order.map(i => {
+                              const shot = card.shots[i];
+                              return shot ? (
+                                <img
+                                  class="tile"
+                                  src={shot.src}
+                                  alt={c === 0 ? `${app.name} — ${shot.title}` : ''}
+                                  aria-hidden={c === 0 ? undefined : 'true'}
+                                  width={shot.width}
+                                  height={shot.height}
+                                  loading="lazy"
+                                  decoding="async"
+                                  draggable="false"
+                                />
+                              ) : null;
+                            })}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -483,31 +500,40 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* ---------- the collage ----------
-     A square as tall as a slide's phone — no wider than its column — cut
-     into a 6 x 6 grid that the four tiles fill edge to edge (`COLLAGES`),
-     a hairline of the page's ground between them. Each screen covers its
-     tile and keeps the part the layout names. */
+     A square window as tall as a slide's phone — no wider than its column
+     — onto a wall of phones (`COLLAGES`). Sizes come from the window's own
+     width (a size container), so the wall scales with it: a column is
+     `--col` of the window, a phone fills its column at its own ratio, and
+     each column starts `--from` of a phone above the window's top. */
   .collage {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(6, 1fr);
-    gap: 0.5rem;
+    --gap: 0.5rem;
+    --cw: calc(var(--col) * 100cqw);
+    --ph: calc(var(--cw) * 2556 / 1179);
+    position: relative;
     width: min(100%, var(--shot-h));
     aspect-ratio: 1;
+    overflow: hidden;
+    container-type: size;
+    border-radius: var(--media-radius-flat);
+  }
+
+  .wall-col {
+    position: absolute;
+    left: calc(var(--c) * (var(--cw) + var(--gap)));
+    top: calc(var(--from) * var(--ph) * -1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    width: var(--cw);
   }
 
   .tile {
+    display: block;
     width: 100%;
-    height: 100%;
-    min-width: 0;
-    min-height: 0;
+    height: auto;
     max-width: none;
-    object-fit: cover;
     border: 1px solid var(--hairline);
-    border-radius: calc(var(--media-radius-flat) * 0.6);
-    box-shadow:
-      0 1.5rem 3rem rgba(0, 0, 0, 0.5),
-      0 0.4rem 1rem rgba(0, 0, 0, 0.35);
+    border-radius: 14% / 6.45%;
   }
 
   /* The collage stands in the middle of the phone's height. */
@@ -705,6 +731,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     }
 
     .collage {
+      --gap: 0.3rem;
       width: min(76vw, 30svh);
     }
 
