@@ -69,7 +69,11 @@ const mobileKey = (k: string) =>
  * column's pieces share its width, each column pairs a lying screen with
  * a standing one and no two columns are as wide.
  *
- * A piece is a fraction of the square's side: where its box starts and
+ * THE FRAME IS MORE WORK'S AND EVENTS' (Juan, 2026-10-11): the same 3:2
+ * screen, at the same width, corner, edge and ground, so every picture
+ * beside a block of words on the page is one standard size.
+ *
+ * A piece is a fraction of the frame's WIDTH (its height is 2/3 of it): where its box starts and
  * its LONG side (a standing screen's height, a lying one's width). The
  * numbers are solved from the gap (0.0125 — half its first value: the
  * square read padded) and the screens' ratio
@@ -78,31 +82,29 @@ const mobileKey = (k: string) =>
  */
 type Piece = { shot: number; x: number; y: number; len: number; dir: 'v' | 'h' };
 const COLLAGES: Piece[][] = [
-  // Sound Shaper: the PLAYER, the largest, lying across the whole top;
-  // the library, the shape sheet and the clip editor standing under it,
-  // each narrower than the last.
+  // Sound Shaper: the library, the PLAYER (the largest) in the middle, and
+  // the clip editor lying over the shape sheet.
   [
-    { shot: 1, x: 0.0125, y: 0.0125, len: 0.975, dir: 'h' },
-    { shot: 0, x: 0.0125, y: 0.4747, len: 0.8672, dir: 'v' },
-    { shot: 2, x: 0.425, y: 0.4747, len: 0.6504, dir: 'v' },
-    { shot: 3, x: 0.7375, y: 0.4747, len: 0.542, dir: 'v' },
+    { shot: 0, x: 0.0125, y: 0.0125, len: 0.6569, dir: 'v' },
+    { shot: 1, x: 0.328, y: 0.0125, len: 0.8646, dir: 'v' },
+    { shot: 3, x: 0.7393, y: 0.0125, len: 0.2482, dir: 'h' },
+    { shot: 2, x: 0.7393, y: 0.1395, len: 0.5381, dir: 'v' },
   ],
-  // Topper: a wide column — explore lying over HOME, the largest — beside
-  // a narrower one, the profile lying over a top.
+  // Topper: HOME (the largest) on the left, explore lying over a top, and
+  // the profile.
   [
-    { shot: 1, x: 0.0125, y: 0.0125, len: 0.56, dir: 'h' },
-    { shot: 0, x: 0.0125, y: 0.2833, len: 1.214, dir: 'v' },
-    { shot: 3, x: 0.585, y: 0.0125, len: 0.4025, dir: 'h' },
-    { shot: 2, x: 0.585, y: 0.2107, len: 0.8726, dir: 'v' },
+    { shot: 0, x: 0.0125, y: 0.0125, len: 0.8021, dir: 'v' },
+    { shot: 1, x: 0.395, y: 0.0125, len: 0.277, dir: 'h' },
+    { shot: 2, x: 0.395, y: 0.1528, len: 0.6005, dir: 'v' },
+    { shot: 3, x: 0.6845, y: 0.0125, len: 0.6569, dir: 'v' },
   ],
-  // Booker, Topper's mirror: a narrow column — a chapter lying over the
-  // shelf — beside a wide one, the book's page lying over the READER, the
-  // largest.
+  // Booker: the book's page lying over the shelf, a chapter, and the
+  // READER (the largest) on the right.
   [
-    { shot: 3, x: 0.0125, y: 0.0125, len: 0.38, dir: 'h' },
-    { shot: 0, x: 0.0125, y: 0.2003, len: 0.8238, dir: 'v' },
-    { shot: 1, x: 0.405, y: 0.0125, len: 0.5825, dir: 'h' },
-    { shot: 2, x: 0.405, y: 0.2937, len: 1.2628, dir: 'v' },
+    { shot: 1, x: 0.0125, y: 0.0125, len: 0.265, dir: 'h' },
+    { shot: 0, x: 0.0125, y: 0.1472, len: 0.5745, dir: 'v' },
+    { shot: 3, x: 0.29, y: 0.0125, len: 0.6721, dir: 'v' },
+    { shot: 2, x: 0.6125, y: 0.0125, len: 0.813, dir: 'v' },
   ],
 ];
 
@@ -497,11 +499,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     align-items: start;
   }
 
-  /* The welcome's pitch reads in a wider column (1.2x); the collage
-     stands in the rest. */
-  .is-welcome {
-    grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.2) 1fr;
-  }
 
   /* ---------- the collage ----------
      A square as tall as a slide's phone — no wider than its column — on a
@@ -513,16 +510,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .collage {
     --u: 1cqw;
     position: relative;
-    width: min(100%, var(--shot-h));
-    aspect-ratio: 1;
+    /* More Work's screen, to the letter (PanelDeck `.screen`). */
+    width: var(--screen-w);
+    aspect-ratio: 3 / 2;
     overflow: hidden;
     container-type: size;
     border: 1px solid var(--hairline);
     border-radius: var(--media-radius-flat);
-    background: color-mix(in srgb, var(--surface) 88%, var(--ink) 4%);
+    background: var(--surface);
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    /* It leans toward the pointer (lib/tilt). */
+    rotate: var(--tilt-rot, none);
   }
 
   .piece {
@@ -545,7 +545,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     display: block;
     max-width: none;
     border: 1px solid var(--hairline);
-    border-radius: 14% / 6.45%;
+    /* The slides' phone corner as a share of the phone (its width / its
+       height), the bottom a beat tighter — so a screen with a sheet up
+       (Sound Shaper's shape) keeps the sheet's own rounding clear. */
+    border-radius: 16.5% 16.5% 18.75% 18.75% / 7.6% 7.6% 8.65% 8.65%;
   }
 
   .is-v .tile {
@@ -563,10 +566,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transform: translate(-50%, -50%) rotate(-90deg);
   }
 
-  /* The collage stands in the middle of the phone's height. */
+  /* The frame stands where More Work's does: at the top of its column,
+     on the words' line, in the column's middle. */
   .is-welcome .slot {
-    align-items: center;
-    height: var(--shot-h);
+    /* More Work's eyebrow row (2rem) and the step under it (1.5rem): the
+       frame's top lands on the line its screens' tops do. */
+    margin-top: 3.5rem;
+    align-items: flex-start;
+    perspective: 1600px;
   }
 
   /* An icon keeps its drawn size; a flex row would squeeze the SVG. */
@@ -752,13 +759,18 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       margin-top: 0;
     }
 
-    /* A phone's collage stands over the words, smaller. */
+    /* A phone's frame stands over the words at the column's width, as
+       More Work's does. */
     .is-welcome .slot {
-      height: auto;
+      margin-top: 0;
     }
 
     .collage {
-      width: min(76vw, 30svh);
+      width: 100%;
+      box-shadow:
+        var(--media-glow),
+        0 2rem 4rem rgba(0, 0, 0, 0.55),
+        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
     }
 
     .shot {
@@ -818,9 +830,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      667pt tall the store row ran under the arrows. Everything steps down
      a notch so the column clears them. */
   @media (max-width: 48rem) and (max-height: 46rem) {
-    .collage {
-      width: min(62vw, 24svh);
-    }
 
     .card,
     .is-welcome {
@@ -1017,13 +1026,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (c !== h.deck.current) h.deck.go(c);
     });
 
-    // A slide's phone leans toward the pointer.
+    // The picture in front leans toward the pointer: a slide's phone, or a
+    // welcome's frame.
     followPointer(root, () => {
       const h = held[active];
-      const card = h.cards[h.deck.current];
-      return card?.classList.contains('is-slide')
-        ? card.querySelector<HTMLElement>('.shot')
-        : null;
+      return h.cards[h.deck.current]?.querySelector<HTMLElement>('.collage, .slot .shot');
     });
 
     // WARM THE HIDDEN APPS. A deck that is not in front is `hidden`, so its
