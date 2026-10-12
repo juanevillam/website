@@ -130,11 +130,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     {
       decks.map((cards, a) => {
         const app = apps[a];
-        // Which way the fan opens: the lead on the right with the rest to
-        // its left, or mirrored — alternating app by app (Sound Shaper,
-        // Booker one way, Topper the other) so the three welcomes are not
-        // one picture three times.
-        const side = a % 2 ? -1 : 1;
+        // Which way the fan opens: the lead on the left with the rest to
+        // its right (Sound Shaper, Booker), or mirrored (Topper) —
+        // alternating app by app so the three welcomes are not one picture
+        // three times.
+        const side = a % 2 ? 1 : -1;
         return (
           <div
             class="carousel"
@@ -549,7 +549,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
      overlapping, every screen's top still in view. The FIRST card's phone
      (Home, Library) stands on top at one end and the rest tuck under it
-     in order: on the RIGHT, opening leftward, for Sound Shaper and Booker,
+     in order: on the LEFT, opening rightward, for Sound Shaper and Booker,
      and mirrored for Topper (Juan, 2026-10-11), so the welcomes alternate. Tight on purpose: a compact fan of many
      leaves, not four phones spread across the page. It holds still under
      the pointer (a tilted fan read as broken), closes while the card is
