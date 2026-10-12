@@ -1024,7 +1024,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         boxShadow: look.boxShadow,
       });
       document.body.append(ghost);
+      // Width and height each on its own: a collage screen and a slide's
+      // phone differ in ratio by a pixel, and a uniform scale left the
+      // copy that pixel off the phone it lands on.
       const scale = end.h / start.h;
+      const scaleX = end.w / start.w;
       // The cut is drawn in the copy's own pixels, which the flight scales.
       const cutTo = cutOf(b) / scale;
       // It wears the look of where it leaves and lands as the landing
@@ -1043,20 +1047,26 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
           {
             transform:
               `translate(${end.x - start.x}px, ${end.y - start.y}px) ` +
-              `scale(${scale}) rotate(${end.turn}deg)`,
+              `scale(${scaleX}, ${scale}) rotate(${end.turn}deg)`,
             clipPath: clipTo(cutTo),
             borderRadius: unscaled(goal.borderRadius, scale),
             boxShadow: unscaled(goal.boxShadow, scale),
           },
         ],
-        { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
+        // It holds its landing pose while it fades off (`land`).
+        { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
       );
+      // Landed: the real phone is revealed UNDER the copy, which then
+      // fades off it — so whatever sub-pixel the two still differ by
+      // dissolves instead of jumping.
       const land = () => {
         flying = false;
-        ghost.remove();
         a.classList.remove('is-flying');
         b.classList.remove('is-flying');
         to.classList.remove('is-handoff');
+        ghost
+          .animate({ opacity: [1, 0] }, { duration: 120, easing: 'linear' })
+          .finished.finally(() => ghost.remove());
       };
       flight.onfinish = land;
       flight.oncancel = land;
