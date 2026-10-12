@@ -947,6 +947,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      * stands to where it will stand — growing out of the collage to its
      * size there — while both real ones are hidden; the one arriving is
      * revealed in its place when the copy lands.
+     *
+     * The collage's frame may cut its screen at the bottom (Topper's home,
+     * Booker's library), so the copy carries that cut: it leaves the frame
+     * cut where the frame cuts it and uncovers the rest as it grows, and
+     * coming back it closes to that same cut as it lands — never a whole
+     * phone that overflows the frame and is clipped at once (Juan,
+     * 2026-10-11).
      */
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const phoneOf = (card: HTMLElement) =>
@@ -963,12 +970,22 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         turn: (Math.atan2(m.b, m.a) * 180) / Math.PI,
       };
     };
+    // How much of a collage screen its frame hides below, in the screen's
+    // own (unscaled) pixels; 0 for a slide's phone.
+    const cutOf = (img: HTMLElement) => {
+      const frame = img.closest<HTMLElement>('.collage');
+      if (!frame) return 0;
+      const r = img.getBoundingClientRect();
+      const hidden = r.bottom - frame.getBoundingClientRect().bottom;
+      return hidden > 0 ? (hidden / r.height) * img.offsetHeight : 0;
+    };
     const handOff = (from: HTMLElement, to: HTMLElement) => {
       if (reduced) return;
       const a = phoneOf(from);
       const b = phoneOf(to);
       if (!a || !b || !a.offsetHeight) return;
       const start = pose(a);
+      const cutFrom = cutOf(a);
       to.classList.add('is-handoff');
       const end = pose(b);
       a.classList.add('is-flying');
@@ -994,13 +1011,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       });
       document.body.append(ghost);
       const scale = end.h / start.h;
+      // The cut is drawn in the copy's own pixels, which the flight scales.
+      const cutTo = cutOf(b) / scale;
       const flight = ghost.animate(
         [
-          { transform: `rotate(${start.turn}deg)` },
+          {
+            transform: `rotate(${start.turn}deg)`,
+            clipPath: `inset(0 0 ${cutFrom.toFixed(1)}px 0)`,
+          },
           {
             transform:
               `translate(${end.x - start.x}px, ${end.y - start.y}px) ` +
               `scale(${scale}) rotate(${end.turn}deg)`,
+            clipPath: `inset(0 0 ${cutTo.toFixed(1)}px 0)`,
           },
         ],
         { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
