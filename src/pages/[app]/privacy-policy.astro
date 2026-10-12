@@ -139,8 +139,7 @@ const books = app.content === 'books';
       }
       <p>
         Deleting your account removes your account and everything you
-        {social ? 'created' : 'added'}, uploaded files included
-        {social ? ', except the reports you sent, which are kept so they can still be reviewed' : ''}.
+        {social ? 'created' : 'added'}, uploaded files included{social ? ', except the reports you sent, which are kept so they can still be reviewed' : ''}.
         The <a href={`/${app.slug}/delete-account`}>account deletion page</a>
         has the steps, and you can email me instead if you can't access the
         app.
@@ -267,8 +266,7 @@ const books = app.content === 'books';
       }
       <p>
         Eliminar tu cuenta borra tu cuenta y todo lo que{' '}
-        {social ? 'creaste' : 'añadiste'}, incluidos los archivos que subiste
-        {social ? ', salvo las denuncias que enviaste, que se conservan para poder revisarlas' : ''}.
+        {social ? 'creaste' : 'añadiste'}, incluidos los archivos que subiste{social ? ', salvo las denuncias que enviaste, que se conservan para poder revisarlas' : ''}.
         La <a href={`/${app.slug}/delete-account`}>página de eliminación de cuenta</a>
         tiene los pasos, y puedes escribirme por correo si no puedes acceder a
         la app.
