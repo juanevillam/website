@@ -915,6 +915,13 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     const LEAVE_MS = 320;
 
     // Stand the still anchor on the front card's slot.
+    // Where an element starts across the page, ignoring transforms.
+    const pageLeft = (el: HTMLElement) => {
+      let x = 0;
+      for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null)
+        x += n.offsetLeft;
+      return x;
+    };
     const standAnchor = () => {
       const h = held[active];
       const card = h?.cards[h.deck.current];
@@ -922,9 +929,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (!still || !slot) return;
       const y = slot.getBoundingClientRect().top - decksEl.getBoundingClientRect().top;
       still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
-      // Sideways too: on the words' left edge.
-      const base = (still.parentElement ?? decksEl).getBoundingClientRect().left;
-      const x = slot.getBoundingClientRect().left - base;
+      // Sideways too: on the words' left edge — read from the LAYOUT, not
+      // the screen: mid-turn the deck and its words slide sideways by a
+      // transform, and reading that slide moved the narrator right and back
+      // for nothing on every app switch (Juan, 2026-10-11).
+      const x = pageLeft(slot) - pageLeft(still.parentElement ?? decksEl);
       still.style.setProperty('--slot-x', `${x.toFixed(1)}px`);
     };
 
