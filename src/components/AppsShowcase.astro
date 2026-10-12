@@ -49,64 +49,11 @@ const narrate = (k: UIKey) => ({ k, clip: clipFor(k), subs: subsFor(k) });
 const mobileKey = (k: string) =>
   (/\.p\d+$/.test(k) ? k.replace(/\.p\d+$/, '.m') : `${k}.m`) as UIKey;
 
-/**
- * THE COLLAGE — each welcome's four screens COVERING the frame (Juan,
- * 2026-10-11): nothing of the frame's ground shows but the hairline gaps
- * between the screens — a stair that left the ground showing above its
- * lower steps read as holes. Each screen appears once, whole and at its
- * own ratio, standing or lying on its side (`h`, top to the left), all at
- * different sizes, and the screen that leads each app is the largest:
- * Sound Shaper's player, Topper's home, Booker's reader.
- *
- * The frame's top and sides are a margin as wide as the gaps, never a
- * cut; only the bottom edge may cut, so a screen lying down only ever sits
- * at the top. The screens stand in columns that add up to the frame's
- * inner width exactly and every column reaches the bottom edge. A column's
- * pieces share its width, so a column holds one standing screen (wide
- * enough to reach the bottom alone) or a lying one over a standing one.
- *
- * THE FRAME IS MORE WORK'S AND EVENTS' (Juan, 2026-10-11): the same 3:2
- * screen, at the same width, corner, edge and ground, so every picture
- * beside a block of words on the page is one standard size.
- *
- * A piece is a fraction of the frame's WIDTH (its height is 2/3 of it):
- * where its box starts and its LONG side. The numbers are solved from the
- * gap (0.0125) and the screens' ratio (1179 / 2556); change a column and
- * re-solve it.
- */
-type Piece = { shot: number; x: number; y: number; len: number; dir: 'v' | 'h' };
-const COLLAGES: Piece[][] = [
-  // Sound Shaper: the library, the PLAYER (the largest), and the clip
-  // editor lying over the shape sheet.
-  [
-    { shot: 0, x: 0.0125, y: 0.0125, len: 0.6569, dir: 'v' },
-    { shot: 1, x: 0.328, y: 0.0125, len: 0.7523, dir: 'v' },
-    { shot: 3, x: 0.6875, y: 0.0125, len: 0.3, dir: 'h' },
-    { shot: 2, x: 0.6875, y: 0.1634, len: 0.6504, dir: 'v' },
-  ],
-  // Topper: two columns, each a screen lying over one standing — explore
-  // over HOME (the largest), the profile over a top.
-  [
-    { shot: 1, x: 0.0125, y: 0.0125, len: 0.58, dir: 'h' },
-    { shot: 0, x: 0.0125, y: 0.2925, len: 1.2574, dir: 'v' },
-    { shot: 3, x: 0.605, y: 0.0125, len: 0.3825, dir: 'h' },
-    { shot: 2, x: 0.605, y: 0.2014, len: 0.8292, dir: 'v' },
-  ],
-  // Booker, Sound Shaper's mirror: the book's page lying over the shelf,
-  // the READER (the largest), and a chapter.
-  [
-    { shot: 1, x: 0.0125, y: 0.0125, len: 0.3, dir: 'h' },
-    { shot: 0, x: 0.0125, y: 0.1634, len: 0.6504, dir: 'v' },
-    { shot: 2, x: 0.325, y: 0.0125, len: 0.7523, dir: 'v' },
-    { shot: 3, x: 0.6845, y: 0.0125, len: 0.6569, dir: 'v' },
-  ],
-];
-
 type Card =
   | {
       kind: 'welcome';
       paras: UIKey[];
-      /** The app's four screens, for its collage. */
+      /** Every card's phone, fanned out — the app at a glance. */
       shots: { src: string; width: number; height: number; title: string }[];
       scene: string;
     }
@@ -123,8 +70,8 @@ type Card =
 // Each app's cards, in telling order: its welcome, then its slides.
 const decks: Card[][] = [];
 for (const app of apps) {
-  // The welcome's collage holds every card's screen, and lights the page
-  // with all of them together.
+  // The welcome fans out every card's phone, and lights the page with
+  // all of them together.
   const cards: Card[] = [
     {
       kind: 'welcome',
@@ -251,33 +198,29 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {voiced && <div class="narr-slot" aria-hidden="true" />}
                   </div>
 
-                  {card.kind === 'welcome' && (
+                  {card.kind === 'welcome' ? (
+                    /* THE FAN — every card's phone, tilted left to right,
+                       a little apart: the app at a glance, so someone who
+                       skims past one story can judge the next by its UI
+                       (Juan, 2026-10-11). It opens out as the card lands. */
                     <div class="slot" data-deck-part="picture">
-                      <div class="collage">
-                        {COLLAGES[a % COLLAGES.length].map(piece => {
-                          const shot = card.shots[piece.shot];
-                          return shot ? (
-                            <div
-                              class:list={['piece', `is-${piece.dir}`]}
-                              style={`--x: ${piece.x}; --y: ${piece.y}; --len: ${piece.len}`}
-                            >
-                              <img
-                                class="tile"
-                                src={shot.src}
-                                alt={`${app.name} — ${shot.title}`}
-                                width={shot.width}
-                                height={shot.height}
-                                loading="lazy"
-                                decoding="async"
-                                draggable="false"
-                              />
-                            </div>
-                          ) : null;
-                        })}
+                      <div class="fan" style={`--n: ${card.shots.length}`}>
+                        {card.shots.map((shot, i) => (
+                          <img
+                            class:list={['shot', 'fan-shot', i === 0 && 'is-lead']}
+                            style={`--k: ${(card.shots.length - 1) / 2 - i}; --z: ${card.shots.length - i}`}
+                            src={shot.src}
+                            alt={`${app.name} — ${shot.title}`}
+                            width={shot.width}
+                            height={shot.height}
+                            loading="lazy"
+                            decoding="async"
+                            draggable="false"
+                          />
+                        ))}
                       </div>
                     </div>
-                  )}
-                  {card.kind === 'slide' && (
+                  ) : (
                     <div class="slot" data-deck-part="picture">
                       <img
                         class="shot"
@@ -489,85 +432,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .card {
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    gap: var(--column-gap);
+    gap: var(--space-4);
     align-items: start;
   }
 
-
-  /* ---------- the collage ----------
-     A square as tall as a slide's phone — no wider than its column — on a
-     ground of its own, so what is in it reads as apart from the page
-     behind (`COLLAGES`). Sizes come from the square's own width (a size
-     container): a piece stands at `--x`, `--y` of the side, `--len` of it
-     long, and its short side follows the phone's own ratio. A piece lying
-     down carries its screen turned a quarter, top to the left. */
-  .collage {
-    --u: 1cqw;
-    position: relative;
-    /* More Work's screen, to the letter (PanelDeck `.screen`). */
-    width: var(--screen-w);
-    aspect-ratio: 3 / 2;
-    overflow: hidden;
-    container-type: size;
-    border: 1px solid var(--hairline);
-    border-radius: var(--media-radius-flat);
-    background: var(--surface);
-    box-shadow:
-      0 2rem 4rem rgba(0, 0, 0, 0.55),
-      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
-    /* It leans toward the pointer (lib/tilt). */
-    rotate: var(--tilt-rot, none);
-  }
-
-  .piece {
-    position: absolute;
-    left: calc(var(--x) * 100 * var(--u));
-    top: calc(var(--y) * 100 * var(--u));
-  }
-
-  .piece.is-v {
-    width: calc(var(--len) * 100 * var(--u) * 1179 / 2556);
-    height: calc(var(--len) * 100 * var(--u));
-  }
-
-  .piece.is-h {
-    width: calc(var(--len) * 100 * var(--u));
-    height: calc(var(--len) * 100 * var(--u) * 1179 / 2556);
-  }
-
-  .tile {
-    display: block;
-    max-width: none;
-    border: 1px solid var(--hairline);
-    /* The slides' phone corner as a share of the phone (its width / its
-       height), the bottom a beat tighter — so a screen with a sheet up
-       (Sound Shaper's shape) keeps the sheet's own rounding clear. */
-    border-radius: 16.5% 16.5% 18.75% 18.75% / 7.6% 7.6% 8.65% 8.65%;
-  }
-
-  .is-v .tile {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* On its side: the portrait screen, turned about the box's centre. */
-  .is-h .tile {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: calc(var(--len) * 100 * var(--u) * 1179 / 2556);
-    height: calc(var(--len) * 100 * var(--u));
-    transform: translate(-50%, -50%) rotate(-90deg);
-  }
-
-  /* The frame stands where More Work's does: at the top of its column,
-     on the words' line, in the column's middle. */
-  .is-welcome .slot {
-    /* More Work's eyebrow row (2rem) and the step under it (1.5rem): the
-       frame's top lands on the line its screens' tops do. */
-    margin-top: 3.5rem;
-    align-items: flex-start;
-    perspective: 1600px;
+  /* The welcome's pitch reads in a wider column (1.2x), so two paragraphs
+     and the store row stand inside the panel — and no wider, so the fan
+     beside it has room to open (1.5x crowded the four phones together). */
+  .is-welcome {
+    grid-template-columns: calc(100% * 6 / 13 * 0.81 * 1.2) 1fr;
   }
 
   /* An icon keeps its drawn size; a flex row would squeeze the SVG. */
@@ -664,6 +537,76 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
   }
 
+  /* ---------- the fan ----------
+     Four phones AT THE SLIDES' OWN SIZE (Juan, 2026-10-11: a smaller fan
+     read as a different picture from the cards after it), pivoting on one
+     point at their foot, each turned a few degrees by its place from the
+     middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
+     overlapping, every screen's top still in view. The FIRST card's phone
+     (Home, Library) stands on the RIGHT, on top, and the rest tuck under
+     it to the LEFT in order (Juan, 2026-10-11): what shows of each is then
+     its leading edge — the screen's own content — not the status bar's
+     icons down its trailing side. Tight on purpose: a compact fan of many
+     leaves, not four phones spread across the page. It holds still under
+     the pointer (a tilted fan read as broken), closes while the card is
+     away, and opens as the card lands. */
+  .fan {
+    --fan-h: var(--shot-h);
+    --fan-w: calc(var(--fan-h) * 1179 / 2556);
+    /* How far apart neighbours stand at the foot, in phone widths, and how
+       far each turns. */
+    --spread: 0.08;
+    --tilt: 2.5deg;
+    position: relative;
+    width: 100%;
+    height: var(--shot-h);
+  }
+
+  .fan-shot {
+    position: absolute;
+    left: 50%;
+    top: calc((var(--shot-h) - var(--fan-h)) / 2);
+    height: var(--fan-h);
+    margin-left: calc(var(--fan-w) / -2);
+    z-index: var(--z);
+    transform-origin: 50% 100%;
+    transform: rotate(0deg);
+    /* Quick — a detail as the card lands, not a show (Juan, 2026-10-11:
+       at a beat and a half it read as slow). */
+    transition: transform calc(var(--beat) * 0.6) var(--ease);
+    transition-delay: calc(var(--beat) / 12);
+  }
+
+  .deck-card.is-current .fan-shot {
+    transform: translateX(calc(var(--k) * var(--fan-w) * var(--spread)))
+      rotate(calc(var(--k) * var(--tilt)));
+  }
+
+  /* Arriving — a turn or a tab — the fan stands closed for a frame, so it
+     opens every time the card lands, not only the first. */
+  .deck-card.is-arriving .fan-shot {
+    transform: rotate(0deg);
+    transition: none;
+  }
+
+  /* THE HAND-OFF (see the script): while the welcome's lead phone and the
+     first card's phone trade places, the one arriving stands in its final
+     place at once, hidden — a flying copy draws the trip — and the one
+     leaving is gone at once, since it is the one that flies. */
+  .deck-card.is-handoff [data-deck-part='picture'],
+  .deck-card.is-handoff .fan-shot.is-lead {
+    transition: none;
+  }
+
+  .deck-card.is-handoff [data-deck-part='picture'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .is-flying {
+    visibility: hidden;
+  }
+
   /* A slide's phone leans toward the pointer (lib/tilt). */
   .is-slide .slot {
     perspective: 1600px;
@@ -685,7 +628,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
   .narr-static .narr-anchor {
     margin-top: 0;
-    transform: translate(var(--slot-x, 0px), var(--slot-y, 0px));
+    transform: translateY(var(--slot-y, 0px));
     transition: transform calc(var(--beat) * 0.75) var(--ease);
   }
 
@@ -701,9 +644,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   @media (prefers-reduced-motion: reduce) {
     .narr-static .narr-anchor,
     .lozenge,
-    .carousel {
+    .carousel,
+    .fan-shot {
       transition: none;
     }
+
 
     .carousel.is-leaving,
     .carousel.is-arriving {
@@ -753,18 +698,19 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       margin-top: 0;
     }
 
-    /* A phone's frame stands over the words at the column's width, as
-       More Work's does. */
-    .is-welcome .slot {
-      margin-top: 0;
+    /* A phone's fan stands over the words, smaller: the screen is the
+       width the four have to share. */
+    .is-welcome .fan {
+      --fan-h: min(58vw, 27svh);
+      --spread: 0.18;
+      --tilt: 4deg;
+      height: calc(var(--fan-h) * 1.12);
     }
 
-    .collage {
-      width: 100%;
-      box-shadow:
-        var(--media-glow),
-        0 2rem 4rem rgba(0, 0, 0, 0.55),
-        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    /* The phone's corner at this phone's size (a slide's is 112vw). */
+    .is-welcome .fan-shot {
+      top: 0;
+      border-radius: calc(var(--media-radius) * 0.52);
     }
 
     .shot {
@@ -820,10 +766,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* SHORT PHONES (an SE, a phone with Safari's bars showing): the welcome's
-     lockup, pitch and store row are one column over the controls, and at
-     667pt tall the store row ran under the arrows. Everything steps down
-     a notch so the column clears them. */
+     fan, lockup, pitch and store row are one column over the controls,
+     and at 667pt tall the store row ran under the arrows. Everything
+     steps down a notch so the column clears them. */
   @media (max-width: 48rem) and (max-height: 46rem) {
+    .is-welcome .fan {
+      --fan-h: min(50vw, 21svh);
+      height: calc(var(--fan-h) * 1.05);
+    }
 
     .card,
     .is-welcome {
@@ -898,15 +848,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // Stand the still anchor on the front card's slot.
     const standAnchor = () => {
       const h = held[active];
-      const card = h?.cards[h.deck.current];
-      const slot = card?.querySelector<HTMLElement>('.narr-slot');
+      const slot = h?.cards[h.deck.current]?.querySelector<HTMLElement>('.narr-slot');
       if (!still || !slot) return;
       const y = slot.getBoundingClientRect().top - decksEl.getBoundingClientRect().top;
       still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
-      // Sideways too: on the words' left edge.
-      const base = (still.parentElement ?? decksEl).getBoundingClientRect().left;
-      const x = slot.getBoundingClientRect().left - base;
-      still.style.setProperty('--slot-x', `${x.toFixed(1)}px`);
     };
 
     // The narrator starts this panel on the card in front, and a running
@@ -920,15 +865,96 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       document.dispatchEvent(new CustomEvent('narr:select', { detail: first }));
     };
 
+    /**
+     * THE HAND-OFF — the welcome's lead phone (Home, Library) IS the first
+     * card's phone, so it travels between them instead of one leaving and
+     * the other arriving (Juan, 2026-10-11): the narrator's glide between
+     * its anchors, made for a picture. A copy flies from where the phone
+     * stands to where it will stand — turning out of the fan's lean,
+     * scaling to its size there — while both real ones are hidden; the one
+     * arriving is revealed in its place when the copy lands.
+     */
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const phoneOf = (card: HTMLElement) =>
+      card.querySelector<HTMLElement>('.fan-shot.is-lead') ??
+      card.querySelector<HTMLElement>('.is-slide .shot, .slot .shot');
+    const pose = (img: HTMLElement) => {
+      const r = img.getBoundingClientRect();
+      const m = new DOMMatrix(getComputedStyle(img).transform);
+      return {
+        x: r.left + r.width / 2,
+        y: r.top + r.height / 2,
+        w: img.offsetWidth,
+        h: img.offsetHeight,
+        turn: (Math.atan2(m.b, m.a) * 180) / Math.PI,
+      };
+    };
+    const handOff = (from: HTMLElement, to: HTMLElement) => {
+      if (reduced) return;
+      const a = phoneOf(from);
+      const b = phoneOf(to);
+      if (!a || !b || !a.offsetHeight) return;
+      const start = pose(a);
+      to.classList.add('is-handoff');
+      const end = pose(b);
+      a.classList.add('is-flying');
+      b.classList.add('is-flying');
+
+      const look = getComputedStyle(a);
+      const ghost = a.cloneNode() as HTMLImageElement;
+      ghost.removeAttribute('class');
+      ghost.removeAttribute('style');
+      Object.assign(ghost.style, {
+        position: 'fixed',
+        left: `${start.x - start.w / 2}px`,
+        top: `${start.y - start.h / 2}px`,
+        width: `${start.w}px`,
+        height: `${start.h}px`,
+        margin: '0',
+        maxWidth: 'none',
+        zIndex: '20',
+        pointerEvents: 'none',
+        borderRadius: look.borderRadius,
+        border: look.border,
+        boxShadow: look.boxShadow,
+      });
+      document.body.append(ghost);
+      const scale = end.h / start.h;
+      const flight = ghost.animate(
+        [
+          { transform: `rotate(${start.turn}deg)` },
+          {
+            transform:
+              `translate(${end.x - start.x}px, ${end.y - start.y}px) ` +
+              `scale(${scale}) rotate(${end.turn}deg)`,
+          },
+        ],
+        { duration: 650, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
+      );
+      const land = () => {
+        ghost.remove();
+        a.classList.remove('is-flying');
+        b.classList.remove('is-flying');
+        to.classList.remove('is-handoff');
+      };
+      flight.onfinish = land;
+      flight.oncancel = land;
+    };
+
     for (const el of root.querySelectorAll<HTMLElement>('[data-apps-deck]')) {
       const cards = [...el.querySelectorAll<HTMLElement>('.deck-card')];
       const h = { el, cards } as Held;
+      let previous = 0;
       h.deck = createDeck({
         cards,
         controls: el.querySelector('[data-deck-controls]'),
         keys: el,
         swipe: el.querySelector<HTMLElement>('.stage'),
         onChange: current => {
+          // Welcome ⇄ first card: the lead phone flies between them.
+          if (h.deck && previous + current === 1 && previous !== current)
+            handOff(cards[previous], cards[current]);
+          previous = current;
           // The first call comes while the deck is still being made.
           requestAnimationFrame(() => {
             if (held.indexOf(h) === active) select(cards[current]);
@@ -952,8 +978,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // the way the switch went while the new one drifts in from the other
     // side, together, on one curve — and the new deck is ALREADY standing on
     // its welcome (or, when the voice carried the page here, on the card
-    // being told). Replaying the card's entrance on top of the deck's own
-    // move read as a gallop, two beats where there
+    // being told), fan open. Replaying the card's entrance and the fan on
+    // top of the deck's own move read as a gallop, two beats where there
     // should be one, and flicking between tabs replayed it every time.
     const show = (a: number, card?: number) => {
       if (a === active) return;
@@ -1020,11 +1046,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       if (c !== h.deck.current) h.deck.go(c);
     });
 
-    // The picture in front leans toward the pointer: a slide's phone, or a
-    // welcome's frame.
+    // A slide's phone leans toward the pointer; the welcome's fan holds
+    // still.
     followPointer(root, () => {
       const h = held[active];
-      return h.cards[h.deck.current]?.querySelector<HTMLElement>('.collage, .slot .shot');
+      const card = h.cards[h.deck.current];
+      return card?.classList.contains('is-slide')
+        ? card.querySelector<HTMLElement>('.shot')
+        : null;
     });
 
     // WARM THE HIDDEN APPS. A deck that is not in front is `hidden`, so its
