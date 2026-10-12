@@ -11,9 +11,8 @@ import PanelDeck, { type DeckItem } from './PanelDeck.astro';
  * A panel deck (PanelDeck) like More Work, oldest first. Its screens are
  * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
  * most, each cycling through its share when there are more, every one
- * whole. A VIDEO (silent, its poster beside it as .jpg) is one turn of
- * the RIGHT frame, its last — or, beside a single photo, the right frame
- * itself, looping. A new event
+ * whole; three or fewer take one frame, one at a time. A VIDEO (silent,
+ * its poster beside it as .jpg) is always the last turn of its frame. A new event
  * is one more entry here, at the end. The companies a card names link
  * out (`[Cashea](cashea)` in the copy, TL).
  */
@@ -24,6 +23,10 @@ const LINKS = {
   slash: 'https://www.slash.com/',
   salvalo: 'https://salvalo.app',
   ok101: 'https://ok101fm.net/',
+  tripealo: 'https://www.tripealo.app/',
+  cesar: 'https://www.linkedin.com/in/cesarmartinez-dev',
+  pastor: 'https://www.linkedin.com/in/pastor-jimenez/',
+  ale: 'https://www.linkedin.com/in/alehernandezt/',
 };
 
 // In the order they happened, oldest first: the story reads forward —
@@ -38,7 +41,8 @@ const EVENTS: DeckItem[] = [
     clip: 'events.alegria.body',
     // The LinkedIn post's order; the video is the right frame's last turn.
     image: [
-      '/media/events/vibe-coding-hackathon/caracas.mp4',
+      // Juan filming the team.
+      '/media/events/vibe-coding-hackathon/team-record.mp4',
       '/media/events/vibe-coding-hackathon/team-coding.jpg',
       // Víctor Cárdenas's founder talk (Slash).
       '/media/events/vibe-coding-hackathon/talk.jpg',
@@ -57,6 +61,7 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.ilc.body', links: LINKS },
     phone: { k: 'events.ilc.m', links: LINKS },
     clip: 'events.ilc.body',
+    // Three pictures or fewer: one frame, the photo first, then the talk.
     image: ['/media/events/ilc-talks/stage.jpg', '/media/events/ilc-talks/talk.mp4'],
     links: [],
   },
