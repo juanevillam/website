@@ -1,0 +1,677 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import { SCRIPTS_ES } from '../../lib/scripts';
+import '../../styles/global.css';
+
+/**
+ * DEV ONLY — /dev/teleprompter. Juan reads each clip's script line by
+ * line, records it from any microphone the browser can see (the DJI
+ * receiver included), taps to each next line, and saves: the clip and its
+ * subtitles land in public/media/narration/{lang}/ through the dev server's
+ * recorder (scripts/narration-recorder.mjs). The subtitles are timed by
+ * HIS taps, so they follow his pace rather than a guess from line length.
+ *
+ * In a production build this route has no paths, so it does not exist.
+ */
+export const getStaticPaths = () =>
+  import.meta.env.PROD ? [] : [{ params: { tool: 'teleprompter' } }];
+
+const lang = 'es';
+const dir = path.join(process.cwd(), 'public/media/narration', lang);
+const clips = SCRIPTS_ES.map(c => {
+  const has = (ext: string) => fs.existsSync(path.join(dir, `${c.key}.${ext}`));
+  const status = has('vtt') ? 'new' : has('m4a') ? 'old' : 'none';
+  return { ...c, status, audio: has('m4a') ? `/media/narration/${lang}/${c.key}.m4a` : null };
+});
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Teleprompter</title>
+  </head>
+  <body>
+    <aside class="list">
+      <p class="label">Guiones · {lang}</p>
+      <p class="total" data-total></p>
+      <ol>
+        {clips.map(c => (
+          <li>
+            <button type="button" data-pick={c.key} data-status={c.status}>
+              <span class="dot" />
+              <span class="where">{c.where}</span>
+              <span class="key">{c.key}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p class="legend">
+        <span><span class="dot" data-status="new" /> grabado con guión</span>
+        <span><span class="dot" data-status="old" /> grabación vieja</span>
+        <span><span class="dot" data-status="none" /> sin grabar</span>
+      </p>
+    </aside>
+
+    <main>
+      <header class="top">
+        <div>
+          <p class="label" data-where></p>
+          <p class="key" data-key></p>
+        </div>
+        <div class="mic">
+          <button type="button" class="pick-mic" data-mic-on>Activar micrófono</button>
+          <select data-mic aria-label="Micrófono" hidden></select>
+          <span class="meter" hidden><span data-meter></span></span>
+        </div>
+      </header>
+
+      <div class="stage">
+        <ol class="lines" data-lines></ol>
+        <img class="shot" data-shot alt="" hidden />
+      </div>
+
+      <div class="pill" data-pill hidden></div>
+
+      <footer class="controls">
+        <p class="state" data-state></p>
+        <div class="buttons">
+          <button type="button" data-act="record">Grabar <kbd>R</kbd></button>
+          <button type="button" data-act="next" hidden>Siguiente línea <kbd>espacio</kbd></button>
+          <button type="button" data-act="stop" hidden>Terminar <kbd>esc</kbd></button>
+          <button type="button" data-act="take" hidden>Escuchar toma <kbd>P</kbd></button>
+          <button type="button" data-act="save" hidden>Guardar <kbd>S</kbd></button>
+          <button type="button" data-act="current" hidden>Escuchar guardado <kbd>L</kbd></button>
+        </div>
+        <p class="hint">
+          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión · el subtítulo de cada
+          línea empieza cuando tocas <kbd>espacio</kbd> · la barra bajo la
+          línea es un ritmo sugerido, no una regla
+        </p>
+      </footer>
+    </main>
+
+    <script is:inline type="application/json" id="clips" set:html={JSON.stringify(clips)} />
+
+    <script>
+      type Clip = {
+        key: string;
+        where: string;
+        shot?: string;
+        lines: string[];
+        status: 'new' | 'old' | 'none';
+        audio: string | null;
+      };
+
+      const clips: Clip[] = JSON.parse(document.getElementById('clips')!.textContent!);
+      const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+      const linesEl = $('[data-lines]');
+      const stateEl = $('[data-state]');
+      const pill = $('[data-pill]');
+      const shot = $<HTMLImageElement>('[data-shot]');
+      const btn = (a: string) => $<HTMLButtonElement>(`[data-act="${a}"]`);
+
+      // Spoken Spanish runs at about 14 characters a second; the guide bar
+      // and the estimates use it. A rhythm to lean on, nothing more.
+      const CPS = 14;
+      const secs = (s: string) => s.length / CPS + 0.35;
+      const clipSecs = (c: Clip) => c.lines.reduce((t, l) => t + secs(l), 0);
+      const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+      $('[data-total]').textContent =
+        `${clips.length} clips · unos ${fmt(clips.reduce((t, c) => t + clipSecs(c), 0))} en total`;
+
+      let index = Math.max(0, clips.findIndex(c => c.key === localStorage.getItem('tp.key')));
+      let mode: 'idle' | 'count' | 'rec' | 'done' | 'play' = 'idle';
+      let line = 0;
+      let cues: number[] = [];
+      let take: Blob | null = null;
+      let recorder: MediaRecorder | null = null;
+      let started = 0;
+      const player = new Audio();
+
+      const clip = () => clips[index];
+
+      const renderLines = () => {
+        linesEl.replaceChildren(
+          ...clip().lines.map((text, i) => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            li.style.setProperty('--guide', `${secs(text)}s`);
+            li.dataset.i = String(i);
+            return li;
+          }),
+        );
+      };
+
+      const mark = (i: number) => {
+        line = i;
+        linesEl.querySelectorAll('li').forEach((li, j) => {
+          li.classList.toggle('is-past', j < i);
+          li.classList.toggle('is-now', j === i);
+        });
+        linesEl.querySelector('.is-now')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      };
+
+      const select = (i: number) => {
+        if (mode === 'rec' || mode === 'count') return;
+        stopPlayback();
+        index = (i + clips.length) % clips.length;
+        localStorage.setItem('tp.key', clip().key);
+        take = null;
+        cues = [];
+        mode = 'idle';
+        $('[data-where]').textContent = clip().where;
+        $('[data-key]').textContent = `${clip().key} · ~${fmt(clipSecs(clip()))}`;
+        document.querySelectorAll<HTMLElement>('[data-pick]').forEach(b =>
+          b.classList.toggle('is-on', b.dataset.pick === clip().key),
+        );
+        document.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' });
+        shot.hidden = !clip().shot;
+        if (clip().shot) shot.src = clip().shot!;
+        renderLines();
+        mark(0);
+        sync();
+      };
+
+      const sync = () => {
+        const c = clip();
+        btn('record').hidden = mode === 'rec' || mode === 'count';
+        btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
+        btn('next').hidden = mode !== 'rec';
+        btn('stop').hidden = mode !== 'rec';
+        btn('take').hidden = !take || mode === 'rec';
+        btn('save').hidden = !take || mode === 'rec';
+        btn('current').hidden = !c.audio || mode === 'rec' || mode === 'count';
+        linesEl.classList.toggle('is-rec', mode === 'rec');
+        const said: Record<string, string> = {
+          idle:
+            c.status === 'new'
+              ? 'Ya grabado con este guión. Puedes repetirlo.'
+              : c.status === 'old'
+                ? 'Hay una grabación vieja, de antes del guión.'
+                : 'Sin grabar.',
+          count: 'Preparado…',
+          rec: `Grabando · línea ${line + 1} de ${c.lines.length}`,
+          done: 'Toma lista. Escúchala o guárdala.',
+          play: 'Reproduciendo…',
+        };
+        stateEl.textContent = said[mode];
+      };
+
+      // Microphones: ask once so the browser names them, then list.
+      let stream: MediaStream | null = null;
+      const mic = $<HTMLSelectElement>('[data-mic]');
+      const meter = $('[data-meter]');
+      let analyser: AnalyserNode | null = null;
+      const openMic = async (id?: string) => {
+        stream?.getTracks().forEach(t => t.stop());
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            deviceId: id ? { exact: id } : undefined,
+            // His voice as the mic hears it: the browser's call-quality
+            // processing pumps and gates a narration.
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1,
+          },
+        });
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+        const current = stream.getAudioTracks()[0].getSettings().deviceId;
+        mic.replaceChildren(
+          ...devices.map(d => {
+            const o = new Option(d.label || 'Micrófono', d.deviceId);
+            o.selected = d.deviceId === current;
+            return o;
+          }),
+        );
+        mic.hidden = false;
+        meter.parentElement!.hidden = false;
+        $('[data-mic-on]').hidden = true;
+        const ctx = new AudioContext();
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        ctx.createMediaStreamSource(stream).connect(analyser);
+      };
+      $('[data-mic-on]').addEventListener('click', () =>
+        openMic(localStorage.getItem('tp.mic') ?? undefined).catch(() => {
+          stateEl.textContent = 'No hay acceso al micrófono. Revisa el permiso del navegador.';
+        }),
+      );
+      mic.addEventListener('change', () => {
+        localStorage.setItem('tp.mic', mic.value);
+        openMic(mic.value);
+      });
+      const level = new Float32Array(1024);
+      const tick = () => {
+        if (analyser) {
+          analyser.getFloatTimeDomainData(level);
+          let peak = 0;
+          for (const v of level) peak = Math.max(peak, Math.abs(v));
+          meter.style.width = `${Math.min(100, peak * 100)}%`;
+          meter.classList.toggle('is-hot', peak > 0.95);
+        }
+        if (mode === 'play') {
+          const t = player.currentTime;
+          let i = 0;
+          while (i + 1 < cues.length && cues[i + 1] <= t) i++;
+          if (line !== i) mark(i);
+          pill.textContent = clip().lines[i] ?? '';
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+
+      const record = async () => {
+        stopPlayback();
+        if (!stream) await openMic(localStorage.getItem('tp.mic') ?? undefined);
+        mode = 'count';
+        take = null;
+        mark(0);
+        sync();
+        for (const n of [3, 2, 1]) {
+          stateEl.textContent = `Empieza en ${n}…`;
+          await new Promise(r => setTimeout(r, 600));
+          if (mode !== 'count') return;
+        }
+        const chunks: Blob[] = [];
+        recorder = new MediaRecorder(stream!, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 256000 });
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+          take = new Blob(chunks, { type: 'audio/webm' });
+          mode = 'done';
+          mark(0);
+          sync();
+        };
+        recorder.start();
+        started = performance.now();
+        cues = [0];
+        mode = 'rec';
+        mark(0);
+        sync();
+      };
+
+      const next = () => {
+        if (mode !== 'rec') return;
+        if (line + 1 >= clip().lines.length) return stop();
+        cues.push((performance.now() - started) / 1000);
+        mark(line + 1);
+        sync();
+      };
+
+      const stop = () => {
+        if (mode === 'count') {
+          mode = 'idle';
+          return sync();
+        }
+        if (mode !== 'rec') return;
+        // Lines never reached keep a cue at the end, so the file still has
+        // one per line; better to tap through them all.
+        const end = (performance.now() - started) / 1000;
+        while (cues.length < clip().lines.length) cues.push(end);
+        recorder?.stop();
+      };
+
+      const stopPlayback = () => {
+        player.pause();
+        pill.hidden = true;
+        if (mode === 'play') mode = take ? 'done' : 'idle';
+      };
+
+      const play = async (src: string, at: number[]) => {
+        stopPlayback();
+        cues = at;
+        player.src = src;
+        await player.play();
+        mode = 'play';
+        pill.hidden = false;
+        sync();
+      };
+      player.addEventListener('ended', () => {
+        stopPlayback();
+        mark(0);
+        sync();
+      });
+
+      const playTake = () => take && play(URL.createObjectURL(take), cues);
+
+      const playCurrent = async () => {
+        const c = clip();
+        if (!c.audio) return;
+        let at = c.lines.map(() => Infinity);
+        at[0] = 0;
+        if (c.status === 'new') {
+          const vtt = await (await fetch(c.audio.replace(/\.m4a$/, '.vtt'), { cache: 'no-store' })).text();
+          at = [...vtt.matchAll(/(\d+):(\d+):([\d.]+) -->/g)].map(m => +m[1] * 3600 + +m[2] * 60 + +m[3]);
+        }
+        play(`${c.audio}?t=${Date.now()}`, at);
+      };
+
+      const save = async () => {
+        if (!take || mode === 'rec') return;
+        stopPlayback();
+        stateEl.textContent = 'Guardando…';
+        const c = clip();
+        const res = await fetch(`/__narration/save?lang=es&key=${encodeURIComponent(c.key)}`, {
+          method: 'POST',
+          headers: { 'x-cues': encodeURIComponent(JSON.stringify({ lines: c.lines, cues })) },
+          body: take,
+        });
+        const out = await res.json();
+        if (!res.ok) {
+          stateEl.textContent = `No se pudo guardar: ${out.error}`;
+          return;
+        }
+        c.status = 'new';
+        c.audio = out.m4a;
+        document.querySelector(`[data-pick="${CSS.escape(c.key)}"]`)?.setAttribute('data-status', 'new');
+        take = null;
+        mode = 'idle';
+        sync();
+        stateEl.textContent = `Guardado · ${out.length.toFixed(1)} s. Escúchalo con L, o pasa al siguiente con ↓.`;
+      };
+
+      const acts: Record<string, () => unknown> = {
+        record,
+        next,
+        stop,
+        take: playTake,
+        save,
+        current: playCurrent,
+      };
+      document.querySelectorAll<HTMLButtonElement>('[data-act]').forEach(b =>
+        b.addEventListener('click', () => {
+          b.blur();
+          acts[b.dataset.act!]();
+        }),
+      );
+      document.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b, i) =>
+        b.addEventListener('click', () => select(i)),
+      );
+
+      document.addEventListener('keydown', e => {
+        if (e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey) return;
+        const k = e.key.toLowerCase();
+        const map: Record<string, () => unknown> = {
+          ' ': () => (mode === 'rec' ? next() : mode === 'play' ? stopPlayback() : undefined),
+          arrowright: next,
+          enter: next,
+          escape: () => (mode === 'play' ? (stopPlayback(), sync()) : stop()),
+          r: () => mode !== 'rec' && mode !== 'count' && record(),
+          p: playTake,
+          s: save,
+          l: playCurrent,
+          arrowdown: () => select(index + 1),
+          arrowup: () => select(index - 1),
+        };
+        if (map[k]) {
+          e.preventDefault();
+          map[k]();
+        }
+      });
+
+      select(index);
+    </script>
+
+    <style is:global>
+      body {
+        display: grid;
+        grid-template-columns: 19rem 1fr;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-sans);
+      }
+      .label,
+      .key,
+      kbd,
+      .total,
+      .legend,
+      .hint,
+      .state {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.02em;
+        color: var(--ink-3);
+      }
+      .label {
+        text-transform: uppercase;
+        letter-spacing: var(--track-label);
+        color: var(--ink-2);
+      }
+      kbd {
+        padding: 0.05rem 0.35rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.3rem;
+      }
+
+      .list {
+        overflow-y: auto;
+        padding: 1.5rem 1rem;
+        border-right: 1px solid var(--hairline);
+      }
+      .list ol {
+        list-style: none;
+        margin: 1rem 0;
+        padding: 0;
+      }
+      /* A hairline between scripts, so where one clip ends is plain. */
+      .list li + li {
+        margin-top: 0.25rem;
+        padding-top: 0.25rem;
+        border-top: 1px solid var(--hairline);
+      }
+      .list button {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0 0.6rem;
+        align-items: center;
+        width: 100%;
+        padding: 0.525rem 0.675rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: none;
+        color: var(--ink-2);
+        font: inherit;
+        font-size: 0.875rem;
+        text-align: left;
+        cursor: pointer;
+      }
+      .list button:hover {
+        background: var(--surface);
+      }
+      .list button.is-on {
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .list .key {
+        grid-column: 2;
+        margin-top: 0.1rem;
+        font-size: 0.6875rem;
+      }
+      .dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        border: 1px solid var(--ink-3);
+      }
+      [data-status='new'] .dot,
+      .dot[data-status='new'] {
+        background: #6fcf8a;
+        border-color: #6fcf8a;
+      }
+      [data-status='old'] .dot,
+      .dot[data-status='old'] {
+        background: var(--ink-3);
+      }
+      .legend {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      main {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        position: relative;
+        min-height: 0;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.5rem 2rem 0;
+      }
+      .top .key {
+        margin-top: 0.25rem;
+      }
+      .mic {
+        display: grid;
+        gap: 0.4rem;
+        justify-items: end;
+      }
+      .pick-mic,
+      .mic select {
+        max-width: 20rem;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.5rem;
+        background: var(--surface);
+        color: var(--ink-2);
+        font: inherit;
+        font-size: 0.8125rem;
+      }
+      .pick-mic {
+        cursor: pointer;
+      }
+      .meter {
+        width: 12rem;
+        height: 0.25rem;
+        border-radius: 1rem;
+        background: var(--hairline);
+        overflow: hidden;
+      }
+      .meter span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--ink-2);
+      }
+      .meter span.is-hot {
+        background: #e5484d;
+      }
+
+      .stage {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        min-height: 0;
+        padding: 0 2rem;
+      }
+      .lines {
+        list-style: none;
+        margin: 0;
+        padding: 30vh 0;
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .lines li {
+        position: relative;
+        padding: 0.45rem 0;
+        font-size: clamp(1.5rem, 2.6vw, 2.5rem);
+        line-height: 1.25;
+        letter-spacing: var(--track-heading);
+        color: var(--ink-3);
+        transition: color var(--dur-micro) var(--ease), opacity var(--dur-micro) var(--ease);
+      }
+      .lines li.is-past {
+        opacity: 0.35;
+      }
+      .lines li.is-now {
+        color: var(--ink);
+      }
+      .lines.is-rec li.is-now::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 2px;
+        width: 100%;
+        background: var(--ink-3);
+        transform-origin: left;
+        animation: guide var(--guide) linear both;
+      }
+      @keyframes guide {
+        from {
+          transform: scaleX(0);
+        }
+      }
+      /* global.css makes every img a block, which beats [hidden]. */
+      .shot[hidden],
+      .mic [hidden] {
+        display: none;
+      }
+      .shot {
+        align-self: center;
+        height: min(62vh, 40rem);
+        border-radius: 1.75rem;
+        border: 1px solid var(--hairline);
+      }
+
+      .pill {
+        position: absolute;
+        left: 50%;
+        bottom: 9rem;
+        transform: translateX(-50%);
+        max-width: 80%;
+        padding: 0.75rem 1.4rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--surface) 82%, transparent);
+        backdrop-filter: blur(12px);
+        color: var(--ink);
+        font-size: 1rem;
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem 2rem 1.5rem;
+        border-top: 1px solid var(--hairline);
+      }
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .buttons button {
+        display: inline-flex;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.55rem 1rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.9375rem;
+        cursor: pointer;
+      }
+      .buttons button:hover {
+        border-color: var(--ink-3);
+      }
+      .buttons button[hidden] {
+        display: none;
+      }
+      .state {
+        color: var(--ink-2);
+        font-size: 0.8125rem;
+      }
+    </style>
+  </body>
+</html>

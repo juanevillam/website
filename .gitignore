@@ -1,3 +1,6 @@
 # Astro build output + generated types
 dist/
 .astro/
+
+# Raw teleprompter takes and the clips they replaced (dev only)
+narration-takes/
