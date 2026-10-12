@@ -20,8 +20,8 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * Event photos — a phone's, upright — stand two to a frame, 3:4 each.
  * An event's VIDEO (a phone's too, silent) is one turn of the RIGHT
  * frame, its last, and holds it until it ends (Juan, 2026-10-11: shown
- * all the time, it read as the card's only picture). A card may ask
- * for ONE frame instead, showing one picture at a time. Every picture
+ * all the time, it read as the card's only picture); beside one photo it
+ * IS the right frame, looping. Every picture
  * keeps its own aspect ratio — whole, over a blur of itself, never
  * cropped to the frame (Juan, 2026-10-11).
  *
@@ -60,8 +60,6 @@ export type DeckItem = {
    *  or more — two frames, each cycling through its share); or a screen
    *  of its own, passed in as the named slot `{ slot }`. */
   image: string | Media[] | { slot: string };
-  /** Event pictures in ONE frame, one at a time, instead of two. */
-  oneFrame?: boolean;
   links: { label: Segment; href: string }[];
   /** The picture whose colours light the page (lib/scene), for a screen
    *  of its own — a capture or photos light it by themselves. */
@@ -92,7 +90,7 @@ const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
 // left, even right, and a video at the end of the right one.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
-  if (p.oneFrame || all.length === 1) return [all];
+  if (all.length === 1) return [all];
   const photos = all.filter(m => !isVideo(m));
   const [left, right] = [0, 1].map(c => photos.filter((_, i) => i % 2 === c));
   return [left, [...right, ...all.filter(isVideo)]];
