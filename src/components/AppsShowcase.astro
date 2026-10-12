@@ -130,6 +130,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     {
       decks.map((cards, a) => {
         const app = apps[a];
+        // Which way the fan opens: the lead on the right with the rest to
+        // its left, or mirrored — alternating app by app (Sound Shaper,
+        // Booker one way, Topper the other) so the three welcomes are not
+        // one picture three times.
+        const side = a % 2 ? -1 : 1;
         return (
           <div
             class="carousel"
@@ -208,7 +213,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         {card.shots.map((shot, i) => (
                           <img
                             class:list={['shot', 'fan-shot', i === 0 && 'is-lead']}
-                            style={`--k: ${(card.shots.length - 1) / 2 - i}; --z: ${card.shots.length - i}`}
+                            style={`--k: ${side * ((card.shots.length - 1) / 2 - i)}; --z: ${card.shots.length - i}`}
                             src={shot.src}
                             alt={`${app.name} — ${shot.title}`}
                             width={shot.width}
@@ -432,7 +437,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .card {
     display: grid;
     grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
-    gap: var(--space-4);
+    gap: var(--column-gap);
     align-items: start;
   }
 
@@ -543,10 +548,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
      point at their foot, each turned a few degrees by its place from the
      middle (--k: -1.5 … 1.5) and slid a little that way — a fan, mostly
      overlapping, every screen's top still in view. The FIRST card's phone
-     (Home, Library) stands on the RIGHT, on top, and the rest tuck under
-     it to the LEFT in order (Juan, 2026-10-11): what shows of each is then
-     its leading edge — the screen's own content — not the status bar's
-     icons down its trailing side. Tight on purpose: a compact fan of many
+     (Home, Library) stands on top at one end and the rest tuck under it
+     in order: on the RIGHT, opening leftward, for Sound Shaper and Booker,
+     and mirrored for Topper (Juan, 2026-10-11), so the welcomes alternate. Tight on purpose: a compact fan of many
      leaves, not four phones spread across the page. It holds still under
      the pointer (a tilted fan read as broken), closes while the card is
      away, and opens as the card lands. */
