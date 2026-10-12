@@ -197,9 +197,9 @@ const en = {
   'events.hackathon': 'Hackathon',
   'events.alegria.when': 'October 2025',
   'events.alegria.body':
-    "Venezuela's first vibe-coding hackathon: three days at Yummy's offices in Caracas, organized by AlegrIA. Between building with [Cesar](cesar), [Pastor](pastor) and [Ale](ale), we heard the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash) tell how they started. We didn't take a prize home. We took new friends, lessons from people who have done it, and a reminder of why I love building things with others. P.S. This hackathon was the spark for [Tripealo](tripealo) and [Salvalo](salvalo); I later stepped away from Tripealo to keep building Salvalo.",
+    "Venezuela's first vibe-coding hackathon: three days at Yummy's offices in Caracas, organized by AlegrIA. Between building with [Cesar](cesar), [Pastor](pastor) and [Ale](ale), we heard the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash) tell how they started. We didn't take a prize home. We took new friends, lessons from people who have done it, and a reminder of why I love building things with others. P.S. This hackathon was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
   'events.alegria.m':
-    "Three days at Venezuela's first vibe-coding hackathon, in Caracas. No prize, but new friends and lessons from the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash). It was the spark for [Tripealo](tripealo) and [Salvalo](salvalo).",
+    "Three days at Venezuela's first vibe-coding hackathon, in Caracas. No prize, but new friends and lessons from the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash). It was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
   'events.talk': 'Talk',
   'events.ilc.when': 'September 2026',
   'events.ilc.body':
@@ -385,9 +385,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.hackathon': 'Hackathon',
     'events.alegria.when': 'Octubre de 2025',
     'events.alegria.body':
-      'El primer hackathon de vibe coding de Venezuela: tres días en las oficinas de Yummy en Caracas, organizado por AlegrIA. Entre construir junto a [Cesar](cesar), [Pastor](pastor) y [Ale](ale), escuchamos a los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash) contar cómo empezaron. No nos llevamos un premio. Nos llevamos amigos nuevos, lecciones de gente que ya lo hizo y un recordatorio de por qué me encanta construir con otros. P.D.: esta hackathon fue el impulso para [Tripealo](tripealo) y [Salvalo](salvalo); después dejé Tripealo para seguir construyendo Salvalo.',
+      'El primer hackathon de vibe coding de Venezuela: tres días en las oficinas de Yummy en Caracas, organizado por AlegrIA. Entre construir junto a [Cesar](cesar), [Pastor](pastor) y [Ale](ale), escuchamos a los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash) contar cómo empezaron. No nos llevamos un premio. Nos llevamos amigos nuevos, lecciones de gente que ya lo hizo y un recordatorio de por qué me encanta construir con otros. P.D.: esta hackathon fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
     'events.alegria.m':
-      'Tres días en el primer hackathon de vibe coding de Venezuela, en Caracas. Sin premio, pero con amigos nuevos y lecciones de los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash). Fue el impulso para [Tripealo](tripealo) y [Salvalo](salvalo).',
+      'Tres días en el primer hackathon de vibe coding de Venezuela, en Caracas. Sin premio, pero con amigos nuevos y lecciones de los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash). Fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
     'events.talk': 'Charla',
     'events.ilc.when': 'Septiembre de 2026',
     'events.ilc.body':
@@ -562,9 +562,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.hackathon': '黑客松',
     'events.alegria.when': '2025 年 10 月',
     'events.alegria.body':
-      '委内瑞拉第一场 vibe coding 黑客松：由 AlegrIA 主办，在加拉加斯 Yummy 的办公室里度过三天。我和 [Cesar](cesar)、[Pastor](pastor)、[Ale](ale) 一起开发，也听 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人讲述他们如何起步。我们没有拿奖，却带走了新朋友、过来人的经验，也再次想起我为什么喜欢和别人一起创造。附注：这场黑客松催生了 [Tripealo](tripealo) 和 [Salvalo](salvalo)；后来我离开了 Tripealo，继续打造 Salvalo。',
+      '委内瑞拉第一场 vibe coding 黑客松：由 AlegrIA 主办，在加拉加斯 Yummy 的办公室里度过三天。我和 [Cesar](cesar)、[Pastor](pastor)、[Ale](ale) 一起开发，也听 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人讲述他们如何起步。我们没有拿奖，却带走了新朋友、过来人的经验，也再次想起我为什么喜欢和别人一起创造。附注：这场黑客松正是我们需要的那一推，让 [Tripealo](tripealo) 和 [Salvalo](salvalo) 真正起步。',
     'events.alegria.m':
-      '在加拉加斯参加委内瑞拉第一场 vibe coding 黑客松的三天。没有拿奖，却交到新朋友，也从 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人那里学到很多。它也催生了 [Tripealo](tripealo) 和 [Salvalo](salvalo)。',
+      '在加拉加斯参加委内瑞拉第一场 vibe coding 黑客松的三天。没有拿奖，却交到新朋友，也从 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人那里学到很多。它正是让 [Tripealo](tripealo) 和 [Salvalo](salvalo) 起步的那一推。',
     'events.talk': '讲座',
     'events.ilc.when': '2026 年 9 月',
     'events.ilc.body':
