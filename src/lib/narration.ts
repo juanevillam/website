@@ -68,6 +68,7 @@ const STAND_IN: Record<string, string> = {
   footer: 'hero',
   'events.alegria.body': 'shaper.solution',
   'events.ilc.body': 'shaper.problem',
+  'events.radio.body': 'shaper.s1.p1',
 };
 
 const recorded = (key: string): Clip | null => {

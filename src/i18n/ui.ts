@@ -206,6 +206,12 @@ const en = {
     "A conversation at Teatro Juares in Barquisimeto between Father Elías Sayegh and Pedro Vallenilla, co-founder of [Cashea](cashea). At the AlegrIA hackathon I'd heard his story through a screen; this time it was in the same room, and it landed differently. His first startup worked, the next ones didn't, one after another, and then came Cashea. His case for Venezuela stayed with me too: there may be no better place right now to build a tech product, because there is so much left to build.",
   'events.ilc.m':
     "Pedro Vallenilla of [Cashea](cashea), in person this time and in my city: one startup that worked, several that didn't, then Cashea, and why Venezuela is the place to build.",
+  'events.interview': 'Interview',
+  'events.radio.when': 'October 2026',
+  'events.radio.body':
+    "[Salvalo](salvalo)'s first interview, live on José “Cheo” Noguera's show on OK 101.1 FM in Barquisimeto, and on his Instagram at the same time. I was in the studio; my co-founder joined on a video call from Madrid. Cheo downloaded the app on air, and I walked his listeners through it with a bakery: the bread it doesn't sell by closing time, saved instead of thrown away. We closed on the same idea I keep hearing: Venezuela still has so much to build in tech.",
+  'events.radio.m':
+    "[Salvalo](salvalo)'s first interview, live on OK 101.1 FM in Barquisimeto: the host downloaded the app on air while I walked his listeners through it.",
 };
 
 export type UIKey = keyof typeof en;
@@ -388,6 +394,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Una conversación en el Teatro Juares de Barquisimeto entre el Padre Elías Sayegh y Pedro Vallenilla, cofundador de [Cashea](cashea). En la hackathon de AlegrIA había escuchado su historia a través de una pantalla; esta vez fue en la misma sala, y se sintió distinto. Su primera startup funcionó, las siguientes no, una tras otra, y entonces llegó Cashea. También me quedé con su visión de Venezuela: quizás no hay mejor lugar ahora mismo para construir un producto tecnológico, porque queda muchísimo por construir.',
     'events.ilc.m':
       'Pedro Vallenilla de [Cashea](cashea), esta vez en persona y en mi ciudad: una startup que funcionó, varias que no, luego Cashea, y por qué Venezuela es el lugar para construir.',
+    'events.interview': 'Entrevista',
+    'events.radio.when': 'Octubre de 2026',
+    'events.radio.body':
+      'La primera entrevista de [Salvalo](salvalo), en vivo en el programa de José “Cheo” Noguera en OK 101.1 FM de Barquisimeto, y a la vez en su Instagram. Yo estaba en el estudio; mi cofundador se unió por videollamada desde Madrid. Cheo descargó la app al aire, y se la expliqué a sus oyentes con una panadería: el pan que no vende antes de cerrar, salvado en vez de botado. Cerramos con la misma idea que sigo escuchando: en Venezuela queda muchísimo por construir en tecnología.',
+    'events.radio.m':
+      'La primera entrevista de [Salvalo](salvalo), en vivo en OK 101.1 FM de Barquisimeto: el locutor descargó la app al aire mientras se la explicaba a sus oyentes.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -559,5 +571,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '在巴基西梅托的 Juares 剧院，Elías Sayegh 神父与 [Cashea](cashea) 联合创始人 Pedro Vallenilla 的一场对谈。在 AlegrIA 黑客松上，我是隔着屏幕听他的故事；这一次同处一室，感受完全不同。他的第一家创业公司成功了，之后的却接连失败，然后才有了 Cashea。他对委内瑞拉的看法也让我难忘：此刻也许没有比这里更适合打造科技产品的地方，因为还有太多东西等着被建造。',
     'events.ilc.m':
       '这次在我的城市亲耳听 [Cashea](cashea) 的 Pedro Vallenilla 讲：一次成功的创业，接连几次失败，然后是 Cashea，以及为什么委内瑞拉是创造的好地方。',
+    'events.interview': '采访',
+    'events.radio.when': '2026 年 10 月',
+    'events.radio.body':
+      '[Salvalo](salvalo) 的第一次采访：在巴基西梅托 OK 101.1 FM 上 José “Cheo” Noguera 的节目里直播，同时在他的 Instagram 上直播。我在录音室，我的联合创始人从马德里通过视频通话加入。Cheo 在节目中下载了这款 App，我用一家面包店向听众解释它：打烊前没卖完的面包，被救下而不是扔掉。最后我们聊到我一再听到的那个想法：委内瑞拉在科技上还有太多东西等着被建造。',
+    'events.radio.m':
+      '[Salvalo](salvalo) 的第一次采访，在巴基西梅托 OK 101.1 FM 直播：主持人在节目中下载了 App，我向听众讲解它的用法。',
   },
 };

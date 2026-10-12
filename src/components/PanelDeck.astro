@@ -18,6 +18,8 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * landing is a plain 1440 x 960 browser screenshot, untouched: whatever
  * the page shows at that height, a section cut off at the foot included.
  * Event photos — a phone's, upright — stand two to a frame, 3:4 each.
+ * An event's VIDEO (a phone's too, upright, silent) always takes the left
+ * frame and plays on its own; the photos cycle in the right one.
  *
  * The deck is the page's one deck (lib/deck.ts): ENDLESS, one card on
  * stage, and a turn that brings the screen in first and the words after
@@ -50,15 +52,20 @@ export type DeckItem = {
   phone: Rich;
   /** The body's narration clip, by convention (lib/narration). */
   clip: string;
-  /** One 3:2 capture, 1440 x 960 (a string); upright photos (one, two
-   *  or more — two frames, cycling through three each at most); or
-   *  a screen of its own, passed in as the named slot `{ slot }`. */
-  image: string | string[] | { slot: string };
+  /** One 3:2 capture, 1440 x 960 (a string); upright media (one, two
+   *  or more — two frames, each cycling through its share); or a screen
+   *  of its own, passed in as the named slot `{ slot }`. */
+  image: string | Media[] | { slot: string };
   links: { label: Segment; href: string }[];
   /** The picture whose colours light the page (lib/scene), for a screen
    *  of its own — a capture or photos light it by themselves. */
   scene?: string;
 };
+
+/** An event's photo, or its silent video (`.mp4`, with its poster frame
+ *  beside it as `.jpg`). `focus` is the part of a sideways photo an
+ *  upright frame keeps (`object-position`). */
+export type Media = string | { src: string; focus: string };
 
 type Props = {
   id: string;
@@ -71,8 +78,20 @@ const { id, title, items } = Astro.props;
 
 const narr = items.map(p => ({ clip: clipFor(p.clip), subs: subsFor(p.clip) }));
 
-// The photos of a card whose screen is photos.
-const photos = (p: DeckItem) => p.image as string[];
+const srcOf = (m: Media) => (typeof m === 'string' ? m : m.src);
+const isVideo = (m: Media) => srcOf(m).endsWith('.mp4');
+// A video lights the page — and stands before it plays — by its poster.
+const still = (m: Media) => srcOf(m).replace(/\.mp4$/, '.jpg');
+
+// The two frames of a card whose screen is photos: a video takes the left
+// one whole and the photos share the right; otherwise odd photos go left,
+// even right.
+const columns = (p: DeckItem): Media[][] => {
+  const all = p.image as Media[];
+  const video = all.find(isVideo);
+  if (video) return [[video], all.filter(m => m !== video)];
+  return [0, 1].map(c => all.filter((_, i) => i % 2 === c));
+};
 
 // Screens of their own (the game's), rendered from the named slots.
 const slotted: Record<string, string> = {};
@@ -84,7 +103,12 @@ const voiced = narr.some(n => n.clip);
 // The light each card lends the page (lib/scene).
 const scenes = await Promise.all(
   items.map(p => {
-    const src = typeof p.image === 'string' || Array.isArray(p.image) ? p.image : p.scene;
+    const src =
+      typeof p.image === 'string'
+        ? p.image
+        : Array.isArray(p.image)
+          ? p.image.map(still)
+          : p.scene;
     return src ? sceneOf(src).then(sceneAttr) : undefined;
   })
 );
@@ -93,7 +117,7 @@ const scenes = await Promise.all(
 const photoScenes: Record<string, string> = {};
 for (const p of items)
   if (Array.isArray(p.image) && p.image.length > 1)
-    for (const src of p.image) photoScenes[src] = sceneAttr(await sceneOf(src));
+    for (const m of p.image) photoScenes[srcOf(m)] = sceneAttr(await sceneOf(still(m)));
 ---
 
 <section class="panel-deck" id={id} data-narr-panel={voiced ? '' : null}>
@@ -222,30 +246,45 @@ for (const p of items)
                     photo stands whole in the middle over a still blur of
                     itself, in the same frame, so every event card is the
                     same size. */}
-                {photos(p).length === 1 ? (
+                {(p.image as Media[]).length === 1 ? (
                   <>
-                    <img class="fill" src={photos(p)[0]} alt="" aria-hidden="true" loading="lazy" decoding="async" />
-                    <img class="whole" src={photos(p)[0]} alt={p.name} loading="lazy" decoding="async" draggable="false" />
+                    <img class="fill" src={srcOf((p.image as Media[])[0])} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+                    <img class="whole" src={srcOf((p.image as Media[])[0])} alt={p.name} loading="lazy" decoding="async" draggable="false" />
                   </>
                 ) : (
-                  [0, 1].map(c => {
-                    const layers = photos(p).filter((_, i) => i % 2 === c);
-                    return (
-                      <div class="photo-cell" style={`--col: ${c}`} data-n={layers.length}>
-                        {layers.map((src, k) => (
-                          <img
-                            src={src}
-                            alt={k === 0 ? p.name : ''}
+                  columns(p).map((layers, c) => (
+                    <div class="photo-cell" style={`--col: ${c}; --n: ${layers.length}`} data-n={layers.length}>
+                      {layers.map((m, k) =>
+                        isVideo(m) ? (
+                          // Silent by construction: the file carries no
+                          // audio track. It plays only while its card is
+                          // in front and on screen (the script below).
+                          <video
+                            src={srcOf(m)}
+                            poster={still(m)}
+                            aria-label={p.name}
                             style={`--k: ${k}`}
-                            data-scene-photo={photoScenes[src]}
+                            data-scene-photo={photoScenes[srcOf(m)]}
+                            muted
+                            loop
+                            playsinline
+                            preload="none"
+                            disablepictureinpicture
+                          />
+                        ) : (
+                          <img
+                            src={srcOf(m)}
+                            alt={k === 0 ? p.name : ''}
+                            style={`--k: ${k}${typeof m === 'string' ? '' : `; object-position: ${m.focus}`}`}
+                            data-scene-photo={photoScenes[srcOf(m)]}
                             loading="lazy"
                             decoding="async"
                             draggable="false"
                           />
-                        ))}
-                      </div>
-                    );
-                  })
+                        )
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             )}
@@ -489,7 +528,8 @@ for (const p of items)
     object-fit: contain;
   }
 
-  .photo-cell img {
+  .photo-cell img,
+  .photo-cell video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -499,25 +539,80 @@ for (const p of items)
     object-position: center;
   }
 
-  /* Three photos to a frame: each holds a third of a slow cycle (~18s)
-     and hands over in a two-beat cross-fade; the right frame turns a beat
-     after the left. The delays are all negative, so every photo starts
-     mid-cycle in its place — and half a turn in, so the page opens on
-     the first photo held still, not on a hand-over. */
-  .photo-cell[data-n='3'] img {
-    animation: photo-cycle calc(var(--beat) * 30) linear infinite;
+  /* Several photos to a frame: each holds ten beats (6s) of a slow
+     cycle and hands over in a two-beat cross-fade; the right frame turns
+     a beat after the left. The delays are all negative, so every photo
+     starts mid-cycle in its place — and half a turn in, so the page opens
+     on the first photo held still, not on a hand-over. The keyframes are
+     written per count: a percentage cannot be computed. */
+  .photo-cell:not([data-n='1']) img {
+    animation: photo-cycle-3 calc(var(--beat) * var(--n) * 10) linear infinite;
     animation-delay: calc(
-      0s - var(--col) * var(--beat) - ((3 - var(--k)) * 10 + 5) * var(--beat)
+      0s - var(--col) * var(--beat) - ((var(--n) - var(--k)) * 10 + 5) * var(--beat)
     );
   }
 
-  @keyframes photo-cycle {
+  .photo-cell[data-n='2'] img {
+    animation-name: photo-cycle-2;
+  }
+
+  .photo-cell[data-n='4'] img {
+    animation-name: photo-cycle-4;
+  }
+
+  .photo-cell[data-n='5'] img {
+    animation-name: photo-cycle-5;
+  }
+
+  @keyframes photo-cycle-2 {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    60%,
+    90% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes photo-cycle-3 {
     0%,
     33.3% {
       opacity: 1;
     }
     40%,
     93.3% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes photo-cycle-4 {
+    0%,
+    25% {
+      opacity: 1;
+    }
+    30%,
+    95% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes photo-cycle-5 {
+    0%,
+    20% {
+      opacity: 1;
+    }
+    24%,
+    96% {
       opacity: 0;
     }
     100% {
@@ -691,6 +786,30 @@ for (const p of items)
     window.addEventListener('resize', standAnchor, { passive: true });
     // Late fonts, a language switch: whatever reflows the words.
     watchSlots(cards, standAnchor);
+
+    // An event's video plays only while its card is in front and the panel
+    // is on screen — never with reduced motion, where its poster stands.
+    const videos = cards.map(c => c.querySelector<HTMLVideoElement>('video'));
+    if (videos.some(Boolean) && section) {
+      const still = matchMedia('(prefers-reduced-motion: reduce)');
+      let seen = false;
+      const sync = () =>
+        videos.forEach((v, i) => {
+          if (!v) return;
+          if (seen && i === deck.current && !still.matches) {
+            v.preload = 'auto';
+            v.play().catch(() => {});
+          } else v.pause();
+        });
+      new IntersectionObserver(([e]) => {
+        seen = e.isIntersecting;
+        sync();
+      }).observe(section);
+      cards.forEach(c =>
+        new MutationObserver(sync).observe(c, { attributes: true, attributeFilter: ['aria-hidden', 'inert', 'class'] })
+      );
+      still.addEventListener('change', sync);
+    }
 
     // The card's screen leans toward the pointer anywhere over the panel.
     if (section)
