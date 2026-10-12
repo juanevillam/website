@@ -10,7 +10,8 @@ import PanelDeck, { type DeckItem } from './PanelDeck.astro';
  *
  * A panel deck (PanelDeck) like More Work, oldest first. Its screens are
  * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
- * most, each cycling through its share when there are more. A new event
+ * most, each cycling through its share when there are more. A VIDEO
+ * (silent, its poster beside it as .jpg) always holds the left frame. A new event
  * is one more entry here, at the end. The companies a card names link
  * out (`[Cashea](cashea)` in the copy, TL).
  */
@@ -19,6 +20,7 @@ const LINKS = {
   yummy: 'https://www.yummysuperapp.com/',
   cashea: 'https://www.cashea.app/',
   slash: 'https://www.slash.com/',
+  salvalo: 'https://salvalo.app',
 };
 
 // In the order they happened, oldest first: the story reads forward —
@@ -31,14 +33,17 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.alegria.body', links: LINKS },
     phone: { k: 'events.alegria.m', links: LINKS },
     clip: 'events.alegria.body',
-    // The LinkedIn post's own order, 1 to 6 — shown in pairs (1–2, 3–4,
-    // 5–6): the left frame takes the odd ones, the right the even.
+    // The video holds the left frame; the photos cycle in the right one,
+    // in the LinkedIn post's order.
     image: [
+      '/media/events/vibe-coding-hackathon/caracas.mp4',
       '/media/events/vibe-coding-hackathon/team-coding.jpg',
+      // Víctor Cárdenas's founder talk (Slash).
       '/media/events/vibe-coding-hackathon/talk.jpg',
       '/media/events/vibe-coding-hackathon/team-selfie.jpg',
-      '/media/events/vibe-coding-hackathon/mentor-call.jpg',
+      // The founder call with Pedro Vallenilla (Cashea).
       '/media/events/vibe-coding-hackathon/founder-call.jpg',
+      // Juan at the photo stand in Yummy's offices, the purple motorcycle.
       '/media/events/vibe-coding-hackathon/yummy-hq.jpg',
     ],
     links: [],
@@ -50,7 +55,22 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.ilc.body', links: LINKS },
     phone: { k: 'events.ilc.m', links: LINKS },
     clip: 'events.ilc.body',
-    image: ['/media/events/ilc-talks/stage.jpg'],
+    image: ['/media/events/ilc-talks/talk.mp4', '/media/events/ilc-talks/stage.jpg'],
+    links: [],
+  },
+  {
+    id: 'radio',
+    name: 'OK 101.1 FM',
+    meta: [[{ k: 'events.interview' }], ['Barquisimeto'], [{ k: 'events.radio.when' }]],
+    body: { k: 'events.radio.body', links: LINKS },
+    phone: { k: 'events.radio.m', links: LINKS },
+    clip: 'events.radio.body',
+    image: [
+      '/media/events/ok101-radio/on-air.mp4',
+      '/media/events/ok101-radio/good-bye.jpg',
+      // A sideways selfie: the upright frame keeps Juan and the desk.
+      { src: '/media/events/ok101-radio/setup.jpg', focus: '20% center' },
+    ],
     links: [],
   },
 ];
