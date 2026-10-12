@@ -52,44 +52,48 @@ const mobileKey = (k: string) =>
 /**
  * THE COLLAGE — each welcome's four screens laid into a square that they
  * cover (Juan, 2026-10-11): each screen ONCE, whole and at its own ratio,
- * some standing, some laid on their side, a hairline apart, running past
- * the square's edges as if it went on — only the square cuts them, so a
- * screen may show half of itself. Four in view at most, none repeated,
- * nothing tilted. Every app has ITS OWN arrangement so the three welcomes
- * don't repeat each other.
+ * some standing, some laid on their side (`h`, the top of the screen to
+ * the left), at sizes that differ, nothing tilted.
  *
- * A piece is a fraction of the square's side: where its box starts (x, y,
- * which may be negative or run past 1), its LONG side, and whether it
- * stands (`v`) or lies on its side (`h`, the top of the screen to the
- * left). The arrangements are solved so the pieces cover the square with
- * nothing but their gaps showing; change one and re-check the cover.
+ * THE SQUARE'S TOP AND SIDES ARE A MARGIN, NEVER A CUT. Every piece keeps
+ * the same gap from the top and side edges as it keeps from its
+ * neighbours, so the square reads clean; only the BOTTOM edge may cut a
+ * screen, which shows the top of it — the part that says what it is.
+ * The pieces stand in columns that add up to the square's inner width
+ * exactly, and every column runs at least to the bottom edge, so nothing
+ * but the gaps shows the ground.
+ *
+ * A piece is a fraction of the square's side: where its box starts and
+ * its LONG side (a standing screen's height, a lying one's width). The
+ * numbers are solved from the gap (0.025) and the screens' ratio
+ * (1179 / 2556) — change one and re-solve the column it stands in. Every
+ * app has its own arrangement so the three welcomes don't repeat.
  */
 type Piece = { shot: number; x: number; y: number; len: number; dir: 'v' | 'h' };
 const COLLAGES: Piece[][] = [
-  // Sound Shaper: the library standing tall on the left; the other three
-  // lying down, stacked, running off the right edge.
+  // Sound Shaper: a narrow column of two (player, shape) beside a wide
+  // one — the clip editor lying across its top, the library under it.
   [
-    { shot: 0, x: 0, y: -0.06, len: 1.12, dir: 'v' },
-    { shot: 1, x: 0.537, y: 0, len: 0.76, dir: 'h' },
-    { shot: 2, x: 0.537, y: 0.371, len: 0.76, dir: 'h' },
-    { shot: 3, x: 0.537, y: 0.742, len: 0.76, dir: 'h' },
+    { shot: 1, x: 0.025, y: 0.025, len: 0.6504, dir: 'v' },
+    { shot: 2, x: 0.025, y: 0.7004, len: 0.6504, dir: 'v' },
+    { shot: 3, x: 0.35, y: 0.025, len: 0.625, dir: 'h' },
+    { shot: 0, x: 0.35, y: 0.3383, len: 1.355, dir: 'v' },
   ],
-  // Topper: explore lying across the top, past both edges; home, a top and
-  // the profile standing in a row under it, running off the bottom.
+  // Topper: explore lying across the whole top; home large below it on
+  // the left; the profile lying above a top on the right.
   [
-    { shot: 1, x: -0.04, y: -0.03, len: 1.08, dir: 'h' },
-    { shot: 0, x: 0, y: 0.488, len: 0.76, dir: 'v' },
-    { shot: 2, x: 0.371, y: 0.488, len: 0.76, dir: 'v' },
-    { shot: 3, x: 0.742, y: 0.488, len: 0.76, dir: 'v' },
+    { shot: 1, x: 0.025, y: 0.025, len: 0.95, dir: 'h' },
+    { shot: 0, x: 0.025, y: 0.4882, len: 1.1924, dir: 'v' },
+    { shot: 3, x: 0.6, y: 0.4882, len: 0.375, dir: 'h' },
+    { shot: 2, x: 0.6, y: 0.6862, len: 0.813, dir: 'v' },
   ],
-  // Booker: the shelf standing tall on the left; the book's page lying
-  // along the top right; the reader and a chapter standing side by side
-  // beneath it.
+  // Booker: the shelf standing tall on the left; the book's page and a
+  // chapter lying one over the other on the right, the reader under them.
   [
-    { shot: 0, x: 0, y: -0.03, len: 1.08, dir: 'v' },
-    { shot: 1, x: 0.518, y: 0, len: 0.96, dir: 'h' },
-    { shot: 2, x: 0.518, y: 0.463, len: 0.6, dir: 'v' },
-    { shot: 3, x: 0.815, y: 0.463, len: 0.6, dir: 'v' },
+    { shot: 0, x: 0.025, y: 0.025, len: 1.1273, dir: 'v' },
+    { shot: 1, x: 0.57, y: 0.025, len: 0.405, dir: 'h' },
+    { shot: 3, x: 0.57, y: 0.2368, len: 0.405, dir: 'h' },
+    { shot: 2, x: 0.57, y: 0.4486, len: 0.878, dir: 'v' },
   ],
 ];
 
