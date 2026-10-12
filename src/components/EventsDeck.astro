@@ -10,8 +10,9 @@ import PanelDeck, { type DeckItem } from './PanelDeck.astro';
  *
  * A panel deck (PanelDeck) like More Work, oldest first. Its screens are
  * the event's PHOTOS — a phone's, upright — in upright 3:4 frames, two at
- * most, each cycling through its share when there are more. A VIDEO
- * (silent, its poster beside it as .jpg) always holds the left frame. A new event
+ * most, each cycling through its share when there are more, every one
+ * whole. A VIDEO (silent, its poster beside it as .jpg) holds the left
+ * frame; `oneFrame` shows a card's pictures one at a time instead. A new event
  * is one more entry here, at the end. The companies a card names link
  * out (`[Cashea](cashea)` in the copy, TL).
  */
@@ -55,7 +56,9 @@ const EVENTS: DeckItem[] = [
     body: { k: 'events.ilc.body', links: LINKS },
     phone: { k: 'events.ilc.m', links: LINKS },
     clip: 'events.ilc.body',
+    // One frame, one picture at a time: the talk, then the stage.
     image: ['/media/events/ilc-talks/talk.mp4', '/media/events/ilc-talks/stage.jpg'],
+    oneFrame: true,
     links: [],
   },
   {
@@ -68,8 +71,7 @@ const EVENTS: DeckItem[] = [
     image: [
       '/media/events/ok101-radio/on-air.mp4',
       '/media/events/ok101-radio/good-bye.jpg',
-      // A sideways selfie: the upright frame keeps Juan and the desk.
-      { src: '/media/events/ok101-radio/setup.jpg', focus: '20% center' },
+      '/media/events/ok101-radio/setup.jpg',
     ],
     links: [],
   },
