@@ -13,6 +13,7 @@ export const getStaticPaths = legalPaths;
 type Props = { app: LegalApp };
 const { app } = Astro.props;
 const social = app.content === 'tops';
+const books = app.content === 'books';
 ---
 
 <Prose
@@ -37,8 +38,10 @@ const social = app.content === 'tops';
         them back to you{social ? ', and to other people for what you make public' : ''}.
         Only {social ? 'create or upload' : 'upload'} content you have the
         right to use{
-          !social &&
-            ' — the audio files you add must be yours to keep and listen to'
+          books
+            ? ' — the passages you keep from books are for your own reading'
+            : !social &&
+              ' — the audio files you add must be yours to keep and listen to'
         }.
       </p>
 
@@ -96,8 +99,10 @@ const social = app.content === 'tops';
         permiso que necesita para guardar tus {app.contentEs} y mostrártelos{social ? ', y a otras personas en lo que haces público' : ''}.
         {social ? 'Crea o sube' : 'Sube'} solo contenido que tengas derecho a
         usar{
-          !social &&
-            ': los archivos de audio que añades deben ser tuyos para guardarlos y escucharlos'
+          books
+            ? ': los pasajes que guardas de los libros son para tu propia lectura'
+            : !social &&
+              ': los archivos de audio que añades deben ser tuyos para guardarlos y escucharlos'
         }.
       </p>
 
@@ -152,7 +157,7 @@ const social = app.content === 'tops';
 
       <h2>你的内容</h2>
       <p>
-        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '（以及将你公开的内容展示给其他人）' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{!social && '——你添加的音频文件必须是你有权保存和收听的'}。
+        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '（以及将你公开的内容展示给其他人）' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{books ? '——你从书中摘录的段落仅供你自己阅读' : !social && '——你添加的音频文件必须是你有权保存和收听的'}。
       </p>
 
       <h2>可接受的使用</h2>

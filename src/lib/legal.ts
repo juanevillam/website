@@ -1,7 +1,7 @@
 import type { Locale } from '../i18n/ui';
 
 /**
- * The two published apps and the facts their legal pages share. The URL
+ * The three apps and the facts their legal pages share. The URL
  * shape (juanevillam.com/{slug}/{page}) is the one the apps' `legalUrl`
  * helper in @portfolio/mobile-ui already builds — don't change one
  * without the other.
@@ -21,6 +21,13 @@ export const LEGAL_APPS = [
     content: 'tops' as const,
     contentEs: 'tops',
     contentZh: '榜单',
+  },
+  {
+    slug: 'booker',
+    name: 'Booker',
+    content: 'books' as const,
+    contentEs: 'libros',
+    contentZh: '书籍',
   },
 ];
 

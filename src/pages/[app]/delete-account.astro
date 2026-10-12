@@ -8,8 +8,9 @@ export const getStaticPaths = legalPaths;
 type Props = { app: LegalApp };
 const { app } = Astro.props;
 const social = app.content === 'tops';
+const books = app.content === 'books';
 // The steps follow each app's real entry: Topper's account lives on the
-// Profile tab, Sound Shaper's behind its Settings banner. Both apps run
+// Profile tab, Sound Shaper's and Booker's behind their Settings banner. Both apps run
 // `useDeleteAccount` on both platforms, which re-authenticates first.
 ---
 
@@ -72,6 +73,14 @@ const social = app.content === 'tops';
                 its items and their images.
               </li>
               <li>Your comments, reactions, follows and blocks.</li>
+              <li>Your trophies.</li>
+            </>
+          ) : books ? (
+            <>
+              <li>
+                Every book you added — including those in Recently Deleted —
+                with its summary, highlights and cover.
+              </li>
               <li>Your trophies.</li>
             </>
           ) : (
@@ -149,6 +158,14 @@ const social = app.content === 'tops';
               <li>Tus comentarios, reacciones, seguidos y bloqueos.</li>
               <li>Tus trofeos.</li>
             </>
+          ) : books ? (
+            <>
+              <li>
+                Todos los libros que añadiste, incluidos los de Eliminados
+                recientemente, con su resumen, sus resaltados y su portada.
+              </li>
+              <li>Tus trofeos.</li>
+            </>
           ) : (
             <>
               <li>Todos los sonidos que añadiste, con su audio e ilustración.</li>
@@ -212,6 +229,11 @@ const social = app.content === 'tops';
               <li>你的个人资料和用户名。</li>
               <li>你创建的所有榜单（包括“最近删除”中的），连同其中的条目和图片。</li>
               <li>你的评论、反应、关注和屏蔽。</li>
+              <li>你的奖杯。</li>
+            </>
+          ) : books ? (
+            <>
+              <li>你添加的所有书籍（包括“最近删除”中的），连同其摘要、高亮和封面。</li>
               <li>你的奖杯。</li>
             </>
           ) : (
