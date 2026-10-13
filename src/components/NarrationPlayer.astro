@@ -37,7 +37,7 @@ import T from './T.astro';
   <span class="sr-only nar-live"><T k="pause" /></span>
   <span class="nar-glyph" aria-hidden="true">
     <svg class="nar-play" viewBox="0 0 16 16">
-      <path fill="currentColor" d="M3.9 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L5.1 1.9c-.5-.3-1.2.1-1.2.7z"></path>
+      <path fill="currentColor" d="M3.5 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L4.7 1.9c-.5-.3-1.2.1-1.2.7z"></path>
     </svg>
     <svg class="nar-pause" viewBox="0 0 16 16">
       <rect fill="currentColor" x="3.5" y="2.5" width="3" height="11" rx="1"></rect>
@@ -75,7 +75,7 @@ import T from './T.astro';
     cursor: pointer;
     will-change: transform, opacity;
     transition:
-      width var(--beat) var(--ease),
+      width var(--dur-settle) var(--ease),
       color var(--dur-micro) var(--ease),
       border-color var(--dur-micro) var(--ease);
   }
@@ -112,26 +112,29 @@ import T from './T.astro';
     display: inline;
   }
 
-  /* Centred in the closed pill; when it opens for subtitles the glyph's
-     box narrows to a square at the leading end, carrying it there. */
+  /* Centred in the closed circle; when it opens for subtitles the
+     glyph's box narrows to a square at the leading end, carrying it there.
+     The box is the button's INSIDE — its width less the 1px border on
+     each side; the full width stood every glyph 1px right of centre
+     (Juan, 2026-10-13). */
   .nar-glyph {
     position: absolute;
     top: 0;
     left: 0;
     display: grid;
     place-items: center;
-    width: var(--narrator-w);
+    width: calc(var(--narrator-w) - 2px);
     height: 100%;
-    transition: width var(--beat) var(--ease);
+    transition: width var(--dur-settle) var(--ease);
   }
 
   .narrator.is-captioned .nar-glyph {
-    width: var(--narrator-h);
+    width: calc(var(--narrator-h) - 2px);
   }
 
-  /* The play triangle is drawn centred on its own balance point, not
-     its box — no nudge on top (a nudge on a pre-shifted path is what
-     pushed it right). */
+  /* The play triangle sits between its box's centre and its balance
+     point: box-centred it reads left, balance-centred it read right
+     (2026-10-13), so the path is drawn 0.4 of 16 left of the latter. */
   .nar-glyph svg {
     grid-area: 1 / 1;
     /* A play glyph's ink fills its box far more than the header mark's
@@ -170,7 +173,7 @@ import T from './T.astro';
 
   .narrator.is-captioned .nar-sub {
     opacity: 1;
-    transition-delay: calc(var(--beat) / 2);
+    transition-delay: var(--dur-quick);
   }
 
   .nar-sub :global(.nar-sub-line) {
@@ -178,7 +181,7 @@ import T from './T.astro';
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    animation: nar-sub-in calc(var(--beat) / 2) var(--ease);
+    animation: nar-sub-in var(--dur-quick) var(--ease);
   }
 
   @keyframes nar-sub-in {

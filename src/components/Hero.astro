@@ -1,4 +1,5 @@
 ---
+import T from './T.astro';
 import { clipFor, subsFor } from '../lib/narration';
 
 /**
@@ -21,6 +22,13 @@ const subs = subsFor('hero');
     data-hero-inner
     data-narr-block={clip ? 'hero' : null}
   >
+    <!-- The greeting is the name's EYEBROW — "HI" / "HOLA" / "你好" — in
+         the voice every panel's title takes ("MORE WORK", "EVENTS") and
+         at the same step over what it heads, so the language shows at a
+         glance (Juan, 2026-10-13). A centred word in the name's own face
+         read as foreign to the page; in a panel's corner it read as lost,
+         far from the name it greets. -->
+    <p class="label hello" data-reveal><T k="hero.hi" /></p>
     <h1
       class="display"
       data-reveal
@@ -58,11 +66,50 @@ const subs = subsFor('hero');
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
   }
 
+  /* A phone stands the name a little over the screen's middle, not on it
+     — the same lift every panel's top took (2026-10-13). */
+  @media (max-width: 48rem) {
+    .hero {
+      padding-bottom: 8svh;
+    }
+  }
+
   .hero-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
     will-change: opacity, transform;
+  }
+
+  /* Close over the name it greets — a panel's 1.5rem step stood it too
+     far off a name this size (2026-10-13). */
+  .hello {
+    margin-bottom: 0.5rem;
+  }
+
+  @media (max-width: 48rem) {
+    .hello {
+      margin-bottom: 0.25rem;
+    }
+  }
+
+  /* A new language's word arrives rather than simply being there: its
+     span is shown fresh on a switch, which replays this. */
+  .hello :global(.t) {
+    animation: hello-in var(--dur-turn) var(--ease) both;
+  }
+
+  @keyframes hello-in {
+    from {
+      opacity: 0;
+      filter: blur(0.25rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hello :global(.t) {
+      animation: none;
+    }
   }
 
 </style>

@@ -29,6 +29,10 @@ const en = {
   visit: 'visit',
   listen: 'Listen',
   pause: 'Pause',
+  // The hero's greeting over the wordmark — the one word that shows at a
+  // glance which language the page is in (as the GitHub profile's
+  // "Hi · Hola · 你好").
+  'hero.hi': 'Hi',
   // The store tag's status while an app has no listing (StoreBadges).
   'store.soon': 'Coming Soon',
   'legal.terms': 'Terms and Conditions',
@@ -195,19 +199,19 @@ const en = {
   'work.andreina.m': 'A WordPress site for a productivity coach.',
   'events.title': 'Events',
   'events.hackathon': 'Hackathon',
-  'events.alegria.when': 'October 2025',
+  'events.alegria.when': 'Oct 2025',
   'events.alegria.body':
     "Venezuela's first vibe-coding hackathon: three days at Yummy's offices in Caracas, organized by AlegrIA. Between building with [Cesar](cesar), [Pastor](pastor) and [Ale](ale), we heard the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash) tell how they started. We didn't take a prize home. We took new friends, lessons from people who have done it, and a reminder of why I love building things with others. P.S. This hackathon was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
   'events.alegria.m':
     "Three days at Venezuela's first vibe-coding hackathon, in Caracas. No prize, but new friends and lessons from the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash). It was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
   'events.talk': 'Talk',
-  'events.ilc.when': 'September 2026',
+  'events.ilc.when': 'Sep 2026',
   'events.ilc.body':
     "A conversation at [Teatro Juares](juares) in Barquisimeto between [Father Elías Sayegh](elias) and [Pedro Vallenilla](pedro), co-founder of [Cashea](cashea). At the AlegrIA hackathon I'd heard his story through a screen; this time it was in the same room, and it landed differently. His first startup worked, the next ones didn't, one after another, and then came Cashea. His case for Venezuela stayed with me too: there may be no better place right now to build a tech product, because there is so much left to build.",
   'events.ilc.m':
     "[Pedro Vallenilla](pedro) of [Cashea](cashea), in person this time and in my city: one startup that worked, several that didn't, then Cashea, and why Venezuela is the place to build.",
   'events.interview': 'Interview',
-  'events.radio.when': 'October 2026',
+  'events.radio.when': 'Oct 2026',
   'events.radio.body':
     "[Salvalo](salvalo)'s first interview, live on [José “Cheo” Noguera](cheo)'s show on [OK 101.5 FM](ok101) in Barquisimeto, and on his Instagram at the same time. I was in the studio; my co-founder joined on a video call from Madrid. Cheo downloaded the app on air, and I walked his listeners through it with a bakery: the bread it doesn't sell by closing time, saved instead of thrown away. We closed on the same idea I keep hearing: Venezuela still has so much to build in tech.",
   'events.radio.m':
@@ -224,6 +228,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: 'visitar',
     listen: 'Escuchar',
     pause: 'Pausar',
+    'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
     'legal.terms': 'Términos y condiciones',
     'legal.privacy': 'Política de privacidad',
@@ -383,19 +388,19 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.andreina.m': 'Un sitio en WordPress para una coach de productividad.',
     'events.title': 'Eventos',
     'events.hackathon': 'Hackathon',
-    'events.alegria.when': 'Octubre de 2025',
+    'events.alegria.when': 'oct 2025',
     'events.alegria.body':
       'El primer hackathon de vibe coding de Venezuela: tres días en las oficinas de Yummy en Caracas, organizado por AlegrIA. Entre construir junto a [Cesar](cesar), [Pastor](pastor) y [Ale](ale), escuchamos a los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash) contar cómo empezaron. No nos llevamos un premio. Nos llevamos amigos nuevos, lecciones de gente que ya lo hizo y un recordatorio de por qué me encanta construir con otros. P.D.: esta hackathon fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
     'events.alegria.m':
       'Tres días en el primer hackathon de vibe coding de Venezuela, en Caracas. Sin premio, pero con amigos nuevos y lecciones de los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash). Fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
     'events.talk': 'Charla',
-    'events.ilc.when': 'Septiembre de 2026',
+    'events.ilc.when': 'sept 2026',
     'events.ilc.body':
       'Una conversación en el [Teatro Juares](juares) de Barquisimeto entre el [Padre Elías Sayegh](elias) y [Pedro Vallenilla](pedro), cofundador de [Cashea](cashea). En la hackathon de AlegrIA había escuchado su historia a través de una pantalla; esta vez fue en la misma sala, y se sintió distinto. Su primera startup funcionó, las siguientes no, una tras otra, y entonces llegó Cashea. También me quedé con su visión de Venezuela: quizás no hay mejor lugar ahora mismo para construir un producto tecnológico, porque queda muchísimo por construir.',
     'events.ilc.m':
       '[Pedro Vallenilla](pedro) de [Cashea](cashea), esta vez en persona y en mi ciudad: una startup que funcionó, varias que no, luego Cashea, y por qué Venezuela es el lugar para construir.',
     'events.interview': 'Entrevista',
-    'events.radio.when': 'Octubre de 2026',
+    'events.radio.when': 'oct 2026',
     'events.radio.body':
       'La primera entrevista de [Salvalo](salvalo), en vivo en el programa de [José “Cheo” Noguera](cheo) en [OK 101.5 FM](ok101) de Barquisimeto, y a la vez en su Instagram. Yo estaba en el estudio; mi cofundador se unió por videollamada desde Madrid. Cheo descargó la app al aire, y se la expliqué a sus oyentes con una panadería: el pan que no vende antes de cerrar, salvado en vez de botado. Cerramos con la misma idea que sigo escuchando: en Venezuela queda muchísimo por construir en tecnología.',
     'events.radio.m':
@@ -407,6 +412,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: '访问',
     listen: '收听',
     pause: '暂停',
+    'hero.hi': '你好',
     'store.soon': '即将推出',
     'legal.terms': '条款与条件',
     'legal.privacy': '隐私政策',
