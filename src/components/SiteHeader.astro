@@ -67,7 +67,9 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     justify-content: space-between;
     padding: var(--float-gap) clamp(1.25rem, 4vw, 2.5rem) 0;
     pointer-events: none;
-    transition: transform calc(var(--beat) / 2) var(--ease);
+    transition:
+      transform var(--dur-quick) var(--ease),
+      opacity var(--dur-quick) var(--ease);
   }
 
   /* The pills step out of the way while you read down the page and come
@@ -76,6 +78,17 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
      Juan asked for it on the desk too (2026-10-11). */
   .site-header.is-tucked {
     transform: translateY(calc(-100% - var(--float-gap)));
+  }
+
+  /* Gone BY ITSELF (a phone's timeout, the script) it eases away slowly,
+     fading as it rises: the page's quick curve does most of its travel in
+     the first frames, which reads right when a scroll sends it off and
+     sudden when nothing did (Juan, 2026-10-13). */
+  .site-header.is-tucked.is-idle {
+    opacity: 0;
+    transition:
+      transform var(--dur-settle) cubic-bezier(0.4, 0, 0.2, 1),
+      opacity var(--dur-settle) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* With no scrim behind them they carry their own ground, or they
@@ -100,7 +113,21 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
   .mark-link {
     color: var(--ink);
     text-decoration: none;
-    transition: opacity var(--dur-micro) var(--ease);
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      visibility 0s;
+  }
+
+  /* NOT ON THE HERO (Juan, 2026-10-13): the hero IS the wordmark, so the
+     mark beside it only said the name twice. It comes back once the page
+     leaves it; the language pill stays throughout. */
+  .site-header.is-on-hero .mark-link {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      visibility 0s linear var(--dur-quick);
   }
 
   .mark-link:hover {
@@ -145,6 +172,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
 
 <script>
   import { localeCodes, type Locale } from '../i18n/ui';
+  import { dur } from '../lib/motion';
 
   const picker = document.getElementById('lang-picker') as HTMLSelectElement;
   const code = document.getElementById('lang-code') as HTMLElement;
@@ -156,21 +184,85 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
   picker.value = localStorage.getItem('lang') || 'en';
   show(picker.value);
 
-  // Tuck the header while scrolling down; any scroll up (or
-  // the top of the page) brings it back. A class flip, never per-frame
-  // styling — the transform runs on the GPU.
+  // Tuck the header while scrolling down; scrolling back up (or the top
+  // of the page) brings it back. A class flip, never per-frame styling —
+  // the transform runs on the GPU.
+  //
+  // ON A PHONE IT TAKES TWO SECTIONS UP (Juan, 2026-10-13). The page snaps
+  // a section per swipe, so one swipe up is nearly always re-reading the
+  // last one, not reaching for the header — and the header leapt in on
+  // it. Upward travel adds up and any move down starts it over; on a desk
+  // any scroll up still brings it back.
+  //
+  // AND IT GOES AGAIN BY ITSELF, on every screen (Juan, 2026-10-13):
+  // brought back mid-page, it tucks away after a few seconds left alone —
+  // it is noise once it is not wanted. Never while it is being used (a
+  // finger or the pointer on it, the language menu open), and never at
+  // the top of the page, where it simply belongs.
   const header = document.querySelector<HTMLElement>('.site-header');
+  const phoneQuery = matchMedia('(max-width: 48rem)');
+  const LINGER_MS = 3000;
   let lastY = window.scrollY;
+  let upward = 0;
+  let linger = 0;
+  const leaveLater = () => {
+    clearTimeout(linger);
+    if (window.scrollY <= 80) return;
+    linger = window.setTimeout(() => {
+      if (
+        header?.matches(':focus-within') ||
+        header?.querySelector(':hover') ||
+        window.scrollY <= 80
+      )
+        return;
+      header?.classList.add('is-tucked', 'is-idle');
+    }, LINGER_MS);
+  };
+  header?.addEventListener('pointerdown', () => clearTimeout(linger));
+  header?.addEventListener('pointerup', leaveLater);
+  // A pointer resting on it (a desk) holds it; leaving starts the wait.
+  header?.addEventListener('pointerleave', () => {
+    if (!header.classList.contains('is-tucked')) leaveLater();
+  });
+  header?.addEventListener('focusin', () => clearTimeout(linger));
+  header?.addEventListener('focusout', leaveLater);
   window.addEventListener(
     'scroll',
     () => {
       const y = window.scrollY;
       if (Math.abs(y - lastY) < 8) return;
-      header?.classList.toggle('is-tucked', y > lastY && y > 80);
+      upward = y < lastY ? upward + (lastY - y) : 0;
+      // Two sections, less a little: a snapped panel is the screen tall.
+      const needed = phoneQuery.matches ? innerHeight * 1.8 : 0;
+      if (y <= 80) {
+        clearTimeout(linger);
+        header?.classList.remove('is-tucked', 'is-idle');
+      } else if (y > lastY) {
+        clearTimeout(linger);
+        // Already gone by itself: it stays as it is, rather than jumping
+        // back to visible for the quick curve.
+        header?.classList.add('is-tucked');
+      } else if (upward >= needed) {
+        header?.classList.remove('is-tucked', 'is-idle');
+        leaveLater();
+      }
       lastY = y;
     },
     { passive: true }
   );
+
+  // While the hero holds the screen, the mark stands down (see the CSS).
+  const heroEl = document.getElementById('top');
+  const headerEl = document.querySelector<HTMLElement>('.site-header');
+  if (heroEl && headerEl) {
+    // Set at once from where the page opens, so the mark never flashes in
+    // on a load at the top.
+    const r = heroEl.getBoundingClientRect();
+    headerEl.classList.toggle('is-on-hero', r.top < innerHeight / 2 && r.bottom > innerHeight / 2);
+    new IntersectionObserver(([e]) => headerEl.classList.toggle('is-on-hero', e.isIntersecting), {
+      rootMargin: '-45% 0px -45% 0px',
+    }).observe(heroEl);
+  }
 
   // The mark goes home. On the landing it already IS home, so instead of
   // reloading the page (a visible refresh) it TELEPORTS: the page dips to
@@ -189,7 +281,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
     root.classList.add('is-jumping');
-    const dip = parseFloat(getComputedStyle(root).getPropertyValue('--beat')) / 4 || 150;
+    const dip = dur('micro');
     // The hero's own entrance, wound back while the page is dark, so the
     // wordmark ARRIVES the way it did on the first load rather than
     // simply being there.
