@@ -467,13 +467,41 @@ const updateSub = () => {
 /** The anchors in play and how much of the page each one owns. */
 let parks: { anchor: HTMLElement; w: number }[] = [];
 
+// The hero's anchor: on a phone the narrator parks under the wordmark
+// there, as it does on a desk, instead of in its corner (Juan, 2026-10-13).
+const heroBox = document.getElementById('top');
+const heroAnchor =
+  heroBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
+
 // Every frame, not only on scroll: the pill's own width animates when
 // it opens, and a centred anchor has to keep it centred all the way.
 const placeNarrator = () => {
   if (!narrator || narrator.hidden) return;
   // A phone's narrator never travels: it stays in its corner, shown
-  // only while the screen holds a block it can tell.
+  // only while the screen holds a block it can tell — except on the
+  // hero, where it stands centred under the name and fades as the hero
+  // gives up the screen's middle, to come back in its corner. (A glide
+  // from the one place to the other was tried, 2026-10-13, and read as
+  // odd on a phone.)
   if (phone) {
+    const hero = heroBox?.getBoundingClientRect();
+    if (heroAnchor && hero && hero.bottom > innerHeight / 2) {
+      const r = heroAnchor.getBoundingClientRect();
+      narrator.classList.add('is-parked');
+      narrator.style.setProperty(
+        '--park-x',
+        `${(r.left + r.width / 2 - narrator.offsetWidth / 2).toFixed(1)}px`,
+      );
+      narrator.style.setProperty('--park-y', `${r.top.toFixed(1)}px`);
+      const own = Math.min(
+        1,
+        (hero.bottom - innerHeight / 2) / (innerHeight / 4),
+      );
+      narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
+      narrator.style.pointerEvents = own < 0.6 ? 'none' : '';
+      return;
+    }
+    narrator.classList.remove('is-parked');
     const has = !!showing && firstVoiced(showing) >= 0;
     narrator.style.opacity = has ? '' : '0';
     narrator.style.pointerEvents = has ? '' : 'none';
