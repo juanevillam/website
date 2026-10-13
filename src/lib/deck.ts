@@ -29,8 +29,11 @@ export type Deck = {
   readonly current: number;
 };
 
-/** How long a leaving card stays drawn — its parts' exit, and a margin. */
-const LEAVE_MS = 450;
+import { dur } from './motion';
+
+/** How long a leaving card stays drawn — its cross-fade (the ladder's
+ *  `quick`), and a margin. */
+const leaveMs = () => dur('quick') + 100;
 
 export const createDeck = ({
   cards,
@@ -82,7 +85,7 @@ export const createDeck = ({
       setTimeout(() => {
         from.classList.remove('is-leaving');
         leaving.delete(from);
-      }, LEAVE_MS),
+      }, leaveMs()),
     );
 
     // The card arriving is stood on its far side with no transition,

@@ -2,7 +2,9 @@
  * THE POINTER TILT — the page's pictures lean toward the mouse: a slight 3D
  * turn that follows the pointer across a whole panel and settles back when
  * it leaves (Juan, 2026-10-11) — a detail, so a few degrees at most: at
- * 7° / 5° it read as too strong. One recipe for every deck on the page — the
+ * 7° / 5° it read as too strong, 3.5° / 2.5° made the page swim, and
+ * 1.5° / 1° was not felt at all (2026-10-13) — so it sits between them,
+ * following the pointer a little slower than it first did. One recipe for every deck on the page — the
  * apps' phones, More Work's screens, the events' photos.
  *
  * It is drawn with the `rotate` PROPERTY, never `transform`: a deck card's
@@ -18,7 +20,7 @@ export const followPointer = (
   root: HTMLElement,
   /** The picture to lean, asked fresh each frame (the deck turns). */
   target: () => HTMLElement | null | undefined,
-  { x = 3.5, y = 2.5 }: { x?: number; y?: number } = {},
+  { x = 2.5, y = 1.75 }: { x?: number; y?: number } = {},
 ) => {
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -44,8 +46,8 @@ export const followPointer = (
 
   const step = () => {
     now = {
-      tx: now.tx + (goal.tx - now.tx) * 0.14,
-      ty: now.ty + (goal.ty - now.ty) * 0.14,
+      tx: now.tx + (goal.tx - now.tx) * 0.1,
+      ty: now.ty + (goal.ty - now.ty) * 0.1,
     };
     if (el) draw(el, now.tx, now.ty);
     const moving =
