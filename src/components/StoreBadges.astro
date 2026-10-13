@@ -14,8 +14,11 @@ import { RELEASES, type ReleasedApp } from '../lib/releases';
  * NOT YET (null): a "Coming soon" tag in the LANDING's own language — not
  * a copy of the stores' badges, which their guidelines reserve for real
  * listings. A hairline frame with the site's corner and no fill (so it
- * can't be mistaken for the round, filled narrator), the store's name over
- * a mono status label, and a small one-ink mark. It keeps the official
+ * can't be mistaken for the round, filled narrator), a small status line
+ * OVER the store's name — the stores' own badge hierarchy ("Download on
+ * the" / "App Store", "GET IT ON" / "Google Play"), where it had been a
+ * mono caps label under the name that read too loud and too close (Juan,
+ * 2026-10-13) — and a one-ink mark spanning both lines. It keeps the official
  * badge's 48px height, so flipping to live never moves the row. It is not
  * a link and doesn't pretend to be one.
  *
@@ -68,8 +71,8 @@ const STORES = [
             </svg>
           )}
           <span class="soon-words">
-            <span class="soon-name">{store.name}</span>
             <span class="soon-status"><T k="store.soon" /></span>
+            <span class="soon-name">{store.name}</span>
           </span>
         </span>
       );
@@ -86,6 +89,17 @@ const STORES = [
     align-items: center;
     gap: 0.875rem;
     margin-top: 1.5rem;
+  }
+
+  /* A phone: the two tags share the row's full width instead of hugging
+     its left edge, and stack, full width each, where two would not fit
+     side by side. Official artwork keeps its own size — it may not be
+     stretched. */
+  @media (max-width: 48rem) {
+    .soon {
+      flex: 1 1 9.5rem;
+      justify-content: center;
+    }
   }
 
   .badge-link {
@@ -130,30 +144,31 @@ const STORES = [
      not an estimate — a guessed one cut the apple's left side off. */
   .mark {
     flex: none;
-    height: 1.125rem;
+    height: 1.375rem;
     width: auto;
     fill: currentColor;
   }
 
+  /* The badges' proportions: the status line a bit over half the name's
+     size, in the same face, set tight above it. */
   .soon-words {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.1875rem;
     line-height: 1;
     white-space: nowrap;
   }
 
   .soon-name {
-    font-size: 0.9375rem;
+    font-size: 1rem;
     font-weight: 600;
     letter-spacing: -0.01em;
   }
 
   .soon-status {
-    font-family: var(--font-mono);
     font-size: 0.625rem;
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-    color: var(--ink-3);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--ink-2);
   }
 </style>

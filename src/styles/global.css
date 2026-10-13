@@ -5,6 +5,13 @@
    One easing, one motion grammar, whole site.
    ============================================================ */
 
+/* The duration tokens a script reads (lib/motion.ts), registered as
+   times so the browser hands them over resolved — "0.45s", not the calc. */
+@property --dur-micro { syntax: '<time>'; inherits: true; initial-value: 150ms; }
+@property --dur-quick { syntax: '<time>'; inherits: true; initial-value: 300ms; }
+@property --dur-turn { syntax: '<time>'; inherits: true; initial-value: 450ms; }
+@property --dur-settle { syntax: '<time>'; inherits: true; initial-value: 600ms; }
+
 :root {
   /* color — dark (primary) */
   --ground: #0d0d0d;
@@ -28,15 +35,33 @@
   --track-label: 0.08em;
 
   /* tempo — the site runs at 100 BPM. One beat = 600ms; every duration on
-     the page is a subdivision or multiple of it (quarter, triplet, dotted…),
-     so all motion sits on one clock — quantized, like the synth tracks the
-     timing is stolen from. Never hardcode a duration: derive it. */
-  --beat: 600ms;
+     the page is a subdivision or multiple of it, so all motion sits on one
+     clock — quantized, like the synth tracks the timing is stolen from.
 
-  /* motion — the one grammar */
+     THE LADDER (Juan, 2026-10-13: "one sense across the whole site"). A
+     duration is chosen by WHAT MOVES, never written as a number or a
+     fresh fraction of the beat — CSS takes the token, a script reads it
+     (lib/motion.ts), so the two can't drift apart:
+
+       micro   150ms  a hover, words fading in or out, a ghost's dissolve
+       quick   300ms  anything LEAVING; a deck switching apps; small UI
+       turn    450ms  a picture ARRIVING; a phone flying; the light moving
+       settle  600ms  a picture's last drift into place; a photo's
+                      cross-fade; a pill growing
+       ambient 1.2s   the room's colour changing — felt, not watched
+
+     Leaving is always quicker than arriving, so the stage clears before
+     the next thing lands. One curve for all of it: `--ease`. */
+  --beat: 600ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-micro: calc(var(--beat) / 4); /* 150ms — a sixteenth at 100 BPM */
-  --dur-enter: var(--beat); /* entrances land on the beat */
+  --dur-micro: calc(var(--beat) / 4);
+  --dur-quick: calc(var(--beat) / 2);
+  --dur-turn: calc(var(--beat) * 0.75);
+  --dur-settle: var(--beat);
+  --dur-ambient: calc(var(--beat) * 2);
+  /* The step between parts of a card landing one after another. */
+  --dur-step: calc(var(--beat) / 18);
+  --dur-enter: var(--dur-settle); /* entrances land on the beat */
 
   /* proportion — the Monolith ratio, 1 : 4 : 9 (the squares of 1, 2, 3).
      The spacing scale IS the ratio; the canonical column seam splits the
@@ -60,15 +85,17 @@
      mark is drawn at this size. */
   --float-pad: 0.875rem;
   --float-glyph: 1.625rem;
-  /* The narrator: a floating pill built by the SAME recipe — height,
-     side padding, glyph — at twice its area (√2 on every side),
-     so it outranks the chrome it belongs to. Content-sized like the
-     header's pills; fixed, so anchors can reserve it. */
+  /* The narrator: built by the floating pills' SAME recipe — height,
+     glyph — at twice their area (√2 on every side), so it outranks the
+     chrome it belongs to. At rest it is a CIRCLE, as wide as it is tall
+     (Juan, 2026-10-13): a lone glyph is a circle on both platforms, as the
+     decks' arrows are, and the pill is kept for when it TALKS — it
+     stretches to carry the subtitles. Text-carrying controls (the header's
+     pills, the app switcher) stay pills. Fixed, so anchors can reserve it. */
   --narrator-scale: 1.4142136;
   --narrator-h: calc(var(--float-h) * var(--narrator-scale));
-  --narrator-pad: calc(var(--float-pad) * var(--narrator-scale));
   --narrator-glyph: calc(var(--float-glyph) * var(--narrator-scale));
-  --narrator-w: calc(var(--narrator-glyph) + var(--narrator-pad) * 2 + 2px);
+  --narrator-w: var(--narrator-h);
   /* Open, it carries Juan's subtitles beside the glyph — Dynamic Island
      width, never wider than the screen allows. */
   --narrator-w-open: min(30rem, calc(100vw - 2.5rem));
@@ -102,13 +129,20 @@
      Both resolve against whatever box uses them. */
   --screen-cols: calc(100% * 6 / 13 * 0.81) 1fr;
   /* Where a full panel's content starts under the fixed header, and its
-     bottom. The top scales with the viewport so the content sits a beat
-     lower on a tall screen instead of hugging the header. The -3px is
-     Juan's nudge: the floating pills freed the top, so the whole scene
-     stands a hair higher and the bottom breathes. Every panel — the
-     stories, the game, More Work — stands on these. */
-  --stage-top: calc(6rem + 5svh - 3px);
-  --stage-bottom: 2rem;
+     bottom. Every panel — the stories, the game, More Work — stands on
+     these. The top scales with the viewport's HEIGHT, so the content sits
+     a beat lower on a tall screen instead of hugging the header — and,
+     since 2026-10-13, a beat higher on a short one: set right on a
+     full-screen MacBook Air, it stood too low in that screen's maximised
+     window (~100pt shorter), because a near-fixed top took a bigger share
+     of a shorter screen. It gives up 0.215pt per point of height lost,
+     between a floor that clears the pills and a ceiling for tall
+     screens. */
+  --stage-top: clamp(5.5rem, 21.5svh - 4rem, 9rem);
+  /* The foot mirrors the head (Juan, 2026-10-13): a deck's arrows stand
+     as far above the screen's bottom edge as the header's pills stand
+     below its top one. */
+  --stage-bottom: var(--float-gap);
   /* The step between any two blocks: pitch → row, caption → row,
      row → foot. One value, everywhere. */
   --gap-block: 2.5rem;
@@ -119,7 +153,7 @@
 
 @media (max-width: 64rem) {
   :root {
-    --stage-top: calc(5rem + 5svh - 3px);
+    --stage-top: clamp(4.5rem, 21.5svh - 5rem, 8rem);
     --gap-block: 2rem;
   }
 }
@@ -130,12 +164,14 @@
        2026-10-05): its eyebrow half a step under the pills. It started
        94px down, under 38px of nothing; standing it ON the pills' line
        (20px) was too high — the picture crowded the chrome. */
-    --stage-top: calc(var(--header-h) + 0.5rem);
+    /* Just under the pills (Juan, 2026-10-13: 1.75rem read as a phone's
+       room spent on nothing, then 1rem and 0.75rem a little low). */
+    --stage-top: calc(var(--header-h) + 0.375rem);
     --stage-bottom: 1.25rem;
     --gap-block: 1.5rem;
     /* Where every panel's PICTURE starts — under the eyebrow and its
-       1.5rem step (PanelDeck), and the stories' phones on the same line. */
-    --media-top-m: calc(var(--stage-top) + 3.5rem);
+       0.75rem step (PanelDeck), and the stories' phones on the same line. */
+    --media-top-m: calc(var(--stage-top) + 2.75rem);
   }
 }
 
@@ -399,19 +435,11 @@ html.is-jumping body {
 
 /* ---------- the deck (lib/deck.ts) ----------
    One card on stage at a time, all of them in one grid cell; the deck sets
-   `--card-w`. A turn is layered: each `[data-deck-part]` moves on its own,
-   in the order its `--i` gives it, and `--dir` (set by the script) is the
-   way the deck is turning — +1 forwards, -1 back.
-
-   LEAVING: every part drifts out the way of the turn and fades, all at
-   once and quickly, so the stage clears before the new card has landed.
-   ARRIVING: the parts stand on the far side (`.is-arriving`, no
-   transition), then come in one after another — the picture first, the
-   words after it — with the text sharpening out of a light blur. The
-   picture never blurs: a filter changing over a whole screenshot repaints
-   it every frame. */
+   `--card-w`. The card leaving (`.is-leaving`) stays drawn while it fades
+   out; the one arriving is set to transparent with no transition
+   (`.is-arriving`) and released, so the two cross. Each `[data-deck-part]`
+   fades on its own — a hand-off (AppsShowcase) holds one part still. */
 .deck-card {
-  --drift: 2.5rem;
   grid-area: 1 / 1;
   width: var(--card-w);
   visibility: hidden;
@@ -431,102 +459,47 @@ html.is-jumping body {
 /* `will-change` keeps every part on its own layer for good: a part that
    left its layer the moment its turn ended was re-drawn snapped to the
    pixel grid, and on a phone the whole card visibly settled half a pixel
-   up as it landed. */
-.deck-card [data-deck-part] {
-  will-change: transform, opacity;
-  opacity: 0;
-  transform: translateX(calc(var(--dir, 1) * var(--drift) * -1));
-  transition:
-    opacity calc(var(--beat) / 2) var(--ease),
-    transform calc(var(--beat) / 2) var(--ease),
-    filter calc(var(--beat) / 2) var(--ease),
-    color calc(var(--beat) / 2) var(--ease);
-}
+   up as it landed.
 
-.deck-card [data-deck-part='text'] {
-  filter: blur(0.375rem);
-  /* Leaving words clear at the micro beat, so they are gone before the
-     new ones land in the same column. */
+   A TURN IS A PLAIN, QUICK FADE (Juan, 2026-10-13), on a desk and a phone
+   alike. It was a slide (the picture travelling 4rem), then a fade with a
+   half-rem nudge, and seen card after card any movement tired the eye.
+   Nothing moves now. The PICTURES cross-fade, the one leaving and the one
+   arriving at once, linearly, so the two always add up to one picture.
+   The WORDS do not cross — two paragraphs over each other at half ink
+   read as a smudge — so the old ones go at the micro beat and the new
+   ones come in at it once they have. */
+.deck-card [data-deck-part] {
+  will-change: opacity;
+  opacity: 0;
   transition:
-    opacity var(--dur-micro) var(--ease),
-    transform var(--dur-micro) var(--ease),
-    filter var(--dur-micro) var(--ease),
-    color calc(var(--beat) / 2) var(--ease);
+    opacity var(--dur-quick) linear,
+    color var(--dur-quick) var(--ease);
 }
 
 .deck-card.is-current [data-deck-part] {
   opacity: 1;
-  transform: translateX(0);
-  filter: none;
+}
+
+.deck-card [data-deck-part='text'] {
   transition:
-    opacity var(--beat) var(--ease),
-    transform calc(var(--beat) * 1.25) var(--ease),
-    filter var(--beat) var(--ease),
-    color calc(var(--beat) / 2) var(--ease);
-  transition-delay:
-    calc(var(--beat) / 6 + var(--i, 0) * var(--beat) / 9),
-    calc(var(--beat) / 6 + var(--i, 0) * var(--beat) / 9),
-    calc(var(--beat) / 6 + var(--i, 0) * var(--beat) / 9),
-    0s;
+    opacity var(--dur-micro) linear,
+    color var(--dur-quick) var(--ease);
+}
+
+.deck-card.is-current [data-deck-part='text'] {
+  transition:
+    opacity var(--dur-micro) linear var(--dur-micro),
+    color var(--dur-quick) var(--ease);
 }
 
 .deck-card.is-arriving [data-deck-part] {
-  transform: translateX(calc(var(--dir, 1) * var(--drift)));
   transition: none;
 }
 
-/* Words are READ, not watched: they land almost at once — the page's
-   micro beat for the fade and the sharpening, a short slide, a hair
-   between lines — so the picture is the only thing still moving. At the
-   picture's pace they read as slow (Juan, 2026-10-02); the stories'
-   caption swap was cut to 50ms for the same reason. */
-.deck-card.is-current [data-deck-part='text'] {
-  transition:
-    opacity var(--dur-micro) var(--ease),
-    transform calc(var(--beat) / 2) var(--ease),
-    filter var(--dur-micro) var(--ease),
-    color calc(var(--beat) / 2) var(--ease);
-  transition-delay:
-    calc(var(--beat) / 12 + var(--i, 0) * var(--beat) / 24),
-    calc(var(--beat) / 12 + var(--i, 0) * var(--beat) / 24),
-    calc(var(--beat) / 12 + var(--i, 0) * var(--beat) / 24),
-    0s;
-}
-
-/* The picture travels further than the words — the depth in the turn. */
-.deck-card [data-deck-part='picture'] {
-  --drift: 4rem;
-}
-
-/* A phone turns its decks at a thumb's pace: the picture lands in half
-   the time and leaves at the micro beat — at the desk's pace a swipe felt
-   like waiting (Juan, 2026-10-02). The words already run at the micro
-   beat everywhere. */
-@media (max-width: 48rem) {
-  .deck-card [data-deck-part='picture'] {
-    --drift: 3rem;
-    transition:
-      opacity var(--dur-micro) var(--ease),
-      transform var(--dur-micro) var(--ease);
-  }
-
-  .deck-card.is-current [data-deck-part='picture'] {
-    transition:
-      opacity calc(var(--beat) / 2) var(--ease),
-      transform calc(var(--beat) * 0.6) var(--ease);
-    transition-delay: calc(var(--beat) / 12);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .deck-card [data-deck-part],
-  .deck-card.is-arriving [data-deck-part] {
-    transform: none;
-    filter: none;
-  }
-
-  .deck-card.is-current [data-deck-part] {
-    transition: opacity calc(var(--beat) / 2) linear;
+  .deck-card [data-deck-part] {
+    transition: opacity var(--dur-quick) linear;
   }
 }
 
@@ -540,14 +513,14 @@ html.is-stepped .story .lockup,
 html.is-stepped .story .actions,
 html.is-stepped [data-hero-inner] {
   transition:
-    transform calc(var(--beat) * 0.75) var(--ease),
-    opacity calc(var(--beat) * 0.75) var(--ease);
+    transform var(--dur-turn) var(--ease),
+    opacity var(--dur-turn) var(--ease);
 }
 
 html.is-stepped .story .intro-scene,
 html.is-stepped .story .cap,
 html.is-stepped .story .deck-controls {
-  transition: opacity calc(var(--beat) * 0.75) var(--ease);
+  transition: opacity var(--dur-turn) var(--ease);
 }
 
 /* The narrator glides between anchors the same way. Its own width,
@@ -555,9 +528,9 @@ html.is-stepped .story .deck-controls {
    list. */
 html.is-stepped [data-narrator] {
   transition:
-    transform calc(var(--beat) * 0.75) var(--ease),
-    opacity calc(var(--beat) * 0.75) var(--ease),
-    width var(--beat) var(--ease),
+    transform var(--dur-turn) var(--ease),
+    opacity var(--dur-turn) var(--ease),
+    width var(--dur-settle) var(--ease),
     color var(--dur-micro) var(--ease),
     border-color var(--dur-micro) var(--ease);
 }
@@ -578,12 +551,24 @@ html.is-stepped [data-narrator] {
 /* ---------- the phone's narrator ----------
    On a phone the narrator does not travel between anchors (that motion,
    driven by script, dragged behind iOS's scroll): it sits still in the
-   bottom-right corner, clear of the home indicator, at the header pills'
-   size so the screenshots keep the room. The controller only fades it
-   where there is nothing to tell. */
+   bottom-right corner, clear of the home indicator, a step over the
+   header pills' size (below). The controller only fades it where there is
+   nothing to tell. */
 @media (max-width: 48rem) {
+  /* A step over the pills' 40px — 48, past Apple's 44pt touch target:
+     at the pills' size the one control a person taps on purpose read as
+     too small to hit (Juan, 2026-10-13). */
   :root {
-    --narrator-scale: 1;
+    --narrator-scale: 1.2;
+  }
+
+  /* On the hero it parks under the wordmark instead, centred, as on a
+     desk (director.ts sets the box). */
+  [data-narrator].is-parked {
+    top: var(--park-y) !important;
+    left: var(--park-x) !important;
+    right: auto;
+    bottom: auto;
   }
 
   [data-narrator] {
@@ -593,8 +578,8 @@ html.is-stepped [data-narrator] {
     bottom: calc(1rem + env(safe-area-inset-bottom));
     transform: none !important;
     transition:
-      opacity calc(var(--beat) * 0.75) var(--ease),
-      width var(--beat) var(--ease),
+      opacity var(--dur-turn) var(--ease),
+      width var(--dur-settle) var(--ease),
       color var(--dur-micro) var(--ease),
       border-color var(--dur-micro) var(--ease) !important;
   }
@@ -610,20 +595,122 @@ html.is-stepped [data-narrator] {
    dark ramp so it never bands into rings (the room light's lesson). */
 @property --scene-a {
   syntax: '<color>';
-  inherits: false;
+  inherits: true;
   initial-value: transparent;
 }
 
 @property --scene-b {
   syntax: '<color>';
-  inherits: false;
+  inherits: true;
   initial-value: transparent;
 }
 
 @property --scene-c {
   syntax: '<color>';
-  inherits: false;
+  inherits: true;
   initial-value: transparent;
+}
+
+/* ---------- desktop Safari ----------
+   The floating controls — the narrator, the header's pills, the apps'
+   switcher — carry a frosted backdrop (blur 12px) and move with the page
+   or over it as it scrolls. Desktop Safari re-blurs every such layer each
+   frame, and the scroll read as dragging there, though not in Chrome
+   (Juan, 2026-10-13). On it they take a near-solid ground instead: the
+   frost is barely visible at 82% anyway. */
+html.is-desk-safari [data-narrator],
+html.is-desk-safari .site-header > *,
+html.is-desk-safari .switcher {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: color-mix(in srgb, var(--surface) 95%, transparent) !important;
+}
+
+/* ---------- ten lines ----------
+   Every card's words — the apps', More Work's, the events' — stand in a
+   box ten of their lines tall at most and scroll past that (Juan,
+   2026-10-13; seven first, which cut too much), so a longer card never
+   stands taller than its neighbours or moves what is under it. The height
+   is set from the words' own line-height (Base.astro); the narrated
+   paragraph is scrolled into it. */
+[data-cap] {
+  /* THE FADE LIVES IN PADDING (Juan, 2026-10-13: a fade over the words
+     still showed the cut, and dimmed lines meant to be read). The box is
+     ten lines of CONTENT with a fade's depth of padding above and below,
+     so all ten lines stand clear and only words scrolled past them fade.
+     The TOP padding is taken back by the margin, since it shows words only
+     once scrolled; the BOTTOM one is not — words fade through it at rest,
+     and whatever follows the box (a store row, the links) has to stand
+     clear of that fade, not on it (Juan, 2026-10-13). A box sets the step
+     above it as `--cap-gap`, and the top fade never reaches past it onto
+     what stands above — a title, a picture: words scrolled up under a
+     title pressed against it — so the step is at least the fade's depth. */
+  --cap-fade: 1.75em;
+  box-sizing: content-box;
+  padding-top: var(--cap-fade);
+  margin-top: max(0px, calc(var(--cap-gap, 0px) - var(--cap-fade)));
+  position: relative;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  /* Visible, not a hairline: a reader has to see there is more. */
+  scrollbar-color: color-mix(in oklab, var(--ink-body) 35%, transparent) transparent;
+}
+
+/* No hard cut at either edge (Juan, 2026-10-13 — Salvalo's FAQ list,
+   salvalo_next_app `sixth.tsx`, solved the same thing): an edge with more
+   words behind it fades out — the top once scrolled, the bottom while
+   there is more below — so a cut line reads as "keep reading". A box with
+   nothing hidden carries no fade at all. */
+/* On a phone, reading to the end of a box must not fling the page on to
+   the next panel: the box keeps its own scroll. A box with nothing hidden
+   is not a scroller at all, so the page moves through it. A desk's wheel
+   still runs on to the page, as it always has. */
+@media (max-width: 48rem) {
+  [data-cap] {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* The fade's depth under the words, only while words are hidden there
+   (Base.astro sets `is-overflow`) — so a box that shows everything sits
+   as close to what follows as its title sits over it. */
+[data-cap].is-overflow {
+  padding-bottom: var(--cap-fade);
+}
+
+/* Eased, not linear — a straight ramp reads as an edge of its own. */
+[data-cap].is-scrolled {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgb(0 0 0 / 0.12) calc(var(--cap-fade) * 0.35),
+    rgb(0 0 0 / 0.45) calc(var(--cap-fade) * 0.65),
+    #000 var(--cap-fade)
+  );
+}
+
+[data-cap].is-more {
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - var(--cap-fade)),
+    rgb(0 0 0 / 0.45) calc(100% - var(--cap-fade) * 0.65),
+    rgb(0 0 0 / 0.12) calc(100% - var(--cap-fade) * 0.35),
+    transparent 100%
+  );
+}
+
+[data-cap].is-scrolled.is-more {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgb(0 0 0 / 0.12) calc(var(--cap-fade) * 0.35),
+    rgb(0 0 0 / 0.45) calc(var(--cap-fade) * 0.65),
+    #000 var(--cap-fade),
+    #000 calc(100% - var(--cap-fade)),
+    rgb(0 0 0 / 0.45) calc(100% - var(--cap-fade) * 0.65),
+    rgb(0 0 0 / 0.12) calc(100% - var(--cap-fade) * 0.35),
+    transparent 100%
+  );
 }
 
 @property --scene-k {
@@ -645,44 +732,67 @@ html.is-stepped [data-narrator] {
 }
 
 .scene {
-  /* One fixed place for every panel — the media's side. Following the
-     picture (a peeking phone, a rising one) was tried and read as a
-     deformed, cut-off light (Juan, 2026-10-04); a story's opener simply
-     lends no light, and the room lights when the first slide lands. */
+  /* One fixed place for every panel — the media's side — except behind a
+     PEEKING phone (an app's welcome, `data-scene-at`), where it moves to
+     the part of the phone that shows (Juan, 2026-10-13: a light centred
+     where no picture stands read as wrong). Following the WHOLE phone,
+     cut-off part included, read as a deformed light (2026-10-04) — so it
+     follows only what is on screen.
+     IT MOVES BY TRANSFORM, never by the gradients' own position: moving
+     those repainted the whole screen every frame, which Safari could not
+     keep up with (2026-10-13). The light (`::before`) stands at 70% / 48%
+     and slides (`--scene-sx`/`-sy`, Base.astro), which the compositor
+     does alone. ONLY the light slides: the grain (`::after`) stays put —
+     sliding the whole layer took the grain with it and left a bare strip
+     with a hard edge where it had been. The hues are inherited from here,
+     so their fades run once, on this element. */
   --scene-x: 70%;
   --scene-y: 48%;
   /* Its width. A 3:2 screen is wide and short, so the light spills out
      above, below and beside it — a glow behind a monitor. */
   --scene-rx: 34%;
+  /* How strongly the light shows, against its default. */
+  --scene-gain: 1;
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  transition:
+    --scene-a var(--dur-ambient) var(--ease),
+    --scene-b var(--dur-ambient) var(--ease),
+    --scene-c var(--dur-ambient) var(--ease),
+    --scene-k var(--dur-ambient) var(--ease);
+}
+
+.scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translate(var(--scene-sx, 0px), var(--scene-sy, 0px));
+  will-change: transform;
+  /* At the pace of the hand-off's flight (AppsShowcase), so the light
+     moves WITH the phone rather than after it. */
+  transition: transform var(--dur-turn) var(--ease);
   background:
     /* Close around the media, not across the page (Juan, 2026-10-04: the
        first pass was too big — light, not a painting). */
     radial-gradient(
       var(--scene-rx) 46% at var(--scene-x) var(--scene-y),
-      color-mix(in oklab, var(--scene-a) calc(22% * var(--scene-k)), transparent),
+      color-mix(in oklab, var(--scene-a) calc(22% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     ),
     radial-gradient(
       calc(var(--scene-rx) * 0.65) 30% at calc(var(--scene-x) + var(--scene-rx) * 0.35)
         calc(var(--scene-y) + 26%),
-      color-mix(in oklab, var(--scene-b) calc(14% * var(--scene-k)), transparent),
+      color-mix(in oklab, var(--scene-b) calc(14% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     ),
     radial-gradient(
       calc(var(--scene-rx) * 0.7) 28% at calc(var(--scene-x) - var(--scene-rx) * 0.24)
         calc(var(--scene-y) - 28%),
-      color-mix(in oklab, var(--scene-c) calc(10% * var(--scene-k)), transparent),
+      color-mix(in oklab, var(--scene-c) calc(10% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     );
-  transition:
-    --scene-a calc(var(--beat) * 2) var(--ease),
-    --scene-b calc(var(--beat) * 2) var(--ease),
-    --scene-c calc(var(--beat) * 2) var(--ease),
-    --scene-k calc(var(--beat) * 2) var(--ease);
 }
 
 .scene::after {
@@ -699,9 +809,12 @@ html.is-stepped [data-narrator] {
    — set when a story's phone hid the light's middle — ran far past the
    apps' narrower phones and read as too intense; 24%, More Work's own
    light-to-picture proportion, read as too small beside a phone that tall.
-   The middle of the two. */
+   The middle of the two — and a step dimmer than a screen's (2026-10-13:
+   the apps' larger light still read as louder than More Work's and the
+   events'). */
 .scene[data-kind='phone'] {
   --scene-rx: 38%;
+  --scene-gain: 0.7;
 }
 
 /* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of

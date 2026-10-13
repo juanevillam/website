@@ -52,8 +52,6 @@ export type DeckItem = {
    *  of a group by " – " (a role; a span of years; a place; a date). */
   meta: Segment[][];
   body: Rich;
-  /** The phone's version of the body: one short, whole thought. */
-  phone: Rich;
   /** The body's narration clip, by convention (lib/narration). */
   clip: string;
   /** One 3:2 capture, 1440 x 960 (a string); upright media (one, two
@@ -61,6 +59,9 @@ export type DeckItem = {
    *  of its own, passed in as the named slot `{ slot }`. */
   image: string | Media[] | { slot: string };
   links: { label: Segment; href: string }[];
+  /** Where the picture itself goes when clicked: the site it shows. A
+   *  mouse shortcut only — the same place is a link in the words. */
+  visit?: string;
   /** The picture whose colours light the page (lib/scene), for a screen
    *  of its own — a capture or photos light it by themselves. */
   scene?: string;
@@ -88,17 +89,19 @@ const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
 
 // The frames of a card whose screen is photos: three pictures or fewer
 // take ONE frame, one at a time (two frames of one picture each read as
-// static, Juan, 2026-10-11); more take two — odd photos left, even right —
-// and the videos always go to the right frame, one after each of its
-// photos, so two never play back to back.
+// static, Juan, 2026-10-11); more take two. The VIDEOS come first, in the
+// order listed (Juan, 2026-10-13): arriving at a card shows it moving,
+// then its photos — and in two frames they all lead the right one. The
+// photos fill the LEFT frame, in order, until it holds as many as the
+// right will, and the rest follow the videos — so both frames turn
+// through the same number of pictures.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
-  if (all.length <= 3) return [[...all.filter(m => !isVideo(m)), ...all.filter(isVideo)]];
-  const photos = all.filter(m => !isVideo(m));
-  const [left, right] = [0, 1].map(c => photos.filter((_, i) => i % 2 === c));
   const videos = all.filter(isVideo);
-  const turns = right.flatMap((m, i) => (videos[i] ? [m, videos[i]] : [m]));
-  return [left, [...turns, ...videos.slice(right.length)]];
+  const photos = all.filter(m => !isVideo(m));
+  if (all.length <= 3) return [[...videos, ...photos]];
+  const half = Math.min(photos.length, Math.ceil(all.length / 2));
+  return [photos.slice(0, half), [...videos, ...photos.slice(half)]];
 };
 
 // Screens of their own (the game's), rendered from the named slots.
@@ -177,6 +180,8 @@ for (const p of items)
                 class="body"
                 data-deck-part="text"
                 style="--i: 3"
+                data-cap
+                data-cap-phone="6"
                 data-narr-para
                 data-clip-en={narr[i].clip?.en}
                 data-clip-es={narr[i].clip?.es}
@@ -199,21 +204,6 @@ for (const p of items)
                   </>
                 )}
               </p>
-              <p class="body phone-copy" data-deck-part="text" style="--i: 3">
-                {typeof p.phone === 'string' ? (
-                  <T k={p.phone} />
-                ) : 'k' in p.phone ? (
-                  <TL k={p.phone.k} links={p.phone.links} />
-                ) : (
-                  <>
-                    <T k={p.phone.before} /><a
-                      href={p.phone.href}
-                      target="_blank"
-                      rel="noopener noreferrer"><T k={p.phone.link} /></a
-                    ><T k={p.phone.after} />
-                  </>
-                )}
-              </p>
               {p.links.length > 0 && (
                 <ul class="links" data-deck-part="text" style="--i: 4">
                   {p.links.map(link => (
@@ -232,29 +222,121 @@ for (const p of items)
             </div>
             {typeof p.image === 'object' && !Array.isArray(p.image) ? (
               <div class="screen is-own" data-deck-part="picture">
+                {/* A phone's name and facts, ON the picture (the CSS). */}
+                <div class="screen-caption" aria-hidden="true">
+                  <span class="cap-name">{p.name}</span>
+                  <span class="label cap-meta">
+                    {/* Thin spaces round the separators: on the picture the
+                        facts read as one short tag, not spread across it. */}
+                    {p.meta.map((group, g) => (
+                      <>
+                        {g > 0 && '\u2009·\u2009'}
+                        {group.map((part, n) => (
+                          <>
+                            {n > 0 && '\u2009–\u2009'}
+                            {typeof part === 'string' ? part : <T k={part.k} />}
+                          </>
+                        ))}
+                      </>
+                    ))}
+                  </span>
+                </div>
                 <Fragment set:html={slotted[p.image.slot]} />
               </div>
             ) : typeof p.image === 'string' ? (
               <div class="screen" data-deck-part="picture">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  width="1440"
-                  height="960"
-                  loading="lazy"
-                  decoding="async"
-                  draggable="false"
-                />
+                {/* A phone's name and facts, ON the picture (the CSS). */}
+                <div class="screen-caption" aria-hidden="true">
+                  <span class="cap-name">{p.name}</span>
+                  <span class="label cap-meta">
+                    {/* Thin spaces round the separators: on the picture the
+                        facts read as one short tag, not spread across it. */}
+                    {p.meta.map((group, g) => (
+                      <>
+                        {g > 0 && '\u2009·\u2009'}
+                        {group.map((part, n) => (
+                          <>
+                            {n > 0 && '\u2009–\u2009'}
+                            {typeof part === 'string' ? part : <T k={part.k} />}
+                          </>
+                        ))}
+                      </>
+                    ))}
+                  </span>
+                </div>
+                {p.visit ? (
+                  // Out of the tab order and hidden from readers: the
+                  // words already carry this link, once.
+                  <a
+                    class="visit"
+                    href={p.visit}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                    <img
+                      src={p.image}
+                      alt=""
+                      width="1440"
+                      height="960"
+                      loading="lazy"
+                      decoding="async"
+                      draggable="false"
+                    />
+                  </a>
+                ) : (
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    width="1440"
+                    height="960"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                )}
               </div>
             ) : (
               <div class="screen is-photos" data-deck-part="picture" data-frames={columns(p).length}>
+                {/* A phone's name and facts, ON the picture (the CSS). */}
+                <div class="screen-caption" aria-hidden="true">
+                  <span class="cap-name">{p.name}</span>
+                  <span class="label cap-meta">
+                    {/* Thin spaces round the separators: on the picture the
+                        facts read as one short tag, not spread across it. */}
+                    {p.meta.map((group, g) => (
+                      <>
+                        {g > 0 && '\u2009·\u2009'}
+                        {group.map((part, n) => (
+                          <>
+                            {n > 0 && '\u2009–\u2009'}
+                            {typeof part === 'string' ? part : <T k={part.k} />}
+                          </>
+                        ))}
+                      </>
+                    ))}
+                  </span>
+                </div>
                 {/* Event pictures: one or two frames, each cycling through
                     its share (the script below) — three across read as a
                     contact sheet. Each picture stands whole over a still
                     blur of itself, so a sideways photo or a video keeps
                     its shape and every event card is the same size. */}
-                {columns(p).map((layers, c) => (
-                  <div class="photo-cell" data-col={c}>
+                {columns(p).map((layers, c) => {
+                  // A frame with more than one picture turns on a click
+                  // too, so a person can go through them at their own
+                  // pace (Juan, 2026-10-13).
+                  const Cell = layers.length > 1 ? 'button' : 'div';
+                  return (
+                  <Cell
+                    class:list={['photo-cell', layers.length > 1 && 'is-turnable']}
+                    data-col={c}
+                    {...(layers.length > 1 ? { type: 'button' } : {})}
+                  >
+                    {layers.length > 1 && (
+                      <span class="sr"><T k="deck.next" /></span>
+                    )}
                     {layers.map((m, k) => (
                       <div class:list={['layer', k === 0 && 'is-on']} data-scene-photo={photoScenes[m]}>
                         <img class="fill" src={still(m)} alt="" aria-hidden="true" loading="lazy" decoding="async" />
@@ -285,8 +367,9 @@ for (const p of items)
                         )}
                       </div>
                     ))}
-                  </div>
-                ))}
+                  </Cell>
+                  );
+                })}
               </div>
             )}
           </article>
@@ -375,7 +458,7 @@ for (const p of items)
   .narr-static .narr-anchor {
     margin-top: 0;
     transform: translateY(var(--slot-y, 0px));
-    transition: transform calc(var(--beat) * 0.75) var(--ease);
+    transition: transform var(--dur-turn) var(--ease);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -428,9 +511,14 @@ for (const p of items)
     margin-top: 0.5rem;
   }
 
-  .words .body,
   .links {
     margin-top: 1.25rem;
+  }
+
+  /* The body is a ten-line box (global.css `[data-cap]`), which takes the
+     step above it as a variable. */
+  .words .body {
+    --cap-gap: 1.25rem;
   }
 
   /* A step below the stars' titles — this panel is secondary. */
@@ -441,7 +529,8 @@ for (const p of items)
     line-height: 1.05;
   }
 
-  .meta {
+  .meta,
+  .cap-meta {
     text-transform: none;
     letter-spacing: 0;
   }
@@ -507,19 +596,63 @@ for (const p of items)
     grid-template-columns: 1fr;
   }
 
+  /* A phone's event frame is one big picture rather than two small ones
+     side by side (the script folds them): upright 4:5, so a 3:4 photo
+     nearly fills it — square on a short phone, where 4:5 would run the
+     words under the docked controls. (4:5 did that at 844pt while the
+     words ran ten lines; at six they clear it.) */
+  @media (max-width: 48rem) {
+    .screen.is-photos {
+      aspect-ratio: 4 / 5;
+    }
+  }
+
+  @media (max-width: 48rem) and (max-height: 50rem) {
+    .screen.is-photos {
+      aspect-ratio: 1;
+    }
+  }
+
   .photo-cell {
     position: relative;
     overflow: hidden;
   }
 
+  /* A frame that turns on a click: a bare button over the pictures. */
+  button.photo-cell {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .visit {
+    display: block;
+    cursor: pointer;
+  }
+
   /* Each picture is a layer: whole, centred, over a still blur of
-     itself. The layer showing is `.is-on`; the hand-over is a two-beat
-     cross-fade. */
+     itself. The layer showing is `.is-on`; the hand-over is a cross-fade
+     at the ladder's `settle` (2026-10-13 — two beats read as slow). */
   .layer {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity calc(var(--beat) * 2) linear;
+    transition: opacity var(--dur-settle) linear;
   }
 
   .layer.is-on {
@@ -559,6 +692,12 @@ for (const p of items)
     padding-top: var(--gap-block);
   }
 
+  /* A phone's caption on the picture (below); a desk keeps its words
+     beside it. */
+  .screen-caption {
+    display: none;
+  }
+
   /* ---------- phones ---------- */
 
   @media (max-width: 48rem) {
@@ -567,14 +706,13 @@ for (const p of items)
        tallest card's height; without `align-content: start` that spare
        height went into the rows and stood each card's words a different
        distance under its screen (16, 28 and 53px measured in More Work). */
+    /* A hair between the picture and the words: the words' box brings
+       its own fade's depth of air (global.css `[data-cap]`), so words
+       scrolled up never fade onto the picture. */
     .card {
       grid-template-columns: 1fr;
       align-content: start;
-      gap: var(--media-gap-m);
-    }
-
-    .eyebrow {
-      justify-content: center;
+      gap: 0.25rem;
     }
 
     /* Over the screen, which now stands ABOVE the words but still comes
@@ -584,12 +722,6 @@ for (const p of items)
     .words {
       position: relative;
       z-index: 1;
-      align-items: center;
-      text-align: center;
-    }
-
-    .links {
-      justify-content: center;
     }
 
     .screen {
@@ -599,7 +731,12 @@ for (const p of items)
         var(--media-glow),
         0 2rem 4rem rgba(0, 0, 0, 0.55),
         0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
-      transition: box-shadow calc(var(--beat) * 2) var(--ease);
+      /* The deck's cross-fade restated (global.css `.deck-card`): this
+         list REPLACES it, and without its opacity a phone's picture
+         popped in while the words faded (2026-10-13). */
+      transition:
+        opacity var(--dur-quick) linear,
+        box-shadow var(--dur-ambient) var(--ease);
     }
 
     .words .body {
@@ -610,7 +747,6 @@ for (const p of items)
     /* A phone's caption steps: the name and its facts tight (0.5rem),
        then each group one 1rem step — the 1.25rem a wide card uses read
        as a gap under the facts' small mono line. */
-    .words .body,
     .links {
       margin-top: 1rem;
     }
@@ -619,21 +755,91 @@ for (const p of items)
       font-size: 1.5rem;
     }
 
+    /* THE NAME AND ITS FACTS GO ON THE PICTURE (Juan, 2026-10-13): a
+       caption along its foot over a dark fade, so the words under it
+       start straight at the paragraph and a phone's height goes to the
+       picture. The words' own name and facts stay for readers, unseen. */
+    .screen {
+      position: relative;
+    }
+
+    .screen-caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      padding: 2.75rem 0.875rem 0.75rem;
+      /* Dark enough to read on any picture — a bright site or a white
+         wall — on an EASED ramp (a scrim curve, slow at both ends): a
+         straight or short ramp shows where it starts as a hard line, which
+         reads cheap (Juan, 2026-10-13). */
+      background: linear-gradient(
+        to bottom,
+        rgb(0 0 0 / 0.0) 0%,
+        rgb(0 0 0 / 0.012) 8.1%,
+        rgb(0 0 0 / 0.044) 15.5%,
+        rgb(0 0 0 / 0.094) 22.5%,
+        rgb(0 0 0 / 0.158) 29%,
+        rgb(0 0 0 / 0.233) 35.3%,
+        rgb(0 0 0 / 0.317) 41.2%,
+        rgb(0 0 0 / 0.405) 47.1%,
+        rgb(0 0 0 / 0.495) 52.9%,
+        rgb(0 0 0 / 0.583) 58.8%,
+        rgb(0 0 0 / 0.667) 64.7%,
+        rgb(0 0 0 / 0.742) 71%,
+        rgb(0 0 0 / 0.806) 77.5%,
+        rgb(0 0 0 / 0.856) 84.5%,
+        rgb(0 0 0 / 0.888) 91.9%,
+        rgb(0 0 0 / 0.9) 100%
+      );
+      pointer-events: none;
+    }
+
+    .cap-name {
+      font-size: 1.125rem;
+      font-weight: 800;
+      letter-spacing: var(--track-heading);
+      line-height: 1.1;
+      color: #fff;
+    }
+
+    .cap-meta {
+      font-size: 0.6875rem;
+      color: rgb(255 255 255 / 0.72);
+    }
+
+    .words .name,
+    .words .meta {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* The paragraph is the words' first line now: the card's own gap
+       under the picture is its step. */
+    .words .body {
+      --cap-gap: 0px;
+    }
+
+    /* The eyebrow sits close over the picture it names. */
+    .carousel {
+      margin-top: 0.75rem;
+    }
   }
 
   /* ---------- phone ----------
-     The short line instead of the paragraph (which stays, hidden, for the
-     narration); the narrator sits in its corner there, so no card keeps
-     a slot for it and no anchor rides over the deck. */
-  .phone-copy {
-    display: none;
-  }
-
+     The whole narrated paragraph, as on a desk — a phone is narrated too
+     (Juan, 2026-10-13; it showed a shorter line of its own until then).
+     The narrator sits in its corner there, so no card keeps a slot for it
+     and no anchor rides over the deck. */
   @media (max-width: 48rem) {
-    .phone-copy {
-      display: block;
-    }
-
     /* The deck's controls share the bottom row with the phone's corner
        narrator: arrows to the left, narrator to the right. */
     /* Docked beside the narrator (data-dock, global.css): as wide as
@@ -644,7 +850,6 @@ for (const p of items)
       padding-top: 0;
     }
 
-    .words .body[data-narr-para],
     .narr-slot,
     .narr-static {
       display: none;
@@ -655,10 +860,30 @@ for (const p of items)
 <script>
   import { createDeck, watchSlots } from '../lib/deck';
   import { followPointer } from '../lib/tilt';
+  import { dur } from '../lib/motion';
 
   // Every panel deck on the page (More Work, Events) — one script for all.
   for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
     const cards = [...carousel.querySelectorAll<HTMLElement>('.card')];
+
+    // ONE FRAME ON A PHONE (Juan, 2026-10-13): two upright columns across
+    // a phone's width stood each photo about 195 x 260 — too small for
+    // pictures taken on a camera. A phone folds them into one tall frame
+    // (the CSS), in the same order a desk shows them: the videos first,
+    // then the left frame's photos, then the right's.
+    if (matchMedia('(max-width: 48rem)').matches)
+      for (const screen of carousel.querySelectorAll<HTMLElement>('.screen.is-photos')) {
+        const [left, right] = [...screen.querySelectorAll<HTMLElement>('.photo-cell')];
+        if (!left || !right) continue;
+        const theirs = [...right.querySelectorAll<HTMLElement>('.layer')];
+        const videos = theirs.filter(l => l.querySelector('video'));
+        const photos = theirs.filter(l => !l.querySelector('video'));
+        const all = [...videos, ...left.querySelectorAll<HTMLElement>('.layer'), ...photos];
+        all.forEach((layer, i) => layer.classList.toggle('is-on', i === 0));
+        left.append(...all);
+        right.remove();
+        screen.dataset.frames = '1';
+      }
     const section = carousel.closest<HTMLElement>('section');
     const paras = cards.map(c => c.querySelector<HTMLElement>('[data-narr-para]'));
     const stillAnchor = carousel.querySelector<HTMLElement>('.narr-static .narr-anchor');
@@ -703,21 +928,26 @@ for (const p of items)
     watchSlots(cards, standAnchor);
 
     // EVENT PICTURES cycle only while their card is in front and the panel
-    // is on screen: a photo holds ten beats (6s), a video holds until it
-    // ends, and the right frame turns a beat after the left. A video alone
-    // in its frame loops. With reduced motion the first picture stands
-    // still — a video as its poster.
-    const BEAT = 600;
+    // HOLDS the screen — its middle line inside it, not a sliver showing at
+    // an edge, or the videos ran while the page was still on More Work and
+    // were half over on arrival. Every arrival, at the panel or at the
+    // card, starts each frame over: its first picture, a video from 0:00
+    // (Juan, 2026-10-13). A photo holds ten beats (6s); a video stands on
+    // its first frame for two (1.2s), then plays until it ends; and the
+    // right frame turns a beat after the left. A video alone in its frame
+    // loops. With reduced motion the first picture stands still — a video
+    // as its poster.
+    const BEAT = dur('settle');
     const still = matchMedia('(prefers-reduced-motion: reduce)');
     let seen = false;
     const frames = cards.map(card =>
       [...card.querySelectorAll<HTMLElement>('.photo-cell')].map(cell => ({
+        cell,
         col: Number(cell.dataset.col),
         layers: [...cell.querySelectorAll<HTMLElement>('.layer')],
         i: 0,
         timer: 0,
         running: false,
-        started: false,
       }))
     );
     type Frame = (typeof frames)[number][number];
@@ -727,9 +957,18 @@ for (const p of items)
       const v = videoOf(f);
       if (v) {
         v.preload = 'auto';
-        // Refused (a hidden tab, a browser that will not autoplay): the
-        // next sync tries again.
-        v.play().catch(() => (f.running = false));
+        // Refused — usually a pause landing before the load (AbortError),
+        // or a browser holding autoplay back: try again once the video can
+        // play, as long as the frame should still be playing it.
+        v.play().catch(() => {
+          v.addEventListener(
+            'canplay',
+            () => {
+              if (f.running && videoOf(f) === v) v.play().catch(() => {});
+            },
+            { once: true }
+          );
+        });
         if (f.layers.length > 1) v.onended = () => turn(f);
       } else if (f.layers.length > 1) f.timer = window.setTimeout(() => turn(f), wait);
     };
@@ -741,6 +980,24 @@ for (const p of items)
       if (v) v.currentTime = 0;
       hold(f, BEAT * 10);
     };
+    // A click turns the frame now, whatever it was holding — a photo's
+    // beat or a video mid-play — and the next turn counts from here.
+    for (const f of frames.flat())
+      if (f.layers.length > 1)
+        f.cell.addEventListener('click', () => {
+          const v = videoOf(f);
+          if (v) {
+            v.onended = null;
+            v.pause();
+          }
+          if (f.running) turn(f);
+          else {
+            clearTimeout(f.timer);
+            f.layers[f.i].classList.remove('is-on');
+            f.i = (f.i + 1) % f.layers.length;
+            f.layers[f.i].classList.add('is-on');
+          }
+        });
     const sync = () =>
       frames.forEach((card, i) =>
         card.forEach(f => {
@@ -748,8 +1005,23 @@ for (const p of items)
           if (on === f.running) return;
           f.running = on;
           if (on) {
-            hold(f, BEAT * (f.started ? 10 : 10 + f.col));
-            f.started = true;
+            // From the top: the first picture, a video at its start.
+            f.layers[f.i].classList.remove('is-on');
+            f.i = 0;
+            f.layers[0].classList.add('is-on');
+            const v = videoOf(f);
+            if (v) {
+              // A VIDEO WAITS ITS TURN (Juan, 2026-10-13): it stands on its
+              // first frame while the card fades in and a beat more, then
+              // plays — started the instant the panel arrived, it read as
+              // already under way, as if it had begun without you.
+              v.preload = 'auto';
+              v.currentTime = 0;
+              clearTimeout(f.timer);
+              f.timer = window.setTimeout(() => {
+                if (f.running) hold(f, BEAT * 10);
+              }, BEAT * 2);
+            } else hold(f, BEAT * (10 + f.col));
           } else {
             clearTimeout(f.timer);
             videoOf(f)?.pause();
@@ -757,15 +1029,51 @@ for (const p of items)
         })
       );
     if (section && frames.some(c => c.length)) {
-      new IntersectionObserver(([e]) => {
-        seen = e.isIntersecting;
-        sync();
-      }).observe(section);
+      new IntersectionObserver(
+        ([e]) => {
+          seen = e.isIntersecting;
+          sync();
+        },
+        // A band round the viewport's middle: the panel holds the screen.
+        { rootMargin: '-45% 0px -45% 0px' }
+      ).observe(section);
       cards.forEach(c =>
         new MutationObserver(sync).observe(c, { attributes: true, attributeFilter: ['aria-hidden'] })
       );
       still.addEventListener('change', sync);
       document.addEventListener('visibilitychange', sync);
+    }
+
+    // WARM IT AHEAD (Juan, 2026-10-13): the panel's pictures are lazy, so
+    // the first arrival showed an empty frame while they loaded. Once the
+    // page has settled, every picture is fetched in the background; and
+    // two screens before the panel scrolls in, each card's first video
+    // starts to load — a screen ahead was not always enough on a quick
+    // snap down the page.
+    if (section) {
+      const warmPictures = () => {
+        for (const img of section.querySelectorAll<HTMLImageElement>('img[loading="lazy"]'))
+          img.loading = 'eager';
+      };
+      const whenIdle = () =>
+        'requestIdleCallback' in window
+          ? requestIdleCallback(warmPictures, { timeout: 3000 })
+          : setTimeout(warmPictures, 1500);
+      if (document.readyState === 'complete') whenIdle();
+      else addEventListener('load', whenIdle);
+      new IntersectionObserver(
+        ([e], io) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          warmPictures();
+          for (const card of frames)
+            for (const f of card) {
+              const v = f.layers[0]?.querySelector('video');
+              if (v && v.preload === 'none') v.preload = 'auto';
+            }
+        },
+        { rootMargin: '200% 0px' }
+      ).observe(section);
     }
 
     // The card's screen leans toward the pointer anywhere over the panel.
