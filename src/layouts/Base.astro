@@ -35,6 +35,12 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
         const lang = localStorage.getItem('lang') || 'en';
         document.documentElement.lang = lang;
         document.documentElement.dataset.lang = lang;
+        // Desktop Safari, by name: it re-blurs a backdrop-filtered layer
+        // every frame something moves under or with it, and the page's
+        // floating controls do both while it scrolls (global.css).
+        const ua = navigator.userAgent;
+        if (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Mobile/.test(ua))
+          document.documentElement.classList.add('is-desk-safari');
       })();
     </script>
   </head>
@@ -99,11 +105,32 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
         const k = Math.max(...shown.map(([, k]) => Number(k)));
         return `${hues.join(' ')}|${k}`;
       };
+      // A peeking picture (`data-scene-at`) moves the light to the middle of
+      // what of it is on screen; anything else leaves it in its place.
+      const standLight = (now?: HTMLElement) => {
+        const at = now?.querySelector<HTMLElement>('[data-scene-at]');
+        const r = at?.getBoundingClientRect();
+        if (!r || !r.width) {
+          scene!.style.removeProperty('--scene-sx');
+          scene!.style.removeProperty('--scene-sy');
+          return;
+        }
+        const left = Math.max(r.left, 0);
+        const right = Math.min(r.right, innerWidth);
+        const top = Math.max(r.top, 0);
+        const bottom = Math.min(r.bottom, innerHeight);
+        // How far the layer slides to put its light (at 70% / 48%) there.
+        const sx = (left + right) / 2 - innerWidth * 0.7;
+        const sy = (top + bottom) / 2 - innerHeight * 0.48;
+        scene!.style.setProperty('--scene-sx', `${sx.toFixed(1)}px`);
+        scene!.style.setProperty('--scene-sy', `${sy.toFixed(1)}px`);
+      };
       let last: string | undefined;
       const light = () => {
         if (!scene) return;
         const y = innerHeight / 2;
         const now = lit.find(el => el.getClientRects().length && showing(el, y));
+        standLight(now);
         const value = now && photosOf(now);
         if (value === last) return;
         last = value;
@@ -144,9 +171,99 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
         };
         addEventListener('scroll', ask, { passive: true });
         addEventListener('resize', ask, { passive: true });
+        // A deck turning or an app switching moves the light at once, not
+        // on the next tick — so it leaves with the phone, both ways.
+        const turned = new MutationObserver(ask);
+        for (const el of lit) turned.observe(el, { attributes: true, attributeFilter: ['class'] });
+        for (const el of document.querySelectorAll('[data-apps-deck]'))
+          turned.observe(el, { attributes: true, attributeFilter: ['hidden'] });
         setInterval(light, 200);
         light();
       }
+
+      // TEN LINES (global.css `[data-cap]`): each box is as tall as ten
+      // of its words' lines, measured from the first paragraph showing —
+      // asked again whenever it is drawn at a new size (a deck shown, a
+      // breakpoint, late fonts).
+      //
+      // A PHONE SETS ITS OWN (Juan, 2026-10-13), as `data-cap-phone`: a
+      // number of lines, or `fill` — every whole line that fits between
+      // the box's top and whatever stands under it, clear of the docked
+      // controls (an app's welcome, which shows no picture on a phone).
+      const LINES = 10;
+      const phoneQuery = matchMedia('(max-width: 48rem)');
+      // The docked row's height (the narrator, the tallest thing in it),
+      // its 1rem off the screen's foot, and a step of air above it.
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--narrator-h)';
+      const dockReserve = () => {
+        document.body.append(probe);
+        const h = probe.offsetHeight;
+        probe.remove();
+        return h + 16 + 24;
+      };
+      const capTo = (box: HTMLElement) => {
+        const ref =
+          box.tagName === 'P'
+            ? box
+            : [...box.querySelectorAll<HTMLElement>(':scope > p')].find(c => c.getClientRects().length);
+        if (!ref) return;
+        const lh = parseFloat(getComputedStyle(ref).lineHeight);
+        if (!lh) return;
+        // A title riding at the top of the box (a phone's app slide) is
+        // on top of the lines, not one of them.
+        const lead = ref === box ? 0 : ref.offsetTop - parseFloat(getComputedStyle(box).paddingTop);
+        const want = phoneQuery.matches ? box.dataset.capPhone : undefined;
+        const cs = getComputedStyle(box);
+        const padTop = parseFloat(cs.paddingTop);
+        const fade = padTop;
+        let lines = want && want !== 'fill' ? Number(want) : LINES;
+        if (want === 'fill') {
+          const section = box.closest('section');
+          const r = box.getBoundingClientRect();
+          // Whatever follows the box in its column (a store row).
+          const after = [...(box.parentElement?.children ?? [])]
+            .filter(el => el !== box && el.getClientRects().length)
+            .filter(el => box.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
+            .map(el => el.getBoundingClientRect().bottom);
+          const below = after.length ? Math.max(...after) - r.bottom : 0;
+          const top = r.top - (section?.getBoundingClientRect().top ?? 0);
+          const room = innerHeight - dockReserve() - top - padTop - fade - below;
+          lines = Math.max(3, Math.floor(room / lh));
+        }
+        box.style.maxHeight = `${lead + lh * lines}px`;
+        // Words hidden past the box: only then does it keep a fade's depth
+        // under them — a box that shows everything ends at its last line.
+        const words = box.scrollHeight - padTop - parseFloat(cs.paddingBottom);
+        box.classList.toggle('is-overflow', words > lead + lh * lines + 1);
+        more(box);
+      };
+      // Which edges have words behind them, for their fades.
+      const more = (box: HTMLElement) => {
+        box.classList.toggle('is-scrolled', box.scrollTop > 2);
+        box.classList.toggle('is-more', box.scrollTop + box.clientHeight < box.scrollHeight - 2);
+      };
+      const caps = [...document.querySelectorAll<HTMLElement>('[data-cap]')];
+      const recap = new ResizeObserver(entries => {
+        for (const e of entries) capTo(e.target as HTMLElement);
+      });
+      caps.forEach(box => {
+        recap.observe(box);
+        box.addEventListener('scroll', () => more(box), { passive: true });
+      });
+      document.fonts?.ready.then(() => caps.forEach(capTo));
+      // An app's deck shown by its tab: its boxes measured at once, without
+      // waiting on a frame.
+      new MutationObserver(records => {
+        for (const r of records)
+          (r.target as HTMLElement).querySelectorAll<HTMLElement>('[data-cap]').forEach(capTo);
+      }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+      // The paragraph being told scrolls into its box.
+      document.addEventListener('narr:para', e => {
+        const p = (e as CustomEvent<HTMLElement>).detail;
+        const box = p?.closest<HTMLElement>('[data-cap]');
+        if (box && box !== p) box.scrollTo({ top: p.offsetTop, behavior: 'smooth' });
+      });
 
       // Scroll entrances: reveal once, then let the element live untouched.
       const io = new IntersectionObserver(
