@@ -10,49 +10,20 @@ import ArcadeCabinet from './ArcadeCabinet.astro';
  * card is about the app and not the site (2026-10-02).
  *
  * Job titles and project names stay as they are in every locale; roles
- * are keys.
+ * are keys. A screen opens the site it shows when clicked (`visit`).
  */
 
-// Order is weight: the job, the startup, client work oldest last — and
-// the game after all of it.
+// Order is weight: the startup, the job, the game, then client work,
+// oldest last.
 const PROJECTS: DeckItem[] = [
-  {
-    id: 'crol',
-    name: 'Crol ERP Móvil',
-    meta: [['Lead Frontend Developer'], ['2022', { k: 'work.present' }]],
-    body: {
-      before: 'work.crol.before',
-      link: 'work.crol.link',
-      after: 'work.crol.after',
-      href: 'https://www.crol.mx',
-    },
-    phone: {
-      before: 'work.crol.before',
-      link: 'work.crol.link',
-      after: 'work.crol.m.after',
-      href: 'https://www.crol.mx',
-    },
-    clip: 'work.crol.body',
-    image: '/media/work/crol.jpg',
-    links: [
-      {
-        label: 'App Store',
-        href: 'https://apps.apple.com/mx/app/crol-erp-m%C3%B3vil/id6743251171',
-      },
-      {
-        label: 'Google Play',
-        href: 'https://play.google.com/store/apps/details?id=com.crolapp',
-      },
-    ],
-  },
   {
     id: 'salvalo',
     name: 'Salvalo',
     meta: [[{ k: 'work.cofounder' }], ['2024', { k: 'work.present' }]],
     body: 'work.salvalo.body',
-    phone: 'work.salvalo.m',
     clip: 'work.salvalo.body',
     image: '/media/work/salvalo.jpg',
+    visit: 'https://salvalo.app',
     links: [
       { label: 'salvalo.app', href: 'https://salvalo.app' },
       {
@@ -66,27 +37,32 @@ const PROJECTS: DeckItem[] = [
     ],
   },
   {
-    id: 'maktub',
-    name: 'Maktub Art Fund',
-    meta: [[{ k: 'work.freelance' }], ['2026']],
-    body: 'work.maktub.body',
-    phone: 'work.maktub.m',
-    clip: 'work.maktub.body',
-    image: '/media/work/maktub.jpg',
-    links: [{ label: 'maktubartfund.com', href: 'https://maktubartfund.com' }],
+    id: 'crol',
+    name: 'Crol ERP Móvil',
+    meta: [['Lead Frontend Developer'], ['2022', { k: 'work.present' }]],
+    body: {
+      before: 'work.crol.before',
+      link: 'work.crol.link',
+      after: 'work.crol.after',
+      href: 'https://www.crol.mx',
+    },
+    clip: 'work.crol.body',
+    image: '/media/work/crol.jpg',
+    visit: 'https://www.crol.mx',
+    links: [
+      {
+        label: 'App Store',
+        href: 'https://apps.apple.com/mx/app/crol-erp-m%C3%B3vil/id6743251171',
+      },
+      {
+        label: 'Google Play',
+        href: 'https://play.google.com/store/apps/details?id=com.crolapp',
+      },
+    ],
   },
-  {
-    id: 'andreina',
-    name: 'Andreina Aular',
-    meta: [[{ k: 'work.freelance' }], ['2021']],
-    body: 'work.andreina.body',
-    phone: 'work.andreina.m',
-    clip: 'work.andreina.body',
-    image: '/media/work/andreina.jpg',
-    links: [{ label: 'andreinaaular.com', href: 'https://andreinaaular.com' }],
-  },
-  // The easter egg, last: the Platanus arcade entry, playable from its
-  // card (ArcadeCabinet). It was a panel of its own until 2026-10-02.
+  // The easter egg, third (Juan, 2026-10-13): the Platanus arcade entry,
+  // playable from its card (ArcadeCabinet). It was a panel of its own
+  // until 2026-10-02, and More Work's last card until it moved up.
   {
     id: 'space-explorer',
     name: 'Space Explorer',
@@ -95,12 +71,6 @@ const PROJECTS: DeckItem[] = [
       before: 'arcade.p1.before',
       link: 'arcade.p1.link',
       after: 'arcade.p1.after',
-      href: 'https://hack.platan.us/26-ve',
-    },
-    phone: {
-      before: 'arcade.m.before',
-      link: 'arcade.p1.link',
-      after: 'arcade.m.after',
       href: 'https://hack.platan.us/26-ve',
     },
     clip: 'arcade.p1',
@@ -113,6 +83,26 @@ const PROJECTS: DeckItem[] = [
         href: 'https://hack.platan.us/26/arcade/space-explorer',
       },
     ],
+  },
+  {
+    id: 'maktub',
+    name: 'Maktub Art Fund',
+    meta: [[{ k: 'work.freelance' }], ['2026']],
+    body: 'work.maktub.body',
+    clip: 'work.maktub.body',
+    image: '/media/work/maktub.jpg',
+    visit: 'https://maktubartfund.com',
+    links: [{ label: 'maktubartfund.com', href: 'https://maktubartfund.com' }],
+  },
+  {
+    id: 'andreina',
+    name: 'Andreina Aular',
+    meta: [[{ k: 'work.freelance' }], ['2021']],
+    body: 'work.andreina.body',
+    clip: 'work.andreina.body',
+    image: '/media/work/andreina.jpg',
+    visit: 'https://andreinaaular.com',
+    links: [{ label: 'andreinaaular.com', href: 'https://andreinaaular.com' }],
   },
 ];
 ---
