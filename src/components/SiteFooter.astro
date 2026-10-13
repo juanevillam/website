@@ -85,10 +85,9 @@ const SOCIAL = [
     <nav class="columns" aria-label="Footer">
       {
         LEGAL_APPS.map(app => (
-          // A native disclosure: on a phone each app is one row that opens
-          // to its pages; wide, the script holds them all open and the
-          // summary is just the column's label.
-          <details class="column app-pages" open>
+          // A native disclosure: each app is one row that opens to its
+          // pages, one at a time (the script).
+          <details class="column app-pages">
             <summary class="label">
               {app.name}
               <svg
@@ -142,15 +141,51 @@ const SOCIAL = [
 </footer>
 
 <script>
-  // Wide, every app's pages stay open (the columns); on a phone they start
-  // closed, one row each. Re-synced when the width crosses the line.
-  const wide = window.matchMedia('(min-width: 48.01rem)');
-  const sync = () =>
-    document
-      .querySelectorAll<HTMLDetailsElement>('.app-pages')
-      .forEach(d => (d.open = wide.matches));
-  sync();
-  wide.addEventListener('change', sync);
+  // ONE app open at a time, on every screen (Juan, 2026-10-13): three
+  // open rows stacked read as a mess on a phone, and a desk's column per
+  // app would not hold five. Opening one closes the rest. A script rather
+  // than the native `name` grouping, which some browsers still lack.
+  const rows = [...document.querySelectorAll<HTMLDetailsElement>('.app-pages')];
+  const closeOthers = (row: HTMLDetailsElement) =>
+    rows.forEach(other => {
+      if (other !== row) other.open = false;
+    });
+  // On the CLICK, in the same task as the opening — the `toggle` event
+  // comes a task later, so for one frame two apps stood open, the block
+  // outgrew its reserve and jumped back: a flicker in Chrome (2026-10-13).
+  rows.forEach(row => {
+    row.querySelector('summary')?.addEventListener('click', () => {
+      if (!row.open) closeOthers(row);
+    });
+    row.addEventListener('toggle', () => {
+      if (row.open) closeOthers(row);
+    });
+  });
+
+  // NOTHING MOVES WHEN ONE OPENS (Juan, 2026-10-13): the rows' block is
+  // as tall as it will ever be — every row closed, plus the tallest app's
+  // pages — so opening or closing one reflows nothing around it. Measured,
+  // not guessed: a font or a breakpoint changes it.
+  const reserve = () => {
+    for (const block of document.querySelectorAll<HTMLElement>('.site-footer .columns')) {
+      const own = [...block.querySelectorAll<HTMLDetailsElement>('.app-pages')];
+      const was = own.map(r => r.open);
+      block.style.minHeight = '';
+      own.forEach(r => (r.open = false));
+      const closed = block.offsetHeight;
+      let tallest = 0;
+      for (const r of own) {
+        r.open = true;
+        tallest = Math.max(tallest, r.querySelector('ul')?.offsetHeight ?? 0);
+        r.open = false;
+      }
+      own.forEach((r, i) => (r.open = was[i]));
+      block.style.minHeight = `${closed + tallest}px`;
+    }
+  };
+  reserve();
+  document.fonts?.ready.then(reserve);
+  addEventListener('resize', reserve);
 </script>
 
 <style>
@@ -196,21 +231,22 @@ const SOCIAL = [
     padding-top: 3.5rem;
   }
 
-  /* The lead column is as tall as the apps' columns beside it, and its
-     links sit at its FOOT — so GitHub, LinkedIn and Instagram land on the
-     same lines as the last three links of each app, with the name standing
-     clear above them. */
+  /* The name and its links, beside the apps' rows. The links follow the
+     name rather than sitting at the column's foot: the rows beside them
+     open and close, and the profiles must not move with them. */
+  /* Its own height, not the row's: stretched to the rows beside it, the
+     narrator hung from its foot moved as an app opened (2026-10-13). */
   .lead {
     grid-area: lead;
+    align-self: start;
     display: flex;
     flex-direction: column;
   }
 
   .is-panel .columns {
     grid-area: columns;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-content: start;
-    /* The label sits on the title's cap height rather than its top. */
+    /* The first row's hairline sits on the title's cap height. */
     padding-top: 0.5rem;
   }
 
@@ -224,7 +260,6 @@ const SOCIAL = [
      apart by ink alone: full ink where the legal links are muted. The
      underline is the hover, as on every link here. */
   .social {
-    margin-top: auto;
     padding-top: 1.25rem;
   }
 
@@ -267,7 +302,11 @@ const SOCIAL = [
       padding-top: 2.75rem;
     }
 
+    /* The rows sit at the FOOT of their reserved block, on the copyright
+       — not under the links, floating mid-panel — so an app opening grows
+       the rows UP into the room kept for it (Juan, 2026-10-13). */
     .is-panel .columns {
+      align-content: end;
       margin-top: var(--gap-block);
       padding-top: 0;
     }
@@ -280,24 +319,10 @@ const SOCIAL = [
     .social {
       padding-top: 2rem;
     }
-
-    /* Who, centred, as everything on a phone is (Juan, 2026-10-05). The
-       accordion rows below stay full-width rows: a label and its chevron
-       at the two ends is what reads as tappable. The copyright stays on
-       the left: centred, it ran under the corner narrator. */
-    .lead {
-      text-align: center;
-    }
-
-    .social {
-      align-items: center;
-    }
   }
 
   .columns {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-    gap: 2.5rem;
   }
 
   ul {
@@ -329,16 +354,25 @@ const SOCIAL = [
     letter-spacing: 0;
   }
 
-  /* ---------- the apps' pages: columns wide, an accordion on a phone ----
-     Wide, the summary is the column's plain label and can't be toggled.
-     On a phone the two apps stack as rows under a hairline, each opening
-     to its four pages — four links side by side in two columns was a wall
-     of text on a narrow screen. */
+  /* ---------- the apps' pages: an accordion, on every screen ----------
+     Each app is a row under a hairline that opens to its four pages, one
+     app at a time (the script). It was a column per app on a desk until
+     2026-10-13 — fine for three, not for the five there may be. */
+  .app-pages {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .app-pages:first-child {
+    border-top: 1px solid var(--hairline);
+  }
+
   summary {
     list-style: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-height: 3rem;
+    cursor: pointer;
   }
 
   summary::-webkit-details-marker {
@@ -346,57 +380,25 @@ const SOCIAL = [
   }
 
   .chevron {
-    display: none;
     flex: none;
     transition: transform var(--dur-micro) var(--ease);
   }
 
-  @media (min-width: 48.01rem) {
-    summary {
-      pointer-events: none;
-    }
+  .app-pages[open] .chevron {
+    transform: rotate(180deg);
+  }
+
+  /* An app's four pages one under another, on every screen. */
+  .app-pages ul {
+    margin-top: 0;
+    padding-bottom: 1rem;
   }
 
   @media (max-width: 48rem) {
-    .columns {
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
-
-    .is-panel .columns {
-      grid-template-columns: 1fr;
-    }
-
-    .app-pages {
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    .app-pages:first-child {
-      border-top: 1px solid var(--hairline);
-    }
-
     /* The landing's phone order: who first, the apps' pages under. */
     .profiles {
       order: -1;
       margin-bottom: var(--gap-block);
-    }
-
-    summary {
-      min-height: 3rem;
-      cursor: pointer;
-    }
-
-    .chevron {
-      display: block;
-    }
-
-    .app-pages[open] .chevron {
-      transform: rotate(180deg);
-    }
-
-    .app-pages ul {
-      margin-top: 0;
-      padding-bottom: 1rem;
     }
   }
 </style>
