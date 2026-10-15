@@ -152,6 +152,7 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     inset: 0;
     display: grid;
     place-items: center;
+    container-type: size;
   }
 
   .cover-fill {
@@ -177,6 +178,11 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
   .play {
     position: relative;
     z-index: 1;
+    /* The cover carries its title across the middle (since v4), so Play
+       stands below it, at three quarters of the cover's own height — the
+       cover is 4:3 and contained, so that height is the smaller of the
+       frame's height and three quarters of its width. */
+    translate: 0 min(25cqh, 18.75cqw);
   }
 
   /* THE SITE'S PILL — the header's and the narrator's recipe, exactly:
