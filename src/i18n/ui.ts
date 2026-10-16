@@ -42,6 +42,8 @@ const en = {
   'links.legal': 'Legal',
   'links.help': 'Help',
   'legal.updated': 'Updated',
+  // A document's table of contents (Prose) — Apple's word for it.
+  'legal.contents': 'Contents',
   // The 404 page — a title that names what happened, a body that says
   // what to do, and the way home.
   'notFound.title': 'Page Not Found',
@@ -179,6 +181,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'links.legal': 'Legal',
     'links.help': 'Ayuda',
     'legal.updated': 'Actualizado',
+    'legal.contents': 'Contenido',
     'notFound.title': 'Página no encontrada',
     'notFound.body': 'Esta página no existe o se movió.',
     'notFound.home': 'Ir al inicio',
@@ -305,6 +308,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'links.legal': '法律',
     'links.help': '帮助',
     'legal.updated': '更新于',
+    'legal.contents': '目录',
     'notFound.title': '找不到页面',
     'notFound.body': '此页面不存在或已移动。',
     'notFound.home': '前往首页',

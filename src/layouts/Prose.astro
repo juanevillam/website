@@ -20,6 +20,45 @@ type Props = {
 
 const { title, app } = Astro.props;
 
+// THE CONTENTS (Juan, 2026-10-16): a document is read by jumping, not by
+// panels, so its section heads stand in a sidebar that stays put while
+// the page scrolls. Read off the rendered body at build time — every
+// page's h2s, per language (L's `.tb` blocks), each given an id to land
+// on — so a heading added to a page lists itself and nothing runs to
+// draw the list.
+const html = await Astro.slots.render('default');
+const decode = (text: string) =>
+  text
+    .replace(/<[^>]+>/g, '')
+    .replace(/&#39;|&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&');
+const slug = (text: string) =>
+  decode(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+const blocks = html.split(/(?=<div class="tb" lang=")/);
+const english = [...(blocks.find(b => b.includes('lang="en"')) ?? '').matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map(m => slug(m[1]));
+const contents: Record<string, { id: string; text: string }[]> = {};
+const body = blocks
+  .map(block => {
+    const lang = block.match(/^<div class="tb" lang="(\w+)"/)?.[1];
+    if (!lang) return block;
+    let i = 0;
+    contents[lang] = [];
+    return block.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (_, attrs, text) => {
+      // English keeps a readable anchor; the translations take its twin's,
+      // prefixed, so the three lists line up and no id repeats.
+      const base = english[i] || `section-${i + 1}`;
+      const id = lang === 'en' ? base : `${lang}-${base}`;
+      i++;
+      contents[lang].push({ id, text: decode(text) });
+      return `<h2${attrs} id="${id}">${text}</h2>`;
+    });
+  })
+  .join('');
+
 const NOTE: Partial<Record<Locale, string>> = {
   es: 'Traducción de cortesía. Si hay alguna diferencia, prevalece la versión en inglés.',
   zh: '本译文仅供参考。如有出入，以英文版本为准。',
@@ -27,45 +66,207 @@ const NOTE: Partial<Record<Locale, string>> = {
 ---
 
 <Base title={`${title.en} — ${app}`}>
-  <article class="prose">
-    {/* The head rises in the way the hero's and the 404's do. */}
-    <header data-reveal>
-      <p class="label">{app}</p>
-      <h1 class="title">
-        {locales.map(l => <span class="t" lang={l}>{title[l]}</span>)}
-      </h1>
-      <p class="label updated">
-        <T k="legal.updated" />
-        {locales.map(l => <span class="t" lang={l}> {legalDate(l)}</span>)}
-      </p>
+  <div class="doc">
+    <nav class="toc" aria-labelledby="toc-label" data-reveal>
+      <p class="label" id="toc-label"><T k="legal.contents" /></p>
       {
-        locales.map(
-          l =>
-            NOTE[l] && (
-              <p class="t note" lang={l}>
-                {NOTE[l]}
-              </p>
-            )
-        )
+        locales.map(l => (
+          <ol class="tb" lang={l}>
+            {(contents[l] ?? []).map(({ id, text }) => (
+              <li>
+                <a href={`#${id}`}>{text}</a>
+              </li>
+            ))}
+          </ol>
+        ))
       }
-    </header>
-    <slot />
-  </article>
+    </nav>
+    <article class="prose">
+      {/* The head rises in the way the hero's and the 404's do. */}
+      <header data-reveal>
+        <p class="label">{app}</p>
+        <h1 class="title">
+          {locales.map(l => <span class="t" lang={l}>{title[l]}</span>)}
+        </h1>
+        <p class="label updated">
+          <T k="legal.updated" />
+          {locales.map(l => <span class="t" lang={l}> {legalDate(l)}</span>)}
+        </p>
+        {
+          locales.map(
+            l =>
+              NOTE[l] && (
+                <p class="t note" lang={l}>
+                  {NOTE[l]}
+                </p>
+              )
+          )
+        }
+      </header>
+      <Fragment set:html={body} />
+    </article>
+  </div>
   <SiteFooter />
 </Base>
 
+<script>
+  // The section being read is the one marked in the contents: the last
+  // head that has passed a line a third of the way down the screen.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a')];
+  const mark = () => {
+    const line = innerHeight / 3;
+    let current: string | undefined;
+    for (const a of links) {
+      const head = document.getElementById(a.hash.slice(1));
+      if (head?.getClientRects().length && head.getBoundingClientRect().top <= line)
+        current = a.hash;
+    }
+    // The page's foot always reads as its last section.
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) {
+      const shown = links.filter(a => a.getClientRects().length);
+      current = shown[shown.length - 1]?.hash;
+    }
+    for (const a of links)
+      a.toggleAttribute('aria-current', a.hash === current && a.getClientRects().length > 0);
+  };
+  let queued = false;
+  const ask = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      mark();
+    });
+  };
+  addEventListener('scroll', ask, { passive: true });
+  addEventListener('resize', ask, { passive: true });
+  // A jump from the contents GLIDES there. By script: Chrome cancelled a
+  // fragment link's smooth scroll (`scroll-behavior: smooth`) and left
+  // the page where it was, while the same scroll asked of the heading
+  // runs (2026-10-16). The URL still names the section, to share.
+  for (const a of links)
+    a.addEventListener('click', event => {
+      const e = event as MouseEvent;
+      const head = document.getElementById(a.hash.slice(1));
+      if (!head || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+      e.preventDefault();
+      history.replaceState(null, '', a.hash);
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      head.scrollIntoView({ behavior: still ? 'instant' : 'smooth' });
+    });
+  // A language switch shows another list.
+  new MutationObserver(ask).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-lang'],
+  });
+  mark();
+</script>
+
 <style is:global>
-  /* A document scrolls like a document — no panel snapping here. */
+  /* A document scrolls like a document — no panel snapping here — and a
+     jump to a section lands clear of the floating header. */
   html {
     scroll-snap-type: none;
+    scroll-padding-top: calc(var(--header-h) + 2rem);
   }
 </style>
 
 <style>
-  .prose {
-    max-width: var(--measure);
+  /* The site's column, the contents in its left gutter — on the same
+     edge as the header's mark and the foot's name — and the article
+     centred on its measure, as it was before the contents came. */
+  .doc {
+    max-width: calc(var(--content-max) + 2 * clamp(1.25rem, 4vw, 2.5rem));
     margin: 0 auto;
     padding: clamp(8rem, 16vh, 11rem) clamp(1.25rem, 4vw, 2.5rem) 6rem;
+    display: grid;
+    grid-template-columns: 1fr minmax(0, var(--measure)) 1fr;
+    column-gap: var(--space-4);
+    align-items: start;
+  }
+
+  .prose {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* Stays put while the page scrolls, level with the document's title. */
+  .toc {
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+    max-height: calc(100svh - var(--header-h) - 4rem);
+    overflow-y: auto;
+    padding-top: 0.25rem;
+  }
+
+  .toc ol {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.875rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  html:not([data-lang]) .toc ol[lang='en'],
+  html[data-lang='en'] .toc ol[lang='en'],
+  html[data-lang='es'] .toc ol[lang='es'],
+  html[data-lang='zh'] .toc ol[lang='zh'] {
+    display: flex;
+  }
+
+  /* The foot's links' size and ink; the section being read takes full
+     ink, the way a hover does. */
+  .toc a {
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    text-decoration-color: transparent;
+    transition:
+      color var(--dur-micro) var(--ease),
+      text-decoration-color var(--dur-micro) var(--ease);
+  }
+
+  .toc a:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink-3);
+  }
+
+  .toc a[aria-current] {
+    color: var(--ink);
+  }
+
+  /* No gutter wide enough to hold it: the contents stand under the
+     document's head, before its first section, and scroll with it — the
+     article's own children join the column so they can go between. */
+  @media (max-width: 64rem) {
+    .doc {
+      display: flex;
+      flex-direction: column;
+      max-width: calc(var(--measure) + 2 * clamp(1.25rem, 4vw, 2.5rem));
+    }
+
+    .prose {
+      display: contents;
+    }
+
+    .prose > :global(*) {
+      order: 2;
+    }
+
+    .prose > header {
+      order: 0;
+    }
+
+    .toc {
+      order: 1;
+      position: static;
+      max-height: none;
+      overflow: visible;
+      margin-top: 2.5rem;
+      padding: 1.25rem 0;
+      border-block: 1px solid var(--hairline);
+    }
   }
 
   .title {
