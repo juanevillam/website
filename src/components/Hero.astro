@@ -1,6 +1,7 @@
 ---
 import T from './T.astro';
 import { clipFor, subsFor } from '../lib/narration';
+import { NAME_SCENE } from '../lib/scene';
 
 /**
  * The hero is the wordmark alone — a line of text under it was tried
@@ -13,7 +14,7 @@ const clip = clipFor('hero');
 const subs = subsFor('hero');
 ---
 
-<section class="hero" id="top">
+<section class="hero" id="top" data-scene={NAME_SCENE}>
   <!-- The wrapper is what the cinema controller rides out on scroll — the
        revealed children carry transitions of their own, so the scroll-
        coupled transform lives one level up where nothing animates it. -->
@@ -32,6 +33,7 @@ const subs = subsFor('hero');
     <h1
       class="display"
       data-reveal
+      data-scene-at
       data-narr-para
       data-clip-en={clip?.en}
       data-clip-es={clip?.es}
