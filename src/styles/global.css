@@ -751,6 +751,8 @@ html.is-desk-safari .switcher {
   /* Its width. A 3:2 screen is wide and short, so the light spills out
      above, below and beside it — a glow behind a monitor. */
   --scene-rx: 34%;
+  /* Its height, as a share of the default ellipses' heights. */
+  --scene-ry: 1;
   /* How strongly the light shows, against its default. */
   --scene-gain: 1;
   position: fixed;
@@ -777,19 +779,19 @@ html.is-desk-safari .switcher {
     /* Close around the media, not across the page (Juan, 2026-10-04: the
        first pass was too big — light, not a painting). */
     radial-gradient(
-      var(--scene-rx) 46% at var(--scene-x) var(--scene-y),
+      var(--scene-rx) calc(46% * var(--scene-ry)) at var(--scene-x) var(--scene-y),
       color-mix(in oklab, var(--scene-a) calc(22% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     ),
     radial-gradient(
-      calc(var(--scene-rx) * 0.65) 30% at calc(var(--scene-x) + var(--scene-rx) * 0.35)
-        calc(var(--scene-y) + 26%),
+      calc(var(--scene-rx) * 0.65) calc(30% * var(--scene-ry))
+        at calc(var(--scene-x) + var(--scene-rx) * 0.35) calc(var(--scene-y) + 26% * var(--scene-ry)),
       color-mix(in oklab, var(--scene-b) calc(14% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     ),
     radial-gradient(
-      calc(var(--scene-rx) * 0.7) 28% at calc(var(--scene-x) - var(--scene-rx) * 0.24)
-        calc(var(--scene-y) - 28%),
+      calc(var(--scene-rx) * 0.7) calc(28% * var(--scene-ry))
+        at calc(var(--scene-x) - var(--scene-rx) * 0.24) calc(var(--scene-y) - 28% * var(--scene-ry)),
       color-mix(in oklab, var(--scene-c) calc(10% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     );
@@ -815,6 +817,16 @@ html.is-desk-safari .switcher {
 .scene[data-kind='phone'] {
   --scene-rx: 38%;
   --scene-gain: 0.7;
+}
+
+/* THE NAME'S LIGHT IS AN ACCENT, NOT A ROOM (Juan, 2026-10-16): at a
+   picture's size the hero's and the foot's light read as strange — as
+   loud as a section with media, around nothing but a word. Smaller every
+   way and fainter, so it only lifts the ground behind the name. */
+.scene[data-kind='name'] {
+  --scene-rx: 20%;
+  --scene-ry: 0.55;
+  --scene-gain: 0.55;
 }
 
 /* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of
