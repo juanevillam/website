@@ -32,33 +32,13 @@ const find = (lang: NarrationLang, key: string) => {
 
 /**
  * STAND-INS — TEMPORARY (Juan, 2026-10-01). Every narrated block has the
- * narrator now, but only Sound Shaper is recorded, so Topper and Space
- * Explorer borrow its clips paragraph for paragraph. A paragraph's OWN
- * recording always wins: drop `topper.s1.p1.m4a` in and that paragraph
+ * narrator now, but only Sound Shaper is recorded, so the other blocks
+ * borrow its clips paragraph for paragraph. A paragraph's OWN
+ * recording always wins: drop `arcade.p1.m4a` in and that paragraph
  * stops borrowing, with nothing to change here. Delete this map once
  * every key below has a file of its own.
  */
 const STAND_IN: Record<string, string> = {
-  'topper.problem': 'shaper.problem',
-  'topper.solution': 'shaper.solution',
-  'topper.s1.p1': 'shaper.s1.p1',
-  'topper.s1.p2': 'shaper.s1.p2',
-  'topper.s2.p1': 'shaper.s2.p1',
-  'topper.s2.p2': 'shaper.s2.p2',
-  'topper.s3.p1': 'shaper.s3.p1',
-  'topper.s3.p2': 'shaper.s3.p2',
-  'topper.s4.p1': 'shaper.s4.p1',
-  'topper.s4.p2': 'shaper.s4.p2',
-  'booker.problem': 'shaper.problem',
-  'booker.solution': 'shaper.solution',
-  'booker.s1.p1': 'shaper.s1.p1',
-  'booker.s1.p2': 'shaper.s1.p2',
-  'booker.s2.p1': 'shaper.s2.p1',
-  'booker.s2.p2': 'shaper.s2.p2',
-  'booker.s3.p1': 'shaper.s3.p1',
-  'booker.s3.p2': 'shaper.s3.p2',
-  'booker.s4.p1': 'shaper.s4.p1',
-  'booker.s4.p2': 'shaper.s4.p2',
   'arcade.p1': 'shaper.problem',
   'work.crol.body': 'shaper.s1.p1',
   'work.salvalo.body': 'shaper.s2.p1',

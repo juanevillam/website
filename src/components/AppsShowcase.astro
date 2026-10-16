@@ -25,7 +25,9 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * and built by their recipe (Juan, 2026-10-11): standing in the panel, it
  * took a row from the phone. It shows while the panel holds the screen and
  * goes with it. The picked app's pill is a grey lozenge that SLIDES to the
- * tab you pick, and the app's deck slides in from that side.
+ * tab you pick, and the app's deck slides in from that side. With ONE app
+ * there is nothing to pick, so there is no switcher (2026-10-16: Sound
+ * Shaper alone, the others archived — see lib/apps.ts).
  *
  * Every card is the page's deck card (lib/deck.ts, `.deck-card` in
  * global.css), so a turn is the one More Work and Events turn with.
@@ -115,23 +117,25 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   data-phone-scene
 >
   <!-- The switcher, floating at the header's height (see the docblock). -->
-  <div class="switcher" role="tablist" aria-label="Apps" data-switcher>
-    <span class="lozenge" aria-hidden="true"></span>
-    {
-      apps.map((app, a) => (
-        <button
-          class="tab"
-          type="button"
-          role="tab"
-          data-tab={a}
-          aria-selected={a === 0 ? 'true' : 'false'}
-        >
-          <AppTile app={app.id} size={22} />
-          <span class="tab-name">{app.name}</span>
-        </button>
-      ))
-    }
-  </div>
+  {
+    apps.length > 1 && (
+      <div class="switcher" role="tablist" aria-label="Apps" data-switcher>
+        <span class="lozenge" aria-hidden="true" />
+        {apps.map((app, a) => (
+          <button
+            class="tab"
+            type="button"
+            role="tab"
+            data-tab={a}
+            aria-selected={a === 0 ? 'true' : 'false'}
+          >
+            <AppTile app={app.id} size={22} />
+            <span class="tab-name">{app.name}</span>
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   <div class="decks" data-decks>
     {
@@ -862,9 +866,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   const root = document.querySelector<HTMLElement>('[data-apps]');
   if (root) {
     const decksEl = root.querySelector<HTMLElement>('[data-decks]')!;
-    const switcher = root.querySelector<HTMLElement>('[data-switcher]')!;
-    const lozenge = switcher.querySelector<HTMLElement>('.lozenge')!;
-    const tabs = [...switcher.querySelectorAll<HTMLElement>('[data-tab]')];
+    // Absent with one app (see the docblock).
+    const switcher = root.querySelector<HTMLElement>('[data-switcher]');
+    const lozenge = switcher?.querySelector<HTMLElement>('.lozenge');
+    const tabs = [...(switcher?.querySelectorAll<HTMLElement>('[data-tab]') ?? [])];
     const paras = [...root.querySelectorAll<HTMLElement>('[data-narr-para]')];
     const still = decksEl.querySelector<HTMLElement>('.narr-static .narr-anchor');
 
@@ -1087,7 +1092,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // app's name is its own width.
     const placeLozenge = (animate = true) => {
       const tab = tabs[active];
-      if (!tab) return;
+      if (!tab || !lozenge) return;
       lozenge.classList.toggle('is-still', !animate);
       lozenge.style.setProperty('--x', `${tab.offsetLeft}px`);
       lozenge.style.setProperty('--w', `${tab.offsetWidth}px`);
@@ -1135,6 +1140,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // The switcher shows while the panel holds the screen — the middle of
     // the viewport inside it — and goes with it.
     const watch = () => {
+      if (!switcher) return;
       const r = root.getBoundingClientRect();
       const mid = innerHeight / 2;
       switcher.classList.toggle('is-shown', r.top < mid && r.bottom > mid);
