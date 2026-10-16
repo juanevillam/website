@@ -28,24 +28,27 @@ const NOTE: Partial<Record<Locale, string>> = {
 
 <Base title={`${title.en} — ${app}`}>
   <article class="prose">
-    <p class="label">{app}</p>
-    <h1 class="title">
-      {locales.map(l => <span class="t" lang={l}>{title[l]}</span>)}
-    </h1>
-    <p class="label updated">
-      <T k="legal.updated" />
-      {locales.map(l => <span class="t" lang={l}> {legalDate(l)}</span>)}
-    </p>
-    {
-      locales.map(
-        l =>
-          NOTE[l] && (
-            <p class="t note" lang={l}>
-              {NOTE[l]}
-            </p>
-          )
-      )
-    }
+    {/* The head rises in the way the hero's and the 404's do. */}
+    <header data-reveal>
+      <p class="label">{app}</p>
+      <h1 class="title">
+        {locales.map(l => <span class="t" lang={l}>{title[l]}</span>)}
+      </h1>
+      <p class="label updated">
+        <T k="legal.updated" />
+        {locales.map(l => <span class="t" lang={l}> {legalDate(l)}</span>)}
+      </p>
+      {
+        locales.map(
+          l =>
+            NOTE[l] && (
+              <p class="t note" lang={l}>
+                {NOTE[l]}
+              </p>
+            )
+        )
+      }
+    </header>
     <slot />
   </article>
   <SiteFooter />
