@@ -186,3 +186,15 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
  *  turning to it puts the page back on its plain ground. */
 export const sceneAttr = ({ colours, strength }: Scene) =>
   `${colours.join(' ')}|${strength.toFixed(2)}`;
+
+/**
+ * THE NAME'S LIGHT — the hero and the foot show no picture, only Juan's
+ * name, and lit nothing: the page went dark at its first and last screen
+ * while every section between glowed (Juan, 2026-10-16). They take the
+ * light a grey screen gives, neutral and a step dimmer, standing on the
+ * name itself (`data-scene-at`). Desk only, like every room light.
+ */
+export const NAME_SCENE = sceneAttr({
+  colours: [NEUTRAL_LIGHT],
+  strength: NEUTRAL_STRENGTH,
+});

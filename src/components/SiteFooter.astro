@@ -3,6 +3,7 @@ import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
 import type { UIKey } from '../i18n/ui';
 import { clipFor, subsFor } from '../lib/narration';
+import { NAME_SCENE } from '../lib/scene';
 
 /**
  * The page's foot: each app's legal and help pages, and where to find
@@ -47,6 +48,7 @@ const SOCIAL = [
 
 <footer
   class:list={['site-footer', { 'is-panel': panel }]}
+  data-scene={panel ? NAME_SCENE : null}
   data-narr-panel={clip ? '' : null}
 >
   <div class="inner">
@@ -55,7 +57,7 @@ const SOCIAL = [
         section puts its screen. */}
     {
       panel && (
-        <div class="lead">
+        <div class="lead" data-scene-at>
           <h2 class="title">juanevillam</h2>
           <ul class="social">
             {SOCIAL.map(({ name, href }) => (
