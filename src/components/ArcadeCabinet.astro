@@ -183,6 +183,8 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
        cover is 4:3 and contained, so that height is the smaller of the
        frame's height and three quarters of its width. */
     translate: 0 min(25cqh, 18.75cqw);
+    /* Whole pixels: a half-pixel offset left the label soft. */
+    translate: 0 round(min(25cqh, 18.75cqw), 1px);
   }
 
   /* THE SITE'S PILL — the header's and the narrator's recipe, exactly:
@@ -247,14 +249,17 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     color: var(--surface);
     box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.45);
     transition:
-      scale var(--dur-micro) var(--ease),
+      background-color var(--dur-micro) var(--ease),
       box-shadow var(--dur-micro) var(--ease);
   }
 
+  /* Hover is a TONE, never a scale (Juan, 2026-10-16): a scaled pill
+     redraws its label crisp only once the transition ends, so on release
+     the words visibly settled a pixel down. Nothing here moves. */
   .play:hover {
     color: var(--surface);
     border-color: transparent;
-    scale: 1.04;
+    background: color-mix(in srgb, var(--ink) 86%, var(--surface));
     box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.55);
   }
 
