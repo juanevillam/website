@@ -21,10 +21,12 @@ const PAGES: { key: UIKey; page: string }[] = [
 ];
 
 type Props = {
-  /** On the landing the foot is a PANEL like every section above it —
-   *  full height, snapped — so the page ends on a section rather than a
-   *  strip that breaks the rhythm. A document page scrolls freely and
-   *  keeps the short foot. */
+  /** The landing's last panel: snapped like every section above it, and
+   *  narrated. Everywhere else the foot is the SAME composition — the
+   *  name, the profiles, the apps' pages, the name's light — so a
+   *  document page closes the way the landing does (Juan, 2026-10-16:
+   *  its old short strip stacked two columns flush against each other
+   *  under a measure-wide article and read as a different site). */
   panel?: boolean;
 };
 
@@ -47,44 +49,40 @@ const SOCIAL = [
 ---
 
 <footer
-  class:list={['site-footer', { 'is-panel': panel }]}
-  data-scene={panel ? NAME_SCENE : null}
-  data-scene-kind={panel ? 'name' : null}
+  class:list={['site-footer', { 'is-snap': panel }]}
+  data-scene={NAME_SCENE}
+  data-scene-kind="name"
   data-narr-panel={clip ? '' : null}
 >
   <div class="inner">
-    {/* As a panel, the foot takes a section's composition: the name and
-        where to find Juan in the words' column, the apps' pages where a
-        section puts its screen. */}
-    {
-      panel && (
-        <div class="lead" data-scene-at="0.2">
-          <h2 class="title">juanevillam</h2>
-          <ul class="social">
-            {SOCIAL.map(({ name, href }) => (
-              <li>
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  {name}
-                </a>
-              </li>
-            ))}
-          </ul>
-          {clip && (
-            <>
-              <span
-                hidden
-                data-narr-para
-                data-clip-en={clip.en}
-                data-clip-es={clip.es}
-                data-subs-en={subs.en}
-                data-subs-es={subs.es}
-              />
-              <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
-            </>
-          )}
-        </div>
-      )
-    }
+    {/* The foot takes a section's composition: the name and where to find
+        Juan in the words' column, the apps' pages where a section puts its
+        screen. */}
+    <div class="lead" data-scene-at="0.2">
+      <h2 class="title">juanevillam</h2>
+      <ul class="social">
+        {SOCIAL.map(({ name, href }) => (
+          <li>
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              {name}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {clip && (
+        <>
+          <span
+            hidden
+            data-narr-para
+            data-clip-en={clip.en}
+            data-clip-es={clip.es}
+            data-subs-en={subs.en}
+            data-subs-es={subs.es}
+          />
+          <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
+        </>
+      )}
+    </div>
     <nav class="columns" aria-label="Footer">
       {
         // ONE app (Sound Shaper alone, 2026-10-16): its pages stand open as
@@ -142,22 +140,6 @@ const SOCIAL = [
           </details>
         ))
       }
-      {
-        !panel && (
-          <div class="column profiles">
-            <span class="label">juanevillam</span>
-            <ul>
-              {SOCIAL.map(({ name, href }) => (
-                <li>
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    {name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
@@ -213,10 +195,19 @@ const SOCIAL = [
 </script>
 
 <style>
-  /* The document pages' foot: short, under a hairline. */
+  /* A panel like every section: the stories' own inset at the top, the
+     copyright at the foot of the screen, no rule — a panel is set off by
+     being a panel. Only the landing's snaps (`is-snap`). */
   .site-footer {
-    border-top: 1px solid var(--hairline);
-    padding: 6rem clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--stage-top) clamp(1.25rem, 4vw, 2.5rem) var(--stage-bottom);
+  }
+
+  .site-footer.is-snap {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .inner {
@@ -224,24 +215,10 @@ const SOCIAL = [
     margin: 0 auto;
   }
 
-  /* The landing's last panel: the stories' own inset at the top, the
-     copyright at the foot of the screen, no rule — a panel is set off by
-     being a panel. */
-  .site-footer.is-panel {
-    min-height: 100svh;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    display: flex;
-    flex-direction: column;
-    border-top: none;
-    padding-top: var(--stage-top);
-    padding-bottom: var(--stage-bottom);
-  }
-
   /* The section grid: words column | the rest, the copyright across the
      foot. The first row starts a 2rem eyebrow box plus a 1.5rem step
      down — exactly where every section's title line is. */
-  .is-panel .inner {
+  .site-footer .inner {
     flex: 1;
     width: 100%;
     display: grid;
@@ -267,14 +244,14 @@ const SOCIAL = [
     flex-direction: column;
   }
 
-  .is-panel .columns {
+  .site-footer .columns {
     grid-area: columns;
     align-content: start;
     /* The first row's hairline sits on the title's cap height. */
     padding-top: 0.5rem;
   }
 
-  .is-panel .legal-name {
+  .site-footer .legal-name {
     grid-area: name;
     margin-top: 0;
     padding-top: var(--space-4);
@@ -312,7 +289,7 @@ const SOCIAL = [
   }
 
   @media (max-width: 48rem) {
-    .is-panel .inner {
+    .site-footer .inner {
       grid-template-columns: 1fr;
       /* Hierarchy on a phone: who (name, links) at the top; the apps'
          pages down at the foot with the copyright — reference, not the
@@ -329,13 +306,13 @@ const SOCIAL = [
     /* The rows sit at the FOOT of their reserved block, on the copyright
        — not under the links, floating mid-panel — so an app opening grows
        the rows UP into the room kept for it (Juan, 2026-10-13). */
-    .is-panel .columns {
+    .site-footer .columns {
       align-content: end;
       margin-top: var(--gap-block);
       padding-top: 0;
     }
 
-    .is-panel .legal-name {
+    .site-footer .legal-name {
       padding-top: 1.5rem;
     }
 
@@ -416,13 +393,5 @@ const SOCIAL = [
   .app-pages ul {
     margin-top: 0;
     padding-bottom: 1rem;
-  }
-
-  @media (max-width: 48rem) {
-    /* The landing's phone order: who first, the apps' pages under. */
-    .profiles {
-      order: -1;
-      margin-bottom: var(--gap-block);
-    }
   }
 </style>
