@@ -40,6 +40,29 @@ const LINKS = {
 // at the TOP.
 const EVENTS: DeckItem[] = [
   {
+    id: 'panal',
+    name: 'El Panal',
+    meta: [[{ k: 'events.meetup' }], ['Barquisimeto'], [{ k: 'events.panal.when' }]],
+    body: { k: 'events.panal.body', links: LINKS },
+    clip: 'events.panal.body',
+    // Three a frame: the left runs Juan with Manuel Sira, who started El
+    // Panal, with Resty's team, then with the Tripealo founders; the right
+    // the 30-second pitch, El Panal's own clip of the networking, then the
+    // closing selfie.
+    image: [
+      '/media/events/el-panal/manuel-sira.jpg',
+      '/media/events/el-panal/resty.jpg',
+      '/media/events/el-panal/tripealo.jpg',
+      // The night's last photo, by the pool with the Tripealo founders.
+      '/media/events/el-panal/friends-selfie.jpg',
+      // Juan's 30-second Salvalo pitch.
+      '/media/events/el-panal/pitch.mp4',
+      // El Panal's story of the networking, Juan in it.
+      '/media/events/el-panal/networking.mp4',
+    ],
+    links: [],
+  },
+  {
     id: 'radio',
     name: 'OK 101.5 FM',
     meta: [[{ k: 'events.interview' }], ['Barquisimeto'], [{ k: 'events.radio.when' }]],
