@@ -12,8 +12,12 @@ import type { UIKey } from '../i18n/ui';
  * (`….sN.m`, `….problem.m`).
  *
  * Each manifest states its own pixel size, and it must match the files on
- * disk: it reserves the slot before the image lands. All three are shot on
- * the same iPhone (393x852pt at 3x) today.
+ * disk: it reserves the slot before the image lands. Every app is shot on
+ * the same iPhone (393x852pt at 3x).
+ *
+ * ONLY SOUND SHAPER IS TOLD (2026-10-16): it is the one app shipping.
+ * Topper's and Booker's stories wait in apps/web/archive/ with their
+ * screenshots and copy; with one app the panel draws no switcher.
  */
 export type AppSlide = {
   src: string;
@@ -52,28 +56,6 @@ export const APPS: AppStory[] = [
       ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
       ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
       ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
-    ]),
-  },
-  {
-    id: 'topper',
-    name: 'Topper',
-    pitch: ['topper.problem', 'topper.solution'],
-    slides: shots('topper', [
-      ['ios-dark-home', 'Home', ['topper.s1.p1', 'topper.s1.p2']],
-      ['ios-dark-explore', 'Explore', ['topper.s2.p1', 'topper.s2.p2']],
-      ['ios-dark-top-detail', 'Top', ['topper.s3.p1', 'topper.s3.p2']],
-      ['ios-dark-profile', 'Profile', ['topper.s4.p1', 'topper.s4.p2']],
-    ]),
-  },
-  {
-    id: 'booker',
-    name: 'Booker',
-    pitch: ['booker.problem', 'booker.solution'],
-    slides: shots('booker', [
-      ['ios-dark-home', 'Library', ['booker.s1.p1', 'booker.s1.p2']],
-      ['ios-dark-book', 'Book', ['booker.s2.p1', 'booker.s2.p2']],
-      ['ios-dark-reader', 'Reader', ['booker.s3.p1', 'booker.s3.p2']],
-      ['ios-dark-chapter', 'Chapter', ['booker.s4.p1', 'booker.s4.p2']],
     ]),
   },
 ];
