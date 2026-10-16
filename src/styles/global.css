@@ -750,9 +750,29 @@ html.is-desk-safari .switcher {
   --scene-y: 48%;
   /* Its width. A 3:2 screen is wide and short, so the light spills out
      above, below and beside it — a glow behind a monitor. */
-  --scene-rx: 34%;
+  --scene-rx: 44%;
   /* Its height, as a share of the default ellipses' heights. */
   --scene-ry: 1;
+  /* THE LIGHT'S SHAPE FOLLOWS WHAT IT LIGHTS (Juan, 2026-10-16). It was
+     one shape for everything — a core with two lobes on a diagonal, down
+     right and up left — which said nothing about the picture. Now each
+     kind places its lobes: a wide SCREEN spills left and right, like a
+     monitor's backlight; an upright PHONE spills above and below; the
+     NAME is one round halo. The core's height (`--a-h`), then each lobe's
+     width (a share of `--scene-rx`), height, offset and strength. */
+  --a-h: 60%;
+  --b-w: 0.5;
+  --b-h: 34%;
+  --b-dx: 0.6;
+  --b-dy: 0%;
+  --b-k: 1;
+  /* The words' side: closer and smaller, so it fades before the words —
+     the room light's first rule. */
+  --c-w: 0.38;
+  --c-h: 30%;
+  --c-dx: -0.45;
+  --c-dy: 0%;
+  --c-k: 1.4;
   /* How strongly the light shows, against its default. */
   --scene-gain: 1;
   position: fixed;
@@ -779,20 +799,30 @@ html.is-desk-safari .switcher {
     /* Close around the media, not across the page (Juan, 2026-10-04: the
        first pass was too big — light, not a painting). */
     radial-gradient(
-      var(--scene-rx) calc(46% * var(--scene-ry)) at var(--scene-x) var(--scene-y),
+      var(--scene-rx) calc(var(--a-h) * var(--scene-ry)) at var(--scene-x) var(--scene-y),
       color-mix(in oklab, var(--scene-a) calc(22% * var(--scene-k) * var(--scene-gain)), transparent),
       transparent 72%
     ),
     radial-gradient(
-      calc(var(--scene-rx) * 0.65) calc(30% * var(--scene-ry))
-        at calc(var(--scene-x) + var(--scene-rx) * 0.35) calc(var(--scene-y) + 26% * var(--scene-ry)),
-      color-mix(in oklab, var(--scene-b) calc(14% * var(--scene-k) * var(--scene-gain)), transparent),
+      calc(var(--scene-rx) * var(--b-w)) calc(var(--b-h) * var(--scene-ry))
+        at calc(var(--scene-x) + var(--scene-rx) * var(--b-dx))
+        calc(var(--scene-y) + var(--b-dy) * var(--scene-ry)),
+      color-mix(
+          in oklab,
+          var(--scene-b) calc(14% * var(--b-k) * var(--scene-k) * var(--scene-gain)),
+          transparent
+        ),
       transparent 72%
     ),
     radial-gradient(
-      calc(var(--scene-rx) * 0.7) calc(28% * var(--scene-ry))
-        at calc(var(--scene-x) - var(--scene-rx) * 0.24) calc(var(--scene-y) - 28% * var(--scene-ry)),
-      color-mix(in oklab, var(--scene-c) calc(10% * var(--scene-k) * var(--scene-gain)), transparent),
+      calc(var(--scene-rx) * var(--c-w)) calc(var(--c-h) * var(--scene-ry))
+        at calc(var(--scene-x) + var(--scene-rx) * var(--c-dx))
+        calc(var(--scene-y) + var(--c-dy) * var(--scene-ry)),
+      color-mix(
+          in oklab,
+          var(--scene-c) calc(10% * var(--c-k) * var(--scene-k) * var(--scene-gain)),
+          transparent
+        ),
       transparent 72%
     );
 }
@@ -813,10 +843,20 @@ html.is-desk-safari .switcher {
    light-to-picture proportion, read as too small beside a phone that tall.
    The middle of the two — and a step dimmer than a screen's (2026-10-13:
    the apps' larger light still read as louder than More Work's and the
-   events'). */
+   events'). Since 2026-10-16 its reach is UPRIGHT instead of wide: a
+   narrower core, taller, with lobes above and below the phone. */
 .scene[data-kind='phone'] {
-  --scene-rx: 38%;
+  --scene-rx: 30%;
   --scene-gain: 0.7;
+  --a-h: 72%;
+  --b-w: 0.9;
+  --b-h: 28%;
+  --b-dx: 0;
+  --b-dy: -50%;
+  --c-w: 0.9;
+  --c-h: 28%;
+  --c-dx: 0;
+  --c-dy: 50%;
 }
 
 /* THE NAME'S LIGHT IS AN ACCENT, NOT A ROOM (Juan, 2026-10-16): at a
@@ -829,6 +869,9 @@ html.is-desk-safari .switcher {
   /* Muted, not smaller (Juan, 2026-10-16: 0.55 still read as a light
      rather than an effect). */
   --scene-gain: 0.3;
+  --a-h: 46%;
+  --b-k: 0;
+  --c-k: 0;
 }
 
 /* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of
