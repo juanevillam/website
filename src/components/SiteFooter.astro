@@ -84,6 +84,27 @@ const SOCIAL = [
     }
     <nav class="columns" aria-label="Footer">
       {
+        // ONE app (Sound Shaper alone, 2026-10-16): its pages stand open as
+        // a plain column, the way the profiles' links do — there is nothing
+        // to choose between, so a row to open was a tap for nothing.
+        LEGAL_APPS.length === 1 &&
+          LEGAL_APPS.map(app => (
+            <div class="column app-links">
+              <span class="label">{app.name}</span>
+              <ul>
+                {PAGES.map(({ key, page }) => (
+                  <li>
+                    <a href={`/${app.slug}/${page}`}>
+                      <T k={key} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+      }
+      {
+        LEGAL_APPS.length > 1 &&
         LEGAL_APPS.map(app => (
           // A native disclosure: each app is one row that opens to its
           // pages, one at a time (the script).
