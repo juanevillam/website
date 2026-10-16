@@ -72,7 +72,7 @@ const en = {
   // Space Explorer — the Platanus arcade entry, playable at the landing's foot.
   // The control keys are the cabinet's own; the action names are Apple-voice
   // labels. The game's own screens are the cabinet's, untranslated.
-  'arcade.play': 'Play',
+  'arcade.play': 'Play Game',
   'arcade.fullscreen': 'Full Screen',
   'arcade.resume': 'Click the game to play.',
   'arcade.rotate': 'Turn your phone sideways to continue.',
@@ -104,7 +104,7 @@ const en = {
   'work.crol.after':
     ', a cloud ERP for small and mid-sized businesses in Mexico: sales, electronic invoicing, inventory and live financial reports. I built it from scratch, design included, and major clients across Mexico run on it.',
   'work.salvalo.body':
-    "Local shops sell discounted surprise packs in their slow hours; you reserve in the app and pick it up in store. I rebuilt the app's interface, built the landing page and the shop and admin panels, and I'm out visiting the shops for the pilot in Barquisimeto.",
+    'Every day, shops close with products that could still have sold. On Salvalo they turn them into packs with a price and a pickup window; you find one on the map near home, reserve it, pay the shop directly and pick it up with a code. I redesigned the whole app, for customers and for shops, built the new website — the team edits every text and photo on it without code — and I go out visiting shops for the pilot in Barquisimeto.',
   'work.maktub.body':
     "The website of a fund that connects investors with art and cultural projects in Mexico and Latin America. I took it from zero to live in a month, and their team edits every text, image and video without code; they've published dozens of updates on their own.",
   'work.andreina.body':
@@ -129,7 +129,7 @@ const en = {
   'work.crol.m.after':
     ', a cloud ERP for businesses in Mexico. I built it from scratch, design included.',
   'work.salvalo.m':
-    "Local shops sell discounted surprise packs in their slow hours; you reserve in the app and pick up in store. I rebuilt the app's interface and built its landing and panels.",
+    "Shops turn what they didn't sell into packs; you reserve one nearby and pick it up in store. I redesigned the app and built its website and panels.",
   'work.maktub.m':
     'The website of a fund that invests in art across Latin America, live in a month; its team edits everything without code.',
   'work.andreina.m': 'A WordPress site for a productivity coach.',
@@ -229,7 +229,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.crol.after':
       ', un ERP en la nube para pymes en México: ventas, facturación electrónica, inventario y reportes financieros en tiempo real. La construí desde cero, diseño incluido, y hoy la usan clientes importantes en todo México.',
     'work.salvalo.body':
-      'Los comercios locales venden packs sorpresa con descuento en sus horas lentas; reservas en la app y lo retiras en tienda. Rehice la interfaz de la app, hice la landing y los paneles de comercios y administración, y salgo a visitar comercios para el piloto en Barquisimeto.',
+      'Cada día, los comercios cierran con productos que pudieron venderse. En Salvalo los convierten en packs con precio y hora de recogida; tú encuentras uno cerca en el mapa, lo apartas, le pagas directo al comercio y lo recoges con un código. Rediseñé toda la app, la del cliente y la del comercio, hice la nueva web —el equipo edita cada texto y cada foto sin código— y salgo a visitar comercios para el piloto en Barquisimeto.',
     'work.maktub.body':
       'El sitio de un fondo que conecta inversionistas con proyectos de arte y cultura en México y Latinoamérica. Lo llevé de cero a publicado en un mes, y su equipo edita cada texto, imagen y video sin código: ya han publicado decenas de actualizaciones por su cuenta.',
     'work.andreina.body':
@@ -254,7 +254,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.crol.m.after':
       ', un ERP en la nube para empresas en México. La construí desde cero, diseño incluido.',
     'work.salvalo.m':
-      'Los comercios venden packs sorpresa con descuento en sus horas lentas; reservas en la app y retiras en tienda. Rehice la interfaz de la app y construí su landing y paneles.',
+      'Los comercios convierten lo que no vendieron en packs; tú apartas uno cerca y lo recoges en el local. Rediseñé la app e hice su web y sus paneles.',
     'work.maktub.m':
       'El sitio de un fondo que invierte en arte en Latinoamérica, en línea en un mes; su equipo lo edita todo sin código.',
     'work.andreina.m': 'Un sitio en WordPress para una coach de productividad.',
@@ -348,7 +348,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.crol.after':
       ' 的移动应用。Crol 是一款面向墨西哥中小企业的云端 ERP：销售、电子发票、库存和实时财务报表。我从零开始打造了它，包括设计，如今墨西哥各地的大客户都在使用。',
     'work.salvalo.body':
-      '本地商家在客流少的时段出售折扣惊喜包：你在应用里预订，再到店自取。我重做了应用界面，搭建了落地页以及商家和管理后台，还亲自走访商家，推进在巴基西梅托的试点。',
+      '每天，商家打烊时总有本可以卖掉的商品。在 Salvalo 上，他们把这些商品做成带价格和取货时段的套餐；你在地图上找到家附近的一份，预订，直接付款给商家，再凭取货码到店领取。我重新设计了整个应用，包括顾客端和商家端，打造了全新的网站（团队无需代码就能编辑上面的每段文字和每张照片），还亲自走访商家，推进在巴基西梅托的试点。',
     'work.maktub.body':
       '一家基金的网站，连接投资者与墨西哥和拉丁美洲的艺术与文化项目。我在一个月内把它从零做到上线；他们的团队无需写代码就能编辑每段文字、图片和视频，上线后已自行发布了数十次更新。',
     'work.andreina.body':
@@ -371,7 +371,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.crol.m.after':
       ' 的移动应用，一款面向墨西哥企业的云端 ERP。我从零打造，包括设计。',
     'work.salvalo.m':
-      '本地商家在冷清时段以折扣出售惊喜包，你在应用里预订、到店自取。我重做了应用界面，并打造了落地页和后台。',
+      '商家把没卖完的商品做成套餐，你预订附近的一份、到店自取。我重新设计了应用，并打造了它的网站和后台。',
     'work.maktub.m':
       '一家投资拉丁美洲艺术的基金的网站，一个月上线；团队无需代码即可编辑全部内容。',
     'work.andreina.m': '为一位效率教练打造的 WordPress 网站。',
