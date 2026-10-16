@@ -826,7 +826,9 @@ html.is-desk-safari .switcher {
 .scene[data-kind='name'] {
   --scene-rx: 20%;
   --scene-ry: 0.55;
-  --scene-gain: 0.55;
+  /* Muted, not smaller (Juan, 2026-10-16: 0.55 still read as a light
+     rather than an effect). */
+  --scene-gain: 0.3;
 }
 
 /* A PHONE GETS NO ROOM LIGHT. On a narrow screen the picture is most of
