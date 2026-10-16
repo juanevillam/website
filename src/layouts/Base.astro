@@ -117,10 +117,13 @@ const { title = ui.en['meta.title'], noindex = false } = Astro.props;
         }
         const left = Math.max(r.left, 0);
         const right = Math.min(r.right, innerWidth);
+        // Where across the shown part the light stands: its middle unless
+        // the block says otherwise (`data-scene-at="0.2"`, the foot).
+        const across = Number(at!.dataset.sceneAt) || 0.5;
         const top = Math.max(r.top, 0);
         const bottom = Math.min(r.bottom, innerHeight);
         // How far the layer slides to put its light (at 70% / 48%) there.
-        const sx = (left + right) / 2 - innerWidth * 0.7;
+        const sx = left + (right - left) * across - innerWidth * 0.7;
         const sy = (top + bottom) / 2 - innerHeight * 0.48;
         scene!.style.setProperty('--scene-sx', `${sx.toFixed(1)}px`);
         scene!.style.setProperty('--scene-sy', `${sy.toFixed(1)}px`);
