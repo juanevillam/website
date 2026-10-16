@@ -230,9 +230,63 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     height: 1rem;
   }
 
-  /* Play is the one thing to press on the cover: full ink at rest. */
+  /* PLAY IS THE ONE THING TO PRESS ON THE COVER, SO IT IS FILLED (Juan,
+     2026-10-16): the house pill — translucent, hairline, mono label — sank
+     into the cover's busy art, and beside the narrator's own play glyph it
+     did not read as "play the game". A solid ink pill, a step taller, is
+     the page's one filled control, which is what makes it the CTA. */
   .play {
-    color: var(--ink);
+    --play-h: 3rem;
+    height: var(--play-h);
+    padding: 0 1.25rem 0 1.125rem;
+    gap: 0.625rem;
+    border-color: transparent;
+    background: var(--ink);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    color: var(--surface);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.45);
+    transition:
+      scale var(--dur-micro) var(--ease),
+      box-shadow var(--dur-micro) var(--ease);
+  }
+
+  .play:hover {
+    color: var(--surface);
+    border-color: transparent;
+    scale: 1.04;
+    box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.55);
+  }
+
+  .play .glyph {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .play .label {
+    font-size: 0.9375rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* On a phone the card's name and facts lie along the cover's foot on a
+     dark fade (PanelDeck's `.screen-caption`, z 2), right where Play
+     stood — under the fade, greyed, crowding the name. Play joins that
+     row instead: at its right end, above the fade, a step smaller. */
+  @media (max-width: 48rem) {
+    .play {
+      --play-h: 2.5rem;
+      position: absolute;
+      z-index: 3;
+      right: 0.875rem;
+      bottom: 0.875rem;
+      translate: none;
+      padding: 0 1rem 0 0.875rem;
+      gap: 0.5rem;
+    }
+
+    .play .label {
+      font-size: 0.8125rem;
+    }
   }
 
   /* When the page takes the keyboard back, the game keeps flying — say
