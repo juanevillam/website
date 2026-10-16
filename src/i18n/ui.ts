@@ -152,6 +152,12 @@ const en = {
     "[Salvalo](salvalo)'s first interview, live on [José “Cheo” Noguera](cheo)'s show on [OK 101.5 FM](ok101) in Barquisimeto, and on his Instagram at the same time. I was in the studio; my co-founder joined on a video call from Madrid. Cheo downloaded the app on air, and I walked his listeners through it with a bakery: the bread it doesn't sell by closing time, saved instead of thrown away. We closed on the same idea I keep hearing: Venezuela still has so much to build in tech.",
   'events.radio.m':
     "[Salvalo](salvalo)'s first interview, live on [OK 101.5 FM](ok101) in Barquisimeto: the host downloaded the app on air while I walked his listeners through it.",
+  'events.meetup': 'Meetup',
+  'events.panal.when': 'Oct 2026',
+  'events.panal.body':
+    "A night of El Panal, the movement Manuel Sira started, in Barquisimeto, with people building every kind of thing: marketing, fashion, CRMs, inventory systems, mobile apps for mental health and healthcare. The talks covered AI, measuring your company's data so you can grow on it, and how to stand out now that code is within everyone's reach and what's scarce is taste. Every startup had exactly 30 seconds to pitch. I was nervous, but I pitched [Salvalo](salvalo), and left with new friends, contacts and a lead or two. Along the way I met the team behind Resty, a healthcare app, and stood with my founder bros from [Tripealo](tripealo): side by side, each on our own startup. Maybe a preview of what's coming at Startup Summit Caracas.",
+  'events.panal.m':
+    'A night of El Panal in Barquisimeto: talks on AI, data and taste, and 30 seconds to pitch [Salvalo](salvalo). Nervous, but I gave it, and left with new friends and a lead or two.',
 };
 
 export type UIKey = keyof typeof en;
@@ -277,6 +283,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'La primera entrevista de [Salvalo](salvalo), en vivo en el programa de [José “Cheo” Noguera](cheo) en [OK 101.5 FM](ok101) de Barquisimeto, y a la vez en su Instagram. Yo estaba en el estudio; mi cofundador se unió por videollamada desde Madrid. Cheo descargó la app al aire, y se la expliqué a sus oyentes con una panadería: el pan que no vende antes de cerrar, salvado en vez de botado. Cerramos con la misma idea que sigo escuchando: en Venezuela queda muchísimo por construir en tecnología.',
     'events.radio.m':
       'La primera entrevista de [Salvalo](salvalo), en vivo en [OK 101.5 FM](ok101) de Barquisimeto: el locutor descargó la app al aire mientras se la explicaba a sus oyentes.',
+    'events.meetup': 'Encuentro',
+    'events.panal.when': 'oct 2026',
+    'events.panal.body':
+      'Una noche de El Panal, el movimiento que creó Manuel Sira, en Barquisimeto, con gente construyendo de todo: marketing, moda, CRM, sistemas de inventario, apps móviles de psicología y de salud. Las charlas fueron de inteligencia artificial, de cómo medir los datos de tu empresa para escalar con ellos, y de cómo diferenciarte ahora que el código se democratizó y lo que hace falta es gusto. Cada startup tenía 30 segundos exactos para su pitch. Estaba nervioso, pero di el de [Salvalo](salvalo), y me fui con amigos nuevos, contactos y uno que otro lead. En el camino conocí al equipo de Resty, una app de salud, y me junté con mis founder bros de [Tripealo](tripealo): juntos, pero no revueltos. Quizás un adelanto de lo que viene en el Startup Summit Caracas.',
+    'events.panal.m':
+      'Una noche de El Panal en Barquisimeto: charlas de IA, datos y gusto, y 30 segundos para el pitch de [Salvalo](salvalo). Nervioso, pero lo di, y me fui con amigos nuevos y uno que otro lead.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -394,5 +406,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '[Salvalo](salvalo) 的第一次采访：在巴基西梅托 [OK 101.5 FM](ok101) 上 [José “Cheo” Noguera](cheo) 的节目里直播，同时在他的 Instagram 上直播。我在录音室，我的联合创始人从马德里通过视频通话加入。Cheo 在节目中下载了这款 App，我用一家面包店向听众解释它：打烊前没卖完的面包，被救下而不是扔掉。最后我们聊到我一再听到的那个想法：委内瑞拉在科技上还有太多东西等着被建造。',
     'events.radio.m':
       '[Salvalo](salvalo) 的第一次采访，在巴基西梅托 [OK 101.5 FM](ok101) 直播：主持人在节目中下载了 App，我向听众讲解它的用法。',
+    'events.meetup': '交流会',
+    'events.panal.when': '2026 年 10 月',
+    'events.panal.body':
+      '在巴基西梅托参加 El Panal 的一个夜晚。这是 Manuel Sira 发起的运动，来的人在做各种各样的事：市场营销、时尚、CRM、库存系统、心理健康和医疗类的移动 App。讲座谈到人工智能，谈到如何衡量公司的数据并靠它成长，也谈到在代码人人可及的今天如何脱颖而出：稀缺的是品味。每家创业公司正好有 30 秒做路演。我很紧张，但还是讲完了 [Salvalo](salvalo)，带走了新朋友、人脉和几条潜在客户线索。期间我认识了医疗 App Resty 的团队，也和 [Tripealo](tripealo) 的创业伙伴们站在一起：并肩同行，各做各的创业公司。也许这是 Startup Summit Caracas 的一次预演。',
+    'events.panal.m':
+      '在巴基西梅托参加 El Panal 的一个夜晚：关于 AI、数据和品味的讲座，还有 30 秒为 [Salvalo](salvalo) 路演。很紧张，但我讲完了，带走了新朋友和几条潜在客户线索。',
   },
 };
