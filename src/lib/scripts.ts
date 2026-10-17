@@ -44,21 +44,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
       'Desde 2022 trabajo remoto para empresas en México, y clientes en España y Argentina.',
       'Empecé ingeniería electrónica, luego técnico en informática; lo que más me enseñó fue construir cosas.',
       'Aquí vas a ver apps hechas por mí, para mí, que igual están en las tiendas; mi trabajo; mi startup, Salvalo; y los eventos de emprendimiento y desarrollo en los que he estado.',
-      'Toda la página está narrada, con mi voz en español, y los subtítulos salen mientras suena: para leerla, escúchala; si quieres, bájale el volumen.',
-      'La página está en español, inglés y chino: escoge arriba a la derecha y los subtítulos salen en tu idioma.',
-      'Esta es mi voz real, no inteligencia artificial. Bienvenido.',
-    ],
-  },
-
-  // TEMPORARY: the hero's last part, re-recorded alone and spliced onto
-  // the hero's first 34.9 s (everything up to "Esta página está…"). Gone
-  // once it is spliced in.
-  {
-    key: 'hero.tail',
-    where: 'Inicio · solo el final',
-    ideas: [
-      'Toda la página está narrada, con mi voz en español, y los subtítulos salen mientras suena: para leerla, escúchala; si quieres, bájale el volumen.',
-      'La página está en español, inglés y chino: escoge arriba a la derecha y los subtítulos salen en tu idioma.',
+      'La página está en español, inglés y chino: cámbiala arriba a la derecha.',
+      'Toda está narrada y los subtítulos salen mientras suena: para leerla, escúchala; si quieres, bájale el volumen.',
       'Esta es mi voz real, no inteligencia artificial. Bienvenido.',
     ],
   },
