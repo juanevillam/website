@@ -27,6 +27,14 @@ pages here (`/sound-shaper/privacy-policy`, `/support`, `/delete-account`,
   rules they share are in [`docs/audit-playbook.md`](docs/audit-playbook.md).
   `/web-release-audit` runs before every deploy.
 
+## Versions
+
+`package.json`'s `version` is the site's (`0.0.1` until launch). The first
+public deploy becomes `1.0.0` and is tagged `v1.0.0`; after that only a change
+a visitor would notice as new — a section, a redesign — bumps the minor or
+major and gets a tag. Fixes and copy edits deploy without one. Tags go on the
+commit Cloudflare deployed.
+
 ## What the site is
 
 - **One snapped page**: hero → the apps (`AppsShowcase`, today only Sound
