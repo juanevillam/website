@@ -1,7 +1,6 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
-import { pinyin } from 'pinyin-pro';
 import { SCRIPT_LANGS, scriptsFor } from '../../lib/scripts';
 import '../../styles/global.css';
 
@@ -14,10 +13,8 @@ import '../../styles/global.css';
  * subtitles are what he said, timed from when he said it. The transcript
  * shows here after saving, to check for a misheard word.
  *
- * Every language Juan narrates in is here (lib/scripts): the tabs pick
- * which one he is reading, the list shows each clip's state in all three,
- * and a clip saves into the language being read. Chinese lines carry
- * their pinyin underneath, tones marked.
+ * Spanish is the only voice (lib/narration); English and Chinese are its
+ * subtitles, written from the transcripts.
  *
  * In a production build this route has no paths, so it does not exist.
  */
@@ -39,7 +36,6 @@ const scripts = Object.fromEntries(
         ...c,
         status: state,
         audio: state === 'none' ? null : `/media/narration/${lang}/${c.key}.m4a`,
-        say: lang === 'zh' ? c.ideas.map(l => pinyin(l, { nonZh: 'consecutive' })) : undefined,
       };
     }),
   ]),
@@ -151,7 +147,6 @@ const list = scripts.es;
         shot?: string;
         ideas: string[];
         draft?: string;
-        say?: string[];
         status: 'new' | 'old' | 'none';
         audio: string | null;
       };
@@ -213,13 +208,6 @@ const list = scripts.es;
           ...clip().ideas.map((text, i) => {
             const li = document.createElement('li');
             li.textContent = text;
-            const say = clip().say?.[i];
-            if (say) {
-              const sub = document.createElement('span');
-              sub.className = 'say';
-              sub.textContent = say;
-              li.append(sub);
-            }
             li.dataset.i = String(i);
             return li;
           }),
@@ -685,14 +673,6 @@ const list = scripts.es;
       }
       .draft[hidden] {
         display: none;
-      }
-      .lines .say {
-        display: block;
-        margin-top: 0.15rem;
-        font-family: var(--font-mono);
-        font-size: 0.45em;
-        letter-spacing: 0.02em;
-        color: var(--ink-3);
       }
 
       main {
