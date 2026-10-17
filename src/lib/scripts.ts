@@ -50,6 +50,19 @@ export const SCRIPTS_ES: ScriptClip[] = [
     ],
   },
 
+  // TEMPORARY: the hero's last part, re-recorded alone and spliced onto
+  // the hero's first 34.9 s (everything up to "Esta página está…"). Gone
+  // once it is spliced in.
+  {
+    key: 'hero.tail',
+    where: 'Inicio · solo el final',
+    ideas: [
+      'Toda la página está narrada, con mi voz en español, y los subtítulos salen mientras suena: para leerla, escúchala; si quieres, bájale el volumen.',
+      'La página está en español, inglés y chino: escoge arriba a la derecha y los subtítulos salen en tu idioma.',
+      'Esta es mi voz real, no inteligencia artificial. Bienvenido.',
+    ],
+  },
+
   // Sound Shaper
   {
     key: 'shaper.problem',
