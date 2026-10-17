@@ -21,12 +21,6 @@ import T from './T.astro';
  * repeated the paragraph on screen; now the paragraph reads itself (the
  * read-along in scripts/director.ts), and a clip with no paragraph — the
  * hero's intro, the footer's — is simply heard.
- *
- * ITS TOOLS come out of it while a clip is in play (Juan, 2026-10-17):
- * the speed beside it — 1×, 1.5×, 2× and round again, Sound Shaper's own
- * control, lent to the page as its easter egg — and ten seconds back and
- * forward under them, on a grid with it. Paused, they go back in. Separate small circles rather than a
- * wider pill, so the narrator itself never changes size.
  */
 ---
 
@@ -53,105 +47,7 @@ import T from './T.astro';
   </span>
 </button>
 
-<div class="nar-tools" data-nar-tools>
-  <button class="nar-tool nar-speed" type="button" data-nar-speed tabindex="-1">
-    <span class="sr-only"><T k="narration.speed" /></span>
-    <span aria-hidden="true" data-nar-rate>1×</span>
-  </button>
-  <button class="nar-tool" type="button" data-nar-skip="-10" tabindex="-1">
-    <span class="sr-only"><T k="narration.back" /></span>
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M5.6 8.5A8 8 0 1 1 4 13.5M5.6 8.5V4.5M5.6 8.5h4"></path>
-      <text x="12.6" y="16.2" text-anchor="middle" font-size="7.5" font-weight="600" fill="currentColor">10</text>
-    </svg>
-  </button>
-  <button class="nar-tool" type="button" data-nar-skip="10" tabindex="-1">
-    <span class="sr-only"><T k="narration.forward" /></span>
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M18.4 8.5A8 8 0 1 0 20 13.5M18.4 8.5V4.5M18.4 8.5h-4"></path>
-      <text x="11.4" y="16.2" text-anchor="middle" font-size="7.5" font-weight="600" fill="currentColor">10</text>
-    </svg>
-  </button>
-</div>
-
 <style>
-  /* The narrator's tools: the header pills' own recipe at their size, a
-     step under the narrator they serve. The box sits on the narrator, and
-     each tool is placed from it by the director (--dx, --dy), on a 2 × 2
-     grid of shared centres with the play button: the speed beside it, back
-     under it, forward under the speed (mirrored in a phone's corner). They are out only while the voice plays. Closed, every
-     tool is folded into the play button's centre, small and clear, so
-     opening and closing reads as the tools coming out of it and going
-     back in. */
-  .nar-tools {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 39;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-    transition: opacity var(--dur-quick) var(--ease);
-  }
-
-  .nar-tool {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: grid;
-    place-items: center;
-    width: var(--float-h);
-    height: var(--float-h);
-    padding: 0;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(12px);
-    color: var(--ink-2);
-    cursor: pointer;
-    font: 600 0.8125rem/1 var(--font-sans);
-    font-variant-numeric: tabular-nums;
-    opacity: 0;
-    pointer-events: none;
-    transform: translate(var(--hx, 0px), var(--hy, 0px)) scale(0.4);
-    transition:
-      transform var(--dur-turn) var(--ease),
-      opacity var(--dur-quick) var(--ease),
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease);
-  }
-
-  .nar-tools.is-open .nar-tool {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translate(var(--dx, 0px), var(--dy, 0px));
-  }
-
-  /* One after another on the way out, nearest first. */
-  .nar-tools.is-open .nar-tool:nth-child(2) {
-    transition-delay: calc(var(--dur-step) * 2);
-  }
-
-  .nar-tools.is-open .nar-tool:nth-child(3) {
-    transition-delay: calc(var(--dur-step) * 4);
-  }
-
-  .nar-tool:hover {
-    color: var(--ink);
-    border-color: var(--ink-3);
-  }
-
-  .nar-tool svg {
-    width: calc(var(--float-glyph) * 0.85);
-    height: calc(var(--float-glyph) * 0.85);
-  }
-
-  /* A speed other than the usual one says so: lit, like a control that is on. */
-  .nar-speed.is-on {
-    color: var(--ink);
-    border-color: var(--ink-3);
-  }
-
   .nar-field {
     position: fixed;
     inset: 0;

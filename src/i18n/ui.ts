@@ -32,9 +32,6 @@ const en = {
   visit: 'visit',
   listen: 'Listen',
   pause: 'Pause',
-  'narration.back': 'Back 10 Seconds',
-  'narration.forward': 'Forward 10 Seconds',
-  'narration.speed': 'Playback Speed',
   // The hero's greeting over the wordmark — the one word that shows at a
   // glance which language the page is in (as the GitHub profile's
   // "Hi · Hola · 你好").
@@ -177,9 +174,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: 'visitar',
     listen: 'Escuchar',
     pause: 'Pausar',
-    'narration.back': 'Retroceder 10 segundos',
-    'narration.forward': 'Adelantar 10 segundos',
-    'narration.speed': 'Velocidad de reproducción',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
     'legal.terms': 'Términos y condiciones',
@@ -305,9 +299,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: '访问',
     listen: '收听',
     pause: '暂停',
-    'narration.back': '后退 10 秒',
-    'narration.forward': '前进 10 秒',
-    'narration.speed': '播放速度',
     'hero.hi': '你好',
     'store.soon': '即将推出',
     'legal.terms': '条款与条件',

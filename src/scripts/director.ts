@@ -70,14 +70,10 @@ const smooth = (v: number) => v * v * (3 - 2 * v);
 
 const voice = new Audio();
 voice.preload = 'auto';
-// A LITTLE QUICKER THAN RECORDED (Juan, 2026-10-17). The takes stay
-// exactly as recorded — the speed is the player's, never the file's — and
-// the pitch is kept, so it is still Juan's voice, only less unhurried.
-// The read-along runs on the media clock, so its timings follow.
-const NARRATION_RATE = 1.1;
-voice.defaultPlaybackRate = NARRATION_RATE;
-voice.playbackRate = NARRATION_RATE;
-voice.preservesPitch = true;
+// AT THE SPEED IT WAS RECORDED (Juan, 2026-10-17). It played at 1.1× with
+// its pitch kept for a few hours, and the time-stretch made the voice sound
+// robotic; a speed control beside the narrator went with it. Leave the
+// rate alone.
 // What the OS shows for the voice (Dynamic Island, Lock Screen). With no
 // metadata Safari falls back to the favicon, whose rounded tile has
 // transparent corners that the Lock Screen paints white. The artwork is
@@ -608,98 +604,9 @@ const placeNarrator = () => {
   narrator.style.pointerEvents = own < 0.05 ? 'none' : '';
 };
 
-// ----- the narrator's tools: five seconds back, forward, and speed -----
-const tools = document.querySelector<HTMLElement>('[data-nar-tools]');
-const rateLabel = tools?.querySelector<HTMLElement>('[data-nar-rate]');
-const speedButton = tools?.querySelector<HTMLElement>('[data-nar-speed]');
-// Sound Shaper's speeds, as multiples of the voice's usual pace.
-const SPEEDS = [1, 1.5, 2];
-let speed = 0;
-
-const applySpeed = () => {
-  const rate = NARRATION_RATE * SPEEDS[speed];
-  voice.defaultPlaybackRate = rate;
-  voice.playbackRate = rate;
-  if (rateLabel) rateLabel.textContent = `${SPEEDS[speed]}×`;
-  speedButton?.classList.toggle('is-on', speed > 0);
-};
-
-speedButton?.addEventListener('click', () => {
-  speed = (speed + 1) % SPEEDS.length;
-  applySpeed();
-});
-
-tools?.querySelectorAll<HTMLElement>('[data-nar-skip]').forEach(button =>
-  button.addEventListener('click', () => {
-    if (!session) return;
-    const d = voice.duration;
-    const to = (voice.currentTime || 0) + Number(button.dataset.narSkip);
-    // Past the end is the end: the clip finishes and the voice moves on.
-    voice.currentTime = Math.max(
-      0,
-      Number.isFinite(d) ? Math.min(to, d - 0.05) : to,
-    );
-  }),
-);
-
-const toolButtons = [
-  ...(tools?.querySelectorAll<HTMLElement>('.nar-tool') ?? []),
-];
-
-/** Out of the narrator while the voice plays — never while paused — at
- *  its opacity, on a 2 × 2 grid with it: the speed beside it, back under
- *  it and forward under the speed. A phone's corner mirrors
- *  it (speed to the left, skips above), where below and to the right is
- *  the screen's edge. Closed, each folds into the play button's centre. */
-const placeTools = () => {
-  if (!tools || !narrator) return;
-  const open = running && !narrator.hidden;
-  if (tools.classList.contains('is-open') !== open) {
-    tools.classList.toggle('is-open', open);
-    for (const b of toolButtons) b.tabIndex = open ? 0 : -1;
-  }
-  const r = narrator.getBoundingClientRect();
-  tools.style.transform = `translate(${r.left.toFixed(1)}px, ${r.top.toFixed(1)}px)`;
-  const own = narrator.style.opacity;
-  tools.style.opacity = own;
-  tools.style.pointerEvents = 'none';
-  const [speedTool, back, forward] = toolButtons;
-  if (!speedTool) return;
-  const size = speedTool.offsetWidth;
-  const gap = 8;
-  const mirrored = phone && !narrator.classList.contains('is-parked');
-  const cx = r.width / 2 - size / 2;
-  const cy = r.height / 2 - size / 2;
-  // A GRID ON CENTRES: two columns (the play button's, the speed's) and two
-  // rows (the play button's, the skips'), so every tool shares a centre
-  // line with its neighbour. Aligning EDGES instead left the smaller tools
-  // off the play button's axis, and the corner read crooked (Juan,
-  // 2026-10-17).
-  const side = r.width + gap + (size - r.width) / 2; // play centre → next column's
-  const slots: [HTMLElement, number, number][] = mirrored
-    ? [
-        [speedTool, cx - side, cy],
-        [back, cx - side, cy - side],
-        [forward, cx, cy - side],
-      ]
-    : [
-        [speedTool, cx + side, cy],
-        [back, cx, cy + side],
-        [forward, cx + side, cy + side],
-      ];
-  for (const [el, x, y] of slots) {
-    if (!el) continue;
-    el.style.setProperty('--dx', `${x.toFixed(1)}px`);
-    el.style.setProperty('--dy', `${y.toFixed(1)}px`);
-    el.style.setProperty('--hx', `${cx.toFixed(1)}px`);
-    el.style.setProperty('--hy', `${cy.toFixed(1)}px`);
-  }
-};
-
 const animateNarrator = (now: number) => {
   updateRead();
   placeNarrator();
-  placeTools();
   listen();
   drawField(now);
   requestAnimationFrame(animateNarrator);
@@ -725,7 +632,6 @@ const start = (block: Narr, para: number) => {
   session = { block, para };
   running = true;
   voice.src = src;
-  applySpeed();
   voice.play().catch(() => stop());
   paint();
   // Whatever shows this paragraph can follow the voice to it (a deck

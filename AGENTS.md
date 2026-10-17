@@ -56,9 +56,9 @@ commit Cloudflare deployed.
   dropped on purpose.
   - Takes are kept **exactly as recorded** — only re-wrapped as AAC. No trim,
     levelling, filters or breath softening, ever. Cuts Juan asks for are made
-    without re-encoding (`ffmpeg -c copy`). The player runs them a little
-    quicker (`NARRATION_RATE` 1.1×, pitch kept) — the speed is the player's,
-    never the file's.
+    without re-encoding (`ffmpeg -c copy`). They PLAY at the speed they were
+    recorded: 1.1× with the pitch kept was tried and sounded robotic (Juan,
+    2026-10-17), so nothing time-stretches the voice.
   - **THE PARAGRAPH IS THE TAKE, AND IT READS ITSELF** (2026-10-17). Every
     narrated paragraph is Juan's own take, transcribed and tidied (repeats
     and filler out, names spelled right; English and Chinese written sentence
@@ -69,11 +69,10 @@ commit Cloudflare deployed.
     word by word and the translations sentence by sentence (same sentence
     count, or it falls back to the whole clip) and emitted as
     `data-read-{lang}`. There are NO subtitles in the narrator any more.
-  - **The narrator is one fixed circle and never changes size.** While the
-    voice plays, three small tools fold out of it on a 2 × 2 grid of shared
-    centres — the speed (1×, 1.5×, 2×, Sound Shaper's control as the easter
-    egg) beside it, ten seconds back and forward under them — and fold back
-    in on pause (`NarrationPlayer.astro`, `placeTools` in the director).
+  - **The narrator is one fixed circle and never changes size**, and carries
+    no controls of its own. A speed control and ten-second skips folded out
+    of it for a day (2026-10-17) and were removed (Juan): the circle plays
+    and pauses, and that is all.
   - Juan records from IDEAS (`lib/scripts.ts`), not a script; the teleprompter
     (`/dev/teleprompter`, dev only) transcribes each take locally with
     whisper.cpp and now writes its `.words.json` too. After a re-record,
