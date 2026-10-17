@@ -14,9 +14,8 @@ const run = promisify(execFile);
  *   body: the raw browser recording (webm/opus)
  *   header x-ideas: encodeURIComponent(JSON string[]) — the clip's ideas
  *
- * Writes `public/media/narration/{lang}/{key}.m4a` (mono AAC, loudness
- * normalised, leading and trailing silence trimmed, breaths between
- * phrases softened) and `{key}.vtt`: the
+ * Writes `public/media/narration/{lang}/{key}.m4a` — the take exactly as
+ * recorded, only re-wrapped as AAC — and `{key}.vtt`: the
  * take TRANSCRIBED (whisper.cpp, local), its words grouped into subtitle
  * phrases, each timed from when its first word is said. Juan speaks from
  * ideas, not a script (lib/scripts), so what he said is only known from
@@ -48,25 +47,6 @@ const duration = async file => {
     '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file,
   ]);
   return parseFloat(stdout);
-};
-
-/** Where the voice starts and ends inside a take, from ffmpeg's own
- *  silence detector — the dead air before the first word and after the
- *  last one is trimmed, and the cues move with it. */
-const voiceSpan = async (file, total) => {
-  const { stderr } = await ffmpeg(
-    '-i', file, '-af', 'silencedetect=noise=-42dB:d=0.35', '-f', 'null', '-',
-  );
-  const starts = [...stderr.matchAll(/silence_start: ([\d.]+)/g)].map(m => +m[1]);
-  const ends = [...stderr.matchAll(/silence_end: ([\d.]+)/g)].map(m => +m[1]);
-  let from = 0;
-  let to = total;
-  if (starts.length && starts[0] < 0.05 && ends.length) from = ends[0];
-  // The closing silence may or may not get an end stamp at EOF.
-  const last = starts.at(-1);
-  const lastEnd = ends.length === starts.length ? ends.at(-1) : total;
-  if (last !== undefined && last > from && lastEnd >= total - 0.1) to = last;
-  return { from: Math.max(0, from - 0.25), to: Math.min(total, to + 0.45) };
 };
 
 const stamp = s => {
@@ -141,68 +121,6 @@ const phrases = (list, lang) => {
   return out;
 };
 
-// ---------- breaths ----------
-// Juan breathes between sentences, and the mic hears it. The quiet between
-// phrases is pulled down, never cut (a cut gap sounds robotic). Found by
-// LEVEL, not by the transcript: whisper's word times close up the gaps
-// (the word after a pause starts where the one before it ended), so they
-// cannot say where a breath is. Measured on Juan's hero take: words run
-// -12 to -28 dBFS, the breaths and the room between them -40 to -50; a
-// stretch under -30 that lasts 150 ms is between words, and a margin on
-// each side keeps every word's tail and attack whole.
-const RATE = 48000;
-const FRAME = 480; // 10 ms
-const SPEECH_DB = -30;
-const DUCK = 10 ** (-15 / 20);
-const RAMP = 0.03; // seconds, in and out of every dip
-
-const pcm = async file => {
-  const { stdout } = await run(
-    'ffmpeg',
-    ['-hide_banner', '-loglevel', 'error', '-i', file, '-f', 'f32le', '-ac', '1', '-ar', String(RATE), '-'],
-    { encoding: 'buffer', maxBuffer: 1 << 29 },
-  );
-  return new Float32Array(stdout.buffer, stdout.byteOffset, stdout.byteLength / 4);
-};
-
-/** The take's samples with the breaths between phrases pulled down. */
-const softenBreaths = samples => {
-  const frames = Math.ceil(samples.length / FRAME);
-  const quiet = new Uint8Array(frames);
-  for (let f = 0; f < frames; f++) {
-    let sum = 0;
-    const end = Math.min(samples.length, (f + 1) * FRAME);
-    for (let i = f * FRAME; i < end; i++) sum += samples[i] * samples[i];
-    const db = 10 * Math.log10(sum / Math.max(1, end - f * FRAME) + 1e-12);
-    quiet[f] = db < SPEECH_DB ? 1 : 0;
-  }
-  // Per frame: 1 = as recorded, DUCK = pulled down.
-  const target = new Float32Array(frames).fill(1);
-  const ms = n => Math.round((n * RATE) / FRAME / 1000);
-  for (let f = 0; f < frames; ) {
-    if (!quiet[f]) {
-      f++;
-      continue;
-    }
-    let g = f;
-    while (g < frames && quiet[g]) g++;
-    // A run from f to g: long enough to be a gap, not a soft consonant.
-    if (g - f >= ms(150))
-      for (let k = f + ms(60); k < g - ms(40); k++) target[k] = DUCK;
-    f = g;
-  }
-  // Eased in and out, sample by sample, so no dip clicks.
-  const step = 1 / (RAMP * RATE);
-  const out = new Float32Array(samples.length);
-  let gain = 1;
-  for (let i = 0; i < samples.length; i++) {
-    const want = target[Math.floor(i / FRAME)];
-    gain += Math.max(-step, Math.min(step, want - gain));
-    out[i] = samples[i] * gain;
-  }
-  return out;
-};
-
 const vtt = (lines, cues, end) =>
   'WEBVTT\n\n' +
   lines
@@ -239,31 +157,13 @@ const save = async (req, res, url) => {
     if (fs.existsSync(f))
       fs.renameSync(f, path.join(takes, 'replaced', `${when}--${path.basename(f)}`));
 
-  // Browser webm has no reliable duration header; decode once to wav.
-  const wav = raw.replace(/\.webm$/, '.wav');
-  await ffmpeg('-i', raw, '-ac', '1', '-ar', '48000', wav);
-  const total = await duration(wav);
-  const { from, to } = await voiceSpan(wav, total);
-  // Trimmed and levelled first; the transcript is taken from this, and
-  // the breaths are softened on it before the one AAC encode.
-  const clean = raw.replace(/\.webm$/, '.clean.wav');
-  await ffmpeg(
-    '-ss', String(from), '-to', String(to), '-i', wav,
-    '-af', 'highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:d=0.08',
-    '-ac', '1', '-ar', String(RATE), '-c:a', 'pcm_f32le', clean,
-  );
-  fs.rmSync(wav);
-
-  const heard = await words(clean, lang, ideas);
+  // AS RECORDED (Juan, 2026-10-17): no trim, no levelling, no filter, no
+  // breath softening — the take is only re-wrapped as AAC, at a rate high
+  // enough to be transparent, because that is what every browser the site
+  // serves plays. Whatever the mic heard is what the page plays.
+  await ffmpeg('-i', raw, '-vn', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', out);
+  const heard = await words(out, lang, ideas);
   if (!heard.length) throw new Error('no words heard in the take');
-  const soft = clean.replace(/\.clean\.wav$/, '.soft.f32');
-  fs.writeFileSync(soft, Buffer.from(softenBreaths(await pcm(clean)).buffer));
-  await ffmpeg(
-    '-f', 'f32le', '-ar', String(RATE), '-ac', '1', '-i', soft,
-    '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', out,
-  );
-  fs.rmSync(clean);
-  fs.rmSync(soft);
 
   const length = await duration(out);
   const said = phrases(heard, lang);
