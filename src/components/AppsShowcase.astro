@@ -167,7 +167,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {card.kind === 'welcome' ? (
                       <div class="lockup big" data-deck-part="text" style="--i: 1">
                         <AppTile app={app.id} size={52} />
-                        <h3 class="lockup-name">{app.name}</h3>
+                        <h3 class="lockup-name">
+                          {app.name}<CopyLink
+                            path={
+                              FOCUS_PAGES.find(
+                                f => f.focus.section === 'apps' && f.focus.app === app.id,
+                              )!.path
+                            }
+                          />
+                        </h3>
                       </div>
                     ) : (
                       <>
@@ -198,16 +206,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {card.kind === 'welcome' && (
                       <div class="store-row" data-deck-part="text" style="--i: 4">
                         <StoreBadges app={app.id} />
-                        {/* The app's own address, to paste into a post. */}
-                        <p class="share">
-                          <CopyLink
-                            path={
-                              FOCUS_PAGES.find(
-                                f => f.focus.section === 'apps' && f.focus.app === app.id,
-                              )!.path
-                            }
-                          />
-                        </p>
                       </div>
                     )}
                     {voiced && <div class="narr-slot" aria-hidden="true" />}
@@ -589,10 +587,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     margin-top: 1.25rem;
   }
 
-  /* Copy Link: a card link's size, a step under the stores. */
-  .share {
-    margin-top: 1rem;
-    font-size: 0.875rem;
+  /* The Copy Link glyph rides at the end of the app's name (CopyLink). */
+  .lockup-name :global(.copy-link) {
+    margin-left: 0.25rem;
   }
 
   .narr-slot {

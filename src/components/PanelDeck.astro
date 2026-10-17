@@ -145,7 +145,9 @@ for (const p of items)
             data-scene={scenes[i]}
           >
             <div class="words">
-              <h3 class="name" data-deck-part="text" style="--i: 1">{p.name}</h3>
+              <h3 class="name" data-deck-part="text" style="--i: 1">
+                {p.name}<CopyLink path={pathOf(p)} />
+              </h3>
               <p class="label meta" data-deck-part="text" style="--i: 2">
                 {p.meta.map((group, g) => (
                   <>
@@ -184,19 +186,17 @@ for (const p of items)
                   </>
                 )}
               </p>
-              <ul class="links" data-deck-part="text" style="--i: 4">
-                {p.links.map(link => (
-                  <li>
-                    <a href={link.href} target="_blank" rel="noopener noreferrer">
-                      {typeof link.label === 'string' ? link.label : <T k={link.label.k} />}
-                    </a>
-                  </li>
-                ))}
-                {/* Its own address, to paste into a post (lib/links). */}
-                <li>
-                  <CopyLink path={pathOf(p)} />
-                </li>
-              </ul>
+              {p.links.length > 0 && (
+                <ul class="links" data-deck-part="text" style="--i: 4">
+                  {p.links.map(link => (
+                    <li>
+                      <a href={link.href} target="_blank" rel="noopener noreferrer">
+                        {typeof link.label === 'string' ? link.label : <T k={link.label.k} />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
               {/* The narrator's place, kept EMPTY: it reserves the pill's
                   box under the links, and the still anchor below moves to
                   whichever card's slot is in front. */}
@@ -206,7 +206,9 @@ for (const p of items)
               <div class="screen is-own" data-deck-part="picture">
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
-                  <span class="cap-name">{p.name}</span>
+                  <span class="cap-name">
+                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                  </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
                         facts read as one short tag, not spread across it. */}
@@ -229,7 +231,9 @@ for (const p of items)
               <div class="screen" data-deck-part="picture">
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
-                  <span class="cap-name">{p.name}</span>
+                  <span class="cap-name">
+                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                  </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
                         facts read as one short tag, not spread across it. */}
@@ -283,7 +287,9 @@ for (const p of items)
               <div class="screen is-photos" data-deck-part="picture" data-frames={columns(p).length}>
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
-                  <span class="cap-name">{p.name}</span>
+                  <span class="cap-name">
+                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                  </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
                         facts read as one short tag, not spread across it. */}
@@ -504,6 +510,17 @@ for (const p of items)
   }
 
   /* A step below the stars' titles — this panel is secondary. */
+  /* The Copy Link glyph rides at the end of the name (CopyLink). */
+  .name :global(.copy-link),
+  .cap-name :global(.copy-link) {
+    margin-left: 0.25rem;
+  }
+
+  /* The caption lets touches through to the picture; its glyph takes them. */
+  .cap-name :global(.copy-link) {
+    pointer-events: auto;
+  }
+
   .name {
     font-size: clamp(1.5rem, 2.6vw, 2rem);
     font-weight: 800;
@@ -589,10 +606,7 @@ for (const p of items)
     }
   }
 
-  /* Square up to 56rem tall, not 50: the Copy Link row under the words
-     (2026-10-17) took the room 4:5 left, and at 844pt the row sat 27px
-     under the docked controls. */
-  @media (max-width: 48rem) and (max-height: 56rem) {
+  @media (max-width: 48rem) and (max-height: 50rem) {
     .screen.is-photos {
       aspect-ratio: 1;
     }
