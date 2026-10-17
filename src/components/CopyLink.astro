@@ -1,0 +1,94 @@
+---
+import T from './T.astro';
+
+/**
+ * COPY LINK — puts one thing's own address (lib/links) on the clipboard,
+ * so it can be pasted into a post: an app, a project, an event. It reads
+ * as one of the card's links (same ink, same underline), and says
+ * "Copied" for a moment once it has worked.
+ *
+ * The address carries the page's language as `?lang=`: whoever copies it
+ * while reading in Spanish is sharing it with Spanish readers.
+ */
+type Props = { path: string };
+const { path } = Astro.props;
+---
+
+<button class="copy-link" type="button" data-copy-link={path}>
+  <span class="when-idle"><T k="share.copy" /></span>
+  <span class="when-done" aria-live="polite"><T k="share.copied" /></span>
+</button>
+
+<style>
+  /* A link's look, on a button: the site's own `a` (global.css). */
+  .copy-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--ink-3);
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+    transition: text-decoration-color var(--dur-micro) var(--ease);
+    /* Both labels share one box, so the swap never moves the row. */
+    display: inline-grid;
+  }
+
+  .copy-link:hover {
+    text-decoration-color: var(--ink);
+  }
+
+  .when-idle,
+  .when-done {
+    grid-area: 1 / 1;
+    transition: opacity var(--dur-micro) var(--ease);
+  }
+
+  .when-done,
+  .copy-link.is-copied .when-idle {
+    opacity: 0;
+  }
+
+  .copy-link.is-copied .when-done {
+    opacity: 1;
+  }
+</style>
+
+<script>
+  // One listener for every Copy Link on the page.
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // An older browser, or no clipboard permission: the old way.
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.append(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      return ok;
+    }
+  };
+
+  const timers = new WeakMap<HTMLElement, number>();
+  document.addEventListener('click', async e => {
+    const button = (e.target as Element | null)?.closest<HTMLElement>('[data-copy-link]');
+    if (!button) return;
+    const lang = document.documentElement.dataset.lang;
+    const url = new URL(button.dataset.copyLink!, location.origin);
+    if (lang) url.searchParams.set('lang', lang);
+    if (!(await copy(url.href))) return;
+    button.classList.add('is-copied');
+    clearTimeout(timers.get(button));
+    timers.set(
+      button,
+      window.setTimeout(() => button.classList.remove('is-copied'), 2000),
+    );
+  });
+</script>
