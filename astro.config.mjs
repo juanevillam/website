@@ -2,11 +2,18 @@ import { defineConfig } from 'astro/config';
 import { narrationRecorder } from './scripts/narration-recorder.mjs';
 
 // juanevillam.com — static output, near-zero JS. Deployed on Cloudflare Pages
-// (build command `npm run build --workspace web`, output `apps/web/dist`).
+// from this repository's root: build command `npm run build`, output `dist`,
+// Node from `.node-version`.
 // Language is a client-side preference (html[data-lang]), not a URL — the
 // page re-renders in place, the way the apps do from Settings.
 export default defineConfig({
   site: 'https://juanevillam.com',
+  // Every address is written WITHOUT a trailing slash — the canonical links,
+  // the shareable addresses and the legal URLs Sound Shaper opens — so each
+  // page is built as `{path}.html`, which Cloudflare Pages serves at exactly
+  // that address. The default `{path}/index.html` would cost every one of
+  // them a redirect to a slashed twin that names a different URL.
+  build: { format: 'file' },
   // Off in the CONFIG, not in `astro preferences` — that one lives in
   // .astro/settings.json, which any cache clear wipes, and the toolbar
   // came back twice that way.

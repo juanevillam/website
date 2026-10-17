@@ -71,7 +71,7 @@ const NOTE: Partial<Record<Locale, string>> = {
 <Base
   title={`${title.en} — ${app}`}
   description={`${title.en} for ${app}, by ${AUTHOR_FULL_NAME}.`}
-  path={Astro.url.pathname.replace(/\/$/, '')}
+  path={Astro.url.pathname.replace(/(\.html|\/)$/, '')}
 >
   <div class="doc">
     <nav class="toc" aria-labelledby="toc-label" data-reveal>
