@@ -7,10 +7,26 @@
 
 /* The duration tokens a script reads (lib/motion.ts), registered as
    times so the browser hands them over resolved — "0.45s", not the calc. */
-@property --dur-micro { syntax: '<time>'; inherits: true; initial-value: 150ms; }
-@property --dur-quick { syntax: '<time>'; inherits: true; initial-value: 300ms; }
-@property --dur-turn { syntax: '<time>'; inherits: true; initial-value: 450ms; }
-@property --dur-settle { syntax: '<time>'; inherits: true; initial-value: 600ms; }
+@property --dur-micro {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 150ms;
+}
+@property --dur-quick {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 300ms;
+}
+@property --dur-turn {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 450ms;
+}
+@property --dur-settle {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 600ms;
+}
 
 :root {
   /* color — dark (primary) */
@@ -349,8 +365,19 @@ a:hover {
    frosted ground. It scrolls on its own; the page under it does not.
    No transform and no filter on the section itself — either would capture
    its fixed children (the phone's docked controls). The frost is a fixed
-   pseudo-element behind its content instead. Closing it (Landing.astro)
-   fades it, then drops the attribute: the section is back in the page. */
+   pseudo-element behind its content instead.
+
+   CLOSING IS A HAND-OFF, NOT A FADE (2026-10-17). It used to fade the
+   whole section, frost and all, then drop the attribute — an opacity ramp
+   over a 24px backdrop blur, which is the most expensive thing to fade on a
+   phone and read as the page sticking before it let go. Now the parts move
+   separately: the modal's content fades, the frost lifts on its own, and
+   the hero underneath steps forward from the slight recession it waited in
+   — so the eye follows one thing leaving and another arriving. The content
+   only FADES: moving it would take a transform, and that captures the
+   phone's docked controls exactly as one on the section would. The hero
+   takes `scale`, not `transform`, so nothing it already sets is
+   overwritten. The timer in Landing.astro runs on the same `--dur-turn`. */
 /* `!important` on the box only: each section states its own position
    (the apps panel is `relative`), and its scoped rule outranks this one. */
 [data-focused] {
@@ -359,7 +386,10 @@ a:hover {
   z-index: 9 !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transition: opacity var(--dur-quick) var(--ease);
+}
+
+[data-focused] > * {
+  transition: opacity var(--dur-turn) var(--ease);
 }
 
 [data-focused]::before {
@@ -370,10 +400,25 @@ a:hover {
   background: color-mix(in srgb, var(--ground) 84%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  transition: opacity var(--dur-turn) var(--ease);
 }
 
-[data-focused].is-closing {
+[data-focused].is-closing > * {
   opacity: 0;
+}
+
+[data-focused].is-closing::before {
+  opacity: 0;
+}
+
+/* The hero waits a step back while a modal stands over it, and comes
+   forward as the modal goes. */
+.hero-inner {
+  transition: scale var(--dur-turn) var(--ease);
+}
+
+html.is-focus:not(.is-unfocusing) .hero-inner {
+  scale: 0.96;
 }
 
 html.is-focus {

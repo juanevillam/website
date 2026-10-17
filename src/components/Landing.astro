@@ -118,9 +118,11 @@ const focus = page?.focus;
 <script>
   import { dur } from '../lib/motion';
 
-  // Closing the modal: it fades, then its section goes back into the page
-  // (which is at its top, the hero) and the address goes back to `/` —
-  // keeping `?lang`, so a reload stays in the post's language.
+  // Closing the modal: its content fades, the frost lifts and the
+  // hero steps forward (global.css, "a shared address's modal"); then its
+  // section goes back into the page (which is at its top, the hero) and the
+  // address goes back to `/` — keeping `?lang`, so a reload stays in the
+  // post's language.
   const root = document.documentElement;
   const focused = document.querySelector<HTMLElement>('[data-focused]');
   if (focused) {
@@ -130,17 +132,18 @@ const focus = page?.focus;
       if (closing) return;
       closing = true;
       focused.classList.add('is-closing');
+      root.classList.add('is-unfocusing');
       document.dispatchEvent(new Event('focus:close'));
       setTimeout(() => {
         focused.removeAttribute('data-focused');
         focused.classList.remove('is-closing');
-        root.classList.remove('is-focus');
+        root.classList.remove('is-focus', 'is-unfocusing');
         window.scrollTo({ top: 0, behavior: 'instant' });
         history.replaceState(null, '', `/${location.search}`);
         const home = document.querySelector<HTMLElement>('[data-home-title]');
         if (home?.dataset.homeTitle) document.title = home.dataset.homeTitle;
         document.dispatchEvent(new Event('focus:closed'));
-      }, dur('quick'));
+      }, dur('turn'));
     };
     document.querySelector('[data-focus-close]')?.addEventListener('click', close);
     window.addEventListener('keydown', e => {
