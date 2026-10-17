@@ -1,8 +1,9 @@
 // Copies Space Explorer's SHIPPED build into the site: the game.js the
 // Platanus cabinet runs, and its cover. The game lives in its own repo
-// (games/platanus-hack-26-venezuela-arcade), which a Cloudflare build never
-// sees — so the copies are committed, and this script is how they are
-// refreshed after a new game release. Run from apps/web: npm run arcade
+// (juanevillam/platanus-hack-26-venezuela-arcade, cloned beside this one at
+// ../games/ in Juan's portfolio folder), which a Cloudflare build never sees
+// — so the copies are committed, and this script is how they are refreshed
+// after a new game release: npm run arcade (ARCADE_DIR points elsewhere).
 //
 // Since v2 the release is the READABLE, commented source — the cabinet
 // minifies it on Platanus's side. The site has no such step, so it
@@ -15,10 +16,9 @@
 import { copyFileSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { transform } from 'esbuild';
 
-const game = new URL(
-  '../../../games/platanus-hack-26-venezuela-arcade/',
-  import.meta.url
-);
+const game = process.env.ARCADE_DIR
+  ? new URL(`file://${process.env.ARCADE_DIR.replace(/\/?$/, '/')}`)
+  : new URL('../../games/platanus-hack-26-venezuela-arcade/', import.meta.url);
 const pub = new URL('../public/', import.meta.url);
 
 const source = readFileSync(new URL('game.js', game), 'utf8');
