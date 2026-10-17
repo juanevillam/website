@@ -181,7 +181,9 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     code.textContent = localeCodes[lang as Locale] ?? lang.toUpperCase();
   };
 
-  picker.value = localStorage.getItem('lang') || 'en';
+  // What the head's pre-paint script settled on (a link's `?lang`, the
+  // saved choice, the browser's language).
+  picker.value = document.documentElement.dataset.lang || 'en';
   show(picker.value);
 
   // Tuck the header while scrolling down; scrolling back up (or the top

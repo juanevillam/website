@@ -37,48 +37,21 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * a clip ending turns the deck to the next card.
  */
 
-/** A piece of a card's line of facts: written as is, or a key. */
-export type Segment = string | { k: UIKey };
-/** A paragraph — one built around a link (the name in the sentence takes
- *  you to it), or one whose copy marks several (`[Cashea](cashea)`, TL). */
-type Linked = { before: UIKey; link: UIKey; after: UIKey; href: string };
-type Marked = { k: UIKey; links: Record<string, string> };
-export type Rich = UIKey | Linked | Marked;
-
-export type DeckItem = {
-  id: string;
-  name: string;
-  /** The line of facts under the name: groups joined by " · ", the parts
-   *  of a group by " – " (a role; a span of years; a place; a date). */
-  meta: Segment[][];
-  body: Rich;
-  /** The body's narration clip, by convention (lib/narration). */
-  clip: string;
-  /** One 3:2 capture, 1440 x 960 (a string); upright media (one, two
-   *  or more — two frames, each cycling through its share); or a screen
-   *  of its own, passed in as the named slot `{ slot }`. */
-  image: string | Media[] | { slot: string };
-  links: { label: Segment; href: string }[];
-  /** Where the picture itself goes when clicked: the site it shows. A
-   *  mouse shortcut only — the same place is a link in the words. */
-  visit?: string;
-  /** The picture whose colours light the page (lib/scene), for a screen
-   *  of its own — a capture or photos light it by themselves. */
-  scene?: string;
-};
-
-/** An event's photo, or its silent video (`.mp4`, with its poster frame
- *  beside it as `.jpg`). */
-export type Media = string;
+export type { DeckItem, Media, Rich, Segment } from '../lib/deck-items';
+import type { DeckItem, Media } from '../lib/deck-items';
 
 type Props = {
   id: string;
   /** The panel's eyebrow. */
   title: UIKey;
   items: DeckItem[];
+  /** The card a shared address opens (lib/links): the panel then stands
+   *  over the page as a modal, on that card alone. */
+  focus?: string;
 };
 
-const { id, title, items } = Astro.props;
+const { id, title, items, focus } = Astro.props;
+const focusCard = focus ? items.findIndex(p => p.id === focus) : -1;
 
 const isVideo = (m: Media) => m.endsWith('.mp4');
 // A video lights the page, stands before it plays, and blurs behind
@@ -129,7 +102,14 @@ for (const p of items)
     for (const m of p.image) photoScenes[m] = sceneAttr(await sceneOf(still(m)));
 ---
 
-<section class="panel-deck" id={id} data-narr-panel={voiced ? '' : null}>
+<section
+  class="panel-deck"
+  id={id}
+  data-narr-panel={voiced ? '' : null}
+  data-focused={focusCard >= 0 ? '' : null}
+  data-focus-lone={focusCard >= 0 ? '' : null}
+  data-focus-card={focusCard >= 0 ? focusCard : null}
+>
   <!-- An eyebrow, not a headline: the stars above open on big titles and
        air; a panel like this is secondary, and a headline plus an intro
        line stacked over the card is what made it read cramped. -->
@@ -892,8 +872,13 @@ for (const p of items)
       stillAnchor.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
     };
 
+    // A shared address opens the panel on its card, ALONE: while it is
+    // the modal the deck does not turn (lib/links).
+    const focusCard = Number(section?.dataset.focusCard ?? 0);
     const deck = createDeck({
       cards,
+      start: focusCard,
+      locked: () => !!section?.hasAttribute('data-focus-lone') && section.hasAttribute('data-focused'),
       controls: carousel.querySelector('[data-deck-controls]'),
       keys: carousel,
       swipe: carousel.querySelector<HTMLElement>('.stage'),

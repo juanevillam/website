@@ -1,0 +1,12 @@
+---
+import Landing from '../../components/Landing.astro';
+import { focusPaths, type FocusPage } from '../../lib/links';
+
+/** An app's own address: the landing with its story open (lib/links). */
+export const getStaticPaths = () => focusPaths('', 'app');
+
+type Props = { page: FocusPage };
+const { page } = Astro.props;
+---
+
+<Landing page={page} />

@@ -41,9 +41,12 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  */
 type Props = {
   apps: AppStory[];
+  /** An app's own address opens it (lib/links): the panel then stands
+   *  over the page as a modal. */
+  focused?: boolean;
 };
 
-const { apps } = Astro.props;
+const { apps, focused = false } = Astro.props;
 
 /**
  * THE PEEK — a welcome shows no picture of its own but the first card's
@@ -113,6 +116,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   data-apps
   data-narr-panel={voiced ? '' : null}
   data-phone-scene
+  data-focused={focused ? '' : null}
 >
   <!-- The switcher, floating at the header's height (see the docblock). -->
   {

@@ -16,8 +16,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
 const NARRATION = path.join(ROOT, 'public/media/narration');
 
-// The keys the page plays, found where the components name them: a deck
-// item's `clip: '…'`, a `clipFor('…')`, and the apps manifest's paragraphs.
+// The keys the page plays, found where they are named: a deck item's
+// `clip: '…'` (lib/work, lib/events), a `clipFor('…')`, and the apps manifest's paragraphs.
 const used = new Set();
 const walk = dir => {
   for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -31,6 +31,7 @@ const walk = dir => {
   }
 };
 walk(path.join(SRC, 'components'));
+walk(path.join(SRC, 'lib'));
 const apps = fs.readFileSync(path.join(SRC, 'lib/apps.ts'), 'utf8');
 for (const m of apps.slice(apps.indexOf('export const APPS')).matchAll(/'([a-z]+\.(?:problem|solution|s\d\.p\d))'/g))
   used.add(m[1]);

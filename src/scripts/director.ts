@@ -130,6 +130,9 @@ type Story = {
 
 const narrator = document.querySelector<HTMLElement>('[data-narrator]');
 
+/** A shared address's modal is open over the page (lib/links). */
+const focusOpen = () => !!document.querySelector('[data-focused]');
+
 /** Where the voice is — kept while paused, so play resumes in place. */
 let session: { block: Narr; para: number } | null = null;
 /** The person's intent: running, or paused by them. Not the element's
@@ -490,7 +493,7 @@ const placeNarrator = () => {
   // odd on a phone.)
   if (phone) {
     const hero = heroBox?.getBoundingClientRect();
-    if (heroAnchor && hero && hero.bottom > innerHeight / 2) {
+    if (heroAnchor && hero && hero.bottom > innerHeight / 2 && !focusOpen()) {
       const r = heroAnchor.getBoundingClientRect();
       narrator.classList.add('is-parked');
       narrator.style.setProperty(
@@ -618,9 +621,20 @@ const scrollToStep = (story: Story, index: number) => {
 voice.addEventListener('ended', () => {
   if (!session || !running) return;
   const { block, para } = session;
+  // A shared address's modal tells its own thing and nothing past it: a
+  // card opened alone ends with its clip, an app with its last card.
+  const inFocus = block.el.hasAttribute('data-focused');
+  if (inFocus && block.el.hasAttribute('data-focus-lone')) {
+    stop();
+    return;
+  }
   const next = firstVoiced(block, para + 1);
   if (next >= 0) {
     start(block, next);
+    return;
+  }
+  if (inFocus) {
+    stop();
     return;
   }
   const story = block.story;
@@ -853,6 +867,24 @@ const docks = phone
 const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
 const render = (force = false) => {
+  // A shared address's modal (lib/links) owns the narrator outright: it
+  // covers the page, so nothing under it is showing.
+  const focused = focusOpen()
+    ? panels.find(n => n.el.hasAttribute('data-focused'))
+    : undefined;
+  if (focused) {
+    parks = focused.anchor ? [{ anchor: focused.anchor, w: 1 }] : [];
+    showing = focused;
+    for (const dock of docks) {
+      const mine = focused.el.contains(dock);
+      dock.style.opacity = mine ? '1' : '0';
+      dock.style.visibility = mine ? 'visible' : 'hidden';
+      dock.style.pointerEvents = mine ? '' : 'none';
+    }
+    if (session && running && showing !== session.block) follow(showing);
+    placeNarrator();
+    return;
+  }
   const vh = window.innerHeight;
   const hp = step(clamp(window.scrollY / vh, 0, 1));
 
@@ -1018,6 +1050,13 @@ document.addEventListener(
 );
 
 render(true);
+
+// Closing the modal ends what it was telling — the page under it is at
+// its top, and a voice running on would start the hero's — and the page
+// takes the narrator back.
+document.addEventListener('focus:close', stop);
+document.addEventListener('focus:closed', () => render(true));
+
 // Transitions switch on only AFTER the first placement, so nothing
 // animates in from nowhere on load.
 // ---------- the phone's decks ----------

@@ -37,12 +37,19 @@ const leaveMs = () => dur('quick') + 100;
 
 export const createDeck = ({
   cards,
+  start = 0,
+  locked,
   controls,
   keys,
   swipe,
   onChange,
 }: {
   cards: HTMLElement[];
+  /** The card in front at first. */
+  start?: number;
+  /** While true, the person cannot turn it — a card opened ALONE by a
+   *  shared address (lib/links). The voice still can. */
+  locked?: () => boolean;
   /** The `DeckControls` block. */
   controls: HTMLElement | null;
   /** What listens for the arrow keys — the focusable carousel. */
@@ -55,7 +62,7 @@ export const createDeck = ({
   const dots = [
     ...(controls?.querySelectorAll<HTMLElement>('[data-deck-dot]') ?? []),
   ];
-  let current = 0;
+  let current = Math.min(Math.max(start, 0), n - 1);
   const leaving = new Map<HTMLElement, ReturnType<typeof setTimeout>>();
 
   const mark = () => {
@@ -102,15 +109,21 @@ export const createDeck = ({
     mark();
   };
 
+  // What the person does turns it only while it is free.
+  const turn = (i: number, dir?: 1 | -1) => {
+    if (!locked?.()) go(i, dir);
+  };
+
   controls
     ?.querySelector('[data-deck-prev]')
-    ?.addEventListener('click', () => go(current - 1, -1));
+    ?.addEventListener('click', () => turn(current - 1, -1));
   controls
     ?.querySelector('[data-deck-next]')
-    ?.addEventListener('click', () => go(current + 1, 1));
-  dots.forEach((dot, i) => dot.addEventListener('click', () => go(i)));
+    ?.addEventListener('click', () => turn(current + 1, 1));
+  dots.forEach((dot, i) => dot.addEventListener('click', () => turn(i)));
 
   keys?.addEventListener('keydown', e => {
+    if (locked?.()) return;
     if (e.key === 'ArrowLeft') go(current - 1, -1);
     else if (e.key === 'ArrowRight') go(current + 1, 1);
     else return;
@@ -138,7 +151,7 @@ export const createDeck = ({
       from = null;
       if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
       const way = dx < 0 ? 1 : -1;
-      go(current + way, way);
+      turn(current + way, way);
     },
     { passive: true },
   );

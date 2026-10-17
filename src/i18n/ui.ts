@@ -26,6 +26,7 @@ export const localeCodes: Record<Locale, string> = {
 const en = {
   'meta.title': 'juanevillam',
   'meta.description': 'I build native mobile apps and web products.',
+  'focus.close': 'Close',
   visit: 'visit',
   listen: 'Listen',
   pause: 'Pause',
@@ -169,6 +170,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   es: {
     'meta.title': 'juanevillam',
     'meta.description': 'Hago apps móviles nativas y productos web.',
+    'focus.close': 'Cerrar',
     visit: 'visitar',
     listen: 'Escuchar',
     pause: 'Pausar',
@@ -296,6 +298,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
   zh: {
     'meta.title': 'juanevillam',
     'meta.description': '我做原生移动应用和网页产品。',
+    'focus.close': '关闭',
     visit: '访问',
     listen: '收听',
     pause: '暂停',
