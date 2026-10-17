@@ -608,9 +608,66 @@ const placeNarrator = () => {
   narrator.style.pointerEvents = own < 0.05 ? 'none' : '';
 };
 
+// ----- the narrator's tools: five seconds back, forward, and speed -----
+const tools = document.querySelector<HTMLElement>('[data-nar-tools]');
+const rateLabel = tools?.querySelector<HTMLElement>('[data-nar-rate]');
+const speedButton = tools?.querySelector<HTMLElement>('[data-nar-speed]');
+// Sound Shaper's speeds, as multiples of the voice's usual pace.
+const SPEEDS = [1, 1.5, 2];
+let speed = 0;
+
+const applySpeed = () => {
+  const rate = NARRATION_RATE * SPEEDS[speed];
+  voice.defaultPlaybackRate = rate;
+  voice.playbackRate = rate;
+  if (rateLabel) rateLabel.textContent = `${SPEEDS[speed]}×`;
+  speedButton?.classList.toggle('is-on', speed > 0);
+};
+
+speedButton?.addEventListener('click', () => {
+  speed = (speed + 1) % SPEEDS.length;
+  applySpeed();
+});
+
+tools?.querySelectorAll<HTMLElement>('[data-nar-skip]').forEach(button =>
+  button.addEventListener('click', () => {
+    if (!session) return;
+    const d = voice.duration;
+    const to = (voice.currentTime || 0) + Number(button.dataset.narSkip);
+    // Past the end is the end: the clip finishes and the voice moves on.
+    voice.currentTime = Math.max(
+      0,
+      Number.isFinite(d) ? Math.min(to, d - 0.05) : to,
+    );
+  }),
+);
+
+/** Beside the narrator while a clip is in play, at its opacity. */
+const placeTools = () => {
+  if (!tools || !narrator) return;
+  const on = !!session && !narrator.hidden;
+  tools.hidden = !on;
+  if (!on) return;
+  const r = narrator.getBoundingClientRect();
+  const gap = 8;
+  // On a phone's corner they stack above it, clear of the deck's docked
+  // controls on the other side; anywhere else they follow it in a row.
+  const stacked = phone && !narrator.classList.contains('is-parked');
+  tools.classList.toggle('is-stacked', stacked);
+  const w = tools.offsetWidth;
+  const h = tools.offsetHeight;
+  const x = stacked ? r.left + r.width / 2 - w / 2 : r.right + gap;
+  const y = stacked ? r.top - gap - h : r.top + r.height / 2 - h / 2;
+  tools.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  const own = narrator.style.opacity;
+  tools.style.opacity = own;
+  tools.style.pointerEvents = own && Number(own) < 0.6 ? 'none' : '';
+};
+
 const animateNarrator = (now: number) => {
   updateRead();
   placeNarrator();
+  placeTools();
   listen();
   drawField(now);
   requestAnimationFrame(animateNarrator);
@@ -636,7 +693,7 @@ const start = (block: Narr, para: number) => {
   session = { block, para };
   running = true;
   voice.src = src;
-  voice.playbackRate = NARRATION_RATE;
+  applySpeed();
   voice.play().catch(() => stop());
   paint();
   // Whatever shows this paragraph can follow the voice to it (a deck
