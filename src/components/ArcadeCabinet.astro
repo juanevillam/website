@@ -657,7 +657,9 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     // The page's narrator pauses for the game's own music.
     document.dispatchEvent(new Event('arcade:start'));
     frame = document.createElement('iframe');
-    frame.src = '/arcade/index.html';
+    // The folder, not its index file: Cloudflare Pages answers /arcade/index.html
+    // with a 308 to /arcade/, a round trip before the game can start.
+    frame.src = '/arcade/';
     frame.title = 'Space Explorer';
     frame.allow = 'fullscreen; autoplay';
     cabinetScreen.append(frame);
