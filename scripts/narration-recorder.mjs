@@ -44,7 +44,13 @@ const ffmpeg = (...args) =>
 
 const duration = async file => {
   const { stdout } = await run('ffprobe', [
-    '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file,
+    '-v',
+    'error',
+    '-show_entries',
+    'format=duration',
+    '-of',
+    'csv=p=0',
+    file,
   ]);
   return parseFloat(stdout);
 };
@@ -61,7 +67,10 @@ const stamp = s => {
 const WHISPER = process.env.WHISPER_BIN ?? 'whisper-cli';
 const MODEL =
   process.env.WHISPER_MODEL ??
-  path.join(process.env.HOME ?? '', '.local/share/whisper-models/ggml-large-v3-turbo-q5_0.bin');
+  path.join(
+    process.env.HOME ?? '',
+    '.local/share/whisper-models/ggml-large-v3-turbo-q5_0.bin',
+  );
 
 // Names the transcriber would otherwise spell its own way.
 const GLOSSARY =
@@ -79,17 +88,34 @@ const words = async (file, lang, ideas) => {
     await run(
       WHISPER,
       [
-        '-m', MODEL, '-l', lang, '-f', wav, '-np',
+        '-m',
+        MODEL,
+        '-l',
+        lang,
+        '-f',
+        wav,
+        '-np',
         // One word per segment: the phrases are ours to make.
-        '-ml', '1', '-sow',
-        '--prompt', `${GLOSSARY} ${ideas.join(' ')}`.slice(0, 800),
-        '-oj', '-of', base,
+        '-ml',
+        '1',
+        '-sow',
+        '--prompt',
+        `${GLOSSARY} ${ideas.join(' ')}`.slice(0, 800),
+        '-oj',
+        '-of',
+        base,
       ],
       { maxBuffer: 1 << 26 },
     );
-    const { transcription } = JSON.parse(fs.readFileSync(`${base}.json`, 'utf8'));
+    const { transcription } = JSON.parse(
+      fs.readFileSync(`${base}.json`, 'utf8'),
+    );
     return transcription
-      .map(s => ({ text: s.text.trim(), from: s.offsets.from / 1000, to: s.offsets.to / 1000 }))
+      .map(s => ({
+        text: s.text.trim(),
+        from: s.offsets.from / 1000,
+        to: s.offsets.to / 1000,
+      }))
       .filter(w => w.text);
   } finally {
     fs.rmSync(wav, { force: true });
@@ -106,12 +132,14 @@ const phrases = (list, lang) => {
   const out = [];
   let cur = [];
   const flush = () => {
-    if (cur.length) out.push({ text: join(cur), from: cur[0].from, to: cur.at(-1).to });
+    if (cur.length)
+      out.push({ text: join(cur), from: cur[0].from, to: cur.at(-1).to });
     cur = [];
   };
   for (const w of list) {
     const last = cur.at(-1);
-    if (last && (w.from - last.to > 0.6 || join([...cur, w]).length > max)) flush();
+    if (last && (w.from - last.to > 0.6 || join([...cur, w]).length > max))
+      flush();
     cur.push(w);
     const text = join(cur);
     if (/[.?!…。？！]$/.test(w.text)) flush();
@@ -145,7 +173,9 @@ const save = async (req, res, url) => {
 
   let ideas = [];
   try {
-    ideas = JSON.parse(decodeURIComponent(String(req.headers['x-ideas'] ?? '%5B%5D')));
+    ideas = JSON.parse(
+      decodeURIComponent(String(req.headers['x-ideas'] ?? '%5B%5D')),
+    );
   } catch {}
   if (!Array.isArray(ideas)) ideas = [];
 
@@ -155,13 +185,27 @@ const save = async (req, res, url) => {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   for (const f of [out, subs])
     if (fs.existsSync(f))
-      fs.renameSync(f, path.join(takes, 'replaced', `${when}--${path.basename(f)}`));
+      fs.renameSync(
+        f,
+        path.join(takes, 'replaced', `${when}--${path.basename(f)}`),
+      );
 
   // AS RECORDED (Juan, 2026-10-17): no trim, no levelling, no filter, no
   // breath softening — the take is only re-wrapped as AAC, at a rate high
   // enough to be transparent, because that is what every browser the site
   // serves plays. Whatever the mic heard is what the page plays.
-  await ffmpeg('-i', raw, '-vn', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', out);
+  await ffmpeg(
+    '-i',
+    raw,
+    '-vn',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '192k',
+    '-movflags',
+    '+faststart',
+    out,
+  );
   const heard = await words(out, lang, ideas);
   if (!heard.length) throw new Error('no words heard in the take');
 
@@ -169,7 +213,25 @@ const save = async (req, res, url) => {
   const said = phrases(heard, lang);
   // The first phrase starts the clip; the rest start on their first word.
   const cues = said.map((p, i) => (i === 0 ? 0 : p.from));
-  fs.writeFileSync(subs, vtt(said.map(p => p.text), cues, length));
+  fs.writeFileSync(
+    subs,
+    vtt(
+      said.map(p => p.text),
+      cues,
+      length,
+    ),
+  );
+  // Every word with when it starts: the read-along's clock (lib/narration).
+  // After a re-record, tidy the paragraph on screen from this transcript
+  // (same words, repeats and filler out) so its words line up again.
+  const timed = path.join(ROOT, 'src/data/narration', `${key}.words.json`);
+  fs.mkdirSync(path.dirname(timed), { recursive: true });
+  fs.writeFileSync(
+    timed,
+    JSON.stringify(
+      heard.map(w => ({ w: w.text, t: Math.round(w.from * 100) / 100 })),
+    ),
+  );
   return {
     m4a: `/media/narration/${lang}/${key}.m4a`,
     length,

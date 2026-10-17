@@ -54,25 +54,25 @@ const en = {
   'notFound.home': 'Go to Home',
 
   'shaper.problem':
-    'I listened to my music on YouTube Music between too many ads, kept the same song in three or four versions — normal, slowed, sped up, ultra slow — and half the time I just wanted the 30 seconds I loved, on loop.',
+    'I listened to music on YouTube Music, but ads kept popping up all the time. And often, if I liked a song, I liked to hear it slow, fast, ultra slow, ultra fast. And many other times I only wanted the 30 seconds in the middle, the first 20 seconds, or the best part, at the end. And of course, I played it again and again.',
   'shaper.solution':
-    "An app where you add your MP3s and it works without internet: change the speed live, shape the equalizer and the effects — preserve pitch, echo, next room — and make clips of your favorite parts. It isn't another streaming app: no catalogue, no algorithm deciding for you. It's your music — the music you already have — sounding the way you want it.",
+    "That's why I made Sound Shaper, a personal MP3 player that works without internet. You add your song once and you can make it slow or fast, put on any effects you want, use the equalizer and make clips of your favorite parts. On YouTube Music a song sounds the way it was uploaded, but here you add the song, you change it, and you choose how you hear it.",
   'shaper.s1.p1':
-    'Add your songs as MP3s and build your own library, each with its artwork and its info.',
+    "This is your library. The app doesn't download music: you add your own MP3s for your personal use, and here you can drag them into whatever order you like.",
   'shaper.s1.p2':
-    "Everything lives on your phone and works fully offline, and it hooks into the system — Dynamic Island, widgets, the Lock Screen, the OS playback controls. Drag any cover to arrange the library your way; the one that's playing carries a quiet mark, so you never lose sight of it.",
+    "It works with widgets, the Lock Screen and the Dynamic Island. From here you also open Settings, where you can change your account details, the app's language and its appearance. And it has a little extra: trophies like PlayStation's. The more you use the app, the more trophies you unlock, until you earn the coveted platinum.",
   'shaper.s2.p1':
-    'A player like the one you already know: big artwork, clear controls, and the cover turned into the light of the screen.',
+    'This is the player screen, a normal one, like YouTube Music or Apple Music. Here you can play, pause and change songs.',
   'shaper.s2.p2':
-    'Underneath, one bar with what makes the app special — Shape, Clips and Edit, one tap away. Whatever you set stays set: it carries from song to song, so the whole queue sounds the way you left it.',
+    'What matters is the bar at the bottom, where you open Shape and Clips. Those two parts are the reason the app exists.',
   'shaper.s3.p1':
-    'This screen is why the app exists: ready-made presets, or a five-band equalizer set your way.',
+    "This is where the name Sound Shaper comes from, from Shape: the app shapes sound. You have ready-made presets, a manual equalizer if you know more about music, and you can change the song's speed, slow or fast, however you like.",
   'shaper.s3.p2':
-    "Playback speed changed live — slowed, sped up, whatever you're feeling — and effects like preserve pitch, echo and next room. The presets are matched in loudness, so comparing them compares their tone — not which one is louder — and none of them clips.",
+    "Preserving the pitch was the most interesting thing to build. On YouTube, if you slow a song down, the voice sounds like slow motion. Here you can choose to keep it sounding the same, at the same pace as the beat. There are also effects like echo and next room, which you can combine so the music sounds like you're at a concert, in a concert's parking lot, or hearing the party your neighbor is throwing next door. And if you put on headphones and close your eyes, it really takes you there.",
   'shaper.s4.p1':
-    'Pick the exact seconds you love: the whole song runs along the bottom, and a zoomed-in view on top lets you place the cut precisely.',
+    "For Clips I took inspiration from Apple's Voice Memos app, the same app I used to record the ideas for this app and this page. You just pick the part of the song you like most, and that's it.",
   'shaper.s4.p2':
-    'Save them as clips you can loop anytime. Each clip stays attached to its song, and you can edit it, delete it or play it again whenever you want.',
+    "You save it as a clip and play it again and again. From here you can also open Shape so the clip you're making or editing sounds your way.",
 
   // Space Explorer — the Platanus arcade entry, playable at the landing's foot.
   // The control keys are the cabinet's own; the action names are Apple-voice
@@ -90,10 +90,8 @@ const en = {
   'arcade.c.overdrive': 'Overdrive',
   'arcade.c.start': 'Start and pause',
   // One sentence around a link: before it, the link's words, after it.
-  'arcade.p1.before': 'A 3D space shooter that fits in 50 KB, built for ',
-  'arcade.p1.link': "Platanus Hack's arcade challenge",
-  'arcade.p1.after':
-    ': the best games get played on a real arcade cabinet at the hackathon in Caracas.',
+  'arcade.p1':
+    "Space Explorer started as an easter egg for my apps, in this case Sound Shaper: you'd go to a specific part of the app, tap a certain combination, and Space Explorer would open as a game. It was going to have several levels, in the sea, in space, a space war, but I took it out to keep Sound Shaper simple. Months later we applied to a [Platanus](platanus) hackathon that had an arcade challenge: make a video game. I already had the idea ready, so I used it to apply. It's a 3D space shooter that fits in 50 kilobytes, not megabytes, and honestly it came out pretty cool. You can play it right here on this page and on Platanus's official site. I don't know if it was the best game technically; by popular vote it wasn't, but it's still a super cool game.",
 
   // More Work — the secondary projects carousel, after the game. Job
   // titles and project names stay as they are in every locale.
@@ -104,16 +102,14 @@ const en = {
   'work.cofounder': 'Co-founder',
   'work.freelance': 'Freelance',
   // One paragraph around a link to Crol; its clip is `work.crol.body`.
-  'work.crol.before': 'The mobile app of ',
-  'work.crol.link': 'Crol',
-  'work.crol.after':
-    ', a cloud ERP for small and mid-sized businesses in Mexico: sales, electronic invoicing, inventory and live financial reports. I built it from scratch, design included, and major clients across Mexico run on it.',
+  'work.crol.body':
+    "Since 2022 I've worked at [Crol](crol), a cloud ERP for companies in Mexico. I also started on Conto Pay, a much simpler, easier version of Crol: its website, its landing page and its mobile app. And that same app was the base for Crol ERP Móvil, which I built and designed from scratch.",
   'work.salvalo.body':
-    'Every day, shops close with products that could still have sold. On Salvalo they turn them into packs with a price and a pickup window; you find one on the map near home, reserve it, pay the shop directly and pick it up with a code. I redesigned the whole app, for customers and for shops, built the new website — the team edits every text and photo on it without code — and I go out visiting shops for the pilot in Barquisimeto.',
+    "I'm a cofounder of [Salvalo](salvalo), my startup. Every day, shops close with products that can still be sold, and Salvalo turns them into packs with a price and a pickup time. The customer finds one nearby on the app's map, reserves it, pays the shop directly and picks it up with a verification code. The example I always give: a bakery has 10 cachitos in the morning, by 5 in the afternoon it has 3 left and 2 loaves of French bread, and it makes a pack out of them at a reduced closing price. The shop wins, because it moves that product instead of losing it, and it gains customers, because Salvalo is an extra sales channel. And the customer gets the same morning cachitos, in the afternoon, at a discount, in a really easy way. I'm the technical cofounder: I redesigned the app and the website, and I handle all the frontend development. I'm also Salvalo's representative here in Venezuela, so I go out to pitch shops and show up at every event on Salvalo's behalf.",
   'work.maktub.body':
-    "The website of a fund that connects investors with art and cultural projects in Mexico and Latin America. I took it from zero to live in a month, and their team edits every text, image and video without code; they've published dozens of updates on their own.",
+    'Maktub Art Fund is a client from Mexico. It was a landing page, and those rarely caught my attention, but the design was great, very modern, very fashion, so I liked the idea and built it. It came out pretty cool too.',
   'work.andreina.body':
-    'A WordPress site for a productivity coach who helps people organize their week and grow their income.',
+    "Andreina Aular's site was the first one I made after finishing my first programming courses. It was a WordPress site, but I designed all of it myself in Figma, from scratch, published it and kept it updated. Later it was rebuilt entirely in WordPress and came out much better, but I made the skeleton, back in 2020.",
 
   // PHONE copy — the short version each block shows below 48rem. The
   // full paragraphs (and their narration) are desktop's.
@@ -142,25 +138,25 @@ const en = {
   'events.hackathon': 'Hackathon',
   'events.alegria.when': 'Oct 2025',
   'events.alegria.body':
-    "Venezuela's first vibe-coding hackathon: three days at Yummy's offices in Caracas, organized by AlegrIA. Between building with [Cesar](cesar), [Pastor](pastor) and [Ale](ale), we heard the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash) tell how they started. We didn't take a prize home. We took new friends, lessons from people who have done it, and a reminder of why I love building things with others. P.S. This hackathon was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
+    "This one has more of a story. One day [Pastor](pastor), who went to primary and secondary school with me, wrote to me and introduced me to [Cesar](cesar) and [Ale](ale) to apply to a hackathon: they were one short, and he asked if I'd join them. The old Juan would have said no, maybe out of shyness or laziness, but this time I thought the worst that could happen was not getting in, and at the very least we'd learn a lot. We came up with several ideas, but the one that won was [Tripealo](tripealo), a marketplace for travel experiences in Venezuela, and out of a thousand people who applied we were among the hundred who went to [Yummy](yummy)'s offices in Caracas. We didn't win, but I heard many founders who now compete in Silicon Valley against the top companies in the United States, and we left with the push to keep going. They carried on with Tripealo, and I left to continue with my cofounder at [Salvalo](salvalo). Today Tripealo and Salvalo are both running, and I'm all in on Salvalo in founder mode. They're my founder bros now: together, but not mixed up. It was the turning point between the old Juan, just a programmer, and the Juan of today, almost an entrepreneur. I'm really grateful for this experience: I learned a lot from a lot of people, and a lot about myself.",
   'events.alegria.m':
     "Three days at Venezuela's first vibe-coding hackathon, in Caracas. No prize, but new friends and lessons from the founders of [Yummy](yummy), [Cashea](cashea) and [Slash](slash). It was the push we needed to get going with [Tripealo](tripealo) and [Salvalo](salvalo).",
   'events.talk': 'Talk',
   'events.ilc.when': 'Sep 2026',
   'events.ilc.body':
-    "A conversation at [Teatro Juares](juares) in Barquisimeto between [Father Elías Sayegh](elias) and [Pedro Vallenilla](pedro), co-founder of [Cashea](cashea). At the AlegrIA hackathon I'd heard his story through a screen; this time it was in the same room, and it landed differently. His first startup worked, the next ones didn't, one after another, and then came Cashea. His case for Venezuela stayed with me too: there may be no better place right now to build a tech product, because there is so much left to build.",
+    "At the AlegrIA hackathon, organized by [Cashea](cashea) and [Yummy](yummy), we had an online talk with [Pedro Vallenilla](pedro), Cashea's cofounder. Months later he came to Barquisimeto in person to give an improved, much fuller talk, with [Father Elías Sayegh](elias). We were literally in the second row of the [theater](juares), right in front. He told how several of his startups failed before the huge success that was Cashea, and how he kept going and going until he built Cashea. What stayed with me most was how he talks about Venezuela: after everything it has been through, it's a greenfield for building anything, because here there are no tech-driven solutions that other countries already have. That's why Venezuela is at the best moment to start a company, and not in theory, in practice.",
   'events.ilc.m':
     "[Pedro Vallenilla](pedro) of [Cashea](cashea), in person this time and in my city: one startup that worked, several that didn't, then Cashea, and why Venezuela is the place to build.",
   'events.interview': 'Interview',
   'events.radio.when': 'Oct 2026',
   'events.radio.body':
-    "[Salvalo](salvalo)'s first interview, live on [José “Cheo” Noguera](cheo)'s show on [OK 101.5 FM](ok101) in Barquisimeto, and on his Instagram at the same time. I was in the studio; my co-founder joined on a video call from Madrid. Cheo downloaded the app on air, and I walked his listeners through it with a bakery: the bread it doesn't sell by closing time, saved instead of thrown away. We closed on the same idea I keep hearing: Venezuela still has so much to build in tech.",
+    "This was [Salvalo](salvalo)'s first radio interview, on [Cheo Noguera](cheo)'s show on [OK 101.5 FM](ok101) in Barquisimeto. I was in the studio and my cofounder joined from Madrid. I gave the usual example: you make 10 cachitos, by 4 you have 3 left, and you make a pack out of them. On the live stream people were asking us how to download it, and we explained what Salvalo is right there to every listener.",
   'events.radio.m':
     "[Salvalo](salvalo)'s first interview, live on [OK 101.5 FM](ok101) in Barquisimeto: the host downloaded the app on air while I walked his listeners through it.",
   'events.meetup': 'Meetup',
   'events.panal.when': 'Oct 2026',
   'events.panal.body':
-    "A night of [El Panal](panal), the movement [Manuel Sira](manuel) started, in Barquisimeto, with people building every kind of thing: marketing, fashion, CRMs, inventory systems, mobile apps for mental health and healthcare. The talks covered AI, measuring your company's data so you can grow on it, and how to stand out now that code is within everyone's reach and what's scarce is taste. Every startup had exactly 30 seconds to pitch. I was nervous, but I pitched [Salvalo](salvalo), and left with new friends, contacts and a lead or two. Along the way I met the team behind [Resty](resty), a healthcare app, and stood with my founder bros from [Tripealo](tripealo): side by side, each on our own startup. Maybe a preview of what's coming at Startup Summit Caracas.",
+    "[El Panal](panal) is a movement [Manuel Sira](manuel) started here in Barquisimeto: lots of people building all kinds of things. There are people in marketing, fashion, CRM, inventory, psychology and health apps, and there were talks on artificial intelligence, on growing your company by measuring its data correctly, and on standing out now that we're in the age of AI and you need taste to make things. Every startup at the event had exactly 30 seconds to pitch, and I, nervous, gave [Salvalo](salvalo)'s. It wasn't the best one I've given, but it was Salvalo's first official pitch at an event of that caliber. I went with my friends from [Tripealo](tripealo) and left with new friends from other apps, new contacts and the odd lead for Salvalo. It's like a preview of Startup Summit Caracas: as I record this we haven't gone yet, but we are going, and this was the practice for the practice.",
   'events.panal.m':
     'A night of [El Panal](panal) in Barquisimeto: talks on AI, data and taste, and 30 seconds to pitch [Salvalo](salvalo). Nervous, but I gave it, and left with new friends and a lead or two.',
 };
@@ -193,25 +189,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'notFound.home': 'Ir al inicio',
 
     'shaper.problem':
-      'Escuchaba mi música en YouTube Music entre demasiados anuncios, guardaba la misma canción en tres o cuatro versiones — normal, slowed, sped up, ultra slow — y muchas veces solo quería los 30 segundos que me gustaban, en loop.',
+      'Yo escuchaba música en YouTube Music, pero me salían anuncios a cada rato. Y muchas veces, si una canción me gustaba, me gustaba escucharla lenta, rápida, ultra lenta, ultra rápida. Y otras muchas veces me gustaba escuchar solo los 30 segundos de en medio, los 20 segundos del principio o la mejor parte, que está al final. Y claro, la repetía y la repetía.',
     'shaper.solution':
-      'Una app donde subes tus MP3 y funciona sin internet: cambias la velocidad en vivo, moldeas el ecualizador y los efectos — preservar el tono, eco, next room — y haces clips de tus partes favoritas. No es otra app de streaming: no hay catálogo ni algoritmo decidiendo por ti. Es tu música — la que ya tienes — sonando como tú quieres.',
+      'Por eso hice Sound Shaper, un reproductor MP3 personal que funciona sin internet. Subes tu canción una vez y la puedes poner lenta, rápida, le pones los efectos que quieras, tiene ecualizador y puedes hacer clips de tus partes favoritas. En YouTube Music la canción suena como la subieron, pero aquí tú subes la canción, la modificas y tú escoges cómo la escuchas.',
     'shaper.s1.p1':
-      'Subes tus canciones en MP3 y armas tu propia biblioteca, cada una con su ilustración y sus datos.',
+      'Esta es tu biblioteca. La app no descarga música: tú mismo subes tus propios MP3 para tu uso personal, y aquí las puedes ordenar arrastrándolas en el orden que tú quieras.',
     'shaper.s1.p2':
-      'Todo vive en tu teléfono y funciona sin conexión, y se integra con el sistema: Dynamic Island, widgets, pantalla de bloqueo, los controles del OS. Arrastra cualquier portada para ordenar la biblioteca a tu manera; la que está sonando lleva una marca discreta, así nunca la pierdes de vista.',
+      'Funciona con widgets, pantalla de bloqueo y Dynamic Island. Desde aquí también entras a ajustes, donde puedes cambiar los detalles de tu cuenta, el idioma de la aplicación y la apariencia. Y tiene un detallito: trofeos como los de PlayStation. Mientras más utilizas la aplicación, más trofeos vas desbloqueando, hasta conseguir el preciado platino.',
     'shaper.s2.p1':
-      'Un reproductor como el que ya conoces: portada grande, controles claros y la ilustración convertida en la luz de la pantalla.',
+      'Esta es la pantalla del reproductor, normal, como si fuese YouTube Music o Apple Music. Aquí le puedes dar play, pausa y cambiar de canción.',
     'shaper.s2.p2':
-      'Debajo, una barra con lo que hace especial a la app — Moldear, Clips y Editar, a un toque. Lo que ajustas se queda puesto: pasa de canción en canción, así que toda la cola suena como la dejaste.',
+      'Lo importante está en la barra de abajo, desde donde abres Shape y Clips. Esas dos partes son la razón por la que existe la aplicación.',
     'shaper.s3.p1':
-      'Esta pantalla es la razón de que exista la app: presets listos, o un ecualizador de cinco bandas a tu manera.',
+      'De aquí viene el nombre de Sound Shaper, de Shape: la aplicación es un moldeador de sonidos. Tienes presets listos, ecualizador manual si sabes más de música, y puedes cambiar la velocidad de la canción, lenta o rápida, como tú quieras.',
     'shaper.s3.p2':
-      'Velocidad de reproducción en vivo — slowed, sped up, lo que quieras — y efectos como preservar el tono, eco y next room. Los presets están igualados en volumen: al compararlos escuchas su tono, no cuál suena más fuerte, y ninguno satura.',
+      'Preservar el tono fue lo más curioso de construir. En YouTube, si pones una canción lenta, la voz suena en cámara lenta. Aquí puedes escoger que suene igual, al mismo pace que va el ritmo. También hay efectos como echo y next room, que puedes combinar para que la música suene como si estuvieses en un concierto, en el estacionamiento de un concierto o escuchando la fiesta que tiene tu vecino al lado de tu casa. Y si te pones audífonos y cierras los ojos, de verdad te teletransporta a ese momento.',
     'shaper.s4.p1':
-      'Elige los segundos exactos que te encantan: abajo ves la canción entera y arriba un zoom para marcar el corte con precisión.',
+      'Para Clips me inspiré en la aplicación de Notas de Voz de Apple, la misma app con la que grabé las ideas para crear esta aplicación y esta página. Simplemente escoges el pedazo de la canción que más te gusta y listo.',
     'shaper.s4.p2':
-      'Guárdalos como clips para repetir en loop cuando quieras. Cada clip queda guardado con su canción, y puedes editarlo, eliminarlo o volver a escucharlo en cualquier momento.',
+      'Lo guardas como clip y lo escuchas una y otra vez. Desde aquí también puedes abrir Shape para que el clip que estás creando o editando suene a tu manera.',
     'arcade.play': 'Jugar',
     'arcade.fullscreen': 'Pantalla completa',
     'arcade.resume': 'Haz clic en el juego para jugar.',
@@ -225,11 +221,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.c.overdrive': 'Overdrive',
     'arcade.c.start': 'Empezar y pausar',
     // One sentence around a link: before it, the link's words, after it.
-    'arcade.p1.before':
-      'Un shooter espacial en 3D que cabe en 50 KB, hecho para el ',
-    'arcade.p1.link': 'reto arcade de Platanus Hack',
-    'arcade.p1.after':
-      ': los mejores juegos se juegan en una máquina arcade real durante la hackathon en Caracas.',
+    'arcade.p1':
+      'Space Explorer empezó como un easter egg para mis aplicaciones, en este caso Sound Shaper: ibas a una parte específica de la aplicación, hacías una combinación de taps y se abría Space Explorer en modo juego. Iba a tener varios niveles, en el mar, en el espacio, una guerra espacial, pero lo quité para no complicar Sound Shaper. Meses después aplicamos a una hackathon de [Platanus](platanus) que tenía un reto arcade: crear un videojuego. Ya tenía la idea lista, así que la usé para aplicar. Es un shooter espacial 3D que cabe en 50 kilobytes, no megabytes, y la verdad quedó bastante cool. Lo puedes jugar aquí en esta página y también en la página oficial de Platanus. No sé si fue el mejor juego a nivel técnico; por voto popular no fue, pero igual es un juego mega chulo.',
 
     // More Work — the secondary projects carousel.
     'work.title': 'Más proyectos',
@@ -239,16 +232,14 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.cofounder': 'Cofundador',
     'work.freelance': 'Freelance',
     // One paragraph around a link to Crol; its clip is `work.crol.body`.
-    'work.crol.before': 'La app móvil de ',
-    'work.crol.link': 'Crol',
-    'work.crol.after':
-      ', un ERP en la nube para pymes en México: ventas, facturación electrónica, inventario y reportes financieros en tiempo real. La construí desde cero, diseño incluido, y hoy la usan clientes importantes en todo México.',
+    'work.crol.body':
+      'Desde 2022 trabajo en [Crol](crol), un ERP en la nube para empresas de México. Además empecé con Conto Pay, una versión mucho más simple y fácil de usar de Crol: su web, su landing y su aplicación móvil. Y esa misma aplicación fue la base para Crol ERP Móvil, que construí y diseñé desde cero.',
     'work.salvalo.body':
-      'Cada día, los comercios cierran con productos que pudieron venderse. En Salvalo los convierten en packs con precio y hora de recogida; tú encuentras uno cerca en el mapa, lo apartas, le pagas directo al comercio y lo recoges con un código. Rediseñé toda la app, la del cliente y la del comercio, hice la nueva web —el equipo edita cada texto y cada foto sin código— y salgo a visitar comercios para el piloto en Barquisimeto.',
+      'Soy cofundador de [Salvalo](salvalo), mi startup. Los comercios cierran cada día con productos que todavía se pueden vender, y en Salvalo los conviertes en packs con precio y horario de recogida. El cliente lo encuentra cerca en el mapa de la aplicación, lo aparta, le paga directo al comercio y lo recoge con un código de verificación. El ejemplo que siempre pongo: una panadería tiene 10 cachitos en la mañana, a las 5 de la tarde le quedan 3 y 2 panes franceses, y arma un pack con eso a un precio de cierre reducido. Gana el comercio, porque mueve ese producto y no lo pierde, y gana más clientes, porque Salvalo es un canal de ventas extra. Y el cliente se lleva los mismos cachitos de la mañana, en la tarde, a precio de oferta y de manera súper cómoda. Yo soy el cofundador técnico: rediseñé la aplicación y la página web, y me encargo de todo el desarrollo frontend. Además soy el representante de Salvalo aquí en Venezuela, así que salgo a hacerle pitch a comercios y a estar en todos los eventos en nombre de Salvalo.',
     'work.maktub.body':
-      'El sitio de un fondo que conecta inversionistas con proyectos de arte y cultura en México y Latinoamérica. Lo llevé de cero a publicado en un mes, y su equipo edita cada texto, imagen y video sin código: ya han publicado decenas de actualizaciones por su cuenta.',
+      'Maktub Art Fund es un cliente de México. Era una landing page, y casi nunca me llamaban la atención, pero el diseño estaba chulo, muy moderno, muy fashion, así que me gustó la idea y la hice. Quedó bastante cool también.',
     'work.andreina.body':
-      'Un sitio en WordPress para una coach de productividad que ayuda a organizar la semana y aumentar los ingresos.',
+      'La página de Andreina Aular fue la primera que hice al terminar mis primeros cursos de programación. Era un WordPress, pero la diseñé completa yo en Figma, desde cero, la publiqué y le hice actualizaciones. Después se rehízo completa en WordPress y quedó mucho mejor, pero el esqueleto lo hice yo, por allá en 2020.',
 
     // Phone copy (see en).
     'shaper.problem.m':
@@ -277,25 +268,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.hackathon': 'Hackathon',
     'events.alegria.when': 'oct 2025',
     'events.alegria.body':
-      'El primer hackathon de vibe coding de Venezuela: tres días en las oficinas de Yummy en Caracas, organizado por AlegrIA. Entre construir junto a [Cesar](cesar), [Pastor](pastor) y [Ale](ale), escuchamos a los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash) contar cómo empezaron. No nos llevamos un premio. Nos llevamos amigos nuevos, lecciones de gente que ya lo hizo y un recordatorio de por qué me encanta construir con otros. P.D.: esta hackathon fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
+      'Esta tiene más historia. Un día [Pastor](pastor), que estudió conmigo primaria y secundaria, me escribe y me presenta a [Cesar](cesar) y [Ale](ale) para aplicar a una hackathon: les faltaba uno, y me preguntó si quería animarme a aplicar con ellos. El Juan de antes habría dicho que no, tal vez por pena o por flojera, pero esta vez pensé que lo peor es que no nos aceptaran, y como mínimo nos íbamos a llevar muchos aprendizajes. Armamos varias ideas, pero la que ganó fue [Tripealo](tripealo), un marketplace de experiencias de viaje en Venezuela, y de entre mil personas que aplicaron quedamos entre las cien que fueron a las oficinas de [Yummy](yummy) en Caracas. No ganamos, pero escuché a muchos fundadores que hoy compiten en Silicon Valley contra las empresas top de Estados Unidos, y salimos con el impulso de seguir. Ellos siguieron con Tripealo, y yo salí para continuar con mi cofundador en [Salvalo](salvalo). Hoy Tripealo y Salvalo están operando, y yo estoy de lleno con Salvalo en modo founder. Ellos ahora son mis founder bros: andamos juntos, pero no revueltos. Fue el punto de inflexión entre el Juan de antes, solo programador, y el Juan de ahora, cuasi emprendedor. Estoy súper agradecido por esta experiencia: aprendí mucho de muchas personas, y mucho de mí mismo.',
     'events.alegria.m':
       'Tres días en el primer hackathon de vibe coding de Venezuela, en Caracas. Sin premio, pero con amigos nuevos y lecciones de los fundadores de [Yummy](yummy), [Cashea](cashea) y [Slash](slash). Fue el empujón que necesitábamos para arrancar con [Tripealo](tripealo) y con [Salvalo](salvalo).',
     'events.talk': 'Charla',
     'events.ilc.when': 'sept 2026',
     'events.ilc.body':
-      'Una conversación en el [Teatro Juares](juares) de Barquisimeto entre el [Padre Elías Sayegh](elias) y [Pedro Vallenilla](pedro), cofundador de [Cashea](cashea). En la hackathon de AlegrIA había escuchado su historia a través de una pantalla; esta vez fue en la misma sala, y se sintió distinto. Su primera startup funcionó, las siguientes no, una tras otra, y entonces llegó Cashea. También me quedé con su visión de Venezuela: quizás no hay mejor lugar ahora mismo para construir un producto tecnológico, porque queda muchísimo por construir.',
+      'En la hackathon de AlegrIA, organizada por [Cashea](cashea) y [Yummy](yummy), tuvimos una charla online con [Pedro Vallenilla](pedro), el cofundador de Cashea. Meses después vino a dar una charla mejorada, mucho más completa, a Barquisimeto en persona, con el [Padre Elías Sayegh](elias). Quedamos literalmente en la segunda fila del [teatro](juares), al frente de la charla. Contó cómo fallaron varias de sus startups antes del mega éxito que fue Cashea, y aun así siguió y siguió hasta hacer Cashea. Lo que más me quedó fue cómo habla de Venezuela: al pasar por lo que ha pasado, es un greenfield para construir de todo, porque aquí no hay soluciones a través de la tecnología que en otros países ya están. Por eso Venezuela está en el mejor momento para emprender, y no en teoría, en práctica.',
     'events.ilc.m':
       '[Pedro Vallenilla](pedro) de [Cashea](cashea), esta vez en persona y en mi ciudad: una startup que funcionó, varias que no, luego Cashea, y por qué Venezuela es el lugar para construir.',
     'events.interview': 'Entrevista',
     'events.radio.when': 'oct 2026',
     'events.radio.body':
-      'La primera entrevista de [Salvalo](salvalo), en vivo en el programa de [José “Cheo” Noguera](cheo) en [OK 101.5 FM](ok101) de Barquisimeto, y a la vez en su Instagram. Yo estaba en el estudio; mi cofundador se unió por videollamada desde Madrid. Cheo descargó la app al aire, y se la expliqué a sus oyentes con una panadería: el pan que no vende antes de cerrar, salvado en vez de botado. Cerramos con la misma idea que sigo escuchando: en Venezuela queda muchísimo por construir en tecnología.',
+      'Esta fue la primera entrevista de [Salvalo](salvalo) en la radio, en el programa de [Cheo Noguera](cheo) en [OK 101.5 FM](ok101) de Barquisimeto. Yo estaba en el estudio y mi cofundador estaba conectado desde Madrid. Expliqué el ejemplo de siempre: haces 10 cachitos, a las 4 te quedan 3 y armas un pack con eso. En el live había personas preguntándonos cómo descargarla, y explicamos directamente qué es Salvalo a todos los oyentes.',
     'events.radio.m':
       'La primera entrevista de [Salvalo](salvalo), en vivo en [OK 101.5 FM](ok101) de Barquisimeto: el locutor descargó la app al aire mientras se la explicaba a sus oyentes.',
     'events.meetup': 'Encuentro',
     'events.panal.when': 'oct 2026',
     'events.panal.body':
-      'Una noche de [El Panal](panal), el movimiento que creó [Manuel Sira](manuel), en Barquisimeto, con gente construyendo de todo: marketing, moda, CRM, sistemas de inventario, apps móviles de psicología y de salud. Las charlas fueron de inteligencia artificial, de cómo medir los datos de tu empresa para escalar con ellos, y de cómo diferenciarte ahora que el código se democratizó y lo que hace falta es gusto. Cada startup tenía 30 segundos exactos para su pitch. Estaba nervioso, pero di el de [Salvalo](salvalo), y me fui con amigos nuevos, contactos y uno que otro lead. En el camino conocí al equipo de [Resty](resty), una app de salud, y me junté con mis founder bros de [Tripealo](tripealo): juntos, pero no revueltos. Quizás un adelanto de lo que viene en el Startup Summit Caracas.',
+      '[El Panal](panal) es un movimiento que creó [Manuel Sira](manuel) aquí en Barquisimeto: muchas personas construyendo de todo. Hay gente de marketing, de moda, CRM, inventario, aplicaciones de psicología y de salud, y hubo charlas de inteligencia artificial, de cómo crecer tu empresa midiendo sus datos correctamente y de cómo diferenciarte ahora que estamos en la era de la inteligencia artificial y tienes que tener gusto para hacer las cosas. Cada startup que fue al evento tenía 30 segundos exactos de pitch, y yo, nervioso, di el de [Salvalo](salvalo). No fue el mejor que he dado, pero sí fue el primer pitch oficial de Salvalo en un evento de alto calibre. Fui con mis amigos de [Tripealo](tripealo) y salí con amigos nuevos de otras aplicaciones, nuevos contactos y uno que otro lead para Salvalo. Esto es como un adelanto del Startup Summit Caracas: al momento de grabar esto no hemos ido, pero sí vamos, y esta fue la práctica de la práctica.',
     'events.panal.m':
       'Una noche de [El Panal](panal) en Barquisimeto: charlas de IA, datos y gusto, y 30 segundos para el pitch de [Salvalo](salvalo). Nervioso, pero lo di, y me fui con amigos nuevos y uno que otro lead.',
   },
@@ -323,25 +314,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'notFound.home': '前往首页',
 
     'shaper.problem':
-      '我在 YouTube Music 听歌，广告太多；同一首歌存三四个版本——正常、slowed、sped up、ultra slow——而很多时候我只想循环最爱的那 30 秒。',
+      '我以前在 YouTube Music 听歌，但广告一直弹出来。很多时候，如果我喜欢一首歌，我喜欢听它慢的、快的、超慢的、超快的版本。还有很多时候，我只想听中间的 30 秒、开头的 20 秒，或者结尾最好听的部分。当然，我会一遍又一遍地重复播放。',
     'shaper.solution':
-      '一个应用：加入你的 MP3，不用网络就能用——实时改变速度，亲手调均衡器和音效（保持原调、回声、Next Room），把最喜欢的部分做成片段。它不是又一个流媒体应用：没有曲库，也没有替你做决定的算法。它是你的音乐——你已经拥有的音乐——照你想要的样子响起。',
+      '所以我做了 Sound Shaper，一个不用网络也能用的个人 MP3 播放器。歌曲只要加入一次，就能调慢、调快，加上你想要的音效，还有均衡器，也能把最喜欢的部分做成片段。在 YouTube Music 上，歌曲上传时是什么样就是什么样；在这里，你加入歌曲、调整它，由你决定怎么听。',
     'shaper.s1.p1':
-      '把歌曲以 MP3 加入，建立你自己的资料库，每一首都带着插图和信息。',
+      '这是你的资料库。这个应用不下载音乐：你自己加入自己的 MP3，仅供个人使用，在这里拖动它们，按你喜欢的顺序排列。',
     'shaper.s1.p2':
-      '一切都存在你的手机里，完全离线可用，并且接入系统：灵动岛、小组件、锁定屏幕、系统播放控制。拖动任意封面，按你的方式排列资料库；正在播放的那首带着一个低调的标记，让你永远不会找不到它。',
+      '它支持小组件、锁定屏幕和灵动岛。从这里也能进入设置，修改账户信息、应用语言和外观。还有一个小细节：像 PlayStation 那样的奖杯。你用得越多，解锁的奖杯就越多，直到拿到珍贵的白金奖杯。',
     'shaper.s2.p1':
-      '一个你早已熟悉的播放器：大封面、清晰的控制，插图化作整个屏幕的光。',
+      '这是播放器界面，很普通，就像 YouTube Music 或 Apple Music。在这里你可以播放、暂停和切换歌曲。',
     'shaper.s2.p2':
-      '下方一条栏，放着这个应用的特别之处——塑形、片段、编辑，一点即达。你调好的设置会一直保留：从一首歌延续到下一首，整个播放队列都照你留下的样子播放。',
+      '重点在下方的栏里，从那里打开 Shape 和 Clips。这两部分就是这个应用存在的理由。',
     'shaper.s3.p1':
-      '这个屏幕就是这个应用存在的理由：现成的预设，或亲手调的五段均衡器。',
+      'Sound Shaper 这个名字就来自这里，来自 Shape：这个应用是一个声音塑形器。有现成的预设，懂音乐的话可以手动调均衡器，还能改变歌曲的速度，慢或快，随你喜欢。',
     'shaper.s3.p2':
-      '实时改变播放速度——slowed、sped up，随你心情——还有保持原调、回声、Next Room 这些音效。预设的响度彼此匹配：比较它们时，你听到的是音色，而不是哪个更响，而且没有一个会削波。',
+      '保持原调是做起来最有意思的部分。在 YouTube 上，把歌曲放慢，人声听起来就像慢动作。在这里，你可以选择让它听起来一样，跟着节奏的速度。还有回声和 next room 这样的音效，可以组合起来，让音乐听起来像在演唱会现场、在演唱会的停车场，或者在听隔壁邻居家的派对。戴上耳机、闭上眼睛，它真的会把你带到那个时刻。',
     'shaper.s4.p1':
-      '选出你最爱的那几秒：下方是整首歌，上方是放大视图，让你精准地截取。',
+      'Clips 的灵感来自 Apple 的语音备忘录，我正是用它录下了做这个应用和这个页面的想法。你只要选出歌曲里最喜欢的那一段，就好了。',
     'shaper.s4.p2':
-      '把它们存成片段，随时循环播放。每个片段都跟着它的歌曲保存，你可以随时编辑、删除或再次播放。',
+      '把它存储为片段，一遍又一遍地听。在这里也可以打开 Shape，让你正在制作或编辑的片段照你的方式响起。',
     'arcade.play': '开始游戏',
     'arcade.fullscreen': '全屏',
     'arcade.resume': '点击游戏即可游玩。',
@@ -355,10 +346,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.c.overdrive': '超载',
     'arcade.c.start': '开始与暂停',
     // One sentence around a link: before it, the link's words, after it.
-    'arcade.p1.before': '一款只有 50 KB 的 3D 太空射击游戏，为 ',
-    'arcade.p1.link': 'Platanus Hack 街机挑战',
-    'arcade.p1.after':
-      '而做：最好的作品会在加拉加斯的黑客松现场，放进一台真正的街机里供人游玩。',
+    'arcade.p1':
+      'Space Explorer 最初是我为自己的应用做的彩蛋，这次是 Sound Shaper：进入应用里的某个地方，按特定的组合轻点，Space Explorer 就会以游戏模式打开。它本来有好几个关卡，海里、太空、一场太空大战，但我把它拿掉了，免得 Sound Shaper 变复杂。几个月后，我们报名了 [Platanus](platanus) 的黑客松，里面有一个街机挑战：做一款电子游戏。我早就有现成的想法，所以就用它来报名。这是一款只有 50 KB 的 3D 太空射击游戏，不是 MB，说实话做得挺酷的。你可以在这个页面上玩，也可以在 Platanus 的官方网站上玩。我不知道它在技术上是不是最好的游戏；按人气投票不是，但它依然是一款超酷的游戏。',
 
     // More Work — the secondary projects carousel.
     'work.title': '更多作品',
@@ -368,16 +357,14 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.cofounder': '联合创始人',
     'work.freelance': '自由职业',
     // One paragraph around a link to Crol; its clip is `work.crol.body`.
-    'work.crol.before': '',
-    'work.crol.link': 'Crol',
-    'work.crol.after':
-      ' 的移动应用。Crol 是一款面向墨西哥中小企业的云端 ERP：销售、电子发票、库存和实时财务报表。我从零开始打造了它，包括设计，如今墨西哥各地的大客户都在使用。',
+    'work.crol.body':
+      '从 2022 年起，我在 [Crol](crol) 工作，这是一款面向墨西哥企业的云端 ERP。我还开始做 Conto Pay，它是 Crol 更简单、更好用的版本：包括它的网站、落地页和移动应用。而这个应用正是 Crol ERP Móvil 的基础，我从零开始设计并开发了它。',
     'work.salvalo.body':
-      '每天，商家打烊时总有本可以卖掉的商品。在 Salvalo 上，他们把这些商品做成带价格和取货时段的套餐；你在地图上找到家附近的一份，预订，直接付款给商家，再凭取货码到店领取。我重新设计了整个应用，包括顾客端和商家端，打造了全新的网站（团队无需代码就能编辑上面的每段文字和每张照片），还亲自走访商家，推进在巴基西梅托的试点。',
+      '我是 [Salvalo](salvalo) 的联合创始人，这是我的创业公司。商家每天打烊时都有还能卖的商品，在 Salvalo 上把它们变成带价格和取货时间的组合包。顾客在应用的地图上找到附近的组合包，预订，直接付款给商家，再凭验证码取货。我常举的例子：一家面包店早上有 10 个 cachito，到下午 5 点还剩 3 个和 2 个法式面包，就把它们打包，用打烊折扣价出售。商家赢了，因为商品卖出去而不是浪费，还多了顾客，因为 Salvalo 是额外的销售渠道。顾客则在下午以优惠价、非常方便地买到早上那些 cachito。我是技术联合创始人：我重新设计了应用和网站，负责全部前端开发。我也是 Salvalo 在委内瑞拉的代表，所以会去向商家介绍，也代表 Salvalo 参加各种活动。',
     'work.maktub.body':
-      '一家基金的网站，连接投资者与墨西哥和拉丁美洲的艺术与文化项目。我在一个月内把它从零做到上线；他们的团队无需写代码就能编辑每段文字、图片和视频，上线后已自行发布了数十次更新。',
+      'Maktub Art Fund 是一位来自墨西哥的客户。那是一个落地页，这类页面我很少感兴趣，但设计很漂亮，非常现代、非常时尚，所以我喜欢这个想法，就做了。成品也挺酷的。',
     'work.andreina.body':
-      '为一位效率教练打造的 WordPress 网站，她帮助人们规划每周、提升收入。',
+      'Andreina Aular 的网站是我上完第一批编程课后做的第一个网站。它是用 WordPress 做的，但我从零开始在 Figma 里亲自完成了全部设计，把它上线并持续更新。后来它在 WordPress 里整个重做，变得好多了，但骨架是我在 2020 年做的。',
 
     // Phone copy (see en).
     'shaper.problem.m':
@@ -404,25 +391,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.hackathon': '黑客松',
     'events.alegria.when': '2025 年 10 月',
     'events.alegria.body':
-      '委内瑞拉第一场 vibe coding 黑客松：由 AlegrIA 主办，在加拉加斯 Yummy 的办公室里度过三天。我和 [Cesar](cesar)、[Pastor](pastor)、[Ale](ale) 一起开发，也听 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人讲述他们如何起步。我们没有拿奖，却带走了新朋友、过来人的经验，也再次想起我为什么喜欢和别人一起创造。附注：这场黑客松正是我们需要的那一推，让 [Tripealo](tripealo) 和 [Salvalo](salvalo) 真正起步。',
+      '这一段故事更多。有一天，和我一起读小学和中学的 [Pastor](pastor) 给我发消息，介绍我认识 [Cesar](cesar) 和 [Ale](ale)，一起报名一场黑客松：他们还差一个人，问我愿不愿意加入。以前的 Juan 会说不，也许是因为害羞或懒，但这次我想，最坏不过是没被录取，至少我们能学到很多。我们想了好几个点子，最后胜出的是 [Tripealo](tripealo)，一个委内瑞拉旅行体验的交易平台；在一千个报名的人里，我们成为去加拉加斯 [Yummy](yummy) 办公室的一百人之一。我们没有获奖，但我听了很多如今在硅谷和美国顶尖公司竞争的创始人分享，带着继续前进的动力离开。他们继续做 Tripealo，而我离开去和我的联合创始人继续做 [Salvalo](salvalo)。如今 Tripealo 和 Salvalo 都在运营，我也以创始人的身份全力投入 Salvalo。他们现在是我的创始人兄弟：一起，但各做各的。这是一个转折点，从以前只是程序员的 Juan，到现在几乎是创业者的 Juan。我非常感谢这段经历：我从很多人身上学到很多，也更了解了自己。',
     'events.alegria.m':
       '在加拉加斯参加委内瑞拉第一场 vibe coding 黑客松的三天。没有拿奖，却交到新朋友，也从 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人那里学到很多。它正是让 [Tripealo](tripealo) 和 [Salvalo](salvalo) 起步的那一推。',
     'events.talk': '讲座',
     'events.ilc.when': '2026 年 9 月',
     'events.ilc.body':
-      '在巴基西梅托的 [Juares 剧院](juares)，[Elías Sayegh 神父](elias)与 [Cashea](cashea) 联合创始人 [Pedro Vallenilla](pedro) 的一场对谈。在 AlegrIA 黑客松上，我是隔着屏幕听他的故事；这一次同处一室，感受完全不同。他的第一家创业公司成功了，之后的却接连失败，然后才有了 Cashea。他对委内瑞拉的看法也让我难忘：此刻也许没有比这里更适合打造科技产品的地方，因为还有太多东西等着被建造。',
+      '在由 [Cashea](cashea) 和 [Yummy](yummy) 主办的 AlegrIA 黑客松上，我们和 Cashea 的联合创始人 [Pedro Vallenilla](pedro) 有过一场线上交流。几个月后，他亲自来到巴基西梅托，和 [Elías Sayegh 神父](elias) 一起做了一场更完整的升级版演讲。我们就坐在[剧院](juares)第二排，正对着讲台。他讲了自己好几个创业项目如何失败，直到 Cashea 的巨大成功，他一直坚持，直到做出了 Cashea。我印象最深的是他怎么谈委内瑞拉：经历了这一切之后，它是一片可以建造任何东西的绿地，因为这里还没有其他国家早已有的科技解决方案。所以委内瑞拉正处在创业的最好时机，不是理论上，而是实践中。',
     'events.ilc.m':
       '这次在我的城市亲耳听 [Cashea](cashea) 的 [Pedro Vallenilla](pedro) 讲：一次成功的创业，接连几次失败，然后是 Cashea，以及为什么委内瑞拉是创造的好地方。',
     'events.interview': '采访',
     'events.radio.when': '2026 年 10 月',
     'events.radio.body':
-      '[Salvalo](salvalo) 的第一次采访：在巴基西梅托 [OK 101.5 FM](ok101) 上 [José “Cheo” Noguera](cheo) 的节目里直播，同时在他的 Instagram 上直播。我在录音室，我的联合创始人从马德里通过视频通话加入。Cheo 在节目中下载了这款 App，我用一家面包店向听众解释它：打烊前没卖完的面包，被救下而不是扔掉。最后我们聊到我一再听到的那个想法：委内瑞拉在科技上还有太多东西等着被建造。',
+      '这是 [Salvalo](salvalo) 的第一次电台采访，在巴基西梅托 [OK 101.5 FM](ok101) 的 [Cheo Noguera](cheo) 节目里。我在录音室，我的联合创始人从马德里连线。我讲了那个老例子：你做了 10 个 cachito，到 4 点还剩 3 个，就把它们做成一个组合包。直播里有人问我们怎么下载，我们就当场向所有听众解释了 Salvalo 是什么。',
     'events.radio.m':
       '[Salvalo](salvalo) 的第一次采访，在巴基西梅托 [OK 101.5 FM](ok101) 直播：主持人在节目中下载了 App，我向听众讲解它的用法。',
     'events.meetup': '交流会',
     'events.panal.when': '2026 年 10 月',
     'events.panal.body':
-      '在巴基西梅托参加 [El Panal](panal) 的一个夜晚。这是 [Manuel Sira](manuel) 发起的运动，来的人在做各种各样的事：市场营销、时尚、CRM、库存系统、心理健康和医疗类的移动 App。讲座谈到人工智能，谈到如何衡量公司的数据并靠它成长，也谈到在代码人人可及的今天如何脱颖而出：稀缺的是品味。每家创业公司正好有 30 秒做路演。我很紧张，但还是讲完了 [Salvalo](salvalo)，带走了新朋友、人脉和几条潜在客户线索。期间我认识了医疗 App [Resty](resty) 的团队，也和 [Tripealo](tripealo) 的创业伙伴们站在一起：并肩同行，各做各的创业公司。也许这是 Startup Summit Caracas 的一次预演。',
+      '[El Panal](panal) 是 [Manuel Sira](manuel) 在巴基西梅托发起的一个运动：很多人在这里做各种各样的东西。有做营销、时尚、CRM、库存，以及心理和健康应用的人，还有关于人工智能、如何正确衡量数据来发展公司、以及在人工智能时代如何靠品味脱颖而出的演讲。每个到场的初创公司都有整整 30 秒的路演时间，我很紧张，但讲了 [Salvalo](salvalo) 的。那不是我讲得最好的一次，却是 Salvalo 在这种级别活动上的第一次正式路演。我和 [Tripealo](tripealo) 的朋友们一起去，离开时多了来自其他应用的新朋友、新联系人，还有几个 Salvalo 的潜在客户。这算是加拉加斯 Startup Summit 的预演：录这段话时我们还没去，但一定会去，而这次是练习的练习。',
     'events.panal.m':
       '在巴基西梅托参加 [El Panal](panal) 的一个夜晚：关于 AI、数据和品味的讲座，还有 30 秒为 [Salvalo](salvalo) 路演。很紧张，但我讲完了，带走了新朋友和几条潜在客户线索。',
   },

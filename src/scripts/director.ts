@@ -9,6 +9,7 @@
  * none to walk.
  */
 import { createDeck, watchSlots, type Deck } from '../lib/deck';
+import { type ReadMark, readTokens } from '../lib/readAlong';
 
 // ---------- the controller ----------
 // The walk from the opener to the deck is a pure function of the scroll
@@ -403,75 +404,94 @@ const drawField = (now: number) => {
 };
 
 // ----- read-along: the paragraph on screen paints in as it is said -----
-// A paragraph Juan narrates is NOT subtitled again in the pill — that only
-// repeated the words beside them (Juan, 2026-10-17). Instead the paragraph
-// itself dims while its clip plays and its words paint back in, in order,
-// at the pace of the clip — a page that reads itself. It follows the
-// clip's PROGRESS, not each spoken word: Juan records from ideas, so the
-// take is looser and longer than the paragraph, and only the clock is
-// shared by every language the page shows. A clip with no paragraph on
-// screen (the hero's intro, the footer's) is simply heard: the pill never
-// carries words and never changes size.
+// The paragraph Juan narrates is his take's own transcript, tidied (Juan,
+// 2026-10-17), so it dims while its clip plays and each word lights up as
+// he says it. When each word starts is worked out at build time
+// (lib/narration: Spanish word by word, English and Chinese sentence by
+// sentence on the Spanish clock) and rides on the paragraph as
+// data-read-{lang}: [character offset, seconds] per word, joined here to
+// the words this wraps by their offset (lib/readAlong cuts both). A clip
+// with no paragraph on screen (the hero's intro, the footer's) is simply
+// heard: the pill never carries words and never changes size.
 const readable = (p: HTMLElement) => p.tagName === 'P';
 
-type ReadWords = { spans: HTMLElement[]; ends: number[]; total: number };
+type ReadWords = { spans: HTMLElement[]; times: number[] };
 const readCache = new WeakMap<HTMLElement, ReadWords>();
-const segmenter =
-  typeof Intl !== 'undefined' && 'Segmenter' in Intl
-    ? new Intl.Segmenter(undefined, { granularity: 'word' })
-    : null;
 
-/** The words of one language's text, wrapped once, with their running
- *  length — the weight each one takes of the clip's time. */
-const wordsOf = (root: HTMLElement): ReadWords => {
+/** The words of one language's text, wrapped once, each with its start. */
+const wordsOf = (
+  p: HTMLElement,
+  root: HTMLElement,
+  lang: string,
+): ReadWords => {
   const cached = readCache.get(root);
   if (cached) return cached;
   const texts: Text[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode())
-    if ((n as Text).data.trim()) texts.push(n as Text);
+    texts.push(n as Text);
   const spans: HTMLElement[] = [];
-  const ends: number[] = [];
-  let total = 0;
+  const offsets: number[] = [];
+  let at = 0;
   for (const node of texts) {
-    const parts = segmenter
-      ? [...segmenter.segment(node.data)].map(s => s.segment)
-      : node.data.split(/(\s+)/);
-    const frag = document.createDocumentFragment();
-    for (const part of parts) {
-      if (!part) continue;
-      if (!part.trim()) {
-        frag.append(part);
-        continue;
+    const data = node.data;
+    const tokens = readTokens(data);
+    if (tokens.length) {
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      for (const tk of tokens) {
+        if (tk.at > last) frag.append(data.slice(last, tk.at));
+        const span = document.createElement('span');
+        span.className = 'rw';
+        span.textContent = tk.text;
+        frag.append(span);
+        spans.push(span);
+        offsets.push(at + tk.at);
+        last = tk.at + tk.text.length;
       }
-      const span = document.createElement('span');
-      span.className = 'rw';
-      span.textContent = part;
-      frag.append(span);
-      total += part.length;
-      spans.push(span);
-      ends.push(total);
+      if (last < data.length) frag.append(data.slice(last));
+      node.replaceWith(frag);
     }
-    node.replaceWith(frag);
+    at += data.length;
   }
-  const words = { spans, ends, total };
+  const raw = p.dataset[`read${lang[0].toUpperCase()}${lang.slice(1)}`];
+  const marks: ReadMark[] = raw ? JSON.parse(raw) : [];
+  const byAt = new Map(marks.map(([o, t]) => [o, t]));
+  // A word the build did not time (a mismatch) starts with the one before.
+  const times: number[] = [];
+  offsets.forEach((o, i) => {
+    times.push(byAt.get(o) ?? (i ? times[i - 1] : 0));
+  });
+  const words = { spans, times };
   readCache.set(root, words);
   return words;
 };
 
-/** The language span the page shows, or the paragraph itself. */
-const shownText = (p: HTMLElement) => {
-  const lang = document.documentElement.dataset.lang ?? 'en';
-  return p.querySelector<HTMLElement>(`:scope > .t[lang="${lang}"]`) ?? p;
-};
-
-let reading: { p: HTMLElement; root: HTMLElement; upTo: number } | null = null;
+let reading: {
+  p: HTMLElement;
+  root: HTMLElement;
+  upTo: number;
+} | null = null;
 
 const endReading = () => {
   if (!reading) return;
   reading.p.classList.remove('is-reading');
-  for (const s of wordsOf(reading.root).spans) s.classList.remove('is-read');
+  for (const s of readCache.get(reading.root)?.spans ?? [])
+    s.classList.remove('is-read');
   reading = null;
+};
+
+/** Keep the word being said in view inside its ten-line box. */
+const keepInView = (span: HTMLElement) => {
+  const box = span.closest<HTMLElement>('[data-cap]');
+  if (!box || box.scrollHeight <= box.clientHeight + 2) return;
+  const b = box.getBoundingClientRect();
+  const r = span.getBoundingClientRect();
+  if (r.bottom <= b.bottom - b.height * 0.25 && r.top >= b.top) return;
+  box.scrollTo({
+    top: box.scrollTop + (r.top - b.top) - b.height / 3,
+    behavior: reduceMotion ? 'auto' : 'smooth',
+  });
 };
 
 const updateRead = () => {
@@ -485,27 +505,25 @@ const updateRead = () => {
     endReading();
     return;
   }
-  const root = shownText(p);
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  const root = p.querySelector<HTMLElement>(`:scope > .t[lang="${lang}"]`) ?? p;
   if (reading && (reading.p !== p || reading.root !== root)) endReading();
-  const words = wordsOf(root);
+  const words = wordsOf(p, root, lang);
   if (!reading) {
     reading = { p, root, upTo: 0 };
     p.classList.add('is-reading');
   }
-  const d = voice.duration;
-  const f =
-    Number.isFinite(d) && d > 0 ? Math.min(1, (voice.currentTime || 0) / d) : 0;
-  const reach = f * words.total;
+  const t = voice.currentTime || 0;
   let upTo = 0;
-  while (upTo < words.ends.length && words.ends[upTo] - 0.5 <= reach) upTo++;
+  while (upTo < words.times.length && words.times[upTo] <= t) upTo++;
+  if (upTo === reading.upTo) return;
   // Paint forward, and back after a seek or a replay from the start.
-  for (
-    let i = Math.min(upTo, reading.upTo);
-    i < Math.max(upTo, reading.upTo);
-    i++
-  )
+  const lo = Math.min(upTo, reading.upTo);
+  const hi = Math.max(upTo, reading.upTo);
+  for (let i = lo; i < hi; i++)
     words.spans[i].classList.toggle('is-read', i < upTo);
   reading.upTo = upTo;
+  if (upTo > 0) keepInView(words.spans[upTo - 1]);
 };
 
 // ----- placement: the narrator glides between its anchors -----
