@@ -1,7 +1,8 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
-import { SCRIPTS_ES } from '../../lib/scripts';
+import { pinyin } from 'pinyin-pro';
+import { SCRIPT_LANGS, scriptsFor } from '../../lib/scripts';
 import '../../styles/global.css';
 
 /**
@@ -12,22 +13,41 @@ import '../../styles/global.css';
  * recorder (scripts/narration-recorder.mjs). The subtitles are timed by
  * HIS taps, so they follow his pace rather than a guess from line length.
  *
+ * Every language Juan narrates in is here (lib/scripts): the tabs pick
+ * which one he is reading, the list shows each clip's state in all three,
+ * and a clip saves into the language being read. Chinese lines carry
+ * their pinyin underneath, tones marked.
+ *
  * In a production build this route has no paths, so it does not exist.
  */
 export const getStaticPaths = () =>
   import.meta.env.PROD ? [] : [{ params: { tool: 'teleprompter' } }];
 
-const lang = 'es';
-const dir = path.join(process.cwd(), 'public/media/narration', lang);
-const clips = SCRIPTS_ES.map(c => {
-  const has = (ext: string) => fs.existsSync(path.join(dir, `${c.key}.${ext}`));
-  const status = has('vtt') ? 'new' : has('m4a') ? 'old' : 'none';
-  return { ...c, status, audio: has('m4a') ? `/media/narration/${lang}/${c.key}.m4a` : null };
-});
+const LANG_NAME = { es: 'Español', en: 'English', zh: '中文' } as const;
+const status = (lang: string, key: string) => {
+  const has = (ext: string) =>
+    fs.existsSync(path.join(process.cwd(), 'public/media/narration', lang, `${key}.${ext}`));
+  return has('vtt') ? 'new' : has('m4a') ? 'old' : 'none';
+};
+const scripts = Object.fromEntries(
+  SCRIPT_LANGS.map(lang => [
+    lang,
+    scriptsFor(lang).map(c => {
+      const state = status(lang, c.key);
+      return {
+        ...c,
+        status: state,
+        audio: state === 'none' ? null : `/media/narration/${lang}/${c.key}.m4a`,
+        say: lang === 'zh' ? c.lines.map(l => pinyin(l, { nonZh: 'consecutive' })) : undefined,
+      };
+    }),
+  ]),
+);
+const list = scripts.es;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-tp-lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -36,13 +56,29 @@ const clips = SCRIPTS_ES.map(c => {
   </head>
   <body>
     <aside class="list">
-      <p class="label">Guiones · {lang}</p>
+      <p class="label">Guiones</p>
+      <div class="langs" role="tablist">
+        {SCRIPT_LANGS.map(lang => (
+          <button type="button" role="tab" data-lang-pick={lang}>
+            {LANG_NAME[lang]}
+          </button>
+        ))}
+      </div>
       <p class="total" data-total></p>
       <ol>
-        {clips.map(c => (
+        {list.map(c => (
           <li>
-            <button type="button" data-pick={c.key} data-status={c.status}>
-              <span class="dot" />
+            <button type="button" data-pick={c.key}>
+              <span class="dots">
+                {SCRIPT_LANGS.map(lang => (
+                  <span
+                    class="dot"
+                    data-dot={lang}
+                    data-status={scripts[lang].find(s => s.key === c.key)!.status}
+                    title={lang}
+                  />
+                ))}
+              </span>
               <span class="where">{c.where}</span>
               <span class="key">{c.key}</span>
             </button>
@@ -50,6 +86,7 @@ const clips = SCRIPTS_ES.map(c => {
         ))}
       </ol>
       <p class="legend">
+        <span>puntos: es · en · zh</span>
         <span><span class="dot" data-status="new" /> grabado con guión</span>
         <span><span class="dot" data-status="old" /> grabación vieja</span>
         <span><span class="dot" data-status="none" /> sin grabar</span>
@@ -61,6 +98,7 @@ const clips = SCRIPTS_ES.map(c => {
         <div>
           <p class="label" data-where></p>
           <p class="key" data-key></p>
+          <p class="draft" data-draft hidden></p>
         </div>
         <div class="mic">
           <button type="button" class="pick-mic" data-mic-on>Activar micrófono</button>
@@ -94,19 +132,36 @@ const clips = SCRIPTS_ES.map(c => {
       </footer>
     </main>
 
-    <script is:inline type="application/json" id="clips" set:html={JSON.stringify(clips)} />
+    <script is:inline type="application/json" id="clips" set:html={JSON.stringify(scripts)} />
 
     <script>
+      type Lang = 'es' | 'en' | 'zh';
       type Clip = {
         key: string;
         where: string;
         shot?: string;
         lines: string[];
+        draft?: string;
+        say?: string[];
         status: 'new' | 'old' | 'none';
         audio: string | null;
       };
 
-      const clips: Clip[] = JSON.parse(document.getElementById('clips')!.textContent!);
+      const scripts: Record<Lang, Clip[]> = JSON.parse(document.getElementById('clips')!.textContent!);
+      const read = (k: string) => {
+        try {
+          return localStorage.getItem(k);
+        } catch {
+          return null;
+        }
+      };
+      const keep = (k: string, v: string) => {
+        try {
+          localStorage.setItem(k, v);
+        } catch {}
+      };
+      let lang: Lang = (read('tp.lang') as Lang) in scripts ? (read('tp.lang') as Lang) : 'es';
+      let clips = scripts[lang];
       const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
       const linesEl = $('[data-lines]');
       const stateEl = $('[data-state]');
@@ -114,16 +169,20 @@ const clips = SCRIPTS_ES.map(c => {
       const shot = $<HTMLImageElement>('[data-shot]');
       const btn = (a: string) => $<HTMLButtonElement>(`[data-act="${a}"]`);
 
-      // Spoken Spanish runs at about 14 characters a second; the guide bar
-      // and the estimates use it. A rhythm to lean on, nothing more.
-      const CPS = 14;
-      const secs = (s: string) => s.length / CPS + 0.35;
+      // Spoken Spanish runs at about 14 characters a second, English about
+      // as fast, Chinese about 4.5 — a character is a syllable. The guide
+      // bar and the estimates use it. A rhythm to lean on, nothing more.
+      const CPS: Record<Lang, number> = { es: 14, en: 14, zh: 4.5 };
+      const secs = (s: string) => s.length / CPS[lang] + 0.35;
       const clipSecs = (c: Clip) => c.lines.reduce((t, l) => t + secs(l), 0);
       const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
-      $('[data-total]').textContent =
-        `${clips.length} clips · unos ${fmt(clips.reduce((t, c) => t + clipSecs(c), 0))} en total`;
+      const total = () => {
+        const done = clips.filter(c => c.status === 'new').length;
+        $('[data-total]').textContent =
+          `${done} de ${clips.length} grabados · unos ${fmt(clips.reduce((t, c) => t + clipSecs(c), 0))} en total`;
+      };
 
-      let index = Math.max(0, clips.findIndex(c => c.key === localStorage.getItem('tp.key')));
+      let index = Math.max(0, clips.findIndex(c => c.key === read('tp.key')));
       let mode: 'idle' | 'count' | 'rec' | 'done' | 'play' = 'idle';
       let line = 0;
       let cues: number[] = [];
@@ -139,6 +198,13 @@ const clips = SCRIPTS_ES.map(c => {
           ...clip().lines.map((text, i) => {
             const li = document.createElement('li');
             li.textContent = text;
+            const say = clip().say?.[i];
+            if (say) {
+              const sub = document.createElement('span');
+              sub.className = 'say';
+              sub.textContent = say;
+              li.append(sub);
+            }
             li.style.setProperty('--guide', `${secs(text)}s`);
             li.dataset.i = String(i);
             return li;
@@ -159,12 +225,15 @@ const clips = SCRIPTS_ES.map(c => {
         if (mode === 'rec' || mode === 'count') return;
         stopPlayback();
         index = (i + clips.length) % clips.length;
-        localStorage.setItem('tp.key', clip().key);
+        keep('tp.key', clip().key);
         take = null;
         cues = [];
         mode = 'idle';
         $('[data-where]').textContent = clip().where;
-        $('[data-key]').textContent = `${clip().key} · ~${fmt(clipSecs(clip()))}`;
+        $('[data-key]').textContent = `${clip().key} · ${lang} · ~${fmt(clipSecs(clip()))}`;
+        const draft = $('[data-draft]');
+        draft.hidden = !clip().draft;
+        draft.textContent = clip().draft ?? '';
         document.querySelectorAll<HTMLElement>('[data-pick]').forEach(b =>
           b.classList.toggle('is-on', b.dataset.pick === clip().key),
         );
@@ -176,9 +245,29 @@ const clips = SCRIPTS_ES.map(c => {
         sync();
       };
 
+      const pickLang = (next: Lang) => {
+        if (mode === 'rec' || mode === 'count') return;
+        lang = next;
+        keep('tp.lang', lang);
+        clips = scripts[lang];
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.tpLang = lang;
+        document.querySelectorAll<HTMLElement>('[data-lang-pick]').forEach(b =>
+          b.setAttribute('aria-selected', String(b.dataset.langPick === lang)),
+        );
+        total();
+        select(index);
+      };
+      document.querySelectorAll<HTMLButtonElement>('[data-lang-pick]').forEach(b =>
+        b.addEventListener('click', () => {
+          b.blur();
+          pickLang(b.dataset.langPick as Lang);
+        }),
+      );
+
       const sync = () => {
         const c = clip();
-        btn('record').hidden = mode === 'rec' || mode === 'count';
+        btn('record').hidden = mode === 'rec' || mode === 'count' || !c.lines.length;
         btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
         btn('next').hidden = mode !== 'rec';
         btn('stop').hidden = mode !== 'rec';
@@ -190,11 +279,13 @@ const clips = SCRIPTS_ES.map(c => {
           idle:
             c.status === 'new'
               ? 'Ya grabado con este guión. Puedes repetirlo.'
-              : c.status === 'old'
-                ? 'Hay una grabación vieja, de antes del guión.'
-                : 'Sin grabar.',
+              : !c.lines.length
+                ? 'Este guión aún no está escrito en este idioma.'
+                : c.status === 'old'
+                  ? 'Hay una grabación vieja, de antes del guión.'
+                  : 'Sin grabar.',
           count: 'Preparado…',
-          rec: `Grabando · línea ${line + 1} de ${c.lines.length}`,
+          rec: `Grabando (${lang}) · línea ${line + 1} de ${c.lines.length}`,
           done: 'Toma lista. Escúchala o guárdala.',
           play: 'Reproduciendo…',
         };
@@ -237,12 +328,12 @@ const clips = SCRIPTS_ES.map(c => {
         ctx.createMediaStreamSource(stream).connect(analyser);
       };
       $('[data-mic-on]').addEventListener('click', () =>
-        openMic(localStorage.getItem('tp.mic') ?? undefined).catch(() => {
+        openMic(read('tp.mic') ?? undefined).catch(() => {
           stateEl.textContent = 'No hay acceso al micrófono. Revisa el permiso del navegador.';
         }),
       );
       mic.addEventListener('change', () => {
-        localStorage.setItem('tp.mic', mic.value);
+        keep('tp.mic', mic.value);
         openMic(mic.value);
       });
       const level = new Float32Array(1024);
@@ -267,7 +358,7 @@ const clips = SCRIPTS_ES.map(c => {
 
       const record = async () => {
         stopPlayback();
-        if (!stream) await openMic(localStorage.getItem('tp.mic') ?? undefined);
+        if (!stream) await openMic(read('tp.mic') ?? undefined);
         mode = 'count';
         take = null;
         mark(0);
@@ -355,7 +446,7 @@ const clips = SCRIPTS_ES.map(c => {
         stopPlayback();
         stateEl.textContent = 'Guardando…';
         const c = clip();
-        const res = await fetch(`/__narration/save?lang=es&key=${encodeURIComponent(c.key)}`, {
+        const res = await fetch(`/__narration/save?lang=${lang}&key=${encodeURIComponent(c.key)}`, {
           method: 'POST',
           headers: { 'x-cues': encodeURIComponent(JSON.stringify({ lines: c.lines, cues })) },
           body: take,
@@ -367,7 +458,10 @@ const clips = SCRIPTS_ES.map(c => {
         }
         c.status = 'new';
         c.audio = out.m4a;
-        document.querySelector(`[data-pick="${CSS.escape(c.key)}"]`)?.setAttribute('data-status', 'new');
+        document
+          .querySelector(`[data-pick="${CSS.escape(c.key)}"] [data-dot="${lang}"]`)
+          ?.setAttribute('data-status', 'new');
+        total();
         take = null;
         mode = 'idle';
         sync();
@@ -413,7 +507,7 @@ const clips = SCRIPTS_ES.map(c => {
         }
       });
 
-      select(index);
+      pickLang(lang);
     </script>
 
     <style is:global>
@@ -513,6 +607,49 @@ const clips = SCRIPTS_ES.map(c => {
       .legend {
         display: grid;
         gap: 0.35rem;
+      }
+      .langs {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.75rem;
+      }
+      .langs button {
+        flex: 1;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: none;
+        color: var(--ink-2);
+        font: inherit;
+        font-size: 0.8125rem;
+        text-align: center;
+        cursor: pointer;
+      }
+      .langs button[aria-selected='true'] {
+        background: var(--surface);
+        border-color: var(--ink-3);
+        color: var(--ink);
+      }
+      .dots {
+        display: inline-flex;
+        gap: 0.2rem;
+      }
+      .draft {
+        margin-top: 0.4rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: #e5a00d;
+      }
+      .draft[hidden] {
+        display: none;
+      }
+      .lines .say {
+        display: block;
+        margin-top: 0.15rem;
+        font-family: var(--font-mono);
+        font-size: 0.45em;
+        letter-spacing: 0.02em;
+        color: var(--ink-3);
       }
 
       main {
