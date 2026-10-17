@@ -6,6 +6,8 @@ import T from './T.astro';
 import type { UIKey } from '../i18n/ui';
 import type { AppStory } from '../lib/apps';
 import { clipFor, voiceAttrs } from '../lib/narration';
+import { FOCUS_PAGES } from '../lib/links';
+import CopyLink from './CopyLink.astro';
 import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
@@ -196,6 +198,16 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     {card.kind === 'welcome' && (
                       <div class="store-row" data-deck-part="text" style="--i: 4">
                         <StoreBadges app={app.id} />
+                        {/* The app's own address, to paste into a post. */}
+                        <p class="share">
+                          <CopyLink
+                            path={
+                              FOCUS_PAGES.find(
+                                f => f.focus.section === 'apps' && f.focus.app === app.id,
+                              )!.path
+                            }
+                          />
+                        </p>
                       </div>
                     )}
                     {voiced && <div class="narr-slot" aria-hidden="true" />}
@@ -575,6 +587,12 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   /* Under the words' fade (global.css `[data-cap]`), a step of air. */
   .store-row :global(.stores) {
     margin-top: 1.25rem;
+  }
+
+  /* Copy Link: a card link's size, a step under the stores. */
+  .share {
+    margin-top: 1rem;
+    font-size: 0.875rem;
   }
 
   .narr-slot {

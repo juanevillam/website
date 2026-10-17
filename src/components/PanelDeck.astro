@@ -2,9 +2,11 @@
 import T from './T.astro';
 import TL from './TL.astro';
 import DeckControls from './DeckControls.astro';
+import CopyLink from './CopyLink.astro';
 import type { UIKey } from '../i18n/ui';
 import { clipFor, voiceAttrs } from '../lib/narration';
 import { sceneAttr, sceneOf } from '../lib/scene';
+import { eventPath, workPath } from '../lib/links';
 
 /**
  * A PANEL DECK — one full panel holding a sideways deck of cards, each the
@@ -48,9 +50,12 @@ type Props = {
   /** The card a shared address opens (lib/links): the panel then stands
    *  over the page as a modal, on that card alone. */
   focus?: string;
+  /** Whose addresses the cards' Copy Link gives (lib/links). */
+  share: 'work' | 'events';
 };
 
-const { id, title, items, focus } = Astro.props;
+const { id, title, items, focus, share } = Astro.props;
+const pathOf = (p: DeckItem) => (share === 'events' ? eventPath(p) : workPath(p));
 const focusCard = focus ? items.findIndex(p => p.id === focus) : -1;
 
 const isVideo = (m: Media) => m.endsWith('.mp4');
@@ -179,17 +184,19 @@ for (const p of items)
                   </>
                 )}
               </p>
-              {p.links.length > 0 && (
-                <ul class="links" data-deck-part="text" style="--i: 4">
-                  {p.links.map(link => (
-                    <li>
-                      <a href={link.href} target="_blank" rel="noopener noreferrer">
-                        {typeof link.label === 'string' ? link.label : <T k={link.label.k} />}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul class="links" data-deck-part="text" style="--i: 4">
+                {p.links.map(link => (
+                  <li>
+                    <a href={link.href} target="_blank" rel="noopener noreferrer">
+                      {typeof link.label === 'string' ? link.label : <T k={link.label.k} />}
+                    </a>
+                  </li>
+                ))}
+                {/* Its own address, to paste into a post (lib/links). */}
+                <li>
+                  <CopyLink path={pathOf(p)} />
+                </li>
+              </ul>
               {/* The narrator's place, kept EMPTY: it reserves the pill's
                   box under the links, and the still anchor below moves to
                   whichever card's slot is in front. */}
@@ -582,7 +589,10 @@ for (const p of items)
     }
   }
 
-  @media (max-width: 48rem) and (max-height: 50rem) {
+  /* Square up to 56rem tall, not 50: the Copy Link row under the words
+     (2026-10-17) took the room 4:5 left, and at 844pt the row sat 27px
+     under the docked controls. */
+  @media (max-width: 48rem) and (max-height: 56rem) {
     .screen.is-photos {
       aspect-ratio: 1;
     }

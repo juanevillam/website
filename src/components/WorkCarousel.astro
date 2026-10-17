@@ -14,6 +14,6 @@ type Props = {
 const { focus } = Astro.props;
 ---
 
-<PanelDeck id="more-work" title="work.title" items={PROJECTS} focus={focus}>
+<PanelDeck id="more-work" title="work.title" items={PROJECTS} focus={focus} share="work">
   <ArcadeCabinet slot="arcade" />
 </PanelDeck>
