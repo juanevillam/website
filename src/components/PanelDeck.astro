@@ -3,7 +3,7 @@ import T from './T.astro';
 import TL from './TL.astro';
 import DeckControls from './DeckControls.astro';
 import type { UIKey } from '../i18n/ui';
-import { clipFor, subsFor } from '../lib/narration';
+import { clipFor, voiceAttrs } from '../lib/narration';
 import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
@@ -80,8 +80,6 @@ type Props = {
 
 const { id, title, items } = Astro.props;
 
-const narr = items.map(p => ({ clip: clipFor(p.clip), subs: subsFor(p.clip) }));
-
 const isVideo = (m: Media) => m.endsWith('.mp4');
 // A video lights the page, stands before it plays, and blurs behind
 // itself by its poster.
@@ -109,7 +107,7 @@ const slotted: Record<string, string> = {};
 for (const p of items)
   if (typeof p.image === 'object' && !Array.isArray(p.image))
     slotted[p.image.slot] = await Astro.slots.render(p.image.slot);
-const voiced = narr.some(n => n.clip);
+const voiced = items.some(p => clipFor(p.clip));
 
 // The light each card lends the page (lib/scene).
 const scenes = await Promise.all(
@@ -183,10 +181,7 @@ for (const p of items)
                 data-cap
                 data-cap-phone="6"
                 data-narr-para
-                data-clip-en={narr[i].clip?.en}
-                data-clip-es={narr[i].clip?.es}
-                data-subs-en={narr[i].subs.en}
-                data-subs-es={narr[i].subs.es}
+                {...voiceAttrs(p.clip)}
               >
                 {typeof p.body === 'string' ? (
                   <T k={p.body} />

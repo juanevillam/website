@@ -1,6 +1,6 @@
 ---
 import T from './T.astro';
-import { clipFor, subsFor } from '../lib/narration';
+import { clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 
 /**
@@ -11,7 +11,6 @@ import { NAME_SCENE } from '../lib/scene';
  * start from the very top.
  */
 const clip = clipFor('hero');
-const subs = subsFor('hero');
 ---
 
 <section class="hero" id="top" data-scene={NAME_SCENE} data-scene-kind="name">
@@ -35,10 +34,7 @@ const subs = subsFor('hero');
       data-reveal
       data-scene-at
       data-narr-para
-      data-clip-en={clip?.en}
-      data-clip-es={clip?.es}
-      data-subs-en={subs.en}
-      data-subs-es={subs.es}
+      {...voiceAttrs('hero')}
     >
       juanevillam
     </h1>

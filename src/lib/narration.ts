@@ -5,7 +5,7 @@ import path from 'node:path';
  * Juan's narration — ONE CLIP PER PARAGRAPH, per language, found by
  * convention rather than listed anywhere:
  *
- *   public/media/narration/{en,es}/{paragraph key}.m4a
+ *   public/media/narration/{en,es,zh}/{paragraph key}.m4a
  *   e.g. public/media/narration/es/shaper.s1.p1.m4a
  *
  * The hero's personal intro has no paragraph on screen; its clip is
@@ -15,10 +15,11 @@ import path from 'node:path';
  * so the page always knows WHICH paragraph is being spoken. Drop a file
  * in and rebuild — the player appears for any block that has a clip.
  *
- * Chinese has no recording of its own; zh readers hear the English clip
- * under the Chinese transcript.
+ * A page language with no clip of its own for a paragraph borrows one, in
+ * VOICE_FALLBACK's order (scripts/director.ts): a Chinese reader hears the
+ * English clip until the Chinese one is recorded.
  */
-export const NARRATION_LANGS = ['en', 'es'] as const;
+export const NARRATION_LANGS = ['en', 'es', 'zh'] as const;
 export type NarrationLang = (typeof NARRATION_LANGS)[number];
 export type Clip = Partial<Record<NarrationLang, string>>;
 
@@ -153,4 +154,17 @@ export const subsFor = (key: string) => {
     if (found?.phrases.length) subs[lang] = JSON.stringify(found);
   }
   return subs;
+};
+
+/** A narrated paragraph's data attributes — every language's clip and
+ *  subtitles, for the director (scripts/director.ts) to choose from. */
+export const voiceAttrs = (key: string) => {
+  const clip = clipFor(key);
+  const subs = subsFor(key);
+  const attrs: Record<string, string | undefined> = {};
+  for (const lang of NARRATION_LANGS) {
+    attrs[`data-clip-${lang}`] = clip?.[lang];
+    attrs[`data-subs-${lang}`] = subs[lang];
+  }
+  return attrs;
 };

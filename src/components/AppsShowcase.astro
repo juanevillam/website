@@ -5,7 +5,7 @@ import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
 import type { UIKey } from '../i18n/ui';
 import type { AppStory } from '../lib/apps';
-import { clipFor, subsFor } from '../lib/narration';
+import { clipFor, voiceAttrs } from '../lib/narration';
 import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
@@ -44,8 +44,6 @@ type Props = {
 };
 
 const { apps } = Astro.props;
-
-const narrate = (k: UIKey) => ({ k, clip: clipFor(k), subs: subsFor(k) });
 
 /**
  * THE PEEK — a welcome shows no picture of its own but the first card's
@@ -177,7 +175,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       </>
                     )}
                     <div class="desc" data-cap data-cap-phone={card.kind === 'welcome' ? 'fill' : '4'}>
-                    {card.paras.map(narrate).map(({ k, clip, subs }, i) => (
+                    {card.paras.map((k, i) => (
                       <p
                         class="body"
                         data-deck-part="text"
@@ -185,10 +183,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         data-narr-para
                         data-card={c}
                         data-app={a}
-                        data-clip-en={clip?.en}
-                        data-clip-es={clip?.es}
-                        data-subs-en={subs.en}
-                        data-subs-es={subs.es}
+                        {...voiceAttrs(k)}
                       >
                         <T k={k} />
                       </p>
