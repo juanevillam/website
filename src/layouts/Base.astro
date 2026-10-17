@@ -289,11 +289,20 @@ const url = new URL(path, Astro.site);
         for (const r of records)
           (r.target as HTMLElement).querySelectorAll<HTMLElement>('[data-cap]').forEach(capTo);
       }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
-      // The paragraph being told scrolls into its box.
+      // The paragraph being told scrolls into its box. Measured against the
+      // BOX, not with `offsetTop`: that is relative to the nearest
+      // positioned ancestor, which is not the box, so starting the voice
+      // scrolled the box past the very paragraph it was about to read.
       document.addEventListener('narr:para', e => {
         const p = (e as CustomEvent<HTMLElement>).detail;
         const box = p?.closest<HTMLElement>('[data-cap]');
-        if (box && box !== p) box.scrollTo({ top: p.offsetTop, behavior: 'smooth' });
+        if (!box || box === p) return;
+        const top =
+          box.scrollTop +
+          p.getBoundingClientRect().top -
+          box.getBoundingClientRect().top -
+          parseFloat(getComputedStyle(box).paddingTop);
+        box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
       });
 
       // Scroll entrances: reveal once, then let the element live untouched.
