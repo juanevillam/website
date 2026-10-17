@@ -9,6 +9,7 @@ type Props = { app: LegalApp };
 const { app } = Astro.props;
 const social = app.content === 'tops';
 const books = app.content === 'books';
+const sounds = app.content === 'sounds';
 // The steps follow each app's real entry: Topper's account lives on the
 // Profile tab, Sound Shaper's and Booker's behind their Settings banner. Both apps run
 // `useDeleteAccount` on both platforms, which re-authenticates first.
@@ -51,7 +52,14 @@ const books = app.content === 'books';
         confirm it's you. Then the deletion runs right away: your uploaded files, then your
         data, then the account itself. If you signed in with Apple, {app.name}
         is also removed from the apps that use Sign in with Apple on your
-        Apple Account.
+        Apple Account; if you signed in with Google, its access to your Google
+        Account is removed.
+        {sounds && (
+          <>
+            {' '}If your files can't be removed at that moment, nothing is
+            deleted and the app asks you to try again.
+          </>
+        )}
       </p>
 
       <h2>If you can't access the app</h2>
@@ -85,7 +93,10 @@ const books = app.content === 'books';
             </>
           ) : (
             <>
-              <li>Every sound you added, with its audio and artwork.</li>
+              <li>
+                Every sound you added, with its audio and artwork, cached
+                copies included.
+              </li>
               <li>Your clips.</li>
               <li>Your trophies.</li>
             </>
@@ -134,7 +145,14 @@ const books = app.content === 'books';
         confirmar que eres tú. Después la eliminación es inmediata: primero los archivos que subiste,
         luego tus datos y, por último, la cuenta. Si iniciaste sesión con
         Apple, {app.name} también desaparece de las apps que usan Iniciar
-        sesión con Apple en tu Cuenta de Apple.
+        sesión con Apple en tu Cuenta de Apple; si iniciaste sesión con Google,
+        se le retira el acceso a tu cuenta de Google.
+        {sounds && (
+          <>
+            {' '}Si en ese momento no se pueden borrar tus archivos, no se
+            elimina nada y la app te pide que lo intentes de nuevo.
+          </>
+        )}
       </p>
 
       <h2>Si no puedes acceder a la app</h2>
@@ -168,7 +186,10 @@ const books = app.content === 'books';
             </>
           ) : (
             <>
-              <li>Todos los sonidos que añadiste, con su audio e ilustración.</li>
+              <li>
+                Todos los sonidos que añadiste, con su audio e ilustración,
+                incluidas sus copias en caché.
+              </li>
               <li>Tus clips.</li>
               <li>Tus trofeos.</li>
             </>
@@ -212,7 +233,7 @@ const books = app.content === 'books';
         <li>轻点<strong>删除账户</strong>并确认。</li>
       </ul>
       <p>
-        删除任何内容之前，应用会要求你重新登录以确认是你本人。随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除。
+        删除任何内容之前，应用会要求你重新登录以确认是你本人。随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除；如果你使用 Google 登录，它对你 Google 账户的访问权限也会被移除。{sounds && '如果当时无法删除你的文件，则不会删除任何内容，应用会请你重试。'}
       </p>
 
       <h2>如果你无法访问应用</h2>
@@ -238,7 +259,7 @@ const books = app.content === 'books';
             </>
           ) : (
             <>
-              <li>你添加的所有音频，连同音频文件和插图。</li>
+              <li>你添加的所有音频，连同音频文件、插图及其缓存副本。</li>
               <li>你的片段。</li>
               <li>你的奖杯。</li>
             </>

@@ -2,6 +2,7 @@
 import Prose from '../../layouts/Prose.astro';
 import L from '../../components/L.astro';
 import {
+  APPLE_EULA_URL,
   AUTHOR_FULL_NAME,
   CONTACT_EMAIL,
   legalPaths,
@@ -14,6 +15,10 @@ type Props = { app: LegalApp };
 const { app } = Astro.props;
 const social = app.content === 'tops';
 const books = app.content === 'books';
+const sounds = app.content === 'sounds';
+// Every promise here has to be one the app keeps — see each app's
+// services/firebase (what is stored and who can read it) and its
+// useDeleteAccount. Change the app, change this.
 ---
 
 <Prose
@@ -27,29 +32,61 @@ const books = app.content === 'books';
   <L>
     <Fragment slot="en">
       <p>
-        {app.name} is built and operated by {AUTHOR_FULL_NAME}. By creating
-        an account or using the app you agree to these terms.
+        {app.name} is built and operated by {AUTHOR_FULL_NAME} ("I", "me").
+        {app.publisher && (
+          <>
+            {' '}It's published on the App Store by {app.publisher}, which
+            only distributes it: {app.publisher} doesn't operate the app, has
+            no access to your account or content, and isn't responsible for
+            either.
+          </>
+        )}{' '}
+        By creating an account or using the app you agree to these terms.
+      </p>
+
+      <h2>Who can use it</h2>
+      <p>
+        You need to be at least 13, or the minimum age in your country to use
+        an online service without a parent's permission, if that's higher.
       </p>
 
       <h2>Your content</h2>
       <p>
-        What you {social ? 'create' : 'upload'} is yours. You give the app
-        only the permission it needs to store your {app.content} and show
-        them back to you{social ? ', and to other people for what you make public' : ''}.
+        What you {social ? 'create' : 'upload'} is yours. You let me store,
+        copy and process it only as far as the app needs to keep your{' '}
+        {app.content}, show them back to you{social ? ', show what you make public to other people' : ''}
+        and sync them to your devices. That permission ends when you delete
+        the content or your account.
+      </p>
+      <p>
         Only {social ? 'create or upload' : 'upload'} content you have the
-        right to use{
+        right to use. By adding something, you confirm that you own it or are
+        allowed to keep a copy of it{
           books
             ? ' — the passages you keep from books are for your own reading'
-            : !social &&
-              ' — the audio files you add must be yours to keep and listen to'
-        }.
+            : sounds
+              ? ' for your own listening'
+              : ''
+        }, and that storing it here doesn't infringe anyone's rights. You're
+        responsible for what you add, including any claim someone makes
+        because of it.
       </p>
+      {
+        sounds && (
+          <p>
+            Your library is for your own use. Nothing in {app.name} shares,
+            lists or shows it to anyone else, and you agree not to use the app
+            to share or distribute anything you add.
+          </p>
+        )
+      }
 
       <h2>Acceptable use</h2>
       <p>
         Don't use the app to store or share content that is illegal,
-        infringes someone else's rights, or harms other people. Accounts that
-        do may be suspended or removed{social ? ', along with the content' : ''}.
+        infringes someone else's rights, or harms other people. Don't use it
+        as general file hosting, and don't try to reach anyone else's account
+        or files.
       </p>
       {
         social && (
@@ -62,6 +99,40 @@ const books = app.content === 'books';
           </p>
         )
       }
+      <p>
+        I can remove content, or suspend or delete an account, that breaks
+        these terms or the law, or that a valid copyright complaint
+        identifies. When I can, I'll tell you by email first.
+      </p>
+
+      <h2>Copyright complaints</h2>
+      <p>
+        If you believe something stored in {app.name} infringes your
+        copyright, email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>{' '}
+        with:
+      </p>
+      <ul>
+        <li>your name, address, phone number and email;</li>
+        <li>the work you believe is infringed;</li>
+        <li>
+          what in {app.name} you believe infringes it, and enough detail for
+          me to find it;
+        </li>
+        <li>
+          a statement that you believe in good faith the use isn't authorized
+          by you, your agent or the law;
+        </li>
+        <li>
+          a statement that the information in your notice is accurate and
+          that you're the owner, or authorized to act for the owner;
+        </li>
+        <li>your physical or electronic signature.</li>
+      </ul>
+      <p>
+        I remove what a valid complaint identifies and tell the person whose
+        account it was, who can reply if they believe it was removed by
+        mistake. Accounts that receive repeated valid complaints are deleted.
+      </p>
 
       <h2>The service</h2>
       <p>
@@ -74,9 +145,22 @@ const books = app.content === 'books';
 
       <h2>Liability</h2>
       <p>
-        To the extent the law allows, I'm not liable for indirect damages or
-        for loss of content caused by circumstances outside my control. Keep
-        copies of anything you can't afford to lose.
+        To the extent the law allows, I'm not liable for indirect or
+        consequential damages, or for loss of content caused by circumstances
+        outside my control, and my total liability for any claim about the
+        app is limited to US$50. Keep copies of anything you can't afford to
+        lose. Nothing here limits rights that the law where you live doesn't
+        allow to be limited.
+      </p>
+
+      <h2>App Store</h2>
+      <p>
+        If you got the app from the App Store, Apple's{' '}
+        <a href={APPLE_EULA_URL}>Licensed Application End User License Agreement</a>{' '}
+        also applies. These terms are between you and me, not Apple: Apple
+        isn't responsible for the app or its content and has no obligation to
+        support it, and Apple and its subsidiaries can enforce these terms as
+        third-party beneficiaries.
       </p>
 
       <h2>Contact</h2>
@@ -89,28 +173,60 @@ const books = app.content === 'books';
 
     <Fragment slot="es">
       <p>
-        {app.name} la hace y la opera {AUTHOR_FULL_NAME}. Al crear una cuenta
-        o usar la app, aceptas estos términos.
+        {app.name} la hace y la opera {AUTHOR_FULL_NAME} ("yo").
+        {app.publisher && (
+          <>
+            {' '}La publica en el App Store {app.publisher}, que solo la
+            distribuye: {app.publisher} no opera la app, no tiene acceso a tu
+            cuenta ni a tu contenido y no es responsable de ninguno de los dos.
+          </>
+        )}{' '}
+        Al crear una cuenta o usar la app, aceptas estos términos.
+      </p>
+
+      <h2>Quién puede usarla</h2>
+      <p>
+        Necesitas tener al menos 13 años, o la edad mínima de tu país para
+        usar un servicio en línea sin el permiso de tus padres, si es mayor.
       </p>
 
       <h2>Tu contenido</h2>
       <p>
-        Lo que {social ? 'creas' : 'subes'} es tuyo. Le das a la app solo el
-        permiso que necesita para guardar tus {app.contentEs} y mostrártelos{social ? ', y a otras personas en lo que haces público' : ''}.
-        {social ? 'Crea o sube' : 'Sube'} solo contenido que tengas derecho a
-        usar{
-          books
-            ? ': los pasajes que guardas de los libros son para tu propia lectura'
-            : !social &&
-              ': los archivos de audio que añades deben ser tuyos para guardarlos y escucharlos'
-        }.
+        Lo que {social ? 'creas' : 'subes'} es tuyo. Me permites guardarlo,
+        copiarlo y procesarlo solo en la medida en que la app lo necesita para
+        conservar tus {app.contentEs}, mostrártelos{social ? ', mostrar a otras personas lo que haces público' : ''}
+        y sincronizarlos con tus dispositivos. Ese permiso termina cuando
+        eliminas el contenido o tu cuenta.
       </p>
+      <p>
+        {social ? 'Crea o sube' : 'Sube'} solo contenido que tengas derecho a
+        usar. Al añadir algo, confirmas que es tuyo o que puedes conservar una
+        copia{
+          books
+            ? ' (los pasajes que guardas de los libros son para tu propia lectura)'
+            : sounds
+              ? ' para escucharla tú'
+              : ''
+        }, y que guardarlo aquí no infringe los derechos de nadie. Eres
+        responsable de lo que añades, incluido cualquier reclamo que alguien
+        haga por ello.
+      </p>
+      {
+        sounds && (
+          <p>
+            Tu biblioteca es para tu propio uso. Nada en {app.name} la
+            comparte, la lista ni la muestra a nadie más, y aceptas no usar la
+            app para compartir ni distribuir lo que añades.
+          </p>
+        )
+      }
 
       <h2>Uso aceptable</h2>
       <p>
         No uses la app para guardar o compartir contenido ilegal, que infrinja
-        los derechos de otra persona o que haga daño a otras personas. Las
-        cuentas que lo hagan pueden ser suspendidas o eliminadas{social ? ', junto con su contenido' : ''}.
+        los derechos de otra persona o que haga daño a otras personas. No la
+        uses como alojamiento de archivos en general ni intentes acceder a la
+        cuenta o los archivos de otra persona.
       </p>
       {
         social && (
@@ -123,6 +239,41 @@ const books = app.content === 'books';
           </p>
         )
       }
+      <p>
+        Puedo eliminar contenido, o suspender o eliminar una cuenta, que
+        incumpla estos términos o la ley, o que señale un reclamo válido de
+        derechos de autor. Cuando pueda, te avisaré antes por correo.
+      </p>
+
+      <h2>Reclamos de derechos de autor</h2>
+      <p>
+        Si crees que algo guardado en {app.name} infringe tus derechos de
+        autor, escribe a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>{' '}
+        con:
+      </p>
+      <ul>
+        <li>tu nombre, dirección, teléfono y correo electrónico;</li>
+        <li>la obra que crees que se infringe;</li>
+        <li>
+          qué parte de {app.name} crees que la infringe, con detalle
+          suficiente para encontrarla;
+        </li>
+        <li>
+          una declaración de que crees de buena fe que el uso no está
+          autorizado por ti, tu representante ni la ley;
+        </li>
+        <li>
+          una declaración de que la información de tu aviso es exacta y de que
+          eres el titular o estás autorizado para actuar en su nombre;
+        </li>
+        <li>tu firma física o electrónica.</li>
+      </ul>
+      <p>
+        Elimino lo que identifica un reclamo válido y se lo comunico a la
+        persona dueña de la cuenta, que puede responder si cree que se eliminó
+        por error. Las cuentas que reciben reclamos válidos repetidos se
+        eliminan.
+      </p>
 
       <h2>El servicio</h2>
       <p>
@@ -137,9 +288,22 @@ const books = app.content === 'books';
       <h2>Responsabilidad</h2>
       <p>
         En la medida en que la ley lo permita, no soy responsable de daños
-        indirectos ni de la pérdida de contenido causada por circunstancias
-        ajenas a mi control. Guarda copias de todo lo que no puedas permitirte
-        perder.
+        indirectos o consecuentes ni de la pérdida de contenido causada por
+        circunstancias ajenas a mi control, y mi responsabilidad total por
+        cualquier reclamo sobre la app se limita a 50 dólares
+        estadounidenses. Guarda copias de todo lo que no puedas permitirte
+        perder. Nada de esto limita derechos que la ley de tu país no permite
+        limitar.
+      </p>
+
+      <h2>App Store</h2>
+      <p>
+        Si obtuviste la app en el App Store, también se aplica el{' '}
+        <a href={APPLE_EULA_URL}>Contrato de licencia de usuario final de aplicaciones con licencia</a>{' '}
+        de Apple. Estos términos son entre tú y yo, no con Apple: Apple no es
+        responsable de la app ni de su contenido y no tiene obligación de
+        darle soporte, y Apple y sus filiales pueden hacer cumplir estos
+        términos como terceros beneficiarios.
       </p>
 
       <h2>Contacto</h2>
@@ -152,17 +316,32 @@ const books = app.content === 'books';
 
     <Fragment slot="zh">
       <p>
-        {app.name} 由 {AUTHOR_FULL_NAME} 打造和运营。创建账户或使用本应用，即表示你同意这些条款。
+        {app.name} 由 {AUTHOR_FULL_NAME}（“我”）打造和运营。{app.publisher && `本应用在 App Store 上由 ${app.publisher} 发布，${app.publisher} 仅负责分发：它不运营本应用，无法访问你的账户或内容，也不对二者承担责任。`}创建账户或使用本应用，即表示你同意这些条款。
+      </p>
+
+      <h2>谁可以使用</h2>
+      <p>
+        你必须年满 13 岁；如果你所在国家或地区规定在无需父母许可的情况下使用在线服务的最低年龄更高，则须达到该年龄。
       </p>
 
       <h2>你的内容</h2>
       <p>
-        你{social ? '创建' : '上传'}的内容归你所有。你只授予应用为存储你的{app.contentZh}并将其展示给你{social ? '（以及将你公开的内容展示给其他人）' : ''}所需的权限。请只{social ? '创建或上传' : '上传'}你有权使用的内容{books ? '——你从书中摘录的段落仅供你自己阅读' : !social && '——你添加的音频文件必须是你有权保存和收听的'}。
+        你{social ? '创建' : '上传'}的内容归你所有。你允许我存储、复制和处理这些内容，但仅限于应用保存你的{app.contentZh}、将其展示给你{social ? '、向其他人展示你公开的内容' : ''}以及同步到你的设备所需的范围。你删除内容或账户后，该许可即告终止。
       </p>
+      <p>
+        请只{social ? '创建或上传' : '上传'}你有权使用的内容。添加任何内容，即表示你确认你拥有该内容或有权保留其副本{books ? '（你从书中摘录的段落仅供你自己阅读）' : sounds ? '供自己收听' : ''}，并且将其存储在这里不会侵犯任何人的权利。你须对你添加的内容负责，包括他人因此提出的任何索赔。
+      </p>
+      {
+        sounds && (
+          <p>
+            你的资料库仅供你自己使用。{app.name} 不会向任何人分享、列出或展示其中的内容，你也同意不使用本应用分享或传播你添加的任何内容。
+          </p>
+        )
+      }
 
       <h2>可接受的使用</h2>
       <p>
-        不得使用本应用存储或分享违法、侵犯他人权利或伤害他人的内容。违反者的账户可能会被暂停或删除{social ? '，相关内容也会一并删除' : ''}。
+        不得使用本应用存储或分享违法、侵犯他人权利或伤害他人的内容。不得将其用作通用文件托管，也不得试图访问他人的账户或文件。
       </p>
       {
         social && (
@@ -171,6 +350,25 @@ const books = app.content === 'books';
           </p>
         )
       }
+      <p>
+        对于违反这些条款或法律的内容，或有效版权投诉所指明的内容，我可以将其删除，或暂停、删除相关账户。在可能的情况下，我会先通过电子邮件通知你。
+      </p>
+
+      <h2>版权投诉</h2>
+      <p>
+        如果你认为 {app.name} 中存储的内容侵犯了你的版权，请发送电子邮件至 <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>，并提供：
+      </p>
+      <ul>
+        <li>你的姓名、地址、电话号码和电子邮件地址；</li>
+        <li>你认为被侵权的作品；</li>
+        <li>你认为 {app.name} 中侵权的内容，以及足以让我找到它的详细信息；</li>
+        <li>一份声明，表明你善意地相信该使用未经你、你的代理人或法律授权；</li>
+        <li>一份声明，表明你通知中的信息准确无误，且你是权利人或有权代表权利人行事；</li>
+        <li>你的亲笔签名或电子签名。</li>
+      </ul>
+      <p>
+        我会删除有效投诉所指明的内容，并通知该账户的所有者；如果对方认为内容被误删，可以回复说明。多次收到有效投诉的账户将被删除。
+      </p>
 
       <h2>服务</h2>
       <p>
@@ -179,7 +377,12 @@ const books = app.content === 'books';
 
       <h2>责任</h2>
       <p>
-        在法律允许的范围内，我不对间接损失或因我无法控制的情况造成的内容丢失承担责任。请为你不能失去的内容保留副本。
+        在法律允许的范围内，我不对间接损失或后果性损失、或因我无法控制的情况造成的内容丢失承担责任，并且我对与本应用有关的任何索赔所承担的全部责任以 50 美元为限。请为你不能失去的内容保留副本。本条款不限制你所在地法律不允许限制的权利。
+      </p>
+
+      <h2>App Store</h2>
+      <p>
+        如果你从 App Store 获取本应用，Apple 的<a href={APPLE_EULA_URL}>《许可应用最终用户许可协议》</a>同样适用。这些条款是你与我之间的约定，而非与 Apple 之间的约定：Apple 不对本应用或其内容负责，也没有义务为其提供支持；Apple 及其子公司可作为第三方受益人执行这些条款。
       </p>
 
       <h2>联系方式</h2>
