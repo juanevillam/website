@@ -1,23 +1,19 @@
 /**
- * THE NARRATION SCRIPTS — what Juan reads, word for word, one entry per
- * clip key (see lib/narration). Read only by the dev teleprompter
- * (pages/dev); nothing on the public page imports this file.
+ * THE NARRATION SCRIPTS — what each clip has to SAY, one entry per clip
+ * key (see lib/narration). Read only by the dev teleprompter (pages/dev);
+ * nothing on the public page imports this file.
  *
- * Every LINE is one subtitle phrase: the teleprompter shows them one at a
- * time, and the cue Juan taps at each line becomes that phrase's start in
- * the clip's `.vtt`. Keep a line short enough for the narrator's pill
- * (about 60 characters).
- *
- * Written the way Juan TALKS, not the way he writes (Juan, 2026-10-12):
- * his own fillers stay where they sound like him — "pues", "o sea",
- * "fíjate", "mira", "¿verdad?" — a few per clip, never one per line.
+ * IDEAS, NOT LINES (Juan, 2026-10-17): read word for word, a script never
+ * sounded like him, so each clip is the points to cover, in order, and he
+ * says them his own way. A name, a number or a place in an idea is one he
+ * has to say; everything else is his. The subtitles come from what he
+ * actually said: the dev server's recorder transcribes the take (whisper,
+ * scripts/narration-recorder.mjs) and times every phrase from it.
  *
  * Spanish is the source. English and Chinese (SCRIPT_EN, SCRIPT_ZH) are
- * FIRST DRAFTS translated from it on 2026-10-16, line for line, for Juan
- * to read through and adjust before he records them — the teleprompter
- * marks every clip that is still a draft. Chinese takes full-width
- * punctuation, and its lines are kept shorter: a Chinese character is
- * twice as wide in the pill.
+ * still the 2026-10-16 line-for-line translations of the OLD Spanish
+ * lines; each is rewritten as ideas, from the Spanish ideas, before its
+ * own recording block — the teleprompter marks them as drafts.
  */
 export type ScriptLang = 'es' | 'en' | 'zh';
 export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en', 'zh'];
@@ -28,8 +24,9 @@ export type ScriptClip = {
   where: string;
   /** What a visitor sees while it plays, when that is a screenshot. */
   shot?: string;
-  lines: string[];
-  /** Why this script is not Juan's own words yet, when it is not. */
+  /** The points to cover, in order. */
+  ideas: string[];
+  /** Why this script is not ready to record from yet, when it is not. */
   draft?: string;
 };
 
@@ -39,30 +36,14 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'hero',
     where: 'Inicio',
-    lines: [
-      'Hola, soy Juan Villa, desarrollador de software.',
-      'Me gusta hacer software igual que me gusta jugar videojuegos:',
-      'yendo por el platino.',
-      'Desde 2022 trabajo de forma remota en Crol,',
-      'un ERP para empresas en México,',
-      'donde construí su app móvil desde cero.',
-      'Empecé a estudiar ingeniería electrónica,',
-      'y después técnico en informática,',
-      'pero lo que más me enseñó fue construir cosas.',
-      'Aquí te cuento en todo lo que he trabajado',
-      'y lo que me parece interesante resaltar:',
-      'Sound Shaper, la app que hice para mí',
-      'y que va a salir en la App Store,',
-      'mi trabajo, mi startup',
-      'y los eventos de emprendimiento y desarrollo',
-      'en los que he estado.',
-      'Ah, y la página está en español, inglés y chino.',
-      'Si la quieres escuchar en otro idioma,',
-      'cámbialo arriba, en la barra de navegación.',
-      'Toda la página está narrada.',
-      'Casi no hay textos, porque más que leer lo que escribí,',
-      'quería que me escucharan.',
-      'Y sí, esta es mi voz real, no es inteligencia artificial.',
+    ideas: [
+      'Saludo: Juan Villa, desarrollador de software.',
+      'Hago software como juego videojuegos: yendo por el platino.',
+      'Desde 2022 trabajo remoto para empresas en México; antes, clientes en España y Argentina. (Sin nombrar a Crol.)',
+      'Empecé ingeniería electrónica, luego técnico en informática, pero lo que más me enseñó fue construir cosas.',
+      'Qué vas a ver aquí: Sound Shaper, la app que hice para mí; mi trabajo; mi startup; los eventos de emprendimiento y desarrollo en los que he estado.',
+      'La página está en español, inglés y chino: cámbialo arriba, en la barra.',
+      'Toda la página está narrada, casi no hay texto: quería que me escucharan. Es mi voz real, no IA.',
     ],
   },
 
@@ -70,126 +51,96 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'shaper.problem',
     where: 'Sound Shaper · el problema',
-    lines: [
-      'Yo escuchaba mucha música en YouTube Music,',
-      'con anuncios a cada rato.',
-      'Y cuando una canción me gustaba,',
-      'la quería en todas sus versiones:',
-      'normal, slowed, sped up, ultra slowed.',
-      'Y muchas veces ni siquiera la quería entera, o sea,',
-      'quería los treinta segundos que más me gustaban,',
-      'y los repetía, y los repetía, y los repetía.',
+    ideas: [
+      'Escuchaba mucha música en YouTube Music, con anuncios a cada rato.',
+      'Si una canción me gustaba, la quería en todas sus versiones: normal, slowed, sped up, ultra slowed.',
+      'Y muchas veces solo quería los treinta segundos que más me gustaban, en repetición.',
     ],
   },
   {
     key: 'shaper.solution',
     where: 'Sound Shaper · la idea',
-    lines: [
-      'Entonces se me ocurrió hacer Sound Shaper:',
-      'un reproductor de MP3 que funciona sin internet.',
-      'Tengo la canción original una sola vez,',
-      'y desde la app la pongo lenta, rápida,',
-      'le pongo los efectos que yo quiera',
-      'y corto clips de mis partes favoritas.',
-      'En YouTube la canción es un video, y suena como está.',
-      'Aquí, pues, yo escojo cómo la escucho.',
+    ideas: [
+      'Por eso hice Sound Shaper: un reproductor de MP3 que funciona sin internet.',
+      'Tengo la canción original una vez y desde la app la pongo lenta o rápida, le pongo efectos y corto clips de mis partes favoritas.',
+      'En YouTube la canción suena como está; aquí yo escojo cómo la escucho.',
     ],
   },
   {
     key: 'shaper.s1.p1',
     where: 'Sound Shaper · Library',
     shot: shot('shaper', 'ios-dark-home'),
-    lines: [
+    ideas: [
       'Esta es tu biblioteca.',
-      'Ojo, la app no descarga música:',
-      'subes tus propios MP3, para tu uso personal,',
-      'y los ordenas a mano, arrastrándolos,',
-      'en el orden que más te guste.',
+      'La app no descarga música: subes tus propios MP3, para uso personal.',
+      'Los ordenas a mano, arrastrándolos, en el orden que quieras.',
     ],
   },
   {
     key: 'shaper.s1.p2',
     where: 'Sound Shaper · Library',
     shot: shot('shaper', 'ios-dark-home'),
-    lines: [
-      'Funciona con lo que ya conoces del teléfono:',
-      'la Dynamic Island, la pantalla de bloqueo, los widgets.',
-      'Y desde aquí entras a Ajustes,',
-      'como en el resto de mis apps:',
-      'tu cuenta, el idioma, la apariencia',
-      'y los trofeos, tipo los trofeos de PlayStation.',
+    ideas: [
+      'Funciona con lo que ya conoces del teléfono: Dynamic Island, pantalla de bloqueo, widgets.',
+      'Desde aquí entras a Ajustes, como en mis otras apps: cuenta, idioma, apariencia.',
+      'Y trofeos, tipo los de PlayStation.',
     ],
   },
   {
     key: 'shaper.s2.p1',
     where: 'Sound Shaper · Player',
     shot: shot('shaper', 'ios-dark-player'),
-    lines: [
-      'El reproductor lo inspiré mucho en YouTube Music',
-      'y en Apple Music.',
-      'Como tal, es un reproductor normal, y está bien así:',
-      'das play, pausas y cambias de canción sin pensarlo.',
+    ideas: [
+      'El reproductor lo inspiré en YouTube Music y Apple Music.',
+      'Es un reproductor normal, y está bien así: play, pausa, cambiar de canción sin pensarlo.',
     ],
   },
   {
     key: 'shaper.s2.p2',
     where: 'Sound Shaper · Player',
     shot: shot('shaper', 'ios-dark-player'),
-    lines: [
-      'Lo distinto está abajo:',
-      'desde aquí mismito abres Shape y Clips,',
-      'que son, pues, las razones por las que hice la app.',
+    ideas: [
+      'Lo distinto está abajo: desde aquí abres Shape y Clips.',
+      'Son las razones por las que hice la app.',
     ],
   },
   {
     key: 'shaper.s3.p1',
     where: 'Sound Shaper · Shape',
     shot: shot('shaper', 'ios-dark-shape'),
-    lines: [
-      'Shape es la razón principal de que exista la app.',
-      'De hecho, de ahí viene el nombre:',
-      'Sound Shaper, moldeador de sonidos.',
-      'Tienes presets listos, o un ecualizador manual',
-      'si sabes más de esa configuración.',
-      'Y la velocidad: ya no busco la versión slowed,',
-      'la pongo slowed al nivel que yo quiera.',
+    ideas: [
+      'Shape es la razón principal de la app; de ahí el nombre: Sound Shaper, moldeador de sonidos.',
+      'Presets listos, o ecualizador manual si sabes más de eso.',
+      'Velocidad: ya no busco la versión slowed, la pongo slowed al nivel que quiera.',
     ],
   },
   {
     key: 'shaper.s3.p2',
     where: 'Sound Shaper · Shape',
     shot: shot('shaper', 'ios-dark-shape'),
-    lines: [
+    ideas: [
       'Preservar el tono fue lo más curioso de construir.',
-      'En YouTube, si la pones lenta, cambia el tono,',
-      'y la voz suena como en cámara lenta.',
-      'Aquí la pones lenta y la voz se queda igual.',
-      'Y dos efectos que me encantan:',
-      'eco, como si estuvieras en un concierto,',
-      'y next room, como una fiesta en el cuarto de al lado.',
-      'Con audífonos y los ojos cerrados, de verdad te transporta.',
+      'En YouTube, si la pones lenta, la voz suena en cámara lenta; aquí la voz se queda igual.',
+      'Dos efectos favoritos: eco, como en un concierto, y next room, como una fiesta en el cuarto de al lado.',
+      'Con audífonos y los ojos cerrados, te transporta.',
     ],
   },
   {
     key: 'shaper.s4.p1',
     where: 'Sound Shaper · Clips',
     shot: shot('shaper', 'ios-dark-clip'),
-    lines: [
-      'Clips lo inspiré en Notas de Voz de Apple,',
-      'la misma app con la que grabé las ideas de esta página.',
-      'Escoges el pedazo exacto de la canción',
-      'que más te gusta.',
+    ideas: [
+      'Clips lo inspiré en Notas de Voz de Apple, la misma app con la que grabé las ideas de esta página.',
+      'Escoges el pedazo exacto de la canción que más te gusta.',
     ],
   },
   {
     key: 'shaper.s4.p2',
     where: 'Sound Shaper · Clips',
     shot: shot('shaper', 'ios-dark-clip'),
-    lines: [
-      'Lo guardas como un clip',
-      'y lo escuchas una y otra vez.',
-      'Y desde aquí también abres Shape,',
-      'para que ese clip suene a tu manera.',
+    ideas: [
+      'Lo guardas como clip y lo escuchas una y otra vez.',
+      'Desde aquí también abres Shape, para que el clip suene a tu manera.',
     ],
   },
 
@@ -197,68 +148,48 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'work.salvalo.body',
     where: 'Más proyectos · Salvalo',
-    lines: [
+    ideas: [
       'Salvalo es mi startup.',
-      'Cada día, los comercios cierran con productos',
-      'que todavía se podían vender.',
-      'En Salvalo los convierten en packs,',
-      'con su precio y su hora de recogida.',
-      'Tú encuentras uno cerca en el mapa, lo apartas,',
-      'le pagas directo al comercio y lo recoges con un código.',
-      'Rediseñé toda la app, la del cliente y la del comercio,',
-      'e hice la nueva web, que el equipo edita sin código.',
-      'Y pues, salgo a visitar comercios',
-      'para el piloto en Barquisimeto.',
+      'Los comercios cierran cada día con productos que todavía se pueden vender; en Salvalo los convierten en packs con precio y hora de recogida.',
+      'Encuentras uno cerca en el mapa, lo apartas, le pagas directo al comercio y lo recoges con un código.',
+      'Mi parte: rediseñé toda la app, cliente y comercio, e hice la nueva web, que el equipo edita sin código.',
+      'Y salgo a visitar comercios para el piloto en Barquisimeto.',
     ],
   },
   {
     key: 'work.crol.body',
     where: 'Más proyectos · Crol ERP Móvil',
-    lines: [
-      'Desde 2022 trabajo en Crol,',
-      'un ERP en la nube para empresas en México.',
-      'Empecé en Conto Pay, una versión más simple de Crol,',
-      'con su web, su landing y su app móvil.',
-      'Esa app fue la base de Crol ERP Móvil,',
-      'que construí desde cero, diseño incluido,',
-      'para usar Crol cómodo desde el teléfono.',
+    ideas: [
+      'Desde 2022 trabajo en Crol, un ERP en la nube para empresas en México.',
+      'Empecé en Conto Pay, una versión más simple de Crol: su web, su landing y su app móvil.',
+      'Esa app fue la base de Crol ERP Móvil, que construí desde cero, diseño incluido, para usar Crol desde el teléfono.',
     ],
   },
   {
     key: 'arcade.p1',
     where: 'Más proyectos · Space Explorer',
-    lines: [
-      'Space Explorer empezó como un easter egg para mis apps,',
-      'como el de Android, ¿verdad?',
-      'Tocas varias veces la versión y aparece un juego.',
-      'Iba a tener tres niveles, uno por app:',
-      'el mar, el espacio y una guerra espacial.',
-      'Al final lo quité para no complicar las apps.',
-      'Y meses después llegó el reto arcade de Platanus Hack,',
-      'y como ya tenía la idea, dije: listo, lo hago.',
+    ideas: [
+      'Empezó como un easter egg para mis apps, como el de Android: tocas varias veces la versión y aparece un juego.',
+      'Iba a tener tres niveles, uno por app: el mar, el espacio y una guerra espacial. Lo quité para no complicar las apps.',
+      'Meses después llegó el reto arcade de Platanus Hack, y como ya tenía la idea, lo hice.',
       'Un shooter en 3D que cabe en 50 KB.',
     ],
   },
   {
     key: 'work.maktub.body',
     where: 'Más proyectos · Maktub Art Fund',
-    lines: [
-      'Maktub Art Fund es un cliente de México',
-      'que conocí gracias a Crol.',
-      'Era una landing, y las landings así de simples',
-      'casi nunca me llaman la atención,',
-      'pero el diseño de esta me gustó, y dije: va, la hago.',
+    ideas: [
+      'Maktub Art Fund: un cliente de México que conocí gracias a Crol.',
+      'Era una landing; casi nunca me llaman la atención, pero el diseño de esta me gustó y la hice.',
     ],
   },
   {
     key: 'work.andreina.body',
     where: 'Más proyectos · Andreina Aular',
-    lines: [
-      'La página de Andreina Aular fue la primera que hice,',
-      'al terminar mis primeros cursos de Udemy.',
-      'La diseñé yo en Figma, la publiqué,',
-      'le hice actualizaciones',
-      'y después la rehicimos completa en WordPress.',
+    ideas: [
+      'La página de Andreina Aular fue la primera que hice, al terminar mis primeros cursos de Udemy.',
+      'La diseñé en Figma, la publiqué y le hice actualizaciones.',
+      'Después la rehicimos completa en WordPress.',
     ],
   },
 
@@ -266,76 +197,45 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'events.panal.body',
     where: 'Eventos · El Panal',
-    lines: [
-      'El Panal es el movimiento que creó Manuel Sira,',
-      'y fui a una de sus noches en Barquisimeto.',
-      'Había gente construyendo de todo:',
-      'marketing, moda, CRM, inventarios,',
-      'apps de psicología y de salud.',
-      'Las charlas fueron de inteligencia artificial,',
-      'de medir los datos de tu empresa para crecer,',
-      'y de cómo diferenciarte ahora que cualquiera programa:',
-      'lo que hace falta es gusto.',
-      'Y mira, cada startup tenía treinta segundos exactos',
-      'para su pitch.',
-      'Yo estaba nervioso, pero di el de Salvalo,',
-      'y me fui con amigos nuevos, contactos y uno que otro lead.',
-      'Ahí conocí al equipo de Resty, una app de salud,',
-      'y me junté con mis founder bros de Tripealo:',
-      'juntos, pero no revueltos.',
-      'Quizás un adelanto',
-      'de lo que viene en el Startup Summit Caracas.',
+    ideas: [
+      'El Panal, el movimiento que creó Manuel Sira: fui a una de sus noches en Barquisimeto.',
+      'Gente construyendo de todo: marketing, moda, CRM, inventarios, apps de psicología y de salud.',
+      'Charlas: inteligencia artificial, medir los datos de tu empresa para crecer, y diferenciarte ahora que cualquiera programa: lo que hace falta es gusto.',
+      'Cada startup tenía treinta segundos exactos de pitch; nervioso, di el de Salvalo.',
+      'Me fui con amigos nuevos, contactos y uno que otro lead; conocí al equipo de Resty, una app de salud.',
+      'Y me junté con mis founder bros de Tripealo: juntos, pero no revueltos. Quizás un adelanto del Startup Summit Caracas.',
     ],
   },
   {
     key: 'events.radio.body',
     where: 'Eventos · Entrevista en OK 101.5',
-    lines: [
-      'La primera entrevista de Salvalo fue en la radio,',
-      'en el programa de Cheo Noguera en OK 101.5.',
-      'Yo fui al estudio y mi cofundador',
-      'se conectó desde Madrid.',
-      'Lo expliqué con una panadería:',
-      'hace diez cachitos, a las cuatro le quedan tres,',
-      'y arma un pack con esos tres y dos panes.',
-      'En el live preguntaron cómo descargarla,',
-      'y Cheo la descargó ahí mismo, al aire.',
+    ideas: [
+      'La primera entrevista de Salvalo fue en la radio: el programa de Cheo Noguera en OK 101.5.',
+      'Yo en el estudio; mi cofundador conectado desde Madrid.',
+      'Lo expliqué con una panadería: hace diez cachitos, a las cuatro le quedan tres, y arma un pack con esos tres y dos panes.',
+      'En el live preguntaron cómo descargarla, y Cheo la descargó ahí mismo, al aire.',
     ],
   },
   {
     key: 'events.ilc.body',
     where: 'Eventos · Charla con Pedro Vallenilla',
-    lines: [
-      'En la hackathon vi a Pedro Vallenilla,',
-      'fundador de Cashea, a través de una pantalla.',
-      'Meses después vino a Barquisimeto',
-      'a una charla con el padre Elías Sayegh,',
-      'y quedamos en la segunda fila del teatro.',
-      'Contó cómo fallaron varias de sus startups,',
-      'con familia y endeudado, y aun así siguió.',
-      'Y me quedé con cómo habla de Venezuela:',
-      'aquí queda muchísimo por construir.',
+    ideas: [
+      'En la hackathon vi a Pedro Vallenilla, fundador de Cashea, a través de una pantalla.',
+      'Meses después vino a Barquisimeto, a una charla con el padre Elías Sayegh; quedamos en la segunda fila del teatro.',
+      'Contó cómo fallaron varias de sus startups, con familia y endeudado, y aun así siguió.',
+      'Me quedé con cómo habla de Venezuela: aquí queda muchísimo por construir.',
     ],
   },
   {
     key: 'events.alegria.body',
     where: 'Eventos · Hackathon de AlegrIA',
-    lines: [
-      'Pastor estudió conmigo primaria y secundaria.',
-      'Un día me escribe: mira, Juan, estoy con Ale y César',
-      'en una hackathon, y nos falta uno.',
-      'El Juan de antes habría dicho que no, por pena.',
-      'Esta vez pensé: lo peor que puede pasar',
-      'es que no nos acepten.',
-      'Armamos Tripealo, un marketplace',
-      'de experiencias de viaje en Venezuela.',
-      'De mil personas, quedamos entre las cien',
-      'que fueron a las oficinas de Yummy en Caracas.',
-      'No ganamos, pero escuché a fundadores',
-      'que hoy compiten en Silicon Valley,',
-      'y salí con el impulso para seguir.',
-      'Hoy Tripealo y Salvalo están operando,',
-      'y yo estoy de lleno con Salvalo, en modo founder.',
+    ideas: [
+      'Pastor, que estudió conmigo primaria y secundaria, me escribe: está con Ale y César en una hackathon y les falta uno.',
+      'El Juan de antes habría dicho que no, por pena; esta vez pensé: lo peor es que no nos acepten.',
+      'Armamos Tripealo, un marketplace de experiencias de viaje en Venezuela.',
+      'De mil personas quedamos entre las cien que fueron a las oficinas de Yummy en Caracas.',
+      'No ganamos, pero escuché a fundadores que hoy compiten en Silicon Valley y salí con el impulso para seguir.',
+      'Hoy Tripealo y Salvalo están operando, y yo estoy de lleno con Salvalo, en modo founder.',
     ],
   },
 
@@ -343,12 +243,10 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'footer',
     where: 'Despedida',
-    lines: [
-      'Bueno, gracias por llegar hasta aquí.',
-      'Si algo de esto te dio curiosidad,',
-      'escríbeme por LinkedIn o por Instagram.',
-      'Yo sigo construyendo,',
-      'y sigo yendo por el platino.',
+    ideas: [
+      'Gracias por llegar hasta aquí.',
+      'Si algo te dio curiosidad, escríbeme por LinkedIn o Instagram.',
+      'Sigo construyendo, y sigo yendo por el platino.',
     ],
   },
 ];
@@ -801,15 +699,15 @@ const SCRIPT_ZH: Record<string, string[]> = {
 };
 
 const DRAFT =
-  'Borrador traducido del español; léelo y ajústalo antes de grabar.';
+  'Traducción vieja, línea por línea: falta pasarla a ideas antes de grabar.';
 
 /** Every clip's script in one language, in the Spanish order and with
- *  its headings; a clip with no translation yet comes with no lines. */
+ *  its headings; a clip with no translation yet comes with no ideas. */
 export const scriptsFor = (lang: ScriptLang): ScriptClip[] =>
   lang === 'es'
     ? SCRIPTS_ES
     : SCRIPTS_ES.map(c => ({
         ...c,
-        lines: (lang === 'en' ? SCRIPT_EN : SCRIPT_ZH)[c.key] ?? [],
+        ideas: (lang === 'en' ? SCRIPT_EN : SCRIPT_ZH)[c.key] ?? [],
         draft: DRAFT,
       }));
