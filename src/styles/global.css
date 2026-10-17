@@ -37,6 +37,10 @@
   /* Running text — a step lighter than --ink-2, which reads fine on a
      label but tires the eye across a paragraph (Ana, 2026-10-04). */
   --ink-body: #bdbdbd;
+  /* The words still to come while a paragraph is narrated — a step under
+     --ink-3, so what has been said stands well clear of what hasn't
+     (Juan, 2026-10-17). Still legible: someone may read ahead. */
+  --ink-waiting: #525252;
   --surface: #161616;
   --hairline: #262626;
 
@@ -466,7 +470,7 @@ html.is-focus {
 
 .is-read-along [data-narr-para],
 .is-read-along [data-narr-para] a {
-  color: var(--ink-3);
+  color: var(--ink-waiting);
 }
 
 .is-reading .rw.is-read {
