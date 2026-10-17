@@ -52,16 +52,33 @@ commit Cloudflare deployed.
   modal from the first paint, with its own preview card. The link glyph beside
   each name copies it. `/work` and `/events` open the landing at their section.
 - **Narration is ONE VOICE, Spanish** (`lib/narration.ts`): every paragraph has
-  a clip in `public/media/narration/es/`, and English and Chinese visitors get
-  subtitles in their language on the Spanish clock (`{key}.en.vtt`,
-  `{key}.zh.vtt`). Recording English and Chinese was dropped on purpose.
+  a clip in `public/media/narration/es/`. Recording English and Chinese was
+  dropped on purpose.
   - Takes are kept **exactly as recorded** — only re-wrapped as AAC. No trim,
     levelling, filters or breath softening, ever. Cuts Juan asks for are made
-    without re-encoding (`ffmpeg -c copy`), the subtitles moved with them.
+    without re-encoding (`ffmpeg -c copy`). The player runs them a little
+    quicker (`NARRATION_RATE` 1.1×, pitch kept) — the speed is the player's,
+    never the file's.
+  - **THE PARAGRAPH IS THE TAKE, AND IT READS ITSELF** (2026-10-17). Every
+    narrated paragraph is Juan's own take, transcribed and tidied (repeats
+    and filler out, names spelled right; English and Chinese written sentence
+    for sentence). While its clip plays the whole box dims to
+    `--ink-waiting` and each word lights up as it is said — two inks only.
+    The timings are whisper.cpp's, per word, in
+    `src/data/narration/{key}.words.json`; at build time Spanish is aligned
+    word by word and the translations sentence by sentence (same sentence
+    count, or it falls back to the whole clip) and emitted as
+    `data-read-{lang}`. There are NO subtitles in the narrator any more.
+  - **The narrator is one fixed circle and never changes size.** While the
+    voice plays, three small tools fold out of it on a 2 × 2 grid of shared
+    centres — the speed (1×, 1.5×, 2×, Sound Shaper's control as the easter
+    egg) beside it, ten seconds back and forward under them — and fold back
+    in on pause (`NarrationPlayer.astro`, `placeTools` in the director).
   - Juan records from IDEAS (`lib/scripts.ts`), not a script; the teleprompter
     (`/dev/teleprompter`, dev only) transcribes each take locally with
-    whisper.cpp into the Spanish `.vtt`. After a re-record, rewrite that clip's
-    English and Chinese subtitles.
+    whisper.cpp and now writes its `.words.json` too. After a re-record,
+    re-tidy that paragraph from the new transcript in all three languages,
+    keeping the sentence counts equal.
 
 ## Copy
 
