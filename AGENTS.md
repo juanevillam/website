@@ -7,10 +7,13 @@ private `juanevillam/portfolio` monorepo, where it was `apps/web`. It is
 cloned inside that monorepo's folder (gitignored there, pushed by its
 pre-push hook), next to `sound-shaper/` and `games/`.
 
-**NOT DEPLOYED YET (2026-10-17).** Juan's order: run the `web-*` audits, deploy
-the site, then submit Sound Shaper — whose App Store listing needs the legal
-pages here (`/sound-shaper/privacy-policy`, `/support`, `/delete-account`,
-`/terms-and-conditions`) live first.
+**LIVE SINCE 2026-10-17** at https://juanevillam.com — Cloudflare Pages
+project `juanevillam`, built from `main` on every push (`npm run build` →
+`dist`, Node from `.node-version`), `www` 301s to the apex with path and query
+kept (a zone Redirect Rule), DNSSEC on. The domain is registered at Namecheap
+with Cloudflare's nameservers. Sound Shaper's legal pages
+(`/sound-shaper/privacy-policy`, `/support`, `/delete-account`,
+`/terms-and-conditions`) are what its App Store listing points at.
 
 ## Working here
 
