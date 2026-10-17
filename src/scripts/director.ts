@@ -143,28 +143,21 @@ let showing: Narr | undefined;
 
 const narrs: Narr[] = [];
 
-// Which recording a paragraph plays: the page's language when Juan has
-// recorded it there, otherwise the first of the fallbacks that exists —
-// English first, since it is the one a Chinese reader is likeliest to
-// follow, then Spanish. Each language's clip and subtitles ride on the
-// paragraph as data-clip-{lang} / data-subs-{lang} (lib/narration).
+// One voice, Spanish (lib/narration): every paragraph's clip rides on it
+// as data-clip. Its subtitles ride on it per language, data-subs-{lang},
+// all on the Spanish take's clock — the pill shows the page's language,
+// and Spanish when a translation is missing.
 type Lang = 'en' | 'es' | 'zh';
-const VOICE_FALLBACK: Lang[] = ['en', 'es'];
 const cap = (lang: Lang) => lang[0].toUpperCase() + lang.slice(1);
-const voiceLang = (p: HTMLElement): Lang => {
-  const page = (document.documentElement.dataset.lang ?? 'en') as Lang;
-  for (const lang of [page, ...VOICE_FALLBACK])
-    if (p.dataset[`clip${cap(lang)}`]) return lang;
-  return page;
-};
 
-const clipOf = (p: HTMLElement) => p.dataset[`clip${cap(voiceLang(p))}`];
+const clipOf = (p: HTMLElement) => p.dataset.clip;
 
-/** The subtitles for the recording that plays — always its language. */
+/** The subtitles in the page's language, else the take's own Spanish. */
 type Subs = { phrases: string[]; times?: number[] };
 const subsCache = new WeakMap<HTMLElement, Map<string, Subs | null>>();
 const subsOf = (p: HTMLElement): Subs | null => {
-  const lang = voiceLang(p);
+  const page = (document.documentElement.dataset.lang ?? 'en') as Lang;
+  const lang: Lang = p.dataset[`subs${cap(page)}`] ? page : 'es';
   let byLang = subsCache.get(p);
   if (!byLang) subsCache.set(p, (byLang = new Map()));
   if (!byLang.has(lang)) {
@@ -719,17 +712,9 @@ document.addEventListener('arcade:start', () => {
   if (running) pause();
 });
 
-// A language switch mid-sentence restarts that sentence in the new
-// voice; paused, the next play simply uses it.
-new MutationObserver(() => {
-  if (!session) return;
-  const { block, para } = session;
-  if (running) start(block, para);
-  else {
-    const src = clipOf(block.paras[para]);
-    if (src) voice.src = src;
-  }
-}).observe(document.documentElement, { attributeFilter: ['data-lang'] });
+// A language switch changes only the subtitles: the voice is the same
+// Spanish take in every language, so it plays on (subsOf reads the page's
+// language each frame).
 
 // One control. Pressed on the block being told, it pauses or resumes;
 // anywhere else, it starts telling what the page is showing.

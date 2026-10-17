@@ -2,113 +2,55 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Juan's narration — ONE CLIP PER PARAGRAPH, per language, found by
- * convention rather than listed anywhere:
+ * Juan's narration — ONE VOICE, SUBTITLED IN THE PAGE'S LANGUAGE.
  *
- *   public/media/narration/{en,es,zh}/{paragraph key}.m4a
+ * Every paragraph has one clip, in Spanish, found by convention rather
+ * than listed anywhere:
+ *
+ *   public/media/narration/es/{paragraph key}.m4a
  *   e.g. public/media/narration/es/shaper.s1.p1.m4a
  *
  * The hero's personal intro has no paragraph on screen; its clip is
  * simply `hero.m4a`.
  *
- * Per paragraph so a bad take costs one sentence, not a whole slide, and
- * so the page always knows WHICH paragraph is being spoken. Drop a file
- * in and rebuild — the player appears for any block that has a clip.
+ * SPANISH ONLY, BY DECISION (Juan, 2026-10-17): recording the whole page
+ * again in English and in Chinese would cost the time the apps need, so
+ * a visitor reading in English or Chinese hears the same Spanish voice
+ * with subtitles in their language, the way a subtitled film works. The
+ * English and Chinese takes recorded before that decision were dropped.
  *
- * A page language with no clip of its own for a paragraph borrows one, in
- * VOICE_FALLBACK's order (scripts/director.ts): a Chinese reader hears the
- * English clip until the Chinese one is recorded.
+ * Per paragraph so a bad take costs one sentence, not a whole slide, and
+ * so the page always knows WHICH paragraph is being spoken.
  */
-export const NARRATION_LANGS = ['en', 'es', 'zh'] as const;
-export type NarrationLang = (typeof NARRATION_LANGS)[number];
-export type Clip = Partial<Record<NarrationLang, string>>;
+export const SUBTITLE_LANGS = ['es', 'en', 'zh'] as const;
+export type SubtitleLang = (typeof SUBTITLE_LANGS)[number];
 
 // Astro runs with the app as its working directory, in dev and in build.
 const PUBLIC = path.join(process.cwd(), 'public');
+const DIR = 'media/narration/es';
 
-const find = (lang: NarrationLang, key: string) => {
-  const url = `/media/narration/${lang}/${key}.m4a`;
-  return fs.existsSync(path.join(PUBLIC, url)) ? url : undefined;
+/** The clip recorded for one paragraph, or null when there is none. */
+export const clipFor = (key: string): string | null => {
+  const url = `/${DIR}/${key}.m4a`;
+  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
 };
-
-/**
- * STAND-INS — TEMPORARY (Juan, 2026-10-01). Every narrated block has the
- * narrator now, but only Sound Shaper is recorded, so the other blocks
- * borrow its clips paragraph for paragraph. A paragraph's OWN
- * recording always wins: drop `arcade.p1.m4a` in and that paragraph
- * stops borrowing, with nothing to change here. Delete this map once
- * every key below has a file of its own.
- */
-const STAND_IN: Record<string, string> = {
-  'arcade.p1': 'shaper.problem',
-  'work.crol.body': 'shaper.s1.p1',
-  'work.salvalo.body': 'shaper.s2.p1',
-  'work.maktub.body': 'shaper.s3.p1',
-  'work.andreina.body': 'shaper.s4.p1',
-  // The goodbye borrows the hello until Juan records it.
-  footer: 'hero',
-  'events.alegria.body': 'shaper.solution',
-  'events.ilc.body': 'shaper.problem',
-  'events.radio.body': 'shaper.s1.p1',
-  'events.panal.body': 'shaper.s2.p1',
-};
-
-const recorded = (key: string): Clip | null => {
-  const clip: Clip = {};
-  for (const lang of NARRATION_LANGS) {
-    const url = find(lang, key);
-    if (url) clip[lang] = url;
-  }
-  return Object.keys(clip).length ? clip : null;
-};
-
-/** The clips recorded for one paragraph, or null when there are none. */
-export const clipFor = (key: string): Clip | null =>
-  recorded(key) ?? (STAND_IN[key] ? recorded(STAND_IN[key]) : null);
 
 /**
  * SUBTITLES — what Juan actually SAYS, which is looser than the paragraph
- * on screen. Beside each clip, per language:
+ * on screen, beside each clip:
  *
- *   {key}.vtt  WebVTT, exact timings — wins when present
- *   {key}.txt  plain text; one phrase per line, or unbroken prose that is
- *              split into phrases here and timed by length on the page
+ *   {key}.vtt     the take's own transcript, in Spanish
+ *   {key}.en.vtt  the same cues' words in English, on the same clock
+ *   {key}.zh.vtt  and in Chinese
  *
- * Resolved at build time and embedded, so the page never fetches them.
+ * A translation keeps the Spanish timings: it is the subtitle of the same
+ * voice. Resolved at build time and embedded, so the page never fetches
+ * them.
  */
 export type Subs = {
   phrases: string[];
-  /** Start of each phrase in seconds (VTT only); absent → timed by length. */
-  times?: number[];
-};
-
-/** Longest phrase the pill shows before it is split. */
-const PHRASE_MAX = 64;
-
-const splitPhrases = (text: string): string[] => {
-  const lines = text
-    .split(/\r?\n/)
-    .map(l => l.trim())
-    .filter(Boolean);
-  if (lines.length > 1) return lines;
-  const out: string[] = [];
-  for (const sentence of text.match(/[^.!?…]+[.!?…]*/g) ?? [text]) {
-    let rest = sentence.trim();
-    while (rest.length > PHRASE_MAX) {
-      // Break at a clause first, a word second, never mid-word.
-      let cut = Math.max(
-        rest.lastIndexOf(', ', PHRASE_MAX),
-        rest.lastIndexOf(' — ', PHRASE_MAX),
-        rest.lastIndexOf('; ', PHRASE_MAX),
-      );
-      if (cut < PHRASE_MAX * 0.4) cut = rest.lastIndexOf(' ', PHRASE_MAX);
-      if (cut <= 0) cut = PHRASE_MAX;
-      out.push(rest.slice(0, cut + 1).trim());
-      rest = rest.slice(cut + 1).trim();
-    }
-    if (rest) out.push(rest);
-  }
-  return out;
+  /** Start of each phrase in seconds. */
+  times: number[];
 };
 
 const seconds = (stamp: string) =>
@@ -135,36 +77,28 @@ const parseVtt = (vtt: string): Subs => {
   return { phrases, times };
 };
 
-const readSubs = (lang: NarrationLang, key: string): Subs | undefined => {
-  const base = path.join(PUBLIC, 'media/narration', lang, key);
-  if (fs.existsSync(`${base}.vtt`))
-    return parseVtt(fs.readFileSync(`${base}.vtt`, 'utf8'));
-  if (fs.existsSync(`${base}.txt`))
-    return { phrases: splitPhrases(fs.readFileSync(`${base}.txt`, 'utf8')) };
-  return undefined;
+const readSubs = (lang: SubtitleLang, key: string): Subs | undefined => {
+  const file = path.join(
+    PUBLIC,
+    DIR,
+    lang === 'es' ? `${key}.vtt` : `${key}.${lang}.vtt`,
+  );
+  return fs.existsSync(file)
+    ? parseVtt(fs.readFileSync(file, 'utf8'))
+    : undefined;
 };
 
-/** Subtitles per language for one clip, as data attributes' JSON. The
- *  subtitles follow the CLIP: a borrowed recording brings its own. */
-export const subsFor = (key: string) => {
-  const subs: Partial<Record<NarrationLang, string>> = {};
-  const source = !recorded(key) && STAND_IN[key] ? STAND_IN[key] : key;
-  for (const lang of NARRATION_LANGS) {
-    const found = readSubs(lang, source);
-    if (found?.phrases.length) subs[lang] = JSON.stringify(found);
-  }
-  return subs;
-};
-
-/** A narrated paragraph's data attributes — every language's clip and
- *  subtitles, for the director (scripts/director.ts) to choose from. */
+/** A narrated paragraph's data attributes — its clip, and its subtitles
+ *  in every language, for the director (scripts/director.ts). */
 export const voiceAttrs = (key: string) => {
-  const clip = clipFor(key);
-  const subs = subsFor(key);
-  const attrs: Record<string, string | undefined> = {};
-  for (const lang of NARRATION_LANGS) {
-    attrs[`data-clip-${lang}`] = clip?.[lang];
-    attrs[`data-subs-${lang}`] = subs[lang];
+  const attrs: Record<string, string | undefined> = {
+    'data-clip': clipFor(key) ?? undefined,
+  };
+  for (const lang of SUBTITLE_LANGS) {
+    const subs = readSubs(lang, key);
+    attrs[`data-subs-${lang}`] = subs?.phrases.length
+      ? JSON.stringify(subs)
+      : undefined;
   }
   return attrs;
 };
