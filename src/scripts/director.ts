@@ -646,13 +646,15 @@ const toolButtons = [
   ...(tools?.querySelectorAll<HTMLElement>('.nar-tool') ?? []),
 ];
 
-/** Out of the narrator while a clip is in play, at its opacity: the speed
- *  beside it and the two skips under it — an inverted L, mirrored in a
- *  phone's corner (speed to its left, skips above), where below and to
- *  the right is the screen's edge. Closed, each folds into its centre. */
+/** Out of the narrator while the voice plays — never while paused — at
+ *  its opacity, tucked into its corner: the speed beside it, and under
+ *  both the two skips, back on the left and forward on the right, level
+ *  with each other and forward under the speed. A phone's corner mirrors
+ *  it (speed to the left, skips above), where below and to the right is
+ *  the screen's edge. Closed, each folds into the play button's centre. */
 const placeTools = () => {
   if (!tools || !narrator) return;
-  const open = !!session && !narrator.hidden;
+  const open = running && !narrator.hidden;
   if (tools.classList.contains('is-open') !== open) {
     tools.classList.toggle('is-open', open);
     for (const b of toolButtons) b.tabIndex = open ? 0 : -1;
@@ -671,14 +673,14 @@ const placeTools = () => {
   const cy = r.height / 2 - size / 2;
   const slots: [HTMLElement, number, number][] = mirrored
     ? [
-        [speedTool, -gap - size, cy],
-        [back, cx, -gap - size],
-        [forward, cx, -2 * (gap + size)],
+        [speedTool, -gap - size, 0],
+        [back, -gap - size, -gap - size],
+        [forward, 0, -gap - size],
       ]
     : [
-        [speedTool, r.width + gap, cy],
-        [back, cx, r.height + gap],
-        [forward, cx, r.height + gap + size + gap],
+        [speedTool, r.width + gap, r.height - size],
+        [back, r.width - size, r.height + gap],
+        [forward, r.width + gap, r.height + gap],
       ];
   for (const [el, x, y] of slots) {
     if (!el) continue;
