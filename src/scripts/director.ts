@@ -140,17 +140,22 @@ let showing: Narr | undefined;
 
 const narrs: Narr[] = [];
 
-// Which recording a paragraph plays: the page's language when Juan
-// recorded it, the other one when he did not. Chinese has no recording;
-// it hears English under its own transcript.
-const voiceLang = (p: HTMLElement) => {
-  const es = document.documentElement.dataset.lang === 'es';
-  if (es) return p.dataset.clipEs ? 'es' : 'en';
-  return p.dataset.clipEn ? 'en' : 'es';
+// Which recording a paragraph plays: the page's language when Juan has
+// recorded it there, otherwise the first of the fallbacks that exists —
+// English first, since it is the one a Chinese reader is likeliest to
+// follow, then Spanish. Each language's clip and subtitles ride on the
+// paragraph as data-clip-{lang} / data-subs-{lang} (lib/narration).
+type Lang = 'en' | 'es' | 'zh';
+const VOICE_FALLBACK: Lang[] = ['en', 'es'];
+const cap = (lang: Lang) => lang[0].toUpperCase() + lang.slice(1);
+const voiceLang = (p: HTMLElement): Lang => {
+  const page = (document.documentElement.dataset.lang ?? 'en') as Lang;
+  for (const lang of [page, ...VOICE_FALLBACK])
+    if (p.dataset[`clip${cap(lang)}`]) return lang;
+  return page;
 };
 
-const clipOf = (p: HTMLElement) =>
-  voiceLang(p) === 'es' ? p.dataset.clipEs : p.dataset.clipEn;
+const clipOf = (p: HTMLElement) => p.dataset[`clip${cap(voiceLang(p))}`];
 
 /** The subtitles for the recording that plays — always its language. */
 type Subs = { phrases: string[]; times?: number[] };
@@ -160,7 +165,7 @@ const subsOf = (p: HTMLElement): Subs | null => {
   let byLang = subsCache.get(p);
   if (!byLang) subsCache.set(p, (byLang = new Map()));
   if (!byLang.has(lang)) {
-    const raw = lang === 'es' ? p.dataset.subsEs : p.dataset.subsEn;
+    const raw = p.dataset[`subs${cap(lang)}`];
     byLang.set(lang, raw ? (JSON.parse(raw) as Subs) : null);
   }
   return byLang.get(lang) ?? null;

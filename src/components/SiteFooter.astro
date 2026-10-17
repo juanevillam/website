@@ -2,7 +2,7 @@
 import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
 import type { UIKey } from '../i18n/ui';
-import { clipFor, subsFor } from '../lib/narration';
+import { clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 
 /**
@@ -37,7 +37,6 @@ const { panel = false } = Astro.props;
 // the narrator parks under it — the page opens and closes on the same
 // name, the same voice, the same place.
 const clip = panel ? clipFor('footer') : null;
-const subs = subsFor('footer');
 
 // Public profiles only. The apps' code is private, but the GitHub profile
 // is public and is where the game and the profile README live.
@@ -74,10 +73,7 @@ const SOCIAL = [
           <span
             hidden
             data-narr-para
-            data-clip-en={clip.en}
-            data-clip-es={clip.es}
-            data-subs-en={subs.en}
-            data-subs-es={subs.es}
+            {...voiceAttrs('footer')}
           />
           <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
         </>
