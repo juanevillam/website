@@ -67,7 +67,7 @@ const MODEL =
 const GLOSSARY =
   'Juan Villa, Sound Shaper, Salvalo, Tripealo, Crol, Conto Pay, Maktub Art Fund, ' +
   'Andreina Aular, Space Explorer, Platanus Hack, El Panal, Manuel Sira, Resty, ' +
-  'Cheo Noguera, OK 101.5, Pedro Vallenilla, Cashea, Elías Sayegh, AlegrIA, Yummy, ' +
+  'Cheo Noguera, OK 101.5, Pedro Vallenilla, Cashea, Elías Sayegh, AlegrIA, Yummy, Abrahan, ' +
   'Barquisimeto, Caracas, YouTube Music, Apple Music, PlayStation, Dynamic Island.';
 
 /** Every word of the take with when it is said, in seconds. */

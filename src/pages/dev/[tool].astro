@@ -132,9 +132,11 @@ const list = scripts.es;
           <button type="button" data-act="current" hidden>Escuchar guardado <kbd>L</kbd></button>
         </div>
         <p class="hint">
-          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión · son ideas, no texto:
-          dilas a tu manera · <kbd>espacio</kbd> marca por qué idea vas (no
-          afecta la toma) · al guardar se transcribe y se arman los subtítulos
+          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión ·
+          <span data-hint-es>son ideas, no texto: dilas a tu manera</span><span
+            data-hint-read>léelo tal cual, como si lo inventaras</span
+          > · <kbd>espacio</kbd> marca por dónde vas (no afecta la toma) · al
+          guardar se transcribe y se arman los subtítulos
         </p>
       </footer>
     </main>
@@ -850,6 +852,11 @@ const list = scripts.es;
         border-color: var(--ink-3);
       }
       .buttons button[hidden] {
+        display: none;
+      }
+      /* Spanish is said from ideas; every other language is read. */
+      html:not([data-tp-lang='es']) [data-hint-es],
+      html[data-tp-lang='es'] [data-hint-read] {
         display: none;
       }
       .state {
