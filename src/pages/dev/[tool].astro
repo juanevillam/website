@@ -6,12 +6,13 @@ import { SCRIPT_LANGS, scriptsFor } from '../../lib/scripts';
 import '../../styles/global.css';
 
 /**
- * DEV ONLY — /dev/teleprompter. Juan reads each clip's script line by
- * line, records it from any microphone the browser can see (the DJI
- * receiver included), taps to each next line, and saves: the clip and its
- * subtitles land in public/media/narration/{lang}/ through the dev server's
- * recorder (scripts/narration-recorder.mjs). The subtitles are timed by
- * HIS taps, so they follow his pace rather than a guess from line length.
+ * DEV ONLY — /dev/teleprompter. Juan sees each clip's IDEAS (lib/scripts),
+ * says them his own way into any microphone the browser can see (the DJI
+ * receiver included), and saves: the clip and its subtitles land in
+ * public/media/narration/{lang}/ through the dev server's recorder
+ * (scripts/narration-recorder.mjs), which transcribes the take — so the
+ * subtitles are what he said, timed from when he said it. The transcript
+ * shows here after saving, to check for a misheard word.
  *
  * Every language Juan narrates in is here (lib/scripts): the tabs pick
  * which one he is reading, the list shows each clip's state in all three,
@@ -38,7 +39,7 @@ const scripts = Object.fromEntries(
         ...c,
         status: state,
         audio: state === 'none' ? null : `/media/narration/${lang}/${c.key}.m4a`,
-        say: lang === 'zh' ? c.lines.map(l => pinyin(l, { nonZh: 'consecutive' })) : undefined,
+        say: lang === 'zh' ? c.ideas.map(l => pinyin(l, { nonZh: 'consecutive' })) : undefined,
       };
     }),
   ]),
@@ -108,7 +109,13 @@ const list = scripts.es;
       </header>
 
       <div class="stage">
-        <ol class="lines" data-lines></ol>
+        <div class="col">
+          <ol class="lines" data-lines></ol>
+          <div class="said" data-said hidden>
+            <p class="label">Lo que dijiste</p>
+            <p class="said-text" data-said-text></p>
+          </div>
+        </div>
         <img class="shot" data-shot alt="" hidden />
       </div>
 
@@ -118,16 +125,16 @@ const list = scripts.es;
         <p class="state" data-state></p>
         <div class="buttons">
           <button type="button" data-act="record">Grabar <kbd>R</kbd></button>
-          <button type="button" data-act="next" hidden>Siguiente línea <kbd>espacio</kbd></button>
+          <button type="button" data-act="next" hidden>Siguiente idea <kbd>espacio</kbd></button>
           <button type="button" data-act="stop" hidden>Terminar <kbd>esc</kbd></button>
           <button type="button" data-act="take" hidden>Escuchar toma <kbd>P</kbd></button>
           <button type="button" data-act="save" hidden>Guardar <kbd>S</kbd></button>
           <button type="button" data-act="current" hidden>Escuchar guardado <kbd>L</kbd></button>
         </div>
         <p class="hint">
-          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión · el subtítulo de cada
-          línea empieza cuando tocas <kbd>espacio</kbd> · la barra bajo la
-          línea es un ritmo sugerido, no una regla
+          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión · son ideas, no texto:
+          dilas a tu manera · <kbd>espacio</kbd> marca por qué idea vas (no
+          afecta la toma) · al guardar se transcribe y se arman los subtítulos
         </p>
       </footer>
     </main>
@@ -140,7 +147,7 @@ const list = scripts.es;
         key: string;
         where: string;
         shot?: string;
-        lines: string[];
+        ideas: string[];
         draft?: string;
         say?: string[];
         status: 'new' | 'old' | 'none';
@@ -164,17 +171,24 @@ const list = scripts.es;
       let clips = scripts[lang];
       const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
       const linesEl = $('[data-lines]');
+      const saidEl = $('[data-said]');
+      const saidText = $('[data-said-text]');
+      const showSaid = (lines: string[]) => {
+        saidEl.hidden = !lines.length;
+        saidText.textContent = lines.join(' ');
+      };
       const stateEl = $('[data-state]');
       const pill = $('[data-pill]');
       const shot = $<HTMLImageElement>('[data-shot]');
       const btn = (a: string) => $<HTMLButtonElement>(`[data-act="${a}"]`);
 
       // Spoken Spanish runs at about 14 characters a second, English about
-      // as fast, Chinese about 4.5 — a character is a syllable. The guide
-      // bar and the estimates use it. A rhythm to lean on, nothing more.
+      // as fast, Chinese about 4.5 — a character is a syllable. Said in his
+      // own words an idea runs longer than it reads, so the estimate is
+      // loose on purpose.
       const CPS: Record<Lang, number> = { es: 14, en: 14, zh: 4.5 };
-      const secs = (s: string) => s.length / CPS[lang] + 0.35;
-      const clipSecs = (c: Clip) => c.lines.reduce((t, l) => t + secs(l), 0);
+      const secs = (s: string) => (s.length * 1.2) / CPS[lang] + 0.5;
+      const clipSecs = (c: Clip) => c.ideas.reduce((t, l) => t + secs(l), 0);
       const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
       const total = () => {
         const done = clips.filter(c => c.status === 'new').length;
@@ -188,14 +202,13 @@ const list = scripts.es;
       let cues: number[] = [];
       let take: Blob | null = null;
       let recorder: MediaRecorder | null = null;
-      let started = 0;
       const player = new Audio();
 
       const clip = () => clips[index];
 
       const renderLines = () => {
         linesEl.replaceChildren(
-          ...clip().lines.map((text, i) => {
+          ...clip().ideas.map((text, i) => {
             const li = document.createElement('li');
             li.textContent = text;
             const say = clip().say?.[i];
@@ -205,7 +218,6 @@ const list = scripts.es;
               sub.textContent = say;
               li.append(sub);
             }
-            li.style.setProperty('--guide', `${secs(text)}s`);
             li.dataset.i = String(i);
             return li;
           }),
@@ -242,7 +254,23 @@ const list = scripts.es;
         if (clip().shot) shot.src = clip().shot!;
         renderLines();
         mark(0);
+        showSaid([]);
+        if (clip().status === 'new') loadSaid(clip());
         sync();
+      };
+
+      /** The saved clip's subtitles: their text, and when each starts. */
+      const readVtt = async (c: Clip) => {
+        const vtt = await (await fetch(c.audio!.replace(/\.m4a$/, '.vtt'), { cache: 'no-store' })).text();
+        const cues = [...vtt.matchAll(/(\d+):(\d+):([\d.]+) -->[^\n]*\n([^\n]+)/g)];
+        return {
+          at: cues.map(m => +m[1] * 3600 + +m[2] * 60 + +m[3]),
+          lines: cues.map(m => m[4]),
+        };
+      };
+      const loadSaid = async (c: Clip) => {
+        const { lines } = await readVtt(c);
+        if (clip() === c) showSaid(lines);
       };
 
       const pickLang = (next: Lang) => {
@@ -267,7 +295,7 @@ const list = scripts.es;
 
       const sync = () => {
         const c = clip();
-        btn('record').hidden = mode === 'rec' || mode === 'count' || !c.lines.length;
+        btn('record').hidden = mode === 'rec' || mode === 'count' || !c.ideas.length;
         btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
         btn('next').hidden = mode !== 'rec';
         btn('stop').hidden = mode !== 'rec';
@@ -278,14 +306,14 @@ const list = scripts.es;
         const said: Record<string, string> = {
           idle:
             c.status === 'new'
-              ? 'Ya grabado con este guión. Puedes repetirlo.'
-              : !c.lines.length
+              ? 'Ya grabado. Puedes repetirlo.'
+              : !c.ideas.length
                 ? 'Este guión aún no está escrito en este idioma.'
                 : c.status === 'old'
                   ? 'Hay una grabación vieja, de antes del guión.'
                   : 'Sin grabar.',
           count: 'Preparado…',
-          rec: `Grabando (${lang}) · línea ${line + 1} de ${c.lines.length}`,
+          rec: `Grabando (${lang}) · idea ${line + 1} de ${c.ideas.length}`,
           done: 'Toma lista. Escúchala o guárdala.',
           play: 'Reproduciendo…',
         };
@@ -349,8 +377,8 @@ const list = scripts.es;
           const t = player.currentTime;
           let i = 0;
           while (i + 1 < cues.length && cues[i + 1] <= t) i++;
-          if (line !== i) mark(i);
-          pill.textContent = clip().lines[i] ?? '';
+          pill.textContent = playingSubs[i] ?? '';
+          pill.hidden = !pill.textContent;
         }
         requestAnimationFrame(tick);
       };
@@ -378,17 +406,16 @@ const list = scripts.es;
           sync();
         };
         recorder.start();
-        started = performance.now();
         cues = [0];
         mode = 'rec';
         mark(0);
         sync();
       };
 
+      // Only his place in the list: the take's timing comes from the
+      // transcript, not from these taps.
       const next = () => {
-        if (mode !== 'rec') return;
-        if (line + 1 >= clip().lines.length) return stop();
-        cues.push((performance.now() - started) / 1000);
+        if (mode !== 'rec' || line + 1 >= clip().ideas.length) return;
         mark(line + 1);
         sync();
       };
@@ -399,10 +426,6 @@ const list = scripts.es;
           return sync();
         }
         if (mode !== 'rec') return;
-        // Lines never reached keep a cue at the end, so the file still has
-        // one per line; better to tap through them all.
-        const end = (performance.now() - started) / 1000;
-        while (cues.length < clip().lines.length) cues.push(end);
         recorder?.stop();
       };
 
@@ -412,9 +435,11 @@ const list = scripts.es;
         if (mode === 'play') mode = take ? 'done' : 'idle';
       };
 
-      const play = async (src: string, at: number[]) => {
+      let playingSubs: string[] = [];
+      const play = async (src: string, at: number[], lines: string[] = []) => {
         stopPlayback();
         cues = at;
+        playingSubs = lines;
         player.src = src;
         await player.play();
         mode = 'play';
@@ -427,28 +452,24 @@ const list = scripts.es;
         sync();
       });
 
-      const playTake = () => take && play(URL.createObjectURL(take), cues);
+      // A take not yet saved has no transcript: it plays without the pill.
+      const playTake = () => take && play(URL.createObjectURL(take), [0], []);
 
       const playCurrent = async () => {
         const c = clip();
         if (!c.audio) return;
-        let at = c.lines.map(() => Infinity);
-        at[0] = 0;
-        if (c.status === 'new') {
-          const vtt = await (await fetch(c.audio.replace(/\.m4a$/, '.vtt'), { cache: 'no-store' })).text();
-          at = [...vtt.matchAll(/(\d+):(\d+):([\d.]+) -->/g)].map(m => +m[1] * 3600 + +m[2] * 60 + +m[3]);
-        }
-        play(`${c.audio}?t=${Date.now()}`, at);
+        const { at, lines } = c.status === 'new' ? await readVtt(c) : { at: [0], lines: [] };
+        play(`${c.audio}?t=${Date.now()}`, at, lines);
       };
 
       const save = async () => {
         if (!take || mode === 'rec') return;
         stopPlayback();
-        stateEl.textContent = 'Guardando…';
+        stateEl.textContent = 'Guardando y transcribiendo…';
         const c = clip();
         const res = await fetch(`/__narration/save?lang=${lang}&key=${encodeURIComponent(c.key)}`, {
           method: 'POST',
-          headers: { 'x-cues': encodeURIComponent(JSON.stringify({ lines: c.lines, cues })) },
+          headers: { 'x-ideas': encodeURIComponent(JSON.stringify(c.ideas)) },
           body: take,
         });
         const out = await res.json();
@@ -464,8 +485,9 @@ const list = scripts.es;
         total();
         take = null;
         mode = 'idle';
+        if (clip() === c) showSaid(out.lines);
         sync();
-        stateEl.textContent = `Guardado · ${out.length.toFixed(1)} s. Escúchalo con L, o pasa al siguiente con ↓.`;
+        stateEl.textContent = `Guardado · ${out.length.toFixed(1)} s · ${out.lines.length} subtítulos. Revisa lo que dijiste, escúchalo con L, o pasa al siguiente con ↓.`;
       };
 
       const acts: Record<string, () => unknown> = {
@@ -710,43 +732,49 @@ const list = scripts.es;
         min-height: 0;
         padding: 0 2rem;
       }
-      .lines {
-        list-style: none;
-        margin: 0;
-        padding: 30vh 0;
+      /* Every idea readable at once — they are a map, not a script. */
+      .col {
+        min-height: 0;
         overflow-y: auto;
-        scrollbar-width: none;
+        padding: 2rem 0;
+      }
+      .lines {
+        margin: 0;
+        padding: 0 0 0 1.5rem;
+        counter-reset: idea;
       }
       .lines li {
-        position: relative;
-        padding: 0.45rem 0;
-        font-size: clamp(1.5rem, 2.6vw, 2.5rem);
-        line-height: 1.25;
+        padding: 0.5rem 0;
+        font-size: clamp(1.25rem, 2vw, 1.875rem);
+        line-height: 1.3;
         letter-spacing: var(--track-heading);
-        color: var(--ink-3);
+        color: var(--ink-2);
         transition: color var(--dur-micro) var(--ease), opacity var(--dur-micro) var(--ease);
       }
-      .lines li.is-past {
-        opacity: 0.35;
+      .lines li::marker {
+        color: var(--ink-3);
+        font-family: var(--font-mono);
+        font-size: 0.6em;
       }
-      .lines li.is-now {
+      .lines.is-rec li.is-past {
+        opacity: 0.4;
+      }
+      .lines.is-rec li.is-now {
         color: var(--ink);
       }
-      .lines.is-rec li.is-now::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        height: 2px;
-        width: 100%;
-        background: var(--ink-3);
-        transform-origin: left;
-        animation: guide var(--guide) linear both;
+      .said {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--hairline);
       }
-      @keyframes guide {
-        from {
-          transform: scaleX(0);
-        }
+      .said[hidden] {
+        display: none;
+      }
+      .said-text {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.55;
+        color: var(--ink-2);
       }
       /* global.css makes every img a block, which beats [hidden]. */
       .shot[hidden],
