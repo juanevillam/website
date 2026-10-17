@@ -342,6 +342,49 @@ a:hover {
   transform: none;
 }
 
+/* ---------- a shared address's modal (lib/links) ----------
+   The section a shared link names stands OVER the landing, detached: a
+   full-screen layer of its own from the first paint (server-rendered, so
+   there is no flash of the hero first), with the landing seen through a
+   frosted ground. It scrolls on its own; the page under it does not.
+   No transform and no filter on the section itself — either would capture
+   its fixed children (the phone's docked controls). The frost is a fixed
+   pseudo-element behind its content instead. Closing it (Landing.astro)
+   fades it, then drops the attribute: the section is back in the page. */
+/* `!important` on the box only: each section states its own position
+   (the apps panel is `relative`), and its scoped rule outranks this one. */
+[data-focused] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  transition: opacity var(--dur-quick) var(--ease);
+}
+
+[data-focused]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--ground) 84%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+[data-focused].is-closing {
+  opacity: 0;
+}
+
+html.is-focus {
+  overflow: hidden;
+}
+
+/* A card opened alone does not turn: no arrows, no dots. */
+[data-focus-lone][data-focused] [data-deck-controls] {
+  visibility: hidden;
+}
+
 /* Load entrance for above-the-fold content (hero). */
 @keyframes rise {
   from {

@@ -1,0 +1,12 @@
+---
+import Landing from '../../components/Landing.astro';
+import { focusPaths, type FocusPage } from '../../lib/links';
+
+/** One card's own address: the landing with it open (lib/links). */
+export const getStaticPaths = () => focusPaths('/work', 'slug');
+
+type Props = { page: FocusPage };
+const { page } = Astro.props;
+---
+
+<Landing page={page} />

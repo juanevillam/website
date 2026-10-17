@@ -1,0 +1,151 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from './Hero.astro';
+import AppsShowcase from './AppsShowcase.astro';
+import NarrationPlayer from './NarrationPlayer.astro';
+import SiteFooter from './SiteFooter.astro';
+import WorkCarousel from './WorkCarousel.astro';
+import EventsDeck from './EventsDeck.astro';
+import T from './T.astro';
+import { APPS } from '../lib/apps';
+import { ui } from '../i18n/ui';
+import type { FocusPage } from '../lib/links';
+
+/**
+ * THE LANDING — `/`, and every shareable address (lib/links), which is
+ * this same page with one thing open over it: its section stands as a
+ * modal (`data-focused`, global.css) from the first paint, and closing it
+ * puts the section back in the page and the address back to `/`.
+ */
+type Props = { page?: FocusPage };
+const { page } = Astro.props;
+const focus = page?.focus;
+---
+
+<Base
+  title={page?.title}
+  description={page?.description}
+  image={page?.image}
+  path={page?.path}
+>
+  <Hero />
+
+  <!-- Juan's apps, the page's main subject: every one in one panel. -->
+  <AppsShowcase apps={APPS} focused={focus?.section === 'apps'} />
+
+  <!-- Everything else, secondary: one card per project. -->
+  <WorkCarousel focus={focus?.section === 'work' ? focus.card : undefined} />
+
+  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
+  <EventsDeck focus={focus?.section === 'events' ? focus.card : undefined} />
+
+  <!-- Each app's legal and help pages, and Juan elsewhere. -->
+  <SiteFooter panel />
+
+  {
+    focus && (
+      <button
+        class="focus-close"
+        type="button"
+        data-focus-close
+        data-home-title={ui.en['meta.title']}
+      >
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+          <path
+            d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span class="sr-only"><T k="focus.close" /></span>
+      </button>
+    )
+  }
+
+  <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
+  <NarrationPlayer />
+</Base>
+
+<style>
+  /* Over the modal, on the header's line and in its pill: a round one,
+     centred between the mark and the language, where the eye looks for
+     a way out of a sheet. */
+  .focus-close {
+    position: fixed;
+    top: var(--float-gap);
+    left: 50%;
+    z-index: 11;
+    display: grid;
+    place-items: center;
+    width: var(--float-h);
+    height: var(--float-h);
+    padding: 0;
+    color: var(--ink-2);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    transform: translateX(-50%);
+    cursor: pointer;
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      color var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease);
+  }
+
+  .focus-close:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  :global(html:not(.is-focus)) .focus-close {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  import { dur } from '../lib/motion';
+
+  // Closing the modal: it fades, then its section goes back into the page
+  // (which is at its top, the hero) and the address goes back to `/` —
+  // keeping `?lang`, so a reload stays in the post's language.
+  const root = document.documentElement;
+  const focused = document.querySelector<HTMLElement>('[data-focused]');
+  if (focused) {
+    root.classList.add('is-focus');
+    let closing = false;
+    const close = () => {
+      if (closing) return;
+      closing = true;
+      focused.classList.add('is-closing');
+      document.dispatchEvent(new Event('focus:close'));
+      setTimeout(() => {
+        focused.removeAttribute('data-focused');
+        focused.classList.remove('is-closing');
+        root.classList.remove('is-focus');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        history.replaceState(null, '', `/${location.search}`);
+        const home = document.querySelector<HTMLElement>('[data-home-title]');
+        if (home?.dataset.homeTitle) document.title = home.dataset.homeTitle;
+        document.dispatchEvent(new Event('focus:closed'));
+      }, dur('quick'));
+    };
+    document.querySelector('[data-focus-close]')?.addEventListener('click', close);
+    window.addEventListener('keydown', e => {
+      // The game's cabinet, open over the modal, takes Escape for itself.
+      if (e.key === 'Escape' && root.dataset.arcade !== 'open') close();
+    });
+  }
+</script>
