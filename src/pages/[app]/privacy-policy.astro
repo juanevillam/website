@@ -44,6 +44,12 @@ const books = app.content === 'books';
           as provided by the sign-in method you choose: Google, or Apple on
           iPhone. If you sign in with Apple and hide your email, the app only
           ever sees the relay address Apple gives it.
+          {!social && !books && (
+            <>
+              {' '}You can change your name and photo in the app at any time; a
+              photo you choose there is stored like the rest of your files.
+            </>
+          )}
         </li>
         {
           social ? (
@@ -68,7 +74,9 @@ const books = app.content === 'books';
             <li>
               <strong>Content you add.</strong> The MP3 files you add, their
               artwork, titles and subtitles, the clips you save, the order of
-              your library, and the trophies you earn. Your library is private
+              your library, the trophies you earn, and two running totals that
+              count toward them: how long you've listened and how many clips
+              you've saved. Your library is private
               to your account — nothing in {app.name} is shown to other
               people.
             </li>
@@ -89,7 +97,7 @@ const books = app.content === 'books';
           crash reports (Crashlytics).
         </li>
         <li>
-          <strong>Cloudinary</strong> — the {social ? 'images' : books ? 'covers' : 'audio and artwork'}
+          <strong>Cloudinary</strong> — the {social ? 'images' : books ? 'covers' : 'audio, artwork and profile photo'}
           you upload, stored in a folder tied to your account.
         </li>
         <li>
@@ -170,6 +178,12 @@ const books = app.content === 'books';
           elijas: Google, o Apple en iPhone. Si inicias sesión con Apple y
           ocultas tu correo, la app solo ve la dirección de reenvío que Apple
           le da.
+          {!social && !books && (
+            <>
+              {' '}Puedes cambiar tu nombre y tu foto en la app cuando quieras;
+              la foto que elijas ahí se guarda como el resto de tus archivos.
+            </>
+          )}
         </li>
         {
           social ? (
@@ -194,9 +208,10 @@ const books = app.content === 'books';
             <li>
               <strong>Contenido que añades.</strong> Los archivos MP3 que
               añades, su ilustración, títulos y subtítulos, los clips que
-              guardas, el orden de tu biblioteca y los trofeos que consigues.
-              Tu biblioteca es privada para tu cuenta: nada en {app.name} se
-              muestra a otras personas.
+              guardas, el orden de tu biblioteca, los trofeos que consigues y
+              dos totales que cuentan para ellos: cuánto tiempo has escuchado y
+              cuántos clips has guardado. Tu biblioteca es privada para tu
+              cuenta: nada en {app.name} se muestra a otras personas.
             </li>
           )
         }
@@ -216,7 +231,7 @@ const books = app.content === 'books';
           datos de la app y los informes de errores (Crashlytics).
         </li>
         <li>
-          <strong>Cloudinary</strong>: {social ? 'las imágenes' : books ? 'las portadas' : 'el audio y las ilustraciones'}
+          <strong>Cloudinary</strong>: {social ? 'las imágenes' : books ? 'las portadas' : 'el audio, las ilustraciones y tu foto de perfil'}
           que subes, guardados en una carpeta vinculada a tu cuenta.
         </li>
         <li>
@@ -288,7 +303,7 @@ const books = app.content === 'books';
       <h2>应用收集的内容</h2>
       <ul>
         <li>
-          <strong>账户。</strong>你所选登录方式提供的电子邮件地址、名称和头像：Google，或在 iPhone 上使用 Apple。如果你使用 Apple 登录并隐藏邮件地址，应用只会看到 Apple 提供的转发地址。
+          <strong>账户。</strong>你所选登录方式提供的电子邮件地址、名称和头像：Google，或在 iPhone 上使用 Apple。如果你使用 Apple 登录并隐藏邮件地址，应用只会看到 Apple 提供的转发地址。{!social && !books && '你可以随时在应用中更改姓名和照片；你在应用中选择的照片会和你的其他文件一样存储。'}
         </li>
         {
           social ? (
@@ -301,7 +316,7 @@ const books = app.content === 'books';
             </li>
           ) : (
             <li>
-              <strong>你添加的内容。</strong>你添加的 MP3 文件及其插图、标题和副标题，你保存的片段，资料库的排列顺序，以及你获得的奖杯。你的资料库只属于你的账户——{app.name} 中的任何内容都不会展示给其他人。
+              <strong>你添加的内容。</strong>你添加的 MP3 文件及其插图、标题和副标题，你保存的片段，资料库的排列顺序，你获得的奖杯，以及计入奖杯的两项累计数据：你的收听时长和你保存的片段数量。你的资料库只属于你的账户——{app.name} 中的任何内容都不会展示给其他人。
             </li>
           )
         }
@@ -316,7 +331,7 @@ const books = app.content === 'books';
           <strong>Google Firebase</strong>——登录、应用的数据库和崩溃报告（Crashlytics）。
         </li>
         <li>
-          <strong>Cloudinary</strong>——你上传的{social ? '图片' : books ? '封面' : '音频和插图'}，存放在与你的账户绑定的文件夹中。
+          <strong>Cloudinary</strong>——你上传的{social ? '图片' : books ? '封面' : '音频、插图和你的头像'}，存放在与你的账户绑定的文件夹中。
         </li>
         <li>
           <strong>Cloudflare</strong>——我的一个小型服务，在你移除文件时将其从 Cloudinary 删除。它会确认请求来自你的账户，自身不存储任何数据。
