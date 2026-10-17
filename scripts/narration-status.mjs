@@ -1,14 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SCRIPT_LANGS, scriptsFor } from '../src/lib/scripts.ts';
+import { scriptsFor } from '../src/lib/scripts.ts';
 
 /**
  * THE RECORDING CHECKLIST — `npm run narration --workspace web`.
  *
- * Every clip key the landing narrates, by language: recorded with its
- * script (a `.vtt` beside the `.m4a`), an old recording from before the
- * scripts, or missing. Read from disk each run, so it is never stale.
+ * Every clip key the landing narrates: its Spanish recording (the one
+ * voice) and its English and Chinese subtitles. Read from disk each run,
+ * so it is never stale.
  * It also names any key the page plays that has no script, and any
  * script the page no longer plays.
  */
@@ -36,29 +36,29 @@ const apps = fs.readFileSync(path.join(SRC, 'lib/apps.ts'), 'utf8');
 for (const m of apps.slice(apps.indexOf('export const APPS')).matchAll(/'([a-z]+\.(?:problem|solution|s\d\.p\d))'/g))
   used.add(m[1]);
 
-const state = (lang, key) => {
-  const has = ext => fs.existsSync(path.join(NARRATION, lang, `${key}.${ext}`));
-  return has('vtt') ? 'recorded' : has('m4a') ? 'old take' : 'missing';
-};
-const MARK = { recorded: '[x]', 'old take': '[~]', missing: '[ ]' };
+// One voice, Spanish; English and Chinese are its subtitles (lib/narration).
+const has = name => fs.existsSync(path.join(NARRATION, 'es', name));
+const scripts = scriptsFor('es');
+const keys = scripts.map(c => c.key);
+const counts = { es: 0, en: 0, zh: 0 };
+const cell = (ok, label) => `${ok ? '[x]' : '[ ]'} ${label}`.padEnd(16);
 
-const scripts = Object.fromEntries(SCRIPT_LANGS.map(l => [l, scriptsFor(l)]));
-const keys = scripts.es.map(c => c.key);
-const counts = Object.fromEntries(SCRIPT_LANGS.map(l => [l, 0]));
-
-console.log(`key${' '.repeat(18)}${SCRIPT_LANGS.map(l => l.padEnd(15)).join('')}`);
-for (const key of keys) {
-  const cells = SCRIPT_LANGS.map(lang => {
-    const s = state(lang, key);
-    if (s === 'recorded') counts[lang]++;
-    const draft = scripts[lang].find(c => c.key === key).draft ? '*' : ' ';
-    return `${MARK[s]}${draft}${s}`.padEnd(15);
-  });
-  console.log(`${key.padEnd(21)}${cells.join('')}${used.has(key) ? '' : '  (not on the page)'}`);
+console.log(`key${' '.repeat(18)}${'es voice'.padEnd(16)}${'en subs'.padEnd(16)}zh subs`);
+for (const c of scripts) {
+  const voice = has(`${c.key}.m4a`) && has(`${c.key}.vtt`);
+  const en = has(`${c.key}.en.vtt`);
+  const zh = has(`${c.key}.zh.vtt`);
+  counts.es += voice;
+  counts.en += en;
+  counts.zh += zh;
+  console.log(
+    `${c.key.padEnd(21)}${cell(voice, c.draft ? 're-record' : 'recorded')}${cell(en, en ? 'done' : 'missing')}${cell(zh, zh ? 'done' : 'missing')}` +
+      (used.has(c.key) ? '' : '  (not on the page)'),
+  );
 }
 console.log(
-  `\n${SCRIPT_LANGS.map(l => `${l} ${counts[l]}/${keys.length}`).join(' · ')} recorded with a script` +
-    '\n[x] recorded  [~] old take, no script timing  [ ] missing  * script is a draft',
+  `\nes voice ${counts.es}/${keys.length} · en subtitles ${counts.en}/${keys.length} · zh subtitles ${counts.zh}/${keys.length}` +
+    '\nre-record = recorded, but its script changed since',
 );
 const unscripted = [...used].filter(k => !keys.includes(k));
 if (unscripted.length) {
