@@ -15,7 +15,8 @@ const run = promisify(execFile);
  *   header x-ideas: encodeURIComponent(JSON string[]) — the clip's ideas
  *
  * Writes `public/media/narration/{lang}/{key}.m4a` (mono AAC, loudness
- * normalised, leading and trailing silence trimmed) and `{key}.vtt`: the
+ * normalised, leading and trailing silence trimmed, breaths between
+ * phrases softened) and `{key}.vtt`: the
  * take TRANSCRIBED (whisper.cpp, local), its words grouped into subtitle
  * phrases, each timed from when its first word is said. Juan speaks from
  * ideas, not a script (lib/scripts), so what he said is only known from
@@ -91,8 +92,8 @@ const GLOSSARY =
 
 /** Every word of the take with when it is said, in seconds. */
 const words = async (file, lang, ideas) => {
-  const wav = file.replace(/\.m4a$/, '.16k.wav');
-  const base = file.replace(/\.m4a$/, '.words');
+  const wav = file.replace(/\.[a-z0-9]+$/, '.16k.wav');
+  const base = file.replace(/\.[a-z0-9]+$/, '.words');
   await ffmpeg('-i', file, '-ar', '16000', '-ac', '1', wav);
   try {
     await run(
@@ -140,6 +141,68 @@ const phrases = (list, lang) => {
   return out;
 };
 
+// ---------- breaths ----------
+// Juan breathes between sentences, and the mic hears it. The quiet between
+// phrases is pulled down, never cut (a cut gap sounds robotic). Found by
+// LEVEL, not by the transcript: whisper's word times close up the gaps
+// (the word after a pause starts where the one before it ended), so they
+// cannot say where a breath is. Measured on Juan's hero take: words run
+// -12 to -28 dBFS, the breaths and the room between them -40 to -50; a
+// stretch under -30 that lasts 150 ms is between words, and a margin on
+// each side keeps every word's tail and attack whole.
+const RATE = 48000;
+const FRAME = 480; // 10 ms
+const SPEECH_DB = -30;
+const DUCK = 10 ** (-15 / 20);
+const RAMP = 0.03; // seconds, in and out of every dip
+
+const pcm = async file => {
+  const { stdout } = await run(
+    'ffmpeg',
+    ['-hide_banner', '-loglevel', 'error', '-i', file, '-f', 'f32le', '-ac', '1', '-ar', String(RATE), '-'],
+    { encoding: 'buffer', maxBuffer: 1 << 29 },
+  );
+  return new Float32Array(stdout.buffer, stdout.byteOffset, stdout.byteLength / 4);
+};
+
+/** The take's samples with the breaths between phrases pulled down. */
+const softenBreaths = samples => {
+  const frames = Math.ceil(samples.length / FRAME);
+  const quiet = new Uint8Array(frames);
+  for (let f = 0; f < frames; f++) {
+    let sum = 0;
+    const end = Math.min(samples.length, (f + 1) * FRAME);
+    for (let i = f * FRAME; i < end; i++) sum += samples[i] * samples[i];
+    const db = 10 * Math.log10(sum / Math.max(1, end - f * FRAME) + 1e-12);
+    quiet[f] = db < SPEECH_DB ? 1 : 0;
+  }
+  // Per frame: 1 = as recorded, DUCK = pulled down.
+  const target = new Float32Array(frames).fill(1);
+  const ms = n => Math.round((n * RATE) / FRAME / 1000);
+  for (let f = 0; f < frames; ) {
+    if (!quiet[f]) {
+      f++;
+      continue;
+    }
+    let g = f;
+    while (g < frames && quiet[g]) g++;
+    // A run from f to g: long enough to be a gap, not a soft consonant.
+    if (g - f >= ms(150))
+      for (let k = f + ms(60); k < g - ms(40); k++) target[k] = DUCK;
+    f = g;
+  }
+  // Eased in and out, sample by sample, so no dip clicks.
+  const step = 1 / (RAMP * RATE);
+  const out = new Float32Array(samples.length);
+  let gain = 1;
+  for (let i = 0; i < samples.length; i++) {
+    const want = target[Math.floor(i / FRAME)];
+    gain += Math.max(-step, Math.min(step, want - gain));
+    out[i] = samples[i] * gain;
+  }
+  return out;
+};
+
 const vtt = (lines, cues, end) =>
   'WEBVTT\n\n' +
   lines
@@ -154,14 +217,19 @@ const save = async (req, res, url) => {
   const lang = url.searchParams.get('lang') ?? '';
   const key = url.searchParams.get('key') ?? '';
   if (!LANGS.has(lang) || !KEY.test(key)) throw new Error('bad lang or key');
-  const ideas = JSON.parse(decodeURIComponent(String(req.headers['x-ideas'] ?? '%5B%5D')));
-  if (!Array.isArray(ideas)) throw new Error('ideas must be a list');
-
+  // The take is on disk before anything can fail: a bad header or a
+  // transcriber error must never cost a recording.
   const when = new Date().toISOString().replace(/[:.]/g, '-');
   const takes = path.join(TAKES, lang);
   fs.mkdirSync(path.join(takes, 'replaced'), { recursive: true });
   const raw = path.join(takes, `${key}--${when}.webm`);
   fs.writeFileSync(raw, await body(req));
+
+  let ideas = [];
+  try {
+    ideas = JSON.parse(decodeURIComponent(String(req.headers['x-ideas'] ?? '%5B%5D')));
+  } catch {}
+  if (!Array.isArray(ideas)) ideas = [];
 
   // The clip being replaced is kept, not lost.
   const out = path.join(PUBLIC, lang, `${key}.m4a`);
@@ -176,17 +244,29 @@ const save = async (req, res, url) => {
   await ffmpeg('-i', raw, '-ac', '1', '-ar', '48000', wav);
   const total = await duration(wav);
   const { from, to } = await voiceSpan(wav, total);
+  // Trimmed and levelled first; the transcript is taken from this, and
+  // the breaths are softened on it before the one AAC encode.
+  const clean = raw.replace(/\.webm$/, '.clean.wav');
   await ffmpeg(
     '-ss', String(from), '-to', String(to), '-i', wav,
     '-af', 'highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:d=0.08',
-    '-ac', '1', '-ar', '48000', '-c:a', 'aac', '-b:a', '96k',
-    '-movflags', '+faststart', out,
+    '-ac', '1', '-ar', String(RATE), '-c:a', 'pcm_f32le', clean,
   );
   fs.rmSync(wav);
 
+  const heard = await words(clean, lang, ideas);
+  if (!heard.length) throw new Error('no words heard in the take');
+  const soft = clean.replace(/\.clean\.wav$/, '.soft.f32');
+  fs.writeFileSync(soft, Buffer.from(softenBreaths(await pcm(clean)).buffer));
+  await ffmpeg(
+    '-f', 'f32le', '-ar', String(RATE), '-ac', '1', '-i', soft,
+    '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', out,
+  );
+  fs.rmSync(clean);
+  fs.rmSync(soft);
+
   const length = await duration(out);
-  const said = phrases(await words(out, lang, ideas), lang);
-  if (!said.length) throw new Error('no words heard in the take');
+  const said = phrases(heard, lang);
   // The first phrase starts the clip; the rest start on their first word.
   const cues = said.map((p, i) => (i === 0 ? 0 : p.from));
   fs.writeFileSync(subs, vtt(said.map(p => p.text), cues, length));
