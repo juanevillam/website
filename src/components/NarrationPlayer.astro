@@ -25,7 +25,7 @@ import T from './T.astro';
  * ITS TOOLS come out of it while a clip is in play (Juan, 2026-10-17):
  * the speed beside it — 1×, 1.5×, 2× and round again, Sound Shaper's own
  * control, lent to the page as its easter egg — and ten seconds back and
- * forward under them, tucked into its corner. Paused, they go back in. Separate small circles rather than a
+ * forward under them, on a grid with it. Paused, they go back in. Separate small circles rather than a
  * wider pill, so the narrator itself never changes size.
  */
 ---
@@ -77,10 +77,9 @@ import T from './T.astro';
 <style>
   /* The narrator's tools: the header pills' own recipe at their size, a
      step under the narrator they serve. The box sits on the narrator, and
-     each tool is placed from it by the director (--dx, --dy), tucked
-     into the play button's corner: the speed beside it, and the two skips
-     under both, back on the left and forward under the speed (mirrored in
-     a phone's corner). They are out only while the voice plays. Closed, every
+     each tool is placed from it by the director (--dx, --dy), on a 2 × 2
+     grid of shared centres with the play button: the speed beside it, back
+     under it, forward under the speed (mirrored in a phone's corner). They are out only while the voice plays. Closed, every
      tool is folded into the play button's centre, small and clear, so
      opening and closing reads as the tools coming out of it and going
      back in. */

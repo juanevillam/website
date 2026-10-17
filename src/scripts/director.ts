@@ -647,9 +647,8 @@ const toolButtons = [
 ];
 
 /** Out of the narrator while the voice plays — never while paused — at
- *  its opacity, tucked into its corner: the speed beside it, and under
- *  both the two skips, back on the left and forward on the right, level
- *  with each other and forward under the speed. A phone's corner mirrors
+ *  its opacity, on a 2 × 2 grid with it: the speed beside it, back under
+ *  it and forward under the speed. A phone's corner mirrors
  *  it (speed to the left, skips above), where below and to the right is
  *  the screen's edge. Closed, each folds into the play button's centre. */
 const placeTools = () => {
@@ -671,16 +670,22 @@ const placeTools = () => {
   const mirrored = phone && !narrator.classList.contains('is-parked');
   const cx = r.width / 2 - size / 2;
   const cy = r.height / 2 - size / 2;
+  // A GRID ON CENTRES: two columns (the play button's, the speed's) and two
+  // rows (the play button's, the skips'), so every tool shares a centre
+  // line with its neighbour. Aligning EDGES instead left the smaller tools
+  // off the play button's axis, and the corner read crooked (Juan,
+  // 2026-10-17).
+  const side = r.width + gap + (size - r.width) / 2; // play centre → next column's
   const slots: [HTMLElement, number, number][] = mirrored
     ? [
-        [speedTool, -gap - size, 0],
-        [back, -gap - size, -gap - size],
-        [forward, 0, -gap - size],
+        [speedTool, cx - side, cy],
+        [back, cx - side, cy - side],
+        [forward, cx, cy - side],
       ]
     : [
-        [speedTool, r.width + gap, r.height - size],
-        [back, r.width - size, r.height + gap],
-        [forward, r.width + gap, r.height + gap],
+        [speedTool, cx + side, cy],
+        [back, cx, cy + side],
+        [forward, cx + side, cy + side],
       ];
   for (const [el, x, y] of slots) {
     if (!el) continue;
