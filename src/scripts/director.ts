@@ -642,26 +642,51 @@ tools?.querySelectorAll<HTMLElement>('[data-nar-skip]').forEach(button =>
   }),
 );
 
-/** Beside the narrator while a clip is in play, at its opacity. */
+const toolButtons = [
+  ...(tools?.querySelectorAll<HTMLElement>('.nar-tool') ?? []),
+];
+
+/** Out of the narrator while a clip is in play, at its opacity: the speed
+ *  beside it and the two skips under it — an inverted L, mirrored in a
+ *  phone's corner (speed to its left, skips above), where below and to
+ *  the right is the screen's edge. Closed, each folds into its centre. */
 const placeTools = () => {
   if (!tools || !narrator) return;
-  const on = !!session && !narrator.hidden;
-  tools.hidden = !on;
-  if (!on) return;
+  const open = !!session && !narrator.hidden;
+  if (tools.classList.contains('is-open') !== open) {
+    tools.classList.toggle('is-open', open);
+    for (const b of toolButtons) b.tabIndex = open ? 0 : -1;
+  }
   const r = narrator.getBoundingClientRect();
-  const gap = 8;
-  // On a phone's corner they stack above it, clear of the deck's docked
-  // controls on the other side; anywhere else they follow it in a row.
-  const stacked = phone && !narrator.classList.contains('is-parked');
-  tools.classList.toggle('is-stacked', stacked);
-  const w = tools.offsetWidth;
-  const h = tools.offsetHeight;
-  const x = stacked ? r.left + r.width / 2 - w / 2 : r.right + gap;
-  const y = stacked ? r.top - gap - h : r.top + r.height / 2 - h / 2;
-  tools.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  tools.style.transform = `translate(${r.left.toFixed(1)}px, ${r.top.toFixed(1)}px)`;
   const own = narrator.style.opacity;
   tools.style.opacity = own;
-  tools.style.pointerEvents = own && Number(own) < 0.6 ? 'none' : '';
+  tools.style.pointerEvents = 'none';
+  const [speedTool, back, forward] = toolButtons;
+  if (!speedTool) return;
+  const size = speedTool.offsetWidth;
+  const gap = 8;
+  const mirrored = phone && !narrator.classList.contains('is-parked');
+  const cx = r.width / 2 - size / 2;
+  const cy = r.height / 2 - size / 2;
+  const slots: [HTMLElement, number, number][] = mirrored
+    ? [
+        [speedTool, -gap - size, cy],
+        [back, cx, -gap - size],
+        [forward, cx, -2 * (gap + size)],
+      ]
+    : [
+        [speedTool, r.width + gap, cy],
+        [back, cx, r.height + gap],
+        [forward, cx, r.height + gap + size + gap],
+      ];
+  for (const [el, x, y] of slots) {
+    if (!el) continue;
+    el.style.setProperty('--dx', `${x.toFixed(1)}px`);
+    el.style.setProperty('--dy', `${y.toFixed(1)}px`);
+    el.style.setProperty('--hx', `${cx.toFixed(1)}px`);
+    el.style.setProperty('--hy', `${cy.toFixed(1)}px`);
+  }
 };
 
 const animateNarrator = (now: number) => {

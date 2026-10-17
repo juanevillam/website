@@ -22,12 +22,11 @@ import T from './T.astro';
  * read-along in scripts/director.ts), and a clip with no paragraph — the
  * hero's intro, the footer's — is simply heard.
  *
- * ITS TOOLS stand beside it while a clip is in play (Juan, 2026-10-17):
- * back and forward five seconds, and the speed — 1×, 1.5×, 2× and round
- * again, Sound Shaper's own control, lent to the page as its easter egg.
- * Separate small circles rather than a wider pill, so the narrator itself
- * never changes size; the director places them beside it every frame
- * (in a row on a desk, stacked above its corner on a phone).
+ * ITS TOOLS come out of it while a clip is in play (Juan, 2026-10-17):
+ * the speed beside it — 1×, 1.5×, 2× and round again, Sound Shaper's own
+ * control, lent to the page as its easter egg — and ten seconds back and
+ * forward under it, an inverted L. Separate small circles rather than a
+ * wider pill, so the narrator itself never changes size.
  */
 ---
 
@@ -54,49 +53,51 @@ import T from './T.astro';
   </span>
 </button>
 
-<div class="nar-tools" data-nar-tools hidden>
-  <button class="nar-tool" type="button" data-nar-skip="-5">
+<div class="nar-tools" data-nar-tools>
+  <button class="nar-tool nar-speed" type="button" data-nar-speed tabindex="-1">
+    <span class="sr-only"><T k="narration.speed" /></span>
+    <span aria-hidden="true" data-nar-rate>1×</span>
+  </button>
+  <button class="nar-tool" type="button" data-nar-skip="-10" tabindex="-1">
     <span class="sr-only"><T k="narration.back" /></span>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M5.6 8.5A8 8 0 1 1 4 13.5M5.6 8.5V4.5M5.6 8.5h4"></path>
-      <text x="12.6" y="16.4" text-anchor="middle" font-size="8.5" font-weight="600" fill="currentColor">5</text>
+      <text x="12.6" y="16.2" text-anchor="middle" font-size="7.5" font-weight="600" fill="currentColor">10</text>
     </svg>
   </button>
-  <button class="nar-tool" type="button" data-nar-skip="5">
+  <button class="nar-tool" type="button" data-nar-skip="10" tabindex="-1">
     <span class="sr-only"><T k="narration.forward" /></span>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M18.4 8.5A8 8 0 1 0 20 13.5M18.4 8.5V4.5M18.4 8.5h-4"></path>
-      <text x="11.4" y="16.4" text-anchor="middle" font-size="8.5" font-weight="600" fill="currentColor">5</text>
+      <text x="11.4" y="16.2" text-anchor="middle" font-size="7.5" font-weight="600" fill="currentColor">10</text>
     </svg>
-  </button>
-  <button class="nar-tool nar-speed" type="button" data-nar-speed>
-    <span class="sr-only"><T k="narration.speed" /></span>
-    <span aria-hidden="true" data-nar-rate>1×</span>
   </button>
 </div>
 
 <style>
   /* The narrator's tools: the header pills' own recipe at their size, a
-     step under the narrator they serve. */
+     step under the narrator they serve. The box sits on the narrator, and
+     each tool is placed from it by the director (--dx, --dy): an inverted
+     L, the speed beside the play button and the two skips under it (over
+     it, and the speed to its left, in a phone's corner). Closed, every
+     tool is folded into the play button's centre, small and clear, so
+     opening and closing reads as the tools coming out of it and going
+     back in. */
   .nar-tools {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 40;
-    display: flex;
-    gap: 0.5rem;
+    z-index: 39;
+    width: 0;
+    height: 0;
+    pointer-events: none;
     transition: opacity var(--dur-quick) var(--ease);
   }
 
-  .nar-tools[hidden] {
-    display: none;
-  }
-
-  .nar-tools.is-stacked {
-    flex-direction: column-reverse;
-  }
-
   .nar-tool {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: grid;
     place-items: center;
     width: var(--float-h);
@@ -110,9 +111,29 @@ import T from './T.astro';
     cursor: pointer;
     font: 600 0.8125rem/1 var(--font-sans);
     font-variant-numeric: tabular-nums;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(var(--hx, 0px), var(--hy, 0px)) scale(0.4);
     transition:
+      transform var(--dur-turn) var(--ease),
+      opacity var(--dur-quick) var(--ease),
       color var(--dur-micro) var(--ease),
       border-color var(--dur-micro) var(--ease);
+  }
+
+  .nar-tools.is-open .nar-tool {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(var(--dx, 0px), var(--dy, 0px));
+  }
+
+  /* One after another on the way out, nearest first. */
+  .nar-tools.is-open .nar-tool:nth-child(2) {
+    transition-delay: calc(var(--dur-step) * 2);
+  }
+
+  .nar-tools.is-open .nar-tool:nth-child(3) {
+    transition-delay: calc(var(--dur-step) * 4);
   }
 
   .nar-tool:hover {
