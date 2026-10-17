@@ -455,14 +455,17 @@ html.is-focus {
   }
 }
 
-/* READ-ALONG (director.ts): the paragraph being narrated dims, and its
-   words paint back in at the pace of the clip — so the page reads itself
-   instead of the narrator repeating it in a subtitle. */
-.rw {
+/* READ-ALONG (director.ts): while a paragraph is narrated, its whole box
+   dims — the paragraphs around it too, links included — and its words
+   paint back in at the pace of the clip. TWO inks only, never three
+   (Juan, 2026-10-17): still to come, and said. */
+.rw,
+.is-read-along [data-narr-para] {
   transition: color var(--dur-quick) var(--ease);
 }
 
-.is-reading .rw {
+.is-read-along [data-narr-para],
+.is-read-along [data-narr-para] a {
   color: var(--ink-3);
 }
 

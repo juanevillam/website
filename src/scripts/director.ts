@@ -70,6 +70,14 @@ const smooth = (v: number) => v * v * (3 - 2 * v);
 
 const voice = new Audio();
 voice.preload = 'auto';
+// A LITTLE QUICKER THAN RECORDED (Juan, 2026-10-17). The takes stay
+// exactly as recorded — the speed is the player's, never the file's — and
+// the pitch is kept, so it is still Juan's voice, only less unhurried.
+// The read-along runs on the media clock, so its timings follow.
+const NARRATION_RATE = 1.1;
+voice.defaultPlaybackRate = NARRATION_RATE;
+voice.playbackRate = NARRATION_RATE;
+voice.preservesPitch = true;
 // What the OS shows for the voice (Dynamic Island, Lock Screen). With no
 // metadata Safari falls back to the favicon, whose rounded tile has
 // transparent corners that the Lock Screen paints white. The artwork is
@@ -470,12 +478,16 @@ const wordsOf = (
 let reading: {
   p: HTMLElement;
   root: HTMLElement;
+  /** The box the paragraph reads in: all of it dims, so the page shows
+   *  two inks only — what is still to come, and what has been said. */
+  box: HTMLElement;
   upTo: number;
 } | null = null;
 
 const endReading = () => {
   if (!reading) return;
   reading.p.classList.remove('is-reading');
+  reading.box.classList.remove('is-read-along');
   for (const s of readCache.get(reading.root)?.spans ?? [])
     s.classList.remove('is-read');
   reading = null;
@@ -510,8 +522,10 @@ const updateRead = () => {
   if (reading && (reading.p !== p || reading.root !== root)) endReading();
   const words = wordsOf(p, root, lang);
   if (!reading) {
-    reading = { p, root, upTo: 0 };
+    const box = p.closest<HTMLElement>('[data-cap]') ?? p.parentElement ?? p;
+    reading = { p, root, box, upTo: 0 };
     p.classList.add('is-reading');
+    box.classList.add('is-read-along');
   }
   const t = voice.currentTime || 0;
   let upTo = 0;
@@ -622,6 +636,7 @@ const start = (block: Narr, para: number) => {
   session = { block, para };
   running = true;
   voice.src = src;
+  voice.playbackRate = NARRATION_RATE;
   voice.play().catch(() => stop());
   paint();
   // Whatever shows this paragraph can follow the voice to it (a deck
