@@ -421,6 +421,112 @@ const drawField = (now: number) => {
   }
 };
 
+// ----- read-along: the paragraph on screen paints in as it is said -----
+// A paragraph Juan narrates is NOT subtitled again in the pill — that only
+// repeated the words beside them (Juan, 2026-10-17). Instead the paragraph
+// itself dims while its clip plays and its words paint back in, in order,
+// at the pace of the clip — a page that reads itself. It follows the
+// clip's PROGRESS, not each spoken word: Juan records from ideas, so the
+// take is looser and longer than the paragraph, and only the clock is
+// shared by every language the page shows. The pill still carries the
+// words for a clip with no paragraph on screen (the hero's intro, the
+// footer's).
+const readable = (p: HTMLElement) => p.tagName === 'P';
+
+type ReadWords = { spans: HTMLElement[]; ends: number[]; total: number };
+const readCache = new WeakMap<HTMLElement, ReadWords>();
+const segmenter =
+  typeof Intl !== 'undefined' && 'Segmenter' in Intl
+    ? new Intl.Segmenter(undefined, { granularity: 'word' })
+    : null;
+
+/** The words of one language's text, wrapped once, with their running
+ *  length — the weight each one takes of the clip's time. */
+const wordsOf = (root: HTMLElement): ReadWords => {
+  const cached = readCache.get(root);
+  if (cached) return cached;
+  const texts: Text[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode())
+    if ((n as Text).data.trim()) texts.push(n as Text);
+  const spans: HTMLElement[] = [];
+  const ends: number[] = [];
+  let total = 0;
+  for (const node of texts) {
+    const parts = segmenter
+      ? [...segmenter.segment(node.data)].map(s => s.segment)
+      : node.data.split(/(\s+)/);
+    const frag = document.createDocumentFragment();
+    for (const part of parts) {
+      if (!part) continue;
+      if (!part.trim()) {
+        frag.append(part);
+        continue;
+      }
+      const span = document.createElement('span');
+      span.className = 'rw';
+      span.textContent = part;
+      frag.append(span);
+      total += part.length;
+      spans.push(span);
+      ends.push(total);
+    }
+    node.replaceWith(frag);
+  }
+  const words = { spans, ends, total };
+  readCache.set(root, words);
+  return words;
+};
+
+/** The language span the page shows, or the paragraph itself. */
+const shownText = (p: HTMLElement) => {
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  return p.querySelector<HTMLElement>(`:scope > .t[lang="${lang}"]`) ?? p;
+};
+
+let reading: { p: HTMLElement; root: HTMLElement; upTo: number } | null = null;
+
+const endReading = () => {
+  if (!reading) return;
+  reading.p.classList.remove('is-reading');
+  for (const s of wordsOf(reading.root).spans) s.classList.remove('is-read');
+  reading = null;
+};
+
+const updateRead = () => {
+  // Kept while paused, so the page holds its place; cleared when the
+  // session ends or moves to the next paragraph.
+  const p =
+    session && (running || voice.currentTime > 0)
+      ? session.block.paras[session.para]
+      : null;
+  if (!p || !readable(p)) {
+    endReading();
+    return;
+  }
+  const root = shownText(p);
+  if (reading && (reading.p !== p || reading.root !== root)) endReading();
+  const words = wordsOf(root);
+  if (!reading) {
+    reading = { p, root, upTo: 0 };
+    p.classList.add('is-reading');
+  }
+  const d = voice.duration;
+  const f =
+    Number.isFinite(d) && d > 0 ? Math.min(1, (voice.currentTime || 0) / d) : 0;
+  const reach = f * words.total;
+  let upTo = 0;
+  while (upTo < words.ends.length && words.ends[upTo] - 0.5 <= reach) upTo++;
+  // Paint forward, and back after a seek or a replay from the start.
+  for (
+    let i = Math.min(upTo, reading.upTo);
+    i < Math.max(upTo, reading.upTo);
+    i++
+  )
+    words.spans[i].classList.toggle('is-read', i < upTo);
+  reading.upTo = upTo;
+};
+
 // ----- subtitles: the pill opens and says what Juan is saying -----
 const subEl = narrator?.querySelector<HTMLElement>('[data-nar-sub]');
 let subShown = '';
@@ -428,6 +534,8 @@ let subShown = '';
 /** The phrase being said now, or '' when there is none to show. */
 const currentPhrase = () => {
   if (!session || !running) return '';
+  // A paragraph on screen reads itself instead (see read-along above).
+  if (readable(session.block.paras[session.para])) return '';
   const subs = subsOf(session.block.paras[session.para]);
   if (!subs?.phrases.length) return '';
   const t = voice.currentTime || 0;
@@ -534,6 +642,7 @@ const placeNarrator = () => {
 
 const animateNarrator = (now: number) => {
   updateSub();
+  updateRead();
   placeNarrator();
   listen();
   drawField(now);

@@ -458,6 +458,21 @@ html.is-focus {
   }
 }
 
+/* READ-ALONG (director.ts): the paragraph being narrated dims, and its
+   words paint back in at the pace of the clip — so the page reads itself
+   instead of the narrator repeating it in a subtitle. */
+.rw {
+  transition: color var(--dur-quick) var(--ease);
+}
+
+.is-reading .rw {
+  color: var(--ink-3);
+}
+
+.is-reading .rw.is-read {
+  color: var(--ink);
+}
+
 /* Where the page's one narrator parks in a narrated block — it reserves
    the control's box so nothing reflows when it glides in (see
    NarrationPlayer). */
