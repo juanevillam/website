@@ -1,0 +1,36 @@
+---
+/**
+ * A SECTION'S BARE ADDRESS — `/work` and `/events` have no page of their
+ * own: their cards live in the landing (lib/links gives each card its
+ * address). Someone who trims a shared link back to its folder lands on
+ * the landing at that section instead of on a 404, keeping `?lang=`.
+ *
+ * A static page rather than a host redirect: Cloudflare Pages' redirect
+ * rules can't carry the `#section` and the query together reliably, and
+ * this works the same under `astro dev`.
+ */
+type Props = { section: string };
+const { section } = Astro.props;
+const target = `/#${section}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>juanevillam</title>
+    <link rel="canonical" href={new URL('/', Astro.site)} />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <script is:inline define:vars={{ target }}>
+      location.replace('/' + location.search + target.slice(1));
+    </script>
+    <style>
+      html {
+        background: #0d0d0d;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>
