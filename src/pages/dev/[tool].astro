@@ -298,6 +298,8 @@ const list = scripts.es;
         btn('record').hidden = mode === 'rec' || mode === 'count' || !c.ideas.length;
         btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
         btn('next').hidden = mode !== 'rec';
+        btn('next').firstChild!.textContent =
+          line + 1 >= c.ideas.length ? 'Terminar y guardar ' : 'Siguiente idea ';
         btn('stop').hidden = mode !== 'rec';
         btn('take').hidden = !take || mode === 'rec';
         btn('save').hidden = !take || mode === 'rec';
@@ -404,6 +406,8 @@ const list = scripts.es;
           mode = 'done';
           mark(0);
           sync();
+          if (saveWhenDone) save();
+          saveWhenDone = false;
         };
         recorder.start();
         cues = [0];
@@ -413,9 +417,15 @@ const list = scripts.es;
       };
 
       // Only his place in the list: the take's timing comes from the
-      // transcript, not from these taps.
+      // transcript, not from these taps. Past the LAST idea it ends the
+      // take and saves it — one button the whole way through.
+      let saveWhenDone = false;
       const next = () => {
-        if (mode !== 'rec' || line + 1 >= clip().ideas.length) return;
+        if (mode !== 'rec') return;
+        if (line + 1 >= clip().ideas.length) {
+          saveWhenDone = true;
+          return stop();
+        }
         mark(line + 1);
         sync();
       };
@@ -471,10 +481,19 @@ const list = scripts.es;
           method: 'POST',
           headers: { 'x-ideas': encodeURIComponent(JSON.stringify(c.ideas)) },
           body: take,
-        });
-        const out = await res.json();
-        if (!res.ok) {
-          stateEl.textContent = `No se pudo guardar: ${out.error}`;
+        }).catch(() => new Response(null, { status: 503 }));
+        // A dev server that is down, stale or crashed answers with no JSON;
+        // the take stays here either way, so Guardar can be pressed again.
+        let out: { error?: string; m4a: string; length: number; lines: string[] };
+        try {
+          out = await res.json();
+        } catch {
+          out = { error: `el servidor respondió ${res.status} sin datos`, m4a: '', length: 0, lines: [] };
+        }
+        if (!res.ok || out.error) {
+          mode = 'done';
+          sync();
+          stateEl.textContent = `No se pudo guardar (${out.error}). La toma sigue aquí: pulsa Guardar otra vez.`;
           return;
         }
         c.status = 'new';
