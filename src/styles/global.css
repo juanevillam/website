@@ -112,9 +112,6 @@
   --narrator-h: calc(var(--float-h) * var(--narrator-scale));
   --narrator-glyph: calc(var(--float-glyph) * var(--narrator-scale));
   --narrator-w: var(--narrator-h);
-  /* Open, it carries Juan's subtitles beside the glyph — Dynamic Island
-     width, never wider than the screen allows. */
-  --narrator-w-open: min(30rem, calc(100vw - 2.5rem));
   /* Exactly where the pills END — counting the gap twice put 40px of
      air over the phone against 24 under it. */
   --header-h: calc(var(--float-gap) + var(--float-h));

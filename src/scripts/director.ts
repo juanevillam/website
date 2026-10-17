@@ -144,28 +144,9 @@ let showing: Narr | undefined;
 const narrs: Narr[] = [];
 
 // One voice, Spanish (lib/narration): every paragraph's clip rides on it
-// as data-clip. Its subtitles ride on it per language, data-subs-{lang},
-// all on the Spanish take's clock — the pill shows the page's language,
-// and Spanish when a translation is missing.
-type Lang = 'en' | 'es' | 'zh';
-const cap = (lang: Lang) => lang[0].toUpperCase() + lang.slice(1);
+// as data-clip.
 
 const clipOf = (p: HTMLElement) => p.dataset.clip;
-
-/** The subtitles in the page's language, else the take's own Spanish. */
-type Subs = { phrases: string[]; times?: number[] };
-const subsCache = new WeakMap<HTMLElement, Map<string, Subs | null>>();
-const subsOf = (p: HTMLElement): Subs | null => {
-  const page = (document.documentElement.dataset.lang ?? 'en') as Lang;
-  const lang: Lang = p.dataset[`subs${cap(page)}`] ? page : 'es';
-  let byLang = subsCache.get(p);
-  if (!byLang) subsCache.set(p, (byLang = new Map()));
-  if (!byLang.has(lang)) {
-    const raw = p.dataset[`subs${cap(lang)}`];
-    byLang.set(lang, raw ? (JSON.parse(raw) as Subs) : null);
-  }
-  return byLang.get(lang) ?? null;
-};
 
 const firstVoiced = (block: Narr | undefined, from = 0) => {
   if (!block) return -1;
@@ -428,9 +409,9 @@ const drawField = (now: number) => {
 // at the pace of the clip — a page that reads itself. It follows the
 // clip's PROGRESS, not each spoken word: Juan records from ideas, so the
 // take is looser and longer than the paragraph, and only the clock is
-// shared by every language the page shows. The pill still carries the
-// words for a clip with no paragraph on screen (the hero's intro, the
-// footer's).
+// shared by every language the page shows. A clip with no paragraph on
+// screen (the hero's intro, the footer's) is simply heard: the pill never
+// carries words and never changes size.
 const readable = (p: HTMLElement) => p.tagName === 'P';
 
 type ReadWords = { spans: HTMLElement[]; ends: number[]; total: number };
@@ -527,51 +508,6 @@ const updateRead = () => {
   reading.upTo = upTo;
 };
 
-// ----- subtitles: the pill opens and says what Juan is saying -----
-const subEl = narrator?.querySelector<HTMLElement>('[data-nar-sub]');
-let subShown = '';
-
-/** The phrase being said now, or '' when there is none to show. */
-const currentPhrase = () => {
-  if (!session || !running) return '';
-  // A paragraph on screen reads itself instead (see read-along above).
-  if (readable(session.block.paras[session.para])) return '';
-  const subs = subsOf(session.block.paras[session.para]);
-  if (!subs?.phrases.length) return '';
-  const t = voice.currentTime || 0;
-  let starts = subs.times;
-  if (!starts) {
-    // A plain transcript carries no timings: each phrase gets the share
-    // of the clip its length earns, plus a beat for the breath between.
-    const d = voice.duration;
-    if (!Number.isFinite(d) || d <= 0) return '';
-    const weights = subs.phrases.map(ph => ph.length + 12);
-    const total = weights.reduce((a, b) => a + b, 0);
-    let acc = 0;
-    starts = weights.map(wt => {
-      const at = (acc / total) * d;
-      acc += wt;
-      return at;
-    });
-  }
-  let i = 0;
-  while (i + 1 < starts.length && starts[i + 1] <= t) i++;
-  return subs.phrases[i];
-};
-
-const updateSub = () => {
-  if (!narrator || !subEl) return;
-  const phrase = currentPhrase();
-  narrator.classList.toggle('is-captioned', !!phrase);
-  if (!phrase || phrase === subShown) return;
-  subShown = phrase;
-  // A fresh line per phrase, so each one fades in on its own.
-  const line = document.createElement('span');
-  line.className = 'nar-sub-line';
-  line.textContent = phrase;
-  subEl.replaceChildren(line);
-};
-
 // ----- placement: the narrator glides between its anchors -----
 /** The anchors in play and how much of the page each one owns. */
 let parks: { anchor: HTMLElement; w: number }[] = [];
@@ -582,8 +518,8 @@ const heroBox = document.getElementById('top');
 const heroAnchor =
   heroBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
 
-// Every frame, not only on scroll: the pill's own width animates when
-// it opens, and a centred anchor has to keep it centred all the way.
+// Every frame, not only on scroll: the anchors themselves move with the
+// page's scroll-coupled motion.
 const placeNarrator = () => {
   if (!narrator || narrator.hidden) return;
   // A phone's narrator never travels: it stays in its corner, shown
@@ -641,7 +577,6 @@ const placeNarrator = () => {
 };
 
 const animateNarrator = (now: number) => {
-  updateSub();
   updateRead();
   placeNarrator();
   listen();
@@ -821,9 +756,9 @@ document.addEventListener('arcade:start', () => {
   if (running) pause();
 });
 
-// A language switch changes only the subtitles: the voice is the same
-// Spanish take in every language, so it plays on (subsOf reads the page's
-// language each frame).
+// A language switch changes only which paragraph paints: the voice is the
+// same Spanish take in every language, so it plays on (the read-along
+// reads the page's language each frame).
 
 // One control. Pressed on the block being told, it pauses or resumes;
 // anywhere else, it starts telling what the page is showing.
