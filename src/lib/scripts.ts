@@ -190,15 +190,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
       'Quedó bastante cool.',
     ],
   },
-  {
-    key: 'work.andreina.body',
-    where: 'Más proyectos · Andreina Aular',
-    ideas: [
-      'La página de Andreina Aular fue la primera que hice, al terminar mis primeros cursos de programación, por allá en 2020.',
-      'La diseñé completa yo en Figma, desde cero; la publiqué y le hice actualizaciones.',
-      'Después se rehízo completa en WordPress y quedó mucho mejor, pero el esqueleto lo hice yo.',
-    ],
-  },
 
   // Events
   {

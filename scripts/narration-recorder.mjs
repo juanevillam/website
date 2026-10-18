@@ -75,7 +75,7 @@ const MODEL =
 // Names the transcriber would otherwise spell its own way.
 const GLOSSARY =
   'Juan Villa, Sound Shaper, Salvalo, Tripealo, Crol, Conto Pay, Maktub Art Fund, ' +
-  'Andreina Aular, Space Explorer, Platanus Hack, El Panal, Manuel Sira, Resty, ' +
+  'Space Explorer, Platanus Hack, El Panal, Manuel Sira, Resty, ' +
   'Cheo Noguera, OK 101.5, Pedro Vallenilla, Cashea, Elías Sayegh, AlegrIA, Yummy, Abrahan, ' +
   'Barquisimeto, Caracas, YouTube Music, Apple Music, PlayStation, Dynamic Island.';
 

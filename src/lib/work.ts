@@ -5,10 +5,8 @@ import type { DeckItem } from './deck-items';
  * SECONDARY on purpose: a panel deck (PanelDeck), smaller type than the
  * stories. Every screen is the project's site, a silent recording of it
  * being scrolled (2026-10-17: the stills read as the one slow panel on the
- * page), or a plain screenshot where the site would not be recorded
- * (Andreina Aular's turns a headless browser away). Crol's starts and ends
- * on its section on the mobile app Juan built, since the card is about the
- * app and not the site (2026-10-02).
+ * page). Crol's starts and ends on its section on the mobile app Juan
+ * built, since the card is about the app and not the site (2026-10-02).
  *
  * Job titles and project names stay as they are in every locale; roles
  * are keys. A screen opens the site it shows when clicked (`visit`).
@@ -91,16 +89,5 @@ export const PROJECTS: DeckItem[] = [
     image: '/media/work/maktub.mp4',
     visit: 'https://maktubartfund.com',
     links: [{ label: 'maktubartfund.com', href: 'https://maktubartfund.com' }],
-  },
-  {
-    id: 'andreina',
-    slug: 'andreina-aular',
-    name: 'Andreina Aular',
-    meta: [[{ k: 'work.freelance' }], ['2020']],
-    body: 'work.andreina.body',
-    clip: 'work.andreina.body',
-    image: '/media/work/andreina.jpg',
-    visit: 'https://andreinaaular.com',
-    links: [{ label: 'andreinaaular.com', href: 'https://andreinaaular.com' }],
   },
 ];

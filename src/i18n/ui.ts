@@ -114,8 +114,6 @@ const en = {
     "I'm a cofounder of Salvalo, my startup. Every day, shops close with products that can still be sold, and Salvalo turns them into packs with a price and a pickup time. The customer finds one nearby on the app's map, reserves it, pays the shop directly and picks it up with a verification code. The example I always give: a bakery has 10 cachitos in the morning, by 5 in the afternoon it has 3 left and 2 loaves of French bread, and it makes a pack out of them at a reduced closing price. The shop wins, because it moves that product instead of losing it, and it gains customers, because Salvalo is an extra sales channel. And the customer gets the same morning cachitos, in the afternoon, at a discount, in a really easy way. I'm the technical cofounder: I redesigned the app and the website, and I handle all the frontend development. I'm also Salvalo's representative here in Venezuela, so I go out to pitch shops and show up at every event on Salvalo's behalf.",
   'work.maktub.body':
     'Maktub Art Fund is a client from Mexico. It was a landing page, and those rarely caught my attention, but the design was great, very modern, very fashion, so I liked the idea and built it. It came out pretty cool too.',
-  'work.andreina.body':
-    "Andreina Aular's site was the first one I made after finishing my first programming courses. It was a WordPress site, but I designed all of it myself in Figma, from scratch, published it and kept it updated. Later it was rebuilt entirely in WordPress and came out much better, but I made the skeleton, back in 2020.",
 
   // PHONE copy — the short version each block shows below 48rem. The
   // full paragraphs (and their narration) are desktop's.
@@ -139,7 +137,6 @@ const en = {
     "Shops turn what they didn't sell into packs; you reserve one nearby and pick it up in store. I redesigned the app and built its website and panels.",
   'work.maktub.m':
     'The website of a fund that invests in art across Latin America, live in a month; its team edits everything without code.',
-  'work.andreina.m': 'A WordPress site for a productivity coach.',
   'events.title': 'Events',
   'events.hackathon': 'Hackathon',
   'events.alegria.when': 'Oct 2025',
@@ -250,8 +247,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Soy cofundador de Salvalo, mi startup. Los comercios cierran cada día con productos que todavía se pueden vender, y en Salvalo los conviertes en packs con precio y horario de recogida. El cliente lo encuentra cerca en el mapa de la aplicación, lo aparta, le paga directo al comercio y lo recoge con un código de verificación. El ejemplo que siempre pongo: una panadería tiene 10 cachitos en la mañana, a las 5 de la tarde le quedan 3 y 2 panes franceses, y arma un pack con eso a un precio de cierre reducido. Gana el comercio, porque mueve ese producto y no lo pierde, y gana más clientes, porque Salvalo es un canal de ventas extra. Y el cliente se lleva los mismos cachitos de la mañana, en la tarde, a precio de oferta y de manera súper cómoda. Yo soy el cofundador técnico: rediseñé la aplicación y la página web, y me encargo de todo el desarrollo frontend. Además soy el representante de Salvalo aquí en Venezuela, así que salgo a hacerle pitch a comercios y a estar en todos los eventos en nombre de Salvalo.',
     'work.maktub.body':
       'Maktub Art Fund es un cliente de México. Era una landing page, y casi nunca me llamaban la atención, pero el diseño estaba chulo, muy moderno, muy fashion, así que me gustó la idea y la hice. Quedó bastante cool también.',
-    'work.andreina.body':
-      'La página de Andreina Aular fue la primera que hice al terminar mis primeros cursos de programación. Era un WordPress, pero la diseñé completa yo en Figma, desde cero, la publiqué y le hice actualizaciones. Después se rehízo completa en WordPress y quedó mucho mejor, pero el esqueleto lo hice yo, por allá en 2020.',
 
     // Phone copy (see en).
     'shaper.problem.m':
@@ -275,7 +270,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Los comercios convierten lo que no vendieron en packs; tú apartas uno cerca y lo recoges en el local. Rediseñé la app e hice su web y sus paneles.',
     'work.maktub.m':
       'El sitio de un fondo que invierte en arte en Latinoamérica, en línea en un mes; su equipo lo edita todo sin código.',
-    'work.andreina.m': 'Un sitio en WordPress para una coach de productividad.',
     'events.title': 'Eventos',
     'events.hackathon': 'Hackathon',
     'events.alegria.when': 'oct 2025',
@@ -381,8 +375,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '我是 Salvalo 的联合创始人，这是我的创业公司。商家每天打烊时都有还能卖的商品，在 Salvalo 上把它们变成带价格和取货时间的组合包。顾客在应用的地图上找到附近的组合包，预订，直接付款给商家，再凭验证码取货。我常举的例子：一家面包店早上有 10 个 cachito，到下午 5 点还剩 3 个和 2 个法式面包，就把它们打包，用打烊折扣价出售。商家赢了，因为商品卖出去而不是浪费，还多了顾客，因为 Salvalo 是额外的销售渠道。顾客则在下午以优惠价、非常方便地买到早上那些 cachito。我是技术联合创始人：我重新设计了应用和网站，负责全部前端开发。我也是 Salvalo 在委内瑞拉的代表，所以会去向商家介绍，也代表 Salvalo 参加各种活动。',
     'work.maktub.body':
       'Maktub Art Fund 是一位来自墨西哥的客户。那是一个落地页，这类页面我很少感兴趣，但设计很漂亮，非常现代、非常时尚，所以我喜欢这个想法，就做了。成品也挺酷的。',
-    'work.andreina.body':
-      'Andreina Aular 的网站是我上完第一批编程课后做的第一个网站。它是用 WordPress 做的，但我从零开始在 Figma 里亲自完成了全部设计，把它上线并持续更新。后来它在 WordPress 里整个重做，变得好多了，但骨架是我在 2020 年做的。',
 
     // Phone copy (see en).
     'shaper.problem.m':
@@ -404,7 +396,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '商家把没卖完的商品做成套餐，你预订附近的一份、到店自取。我重新设计了应用，并打造了它的网站和后台。',
     'work.maktub.m':
       '一家投资拉丁美洲艺术的基金的网站，一个月上线；团队无需代码即可编辑全部内容。',
-    'work.andreina.m': '为一位效率教练打造的 WordPress 网站。',
     'events.title': '活动',
     'events.hackathon': '黑客松',
     'events.alegria.when': '2025 年 10 月',
