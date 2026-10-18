@@ -93,7 +93,7 @@ export const PROJECTS: DeckItem[] = [
     id: 'andreina',
     slug: 'andreina-aular',
     name: 'Andreina Aular',
-    meta: [[{ k: 'work.freelance' }], ['2021']],
+    meta: [[{ k: 'work.freelance' }], ['2020']],
     body: 'work.andreina.body',
     clip: 'work.andreina.body',
     image: '/media/work/andreina.jpg',
