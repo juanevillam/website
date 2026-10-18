@@ -10,6 +10,7 @@
  */
 import { createDeck, watchSlots, type Deck } from '../lib/deck';
 import { type ReadMark, readTokens } from '../lib/readAlong';
+import { dur } from '../lib/motion';
 
 // ---------- the controller ----------
 // The walk from the opener to the deck is a pure function of the scroll
@@ -261,7 +262,7 @@ const voiceBands = (half: number) => {
 };
 
 const listen = () => {
-  const talking = running && !voice.paused;
+  const talking = (running && !voice.paused) || demoPlaying();
   const bands = talking ? voiceBands(BANDS) : null;
   loudness = bands ? bands.reduce((a, b) => a + b, 0) / bands.length : 0;
   spectrum = bands ?? [];
@@ -324,7 +325,7 @@ const drawField = (now: number) => {
   if (!field || !narrator || narrator.hidden || reduceMotion) return;
   const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
   lastFrame = now;
-  const talking = running && !voice.paused;
+  const talking = (running && !voice.paused) || demoPlaying();
 
   // Quick enough to follow the voice, eased enough not to twitch.
   if (heard.length !== spectrum.length && spectrum.length)
@@ -335,7 +336,7 @@ const drawField = (now: number) => {
     heard[i] += d * (d > 0 ? 0.3 : 0.12);
   }
   tone += (brightness - tone) * 0.08;
-  presence += ((session && running ? 1 : 0) - presence) * 0.04;
+  presence += (((session && running) || demo ? 1 : 0) - presence) * 0.04;
   // They travel only on voice — a pause holds them where they are.
   travel += dt * 0.0024 * (0.1 + loudness);
 
@@ -765,6 +766,23 @@ const scrollToStep = (story: Story, index: number) => {
 // the render loop picks the voice up wherever it lands (`follow`).
 voice.addEventListener('ended', () => {
   if (!session || !running) return;
+  // The paragraph introduces a demo: it plays now, and the voice carries
+  // on past the paragraph once it ends.
+  const cue = cueOf(session.block.paras[session.para]);
+  if (cue?.dataset.songKey) {
+    running = false;
+    paint();
+    openDemo(cue.dataset.songKey, () => {
+      running = true;
+      carryOn();
+    });
+    return;
+  }
+  carryOn();
+});
+
+const carryOn = () => {
+  if (!session || !running) return;
   const { block, para } = session;
   // A shared address's modal tells its own thing and nothing past it: a
   // card opened alone ends with its clip, an app with its last card.
@@ -803,7 +821,7 @@ voice.addEventListener('ended', () => {
     else if (panels[0]) scrollToPanel(panels[0]);
     else stop();
   }
-});
+};
 
 // The box a panel owns on the page. Usually its section; a phone
 // story's two stops share one stuck screen, so each owns its STEP — the
@@ -885,55 +903,109 @@ narrator?.addEventListener('click', () => {
   if (block) start(block, Math.max(startOf(block), 0));
 });
 
-// ----- songs inside a take (lib/narration SONGS) -----
-// A take that plays a demo carries a line for the song under its paragraph:
-// tapped, it plays that paragraph's clip from where the song starts; it
-// lights up whenever the song is what is playing.
+// ----- songs a take introduces (lib/narration SONGS, SongDemo.astro) -----
+// A take that introduces a demo carries a line for the song under its
+// paragraph. The demo is a screen recording that plays over the page —
+// tapped from that line or from the app's welcome, or when the voice
+// finishes the paragraph — and is heard through the same graph as the
+// voice, so the waves along the foot draw it too.
 const cues = [...document.querySelectorAll<HTMLElement>('[data-song-cue]')];
 const paraOfCue = (cue: HTMLElement) =>
   cue.previousElementSibling as HTMLElement | null;
 
+let demo: {
+  key: string;
+  el: HTMLElement;
+  video: HTMLVideoElement;
+  /** What the voice does once it ends: carry on past the paragraph that
+   *  introduced it, pick up where it was paused, or nothing. */
+  then: (() => void) | null;
+} | null = null;
+const routed = new WeakSet<HTMLVideoElement>();
+const demoPlaying = () => !!demo && !demo.video.paused;
+
+const closeDemo = () => {
+  if (!demo) return;
+  const { el, video, then } = demo;
+  demo = null;
+  video.pause();
+  el.classList.remove('is-open');
+  document.documentElement.classList.remove('is-demo');
+  setTimeout(() => {
+    if (!demo || demo.el !== el) el.hidden = true;
+    video.currentTime = 0;
+  }, reduceMotion ? 0 : dur('turn'));
+  then?.();
+};
+
+const openDemo = (key: string, then: (() => void) | null) => {
+  const el = document.querySelector<HTMLElement>(`[data-song-demo="${key}"]`);
+  const video = el?.querySelector('video');
+  if (!el || !video) {
+    then?.();
+    return;
+  }
+  ensureGraph();
+  ctx?.resume();
+  if (ctx && analyser && !routed.has(video)) {
+    try {
+      ctx.createMediaElementSource(video).connect(analyser);
+      routed.add(video);
+    } catch {
+      /* heard straight from the element, without the waves */
+    }
+  }
+  demo = { key, el, video, then };
+  el.hidden = false;
+  document.documentElement.classList.add('is-demo');
+  requestAnimationFrame(() => el.classList.add('is-open'));
+  video.currentTime = 0;
+  video.play().catch(() => closeDemo());
+};
+
+/** Opened by hand: a running voice pauses for it and resumes after. */
+const openDemoByHand = (key: string) => {
+  const wasRunning = running;
+  if (running) pause();
+  openDemo(key, wasRunning ? resume : null);
+};
+
 for (const cue of cues)
   cue.addEventListener('click', () => {
-    const p = paraOfCue(cue);
-    const block = p && narrs.find(n => n.paras.includes(p));
-    if (!p || !block) return;
-    const at = Number(cue.dataset.songAt) || 0;
-    start(block, block.paras.indexOf(p));
-    const seek = () => {
-      voice.currentTime = at;
-    };
-    if (voice.readyState >= 1) seek();
-    else voice.addEventListener('loadedmetadata', seek, { once: true });
+    if (cue.dataset.songKey) openDemoByHand(cue.dataset.songKey);
   });
 
-// A link to a song from elsewhere (an app's welcome) plays it as its own
-// line would, which turns the deck to its card.
+// The same demo offered from elsewhere (an app's welcome).
 for (const link of document.querySelectorAll<HTMLElement>('[data-song-link]'))
-  link.addEventListener('click', () =>
-    cues
-      .find(cue => cue.dataset.songKey === link.dataset.songLink)
-      ?.click(),
-  );
+  link.addEventListener('click', () => {
+    if (link.dataset.songLink) openDemoByHand(link.dataset.songLink);
+  });
+
+for (const el of document.querySelectorAll<HTMLElement>('[data-song-demo]')) {
+  el.querySelector('video')?.addEventListener('ended', closeDemo);
+  el.querySelector('[data-song-demo-close]')?.addEventListener('click', closeDemo);
+  // Around the phone is the page, out of focus: a tap there closes it.
+  const stage = el.querySelector('[data-song-demo-stage]');
+  stage?.addEventListener('click', e => {
+    if (e.target === stage) closeDemo();
+  });
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && demo) {
+    e.stopImmediatePropagation();
+    closeDemo();
+  }
+}, { capture: true });
+
+/** The song's line, when the paragraph it belongs to is `p`. */
+const cueOf = (p: HTMLElement) =>
+  cues.find(cue => paraOfCue(cue) === p) ?? null;
 
 const updateCues = () => {
-  const p = session ? session.block.paras[session.para] : null;
   for (const cue of cues) {
-    const on =
-      running &&
-      !!p &&
-      paraOfCue(cue) === p &&
-      voice.currentTime >= Number(cue.dataset.songAt) - 0.2;
-    if (on === cue.classList.contains('is-playing')) continue;
-    cue.classList.toggle('is-playing', on);
-    // The line sits under the paragraph, often below its box's fold:
-    // bring it up as the song starts.
-    const box = cue.closest<HTMLElement>('[data-cap]');
-    if (on && box)
-      box.scrollTo({
-        top: box.scrollHeight,
-        behavior: reduceMotion ? 'auto' : 'smooth',
-      });
+    const on = !!demo && demo.key === cue.dataset.songKey;
+    if (on !== cue.classList.contains('is-playing'))
+      cue.classList.toggle('is-playing', on);
   }
 };
 

@@ -42,7 +42,7 @@ const en = {
     "Hi, I'm Juan Villa, a software developer. I build software the way I like to play video games: going for the platinum. Since 2022 I've worked remotely for companies in Mexico, and with clients in Spain and Argentina. I started out studying electronic engineering, then computer science at a technical college, but what taught me the most was building things. On this site you'll see apps made by me, for me, that are in the app stores too; my work; my startup, which right now is Salvalo; and the startup and developer events I've been to. The site is in Spanish, English and Chinese; you can switch it at the top right. The whole page is narrated and subtitles appear as the audio plays, so to read it you listen to it, though you can turn the volume down. And yes, this is my real voice, not AI. Welcome.",
   'footer.caption':
     "Well, thanks for listening. If you have any comments, you can message me on LinkedIn or Instagram. And I'm still building, and still going for the platinum.",
-  'song.listen': 'Listen to the Demo',
+  'song.listen': 'Watch the Demo',
   'song.teaser': 'Hear DÁKITI in Sound Shaper',
   'legal.terms': 'Terms and Conditions',
   'legal.privacy': 'Privacy Policy',
@@ -186,7 +186,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Hola, soy Juan Villa, desarrollador de software. Hago software como me gusta jugar videojuegos: yendo por el platino. Desde 2022 trabajo remoto para empresas en México y con clientes en España y Argentina. Empecé estudiando Ingeniería Electrónica, luego Técnico en Informática, pero lo que más me enseñó fue construir cosas. En esta página vas a ver aplicaciones hechas por mí, para mí, que también están en las tiendas; mi trabajo; mi startup, que en este momento es Salvalo, y los eventos de emprendimiento y desarrollo a los que he ido. La página está en español, inglés y chino; puedes cambiarla arriba a la derecha. Toda la página está narrada y los subtítulos aparecen mientras suena el audio, así que para leerla tienes que escucharla, aunque puedes bajarle el volumen. Y sí, esta es mi voz real, no es inteligencia artificial. Bienvenido.',
     'footer.caption':
       'Bueno, gracias por escucharme. Si tienes algún comentario, me puedes escribir por LinkedIn o por Instagram. Y yo sigo construyendo, y sigo yendo por el platino.',
-    'song.listen': 'Escuchar el demo',
+    'song.listen': 'Ver el demo',
     'song.teaser': 'Así suena DÁKITI en Sound Shaper',
     'legal.terms': 'Términos y condiciones',
     'legal.privacy': 'Política de privacidad',
@@ -317,7 +317,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '你好，我是 Juan Villa，一名软件开发者。我做软件，就像我玩电子游戏一样：目标是白金奖杯。从 2022 年起，我远程为墨西哥的公司工作，也有西班牙和阿根廷的客户。我先学了电子工程，后来又学了计算机技术，但教会我最多的，是动手做东西。在这个网站上，你会看到我为自己做的应用，它们也上架了应用商店；还有我的工作、我的创业公司 Salvalo，以及我参加过的创业和开发活动。这个网站有西班牙语、英语和中文，可以在右上角切换。整个页面都有旁白，声音播放时会出现字幕；想读内容就要听，不过你也可以把音量调低。没错，这是我真实的声音，不是人工智能。欢迎。',
     'footer.caption':
       '好了，谢谢你听我说。如果你有什么想法，可以在 LinkedIn 或 Instagram 上给我发消息。我还在继续做东西，也还在继续冲白金。',
-    'song.listen': '试听示例',
+    'song.listen': '观看示例',
     'song.teaser': '听听 DÁKITI 在 Sound Shaper 里的效果',
     'legal.terms': '条款与条件',
     'legal.privacy': '隐私政策',

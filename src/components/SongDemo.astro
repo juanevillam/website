@@ -1,0 +1,186 @@
+---
+import T from './T.astro';
+import { SONGS } from '../lib/narration';
+
+/**
+ * A SONG'S DEMO, over the whole page (Juan, 2026-10-17): the screen
+ * recording of Sound Shaper playing it while Juan shapes it, its sound
+ * captured from the app, not through a microphone. The page frosts behind
+ * it as it does behind a shared address's modal, the phone stands in the
+ * middle, and the waves along the foot of the screen draw its sound. It
+ * has no controls on purpose: it plays from the start to the end, and
+ * closing it is the only thing to do. director.ts opens it — from the
+ * song's line under its paragraph, from the app's welcome, and when the
+ * voice finishes the paragraph that introduces it.
+ */
+---
+
+{
+  Object.entries(SONGS).map(([key, song]) => (
+    <div
+      class="song-demo"
+      data-song-demo={key}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${song.title} · ${song.by}`}
+      hidden
+    >
+      <div class="demo-frost" />
+      <div class="demo-stage" data-song-demo-stage>
+      <video
+        class="demo-screen"
+        src={song.video}
+        poster={song.poster}
+        width={song.width}
+        height={song.height}
+        playsinline
+        preload="none"
+        disablepictureinpicture
+        tabindex="-1"
+      />
+      </div>
+      <button class="demo-close" type="button" data-song-demo-close>
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+          <path
+            d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span class="sr-only"><T k="focus.close" /></span>
+      </button>
+    </div>
+  ))
+}
+
+<style>
+  /* Three layers, so the waves along the foot (NarrationPlayer's field)
+     run between the frost and the phone, never across its screen: the
+     frost under them, the phone over them. The frost is the shared
+     address's modal's (global.css `[data-focused]::before`). */
+  .song-demo[hidden] {
+    display: none;
+  }
+
+  .demo-frost,
+  .demo-stage {
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--dur-turn) var(--ease);
+  }
+
+  .demo-frost {
+    z-index: 50;
+    background: color-mix(in srgb, var(--ground) 84%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .demo-stage {
+    z-index: 52;
+    display: grid;
+    place-items: center;
+  }
+
+  .is-open .demo-frost,
+  .is-open .demo-stage {
+    opacity: 1;
+  }
+
+  /* The phone: the stories' own picture of one (AppsShowcase `.shot`) —
+     an iPhone's corner, 14% of its width — tall enough to read, clear of
+     the close above it and of the waves below. */
+  .demo-screen {
+    --demo-h: min(calc(100svh - 2 * var(--header-h) - 14svh), 150vw);
+    height: var(--demo-h);
+    width: auto;
+    margin-bottom: 6svh;
+    border: 1px solid var(--hairline);
+    border-radius: calc(var(--demo-h) * 590 / 1278 * 0.14);
+    background: var(--surface);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    scale: 0.96;
+    transition: scale var(--dur-turn) var(--ease);
+  }
+
+  .is-open .demo-screen {
+    scale: 1;
+  }
+
+  /* On a phone the screen is all height: the phone stands a little
+     shorter and higher, so the waves still show under it. */
+  @media (max-width: 47.99rem) {
+    .demo-screen {
+      --demo-h: min(calc(78svh - 2 * var(--header-h)), 150vw);
+      margin-bottom: 12svh;
+    }
+  }
+
+  /* The modal's close (Landing `.focus-close`): round, on the header's
+     line, centred. */
+  .demo-close {
+    position: fixed;
+    z-index: 53;
+    top: var(--float-gap);
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: var(--float-h);
+    height: var(--float-h);
+    padding: 0;
+    color: var(--ink-2);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    transform: translateX(-50%);
+    cursor: pointer;
+    transition:
+      color var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease);
+  }
+
+  .demo-close:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* While it plays, the page holds still under it, the narrator steps
+     aside (the demo is not its to pause), and the waves come up over the
+     frost to draw the demo's sound. */
+  :global(html.is-demo) {
+    overflow: hidden;
+  }
+
+  :global(html.is-demo .narrator) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  :global(html.is-demo .nar-field) {
+    z-index: 51;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .demo-frost,
+    .demo-stage,
+    .demo-screen {
+      transition: none;
+    }
+  }
+</style>

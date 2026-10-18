@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Hero from './Hero.astro';
 import AppsShowcase from './AppsShowcase.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
+import SongDemo from './SongDemo.astro';
 import SiteFooter from './SiteFooter.astro';
 import WorkCarousel from './WorkCarousel.astro';
 import EventsDeck from './EventsDeck.astro';
@@ -66,6 +67,9 @@ const focus = page?.focus;
 
   <!-- The page's ONE narrator; it glides between the blocks' anchors. -->
   <NarrationPlayer />
+
+  <!-- A song's demo, over the whole page when it plays. -->
+  <SongDemo />
 </Base>
 
 <style>

@@ -207,9 +207,9 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         <T k={k} />
                       </p>
                       {SONGS[k] && (
-                        // The song in the take, as a line of its own: it
-                        // lights up while it plays and plays just the demo
-                        // when tapped (Juan, 2026-10-17).
+                        // The song the take introduces, as a line of its
+                        // own: tapped, its demo plays over the page, and it
+                        // lights up while it does (Juan, 2026-10-17).
                         <button
                           type="button"
                           class="song-cue"
@@ -217,7 +217,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                           style={`--i: ${i + 2}`}
                           data-song-cue
                           data-song-key={k}
-                          data-song-at={SONGS[k].at}
                         >
                           <svg class="song-note" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                             <path d="M6 12.5V3.5l7-1.5v9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -234,8 +233,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     </div>
                     {card.kind === 'welcome' && songOf(cards) && (
                       // The demo deep in the deck, offered up front: it is
-                      // too far in to be found (Juan, 2026-10-17). Tapped,
-                      // the deck turns to its card and plays it there.
+                      // too far in to be found (Juan, 2026-10-17).
                       <button
                         type="button"
                         class="song-cue song-teaser"

@@ -207,12 +207,31 @@ export const captionAttrs = (clipKey: string, textKey: string) => {
 };
 
 /**
- * Songs heard inside a take — a demo Juan plays through Sound Shaper while
- * he talks. From `at` seconds the clip is the song, so the paragraph shows
- * it as a line of its own (a note, the title, who it is by) that lights up
- * while it plays and can be tapped to hear just the demo.
+ * Songs a take introduces — a demo of Sound Shaper playing one while Juan
+ * shapes it. The demo is a SCREEN RECORDING with the app's own sound
+ * (2026-10-17; it used to be the song played through the microphone at
+ * the end of the take, cut off since). The paragraph shows the song as a
+ * line of its own (a note, the title, who it is by); tapped, or when the
+ * voice finishes the paragraph, the recording plays over the page
+ * (SongDemo.astro).
  */
-export const SONGS: Record<string, { at: number; title: string; by: string }> =
+export const SONGS: Record<
+  string,
   {
-    'shaper.s3.p2': { at: 47, title: 'DÁKITI', by: 'Bad Bunny, Jhayco' },
-  };
+    title: string;
+    by: string;
+    video: string;
+    poster: string;
+    width: number;
+    height: number;
+  }
+> = {
+  'shaper.s3.p2': {
+    title: 'DÁKITI',
+    by: 'Bad Bunny, Jhayco',
+    video: '/media/shaper/demo.mp4',
+    poster: '/media/shaper/demo-poster.jpg',
+    width: 590,
+    height: 1278,
+  },
+};
