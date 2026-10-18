@@ -43,6 +43,7 @@ const en = {
   'footer.caption':
     "Well, thanks for listening. If you have any comments, you can message me on LinkedIn or Instagram. And I'm still building, and still going for the platinum.",
   'song.listen': 'Listen to the Demo',
+  'song.teaser': 'Hear DÁKITI in Sound Shaper',
   'legal.terms': 'Terms and Conditions',
   'legal.privacy': 'Privacy Policy',
   'legal.support': 'Support',
@@ -186,6 +187,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'footer.caption':
       'Bueno, gracias por escucharme. Si tienes algún comentario, me puedes escribir por LinkedIn o por Instagram. Y yo sigo construyendo, y sigo yendo por el platino.',
     'song.listen': 'Escuchar el demo',
+    'song.teaser': 'Así suena DÁKITI en Sound Shaper',
     'legal.terms': 'Términos y condiciones',
     'legal.privacy': 'Política de privacidad',
     'legal.support': 'Soporte',
@@ -316,6 +318,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'footer.caption':
       '好了，谢谢你听我说。如果你有什么想法，可以在 LinkedIn 或 Instagram 上给我发消息。我还在继续做东西，也还在继续冲白金。',
     'song.listen': '试听示例',
+    'song.teaser': '听听 DÁKITI 在 Sound Shaper 里的效果',
     'legal.terms': '条款与条件',
     'legal.privacy': '隐私政策',
     'legal.support': '支持',

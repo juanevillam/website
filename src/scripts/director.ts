@@ -849,6 +849,11 @@ document.addEventListener('narr:select', e => {
   if (!session) return;
   const i = session.block.paras.indexOf(p);
   if (i < 0 || i === session.para) return;
+  // Turned to the card already being told (the deck following the voice,
+  // as a song's link makes it): the voice stays where it is.
+  const card = p.closest('.deck-card');
+  if (card && card === session.block.paras[session.para]?.closest('.deck-card'))
+    return;
   if (running) start(session.block, i);
   else {
     session = { block: session.block, para: i };
@@ -901,6 +906,15 @@ for (const cue of cues)
     if (voice.readyState >= 1) seek();
     else voice.addEventListener('loadedmetadata', seek, { once: true });
   });
+
+// A link to a song from elsewhere (an app's welcome) plays it as its own
+// line would, which turns the deck to its card.
+for (const link of document.querySelectorAll<HTMLElement>('[data-song-link]'))
+  link.addEventListener('click', () =>
+    cues
+      .find(cue => cue.dataset.songKey === link.dataset.songLink)
+      ?.click(),
+  );
 
 const updateCues = () => {
   const p = session ? session.block.paras[session.para] : null;
