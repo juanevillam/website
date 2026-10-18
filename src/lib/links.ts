@@ -67,11 +67,11 @@ const summary = (item: DeckItem) => {
   return text.length > 200 ? `${text.slice(0, 197).trimEnd()}…` : text;
 };
 
-/** The picture a preview shows: a capture, an event's first photo (a
+/** The picture a preview shows: a capture or an event's first photo (a
  *  video by its poster), or a screen of its own by its scene picture. */
 const pictureOf = (item: DeckItem) =>
   typeof item.image === 'string'
-    ? item.image
+    ? item.image.replace(/\.mp4$/, '.jpg')
     : Array.isArray(item.image)
       ? item.image[0].replace(/\.mp4$/, '.jpg')
       : (item.scene ?? '');

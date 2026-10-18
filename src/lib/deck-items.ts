@@ -29,7 +29,8 @@ export type DeckItem = {
   body: Rich;
   /** The body's narration clip, by convention (lib/narration). */
   clip: string;
-  /** One 3:2 capture, 1440 x 960 (a string); upright media (one, two
+  /** One 3:2 capture, 1440 x 960 (a string: a screenshot, or a silent
+   *  `.mp4` with its first frame beside it as `.jpg`); upright media (one, two
    *  or more — two frames, each cycling through its share); or a screen
    *  of its own, passed in as the named slot `{ slot }`. */
   image: string | Media[] | { slot: string };

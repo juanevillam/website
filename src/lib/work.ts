@@ -3,9 +3,12 @@ import type { DeckItem } from './deck-items';
 /**
  * More Work — the projects that are not the three stars, after the game.
  * SECONDARY on purpose: a panel deck (PanelDeck), smaller type than the
- * stories. Every screen is a plain screenshot of the project's site — for
- * Crol, scrolled to its section on the mobile app Juan built, since the
- * card is about the app and not the site (2026-10-02).
+ * stories. Every screen is the project's site, a silent recording of it
+ * being scrolled (2026-10-17: the stills read as the one slow panel on the
+ * page), or a plain screenshot where the site would not be recorded
+ * (Andreina Aular's turns a headless browser away). Crol's starts and ends
+ * on its section on the mobile app Juan built, since the card is about the
+ * app and not the site (2026-10-02).
  *
  * Job titles and project names stay as they are in every locale; roles
  * are keys. A screen opens the site it shows when clicked (`visit`).
@@ -21,7 +24,7 @@ export const PROJECTS: DeckItem[] = [
     meta: [[{ k: 'work.cofounder' }], ['2024', { k: 'work.present' }]],
     body: 'work.salvalo.body',
     clip: 'work.salvalo.body',
-    image: '/media/work/salvalo.jpg',
+    image: '/media/work/salvalo.mp4',
     visit: 'https://salvalo.app',
     links: [
       { label: 'salvalo.app', href: 'https://salvalo.app' },
@@ -42,7 +45,7 @@ export const PROJECTS: DeckItem[] = [
     meta: [['Lead Frontend Developer'], ['2022', { k: 'work.present' }]],
     body: { k: 'work.crol.body', links: { crol: 'https://www.crol.mx' } },
     clip: 'work.crol.body',
-    image: '/media/work/crol.jpg',
+    image: '/media/work/crol.mp4',
     visit: 'https://www.crol.mx',
     links: [
       {
@@ -85,7 +88,7 @@ export const PROJECTS: DeckItem[] = [
     meta: [[{ k: 'work.freelance' }], ['2026']],
     body: 'work.maktub.body',
     clip: 'work.maktub.body',
-    image: '/media/work/maktub.jpg',
+    image: '/media/work/maktub.mp4',
     visit: 'https://maktubartfund.com',
     links: [{ label: 'maktubartfund.com', href: 'https://maktubartfund.com' }],
   },

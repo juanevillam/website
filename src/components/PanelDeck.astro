@@ -92,7 +92,7 @@ const scenes = await Promise.all(
   items.map(p => {
     const src =
       typeof p.image === 'string'
-        ? p.image
+        ? still(p.image)
         : Array.isArray(p.image)
           ? p.image.map(still)
           : p.scene;
@@ -261,15 +261,32 @@ for (const p of items)
                     tabindex="-1"
                     aria-hidden="true"
                   >
-                    <img
-                      src={p.image}
-                      alt=""
-                      width="1440"
-                      height="960"
-                      loading="lazy"
-                      decoding="async"
-                      draggable="false"
-                    />
+                    {isVideo(p.image) ? (
+                      // The site being scrolled, silent: it plays from its
+                      // start while its card is in front (the script below).
+                      <video
+                        class="capture"
+                        src={p.image}
+                        poster={still(p.image)}
+                        width="1440"
+                        height="960"
+                        muted
+                        loop
+                        playsinline
+                        preload="none"
+                        disablepictureinpicture
+                      />
+                    ) : (
+                      <img
+                        src={p.image}
+                        alt=""
+                        width="1440"
+                        height="960"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                      />
+                    )}
                   </a>
                 ) : (
                   <img
@@ -562,7 +579,9 @@ for (const p of items)
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
   }
 
-  .screen img {
+  .screen img,
+  .screen .capture {
+    display: block;
     width: 100%;
     height: 100%;
     max-width: none;
@@ -1032,20 +1051,48 @@ for (const p of items)
           }
         })
       );
-    if (section && frames.some(c => c.length)) {
+    // A SITE BEING SCROLLED (a capture recorded as video) plays by the
+    // same rule as an event's video: only while its card is in front and
+    // the panel holds the screen, from its start, after the same two-beat
+    // wait; it loops. With reduced motion it stands as its first frame.
+    const captures = cards.map(card => card.querySelector<HTMLVideoElement>('video.capture'));
+    const captureTimers: number[] = [];
+    const syncCaptures = () =>
+      captures.forEach((v, i) => {
+        if (!v) return;
+        const on = seen && !document.hidden && i === deck.current && !still.matches;
+        if (on === !!v.dataset.on) return;
+        clearTimeout(captureTimers[i]);
+        if (on) {
+          v.dataset.on = '1';
+          v.preload = 'auto';
+          v.currentTime = 0;
+          captureTimers[i] = window.setTimeout(() => {
+            if (v.dataset.on) v.play().catch(() => {});
+          }, BEAT * 2);
+        } else {
+          delete v.dataset.on;
+          v.pause();
+        }
+      });
+    if (section && (frames.some(c => c.length) || captures.some(Boolean))) {
+      const both = () => {
+        sync();
+        syncCaptures();
+      };
       new IntersectionObserver(
         ([e]) => {
           seen = e.isIntersecting;
-          sync();
+          both();
         },
         // A band round the viewport's middle: the panel holds the screen.
         { rootMargin: '-45% 0px -45% 0px' }
       ).observe(section);
       cards.forEach(c =>
-        new MutationObserver(sync).observe(c, { attributes: true, attributeFilter: ['aria-hidden'] })
+        new MutationObserver(both).observe(c, { attributes: true, attributeFilter: ['aria-hidden'] })
       );
-      still.addEventListener('change', sync);
-      document.addEventListener('visibilitychange', sync);
+      still.addEventListener('change', both);
+      document.addEventListener('visibilitychange', both);
     }
 
     // WARM IT AHEAD (Juan, 2026-10-13): the panel's pictures are lazy, so
@@ -1075,6 +1122,7 @@ for (const p of items)
               const v = f.layers[0]?.querySelector('video');
               if (v && v.preload === 'none') v.preload = 'auto';
             }
+          for (const v of captures) if (v && v.preload === 'none') v.preload = 'auto';
         },
         { rootMargin: '200% 0px' }
       ).observe(section);
