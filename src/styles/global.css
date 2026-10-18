@@ -156,10 +156,11 @@
      between a floor that clears the pills and a ceiling for tall
      screens. */
   --stage-top: clamp(5.5rem, 21.5svh - 4rem, 9rem);
-  /* The foot mirrors the head (Juan, 2026-10-13): a deck's arrows stand
-     as far above the screen's bottom edge as the header's pills stand
-     below its top one. */
-  --stage-bottom: var(--float-gap);
+  /* A deck's arrows stand clear of the screen's bottom edge, a little
+     more on a taller screen. They used to mirror the header's pills at
+     1rem (2026-10-13), and in a Chrome window short of full screen that
+     put them where Juan could not see them (2026-10-18). */
+  --stage-bottom: clamp(2rem, 5svh, 3rem);
   /* The step between any two blocks: pitch → row, caption → row,
      row → foot. One value, everywhere. */
   --gap-block: 2.5rem;
