@@ -26,6 +26,12 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   the iPhone on the LAN) and `web-prod` (build + preview on :4322).
 - **Verify on a real iPhone** for anything scroll- or motion-coupled: the
   Mac's responsive mode runs on the Mac's GPU and hides compositing cost.
+- **The page must load light** (Juan, 2026-10-18): measured on the
+  production build it fetched 18.8 MB before anyone scrolled; it is ~2.3 MB
+  now. Videos never preload ahead — they load when their card plays them;
+  pictures ship at the size the page draws (WebP for screenshots, JPEG q80
+  for photos). Re-measure with a production build and a throttled phone
+  before adding media.
 - The audits are `.claude/commands/web-*.md`; their order and the ground
   rules they share are in [`docs/audit-playbook.md`](docs/audit-playbook.md).
   `/web-release-audit` runs before every deploy.
@@ -42,8 +48,11 @@ commit Cloudflare deployed.
 
 - **One snapped page**: hero → the apps (`AppsShowcase`, today only Sound
   Shaper) → More Work (`lib/work.ts`) → Events (`lib/events.ts`, newest
-  first) → footer. Both lists are `PanelDeck`s: one deck, one narrator, the
-  same controls. The phone layout is its own composition below 48rem.
+  first) → footer. More Work's screens are silent recordings of each
+  site being scrolled (~11 s, `public/media/work/*.mp4`, recorded with
+  headless Chromium); only the strongest projects stay — Andreina Aular's
+  was removed on 2026-10-18. Both lists are `PanelDeck`s: one deck, one
+  narrator, the same controls. The phone layout is its own composition below 48rem.
 - **Dark only.** Language is an in-place preference (`html[data-lang]`, en / es
   / zh), never a URL; a link may carry `?lang=` for that visit only, and with
   none the browser's language wins over English.
@@ -73,11 +82,17 @@ commit Cloudflare deployed.
     clips have no paragraph on screen, so their words (`hero.caption`,
     `footer.caption`) stand under the narrator, three lines at most, the
     line being said always the last, shown only while the voice plays.
-  - **A song inside a take is a line of its own** (`SONGS` in
+  - **A song a take introduces is a line of its own** (`SONGS` in
     `lib/narration.ts`): a note, the title and who it is by, under the
-    paragraph. It lights up while the song plays and plays just the demo when
-    tapped. Today that is DÁKITI in `shaper.s3.p2`, from 47 s — kept by
-    Juan's call, knowing it is a commercial recording on a public page.
+    paragraph. Its demo is NOT in the take any more (2026-10-18): it is
+    Juan's screen recording of Sound Shaper shaping the song, with the app's
+    own sound (`public/media/shaper/demo.mp4`), played over a frosted page
+    on a phone exactly the screenshots' size, with no controls; the waves
+    draw its sound (`SongDemo.astro`). The song's line, the welcome's
+    "Hear DÁKITI in Sound Shaper" link and the end of the take all open it,
+    and the voice carries on after it. Today that is DÁKITI in
+    `shaper.s3.p2` — kept by Juan's call, knowing it is a commercial
+    recording on a public page.
   - **The narrator is one fixed circle and never changes size**, and carries
     no controls of its own. A speed control and ten-second skips folded out
     of it for a day (2026-10-17) and were removed (Juan): the circle plays
