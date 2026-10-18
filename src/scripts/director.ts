@@ -766,13 +766,15 @@ const scrollToStep = (story: Story, index: number) => {
 // the render loop picks the voice up wherever it lands (`follow`).
 voice.addEventListener('ended', () => {
   if (!session || !running) return;
-  // The paragraph introduces a demo: it plays now, and the voice carries
-  // on past the paragraph once it ends.
-  const cue = cueOf(session.block.paras[session.para]);
-  if (cue?.dataset.songKey) {
+  // The paragraph introduces a demo (its own song line, or the pitch's
+  // close, `data-song-after`): it plays now, and the voice carries on
+  // past the paragraph once it ends.
+  const p = session.block.paras[session.para];
+  const song = p.dataset.songAfter ?? cueOf(p)?.dataset.songKey;
+  if (song) {
     running = false;
     paint();
-    openDemo(cue.dataset.songKey, () => {
+    openDemo(song, () => {
       running = true;
       carryOn();
     });

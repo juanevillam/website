@@ -202,6 +202,14 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         data-narr-para
                         data-card={c}
                         data-app={a}
+                        // The pitch's last paragraph ends on the demo:
+                        // when its take finishes, the song plays before
+                        // the first slide (Juan, 2026-10-18).
+                        data-song-after={
+                          card.kind === 'welcome' && i === card.paras.length - 1
+                            ? songOf(cards)
+                            : null
+                        }
                         {...voiceAttrs(k)}
                       >
                         <T k={k} />
