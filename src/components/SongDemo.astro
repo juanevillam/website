@@ -69,6 +69,9 @@ import { SONGS } from '../lib/narration';
     position: fixed;
     inset: 0;
     opacity: 0;
+  }
+
+  .demo-stage {
     transition: opacity var(--dur-turn) var(--ease);
   }
 
@@ -77,6 +80,31 @@ import { SONGS } from '../lib/narration';
     background: color-mix(in srgb, var(--ground) 84%, transparent);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      background-color var(--dur-turn) var(--ease);
+  }
+
+  /* THE FROST GOES SOLID ONCE IT HAS COME IN (Juan, 2026-10-18): over a
+     whole recording, Chrome now and then dropped the blurred layer for a
+     frame and the page flashed through, off and on. So the frost frosts
+     the page only on the way in and out; once the phone has landed it
+     eases to the plain ground, and then (director.ts, `is-demo-still`)
+     the page under it stops being drawn and the blur comes off — there
+     is nothing left behind to flash through, nor anything to blur. */
+  .is-still .demo-frost {
+    background-color: var(--ground);
+  }
+
+  :global(html.is-demo-still) .demo-frost {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  :global(html.is-demo-still .scene),
+  :global(html.is-demo-still .site-header),
+  :global(html.is-demo-still main > :not(.song-demo, .nar-field)) {
+    visibility: hidden;
   }
 
   .demo-stage {

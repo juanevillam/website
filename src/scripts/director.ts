@@ -924,15 +924,17 @@ let demo: {
   then: (() => void) | null;
 } | null = null;
 const routed = new WeakSet<HTMLVideoElement>();
+let stilling: ReturnType<typeof setTimeout> | undefined;
 const demoPlaying = () => !!demo && !demo.video.paused;
 
 const closeDemo = () => {
   if (!demo) return;
   const { el, video, then } = demo;
   demo = null;
+  clearTimeout(stilling);
   video.pause();
-  el.classList.remove('is-open');
-  document.documentElement.classList.remove('is-demo');
+  el.classList.remove('is-open', 'is-still');
+  document.documentElement.classList.remove('is-demo', 'is-demo-still');
   setTimeout(() => {
     if (!demo || demo.el !== el) el.hidden = true;
     video.currentTime = 0;
@@ -960,7 +962,21 @@ const openDemo = (key: string, then: (() => void) | null) => {
   demo = { key, el, video, then };
   el.hidden = false;
   document.documentElement.classList.add('is-demo');
-  requestAnimationFrame(() => el.classList.add('is-open'));
+  // Once the frost has come in it goes solid, and once it is solid the
+  // page under it stops being drawn (SongDemo.astro, `is-still`).
+  const turn = reduceMotion ? 0 : dur('turn');
+  clearTimeout(stilling);
+  requestAnimationFrame(() => {
+    if (demo?.el !== el) return;
+    el.classList.add('is-open');
+    stilling = setTimeout(() => {
+      el.classList.add('is-still');
+      stilling = setTimeout(
+        () => document.documentElement.classList.add('is-demo-still'),
+        turn,
+      );
+    }, turn);
+  });
   video.currentTime = 0;
   video.play().catch(() => closeDemo());
 };
