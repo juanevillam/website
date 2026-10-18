@@ -2,7 +2,7 @@
 import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
 import type { UIKey } from '../i18n/ui';
-import { clipFor, voiceAttrs } from '../lib/narration';
+import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 
 /**
@@ -76,6 +76,9 @@ const SOCIAL = [
             {...voiceAttrs('footer')}
           />
           <div class="narr-anchor" data-narr-anchor aria-hidden="true" />
+          <p class="narr-caption" data-narr-caption {...captionAttrs('footer', 'footer.caption')}>
+            <T k="footer.caption" />
+          </p>
         </>
       )}
     </div>
@@ -277,10 +280,20 @@ const SOCIAL = [
     top: 100%;
   }
 
+  /* The goodbye's words stand under the narrator, out of the flow. */
+  .lead .narr-caption {
+    left: 0;
+    top: calc(100% + var(--narrator-h) + 2.5rem);
+  }
+
   /* A phone's narrator stays in its corner; the anchor takes no room. */
   @media (max-width: 48rem) {
     .lead .narr-anchor {
       display: none;
+    }
+
+    .lead .narr-caption {
+      top: calc(100% + 1.5rem);
     }
   }
 

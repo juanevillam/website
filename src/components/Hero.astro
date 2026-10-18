@@ -1,6 +1,6 @@
 ---
 import T from './T.astro';
-import { clipFor, voiceAttrs } from '../lib/narration';
+import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 
 /**
@@ -40,12 +40,19 @@ const clip = clipFor('hero');
     </h1>
     {
       clip && (
-        <div
-          class="narr-anchor"
-          data-narr-anchor
-          data-narr-align="center"
-          aria-hidden="true"
-        />
+        <div class="narr-hold">
+          <div
+            class="narr-anchor"
+            data-narr-anchor
+            data-narr-align="center"
+            aria-hidden="true"
+          />
+          {/* The intro's words, three lines at a time while it plays
+              (Juan, 2026-10-17). Out of the flow, so the name never moves. */}
+          <p class="narr-caption" data-narr-caption {...captionAttrs('hero', 'hero.caption')}>
+            <T k="hero.caption" />
+          </p>
+        </div>
       )
     }
   </div>
@@ -70,6 +77,18 @@ const clip = clipFor('hero');
     .hero {
       padding-bottom: 8svh;
     }
+  }
+
+  .narr-hold {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .narr-hold .narr-caption {
+    left: 50%;
+    translate: -50% 0;
+    text-align: center;
   }
 
   .hero-inner {

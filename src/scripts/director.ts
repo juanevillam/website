@@ -482,15 +482,34 @@ let reading: {
 
 const endReading = () => {
   if (!reading) return;
-  reading.p.classList.remove('is-reading');
+  reading.p.classList.remove('is-reading', 'is-live');
   reading.box.classList.remove('is-read-along');
   for (const s of readCache.get(reading.root)?.spans ?? [])
     s.classList.remove('is-read');
   reading = null;
 };
 
-/** Keep the word being said in view inside its ten-line box. */
+/** Keep the word being said in view inside its ten-line box — or, in a
+ *  three-line caption, on its last line, so the caption rolls up a line
+ *  at a time as the voice goes on. */
 const keepInView = (span: HTMLElement) => {
+  const caption = span.closest<HTMLElement>('[data-narr-caption]');
+  if (caption) {
+    const b = caption.getBoundingClientRect();
+    const r = span.getBoundingClientRect();
+    const by =
+      r.bottom > b.bottom + 1
+        ? r.bottom - b.bottom
+        : r.top < b.top - 1
+          ? r.top - b.top
+          : 0;
+    if (by)
+      caption.scrollTo({
+        top: caption.scrollTop + by,
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
+    return;
+  }
   const box = span.closest<HTMLElement>('[data-cap]');
   if (!box || box.scrollHeight <= box.clientHeight + 2) return;
   const b = box.getBoundingClientRect();
@@ -505,11 +524,16 @@ const keepInView = (span: HTMLElement) => {
 const updateRead = () => {
   // Kept while paused, so the page holds its place; cleared when the
   // session ends or moves to the next paragraph.
-  const p =
+  const para =
     session && (running || voice.currentTime > 0)
       ? session.block.paras[session.para]
       : null;
-  if (!p || !readable(p)) {
+  // A clip with no paragraph on screen reads along in its block's caption.
+  const p =
+    para && !readable(para)
+      ? session!.block.el.querySelector<HTMLElement>('[data-narr-caption]')
+      : para;
+  if (!p) {
     endReading();
     return;
   }
@@ -518,11 +542,14 @@ const updateRead = () => {
   if (reading && (reading.p !== p || reading.root !== root)) endReading();
   const words = wordsOf(p, root, lang);
   if (!reading) {
-    const box = p.closest<HTMLElement>('[data-cap]') ?? p.parentElement ?? p;
+    const box = p.matches('[data-narr-caption]')
+      ? p
+      : (p.closest<HTMLElement>('[data-cap]') ?? p.parentElement ?? p);
     reading = { p, root, box, upTo: 0 };
     p.classList.add('is-reading');
     box.classList.add('is-read-along');
   }
+  p.classList.toggle('is-live', running);
   const t = voice.currentTime || 0;
   let upTo = 0;
   while (upTo < words.times.length && words.times[upTo] <= t) upTo++;
@@ -606,6 +633,7 @@ const placeNarrator = () => {
 
 const animateNarrator = (now: number) => {
   updateRead();
+  updateCues();
   placeNarrator();
   listen();
   drawField(now);
@@ -799,6 +827,49 @@ narrator?.addEventListener('click', () => {
   const block = showing ?? narrs[0];
   if (block) start(block, Math.max(startOf(block), 0));
 });
+
+// ----- songs inside a take (lib/narration SONGS) -----
+// A take that plays a demo carries a line for the song under its paragraph:
+// tapped, it plays that paragraph's clip from where the song starts; it
+// lights up whenever the song is what is playing.
+const cues = [...document.querySelectorAll<HTMLElement>('[data-song-cue]')];
+const paraOfCue = (cue: HTMLElement) =>
+  cue.previousElementSibling as HTMLElement | null;
+
+for (const cue of cues)
+  cue.addEventListener('click', () => {
+    const p = paraOfCue(cue);
+    const block = p && narrs.find(n => n.paras.includes(p));
+    if (!p || !block) return;
+    const at = Number(cue.dataset.songAt) || 0;
+    start(block, block.paras.indexOf(p));
+    const seek = () => {
+      voice.currentTime = at;
+    };
+    if (voice.readyState >= 1) seek();
+    else voice.addEventListener('loadedmetadata', seek, { once: true });
+  });
+
+const updateCues = () => {
+  const p = session ? session.block.paras[session.para] : null;
+  for (const cue of cues) {
+    const on =
+      running &&
+      !!p &&
+      paraOfCue(cue) === p &&
+      voice.currentTime >= Number(cue.dataset.songAt) - 0.2;
+    if (on === cue.classList.contains('is-playing')) continue;
+    cue.classList.toggle('is-playing', on);
+    // The line sits under the paragraph, often below its box's fold:
+    // bring it up as the song starts.
+    const box = cue.closest<HTMLElement>('[data-cap]');
+    if (on && box)
+      box.scrollTo({
+        top: box.scrollHeight,
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
+  }
+};
 
 const collect = (
   el: HTMLElement,

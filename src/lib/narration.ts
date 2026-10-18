@@ -130,11 +130,14 @@ const round = (t: number) => Math.round(t * 100) / 100;
 
 export const readTimings = (
   key: string,
+  /** The text read along, when it is not the clip's own key — a caption
+   *  under a block whose clip has no paragraph (the hero's, the footer's). */
+  textKey: string = key,
 ): Record<Locale, ReadMark[]> | undefined => {
   const spoken = spokenWords(key);
-  if (!spoken?.length || !(key in ui.es)) return undefined;
+  if (!spoken?.length || !(textKey in ui.es)) return undefined;
   const end = spoken.at(-1)!.t + 0.4;
-  const text = (l: Locale) => plainText(ui[l][key as UIKey]);
+  const text = (l: Locale) => plainText(ui[l][textKey as UIKey]);
 
   const esTokens = readTokens(text('es'));
   const esTimes = alignTimes(
@@ -188,3 +191,28 @@ export const voiceAttrs = (key: string) => {
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;
   return attrs;
 };
+
+/**
+ * A CAPTION'S timings (Juan, 2026-10-17): the hero and the footer carry a
+ * clip with no paragraph on screen, so their words stand in a caption under
+ * the narrator instead — three lines at most, shown only while the voice
+ * plays. Same read-along as a paragraph, timed on the block's own clip.
+ */
+export const captionAttrs = (clipKey: string, textKey: string) => {
+  const timings = readTimings(clipKey, textKey);
+  const attrs: Record<string, string | undefined> = {};
+  for (const l of locales)
+    attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;
+  return attrs;
+};
+
+/**
+ * Songs heard inside a take — a demo Juan plays through Sound Shaper while
+ * he talks. From `at` seconds the clip is the song, so the paragraph shows
+ * it as a line of its own (a note, the title, who it is by) that lights up
+ * while it plays and can be tapped to hear just the demo.
+ */
+export const SONGS: Record<string, { at: number; title: string; by: string }> =
+  {
+    'shaper.s3.p2': { at: 47, title: 'DÁKITI', by: 'Bad Bunny, Jhayco' },
+  };

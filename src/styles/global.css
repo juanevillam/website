@@ -477,6 +477,30 @@ html.is-focus {
   color: var(--ink);
 }
 
+/* A CAPTION under the narrator (the hero's intro, the footer's goodbye):
+   their clips have no paragraph on screen, so the words read along here
+   instead — three lines at most, the line being said always the last one
+   shown, and only while the voice plays (Juan, 2026-10-17). Out of the
+   flow, so nothing around it moves when it comes and goes. */
+.narr-caption {
+  position: absolute;
+  top: calc(100% + 1rem);
+  width: min(34rem, calc(100vw - 2.5rem));
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  line-height: 1.5;
+  max-height: calc(3 * 1.5em);
+  overflow: hidden;
+  color: var(--ink-waiting);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-quick) var(--ease);
+}
+
+.narr-caption.is-live {
+  opacity: 1;
+}
+
 /* Where the page's one narrator parks in a narrated block — it reserves
    the control's box so nothing reflows when it glides in (see
    NarrationPlayer). */
@@ -1111,5 +1135,66 @@ html.is-desk-safari .switcher {
 @media (max-width: 48rem) {
   .scene {
     display: none;
+  }
+}
+
+/* Read by a screen reader, never shown. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A SONG IN A TAKE (lib/narration SONGS): one quiet line under the
+   paragraph — a note, the title, who it is by — at the paragraph's own
+   waiting ink. It lights up while the song is playing and plays just the
+   demo when tapped. Not a button that looks like one: it is a credit
+   first, the way a film's subtitles mark music. */
+.song-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--ink-waiting);
+  cursor: pointer;
+  transition: color var(--dur-quick) var(--ease);
+}
+
+.song-cue:hover,
+.song-cue:focus-visible,
+.song-cue.is-playing {
+  color: var(--ink);
+}
+
+.song-title {
+  font-weight: 600;
+}
+
+.song-by::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.song-cue.is-playing .song-note {
+  animation: song-note 1.2s var(--ease) infinite alternate;
+}
+
+@keyframes song-note {
+  to {
+    translate: 0 -0.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .song-cue.is-playing .song-note {
+    animation: none;
   }
 }

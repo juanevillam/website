@@ -5,7 +5,7 @@ import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
 import type { UIKey } from '../i18n/ui';
 import type { AppStory } from '../lib/apps';
-import { clipFor, voiceAttrs } from '../lib/narration';
+import { clipFor, SONGS, voiceAttrs } from '../lib/narration';
 import { FOCUS_PAGES } from '../lib/links';
 import CopyLink from './CopyLink.astro';
 import { sceneAttr, sceneOf } from '../lib/scene';
@@ -190,6 +190,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     )}
                     <div class="desc" data-cap data-cap-phone={card.kind === 'welcome' ? 'fill' : '4'}>
                     {card.paras.map((k, i) => (
+                      <>
                       <p
                         class="body"
                         data-deck-part="text"
@@ -201,6 +202,29 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       >
                         <T k={k} />
                       </p>
+                      {SONGS[k] && (
+                        // The song in the take, as a line of its own: it
+                        // lights up while it plays and plays just the demo
+                        // when tapped (Juan, 2026-10-17).
+                        <button
+                          type="button"
+                          class="song-cue"
+                          data-deck-part="text"
+                          style={`--i: ${i + 2}`}
+                          data-song-cue
+                          data-song-at={SONGS[k].at}
+                        >
+                          <svg class="song-note" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                            <path d="M6 12.5V3.5l7-1.5v9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="4.25" cy="12.5" r="1.75" fill="currentColor" />
+                            <circle cx="11.25" cy="11" r="1.75" fill="currentColor" />
+                          </svg>
+                          <span class="song-title">{SONGS[k].title}</span>
+                          <span class="song-by">{SONGS[k].by}</span>
+                          <span class="visually-hidden"><T k="song.listen" /></span>
+                        </button>
+                      )}
+                      </>
                     ))}
                     </div>
                     {card.kind === 'welcome' && (

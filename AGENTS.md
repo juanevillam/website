@@ -69,6 +69,15 @@ commit Cloudflare deployed.
     word by word and the translations sentence by sentence (same sentence
     count, or it falls back to the whole clip) and emitted as
     `data-read-{lang}`. There are NO subtitles in the narrator any more.
+  - **The hero and the footer read along in a CAPTION** (2026-10-17): their
+    clips have no paragraph on screen, so their words (`hero.caption`,
+    `footer.caption`) stand under the narrator, three lines at most, the
+    line being said always the last, shown only while the voice plays.
+  - **A song inside a take is a line of its own** (`SONGS` in
+    `lib/narration.ts`): a note, the title and who it is by, under the
+    paragraph. It lights up while the song plays and plays just the demo when
+    tapped. Today that is DÁKITI in `shaper.s3.p2`, from 47 s — kept by
+    Juan's call, knowing it is a commercial recording on a public page.
   - **The narrator is one fixed circle and never changes size**, and carries
     no controls of its own. A speed control and ten-second skips folded out
     of it for a day (2026-10-17) and were removed (Juan): the circle plays

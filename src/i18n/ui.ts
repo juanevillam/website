@@ -38,6 +38,11 @@ const en = {
   'hero.hi': 'Hi',
   // The store tag's status while an app has no listing (StoreBadges).
   'store.soon': 'Coming Soon',
+  'hero.caption':
+    "Hi, I'm Juan Villa, a software developer. I build software the way I like to play video games: going for the platinum. Since 2022 I've worked remotely for companies in Mexico, and with clients in Spain and Argentina. I started out studying electronic engineering, then computer science at a technical college, but what taught me the most was building things. On this site you'll see apps made by me, for me, that are in the app stores too; my work; my startup, which right now is Salvalo; and the startup and developer events I've been to. The site is in Spanish, English and Chinese; you can switch it at the top right. The whole page is narrated and subtitles appear as the audio plays, so to read it you listen to it, though you can turn the volume down. And yes, this is my real voice, not AI. Welcome.",
+  'footer.caption':
+    "Well, thanks for listening. If you have any comments, you can message me on LinkedIn or Instagram. And I'm still building, and still going for the platinum.",
+  'song.listen': 'Listen to the Demo',
   'legal.terms': 'Terms and Conditions',
   'legal.privacy': 'Privacy Policy',
   'legal.support': 'Support',
@@ -68,7 +73,7 @@ const en = {
   'shaper.s3.p1':
     "This is where the name Sound Shaper comes from, from Shape: the app shapes sound. You have ready-made presets, a manual equalizer if you know more about music, and you can change the song's speed, slow or fast, however you like.",
   'shaper.s3.p2':
-    "Preserving the pitch was the most interesting thing to build. On YouTube, if you slow a song down, the voice sounds like slow motion. Here you can choose to keep it sounding the same, at the same pace as the beat. There are also effects like echo and next room, which you can combine so the music sounds like you're at a concert, in a concert's parking lot, or hearing the party your neighbor is throwing next door. And if you put on headphones and close your eyes, it really takes you there.",
+    "Preserving the pitch was the most interesting thing to build. On YouTube, if you slow a song down, the voice sounds like slow motion. Here you can choose to keep it sounding the same, at the same pace as the beat. There are also effects like echo and next room, which you can combine so the music sounds like you're at a concert, in a concert's parking lot, or hearing the party your neighbor is throwing next door. And if you put on headphones and close your eyes, it really takes you there. Here's a quick example of how DÁKITI sounds playing with the app's effects.",
   'shaper.s4.p1':
     "For Clips I took inspiration from Apple's Voice Memos app, the same app I used to record the ideas for this app and this page. You just pick the part of the song you like most, and that's it.",
   'shaper.s4.p2':
@@ -176,6 +181,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     pause: 'Pausar',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
+    'hero.caption':
+      'Hola, soy Juan Villa, desarrollador de software. Hago software como me gusta jugar videojuegos: yendo por el platino. Desde 2022 trabajo remoto para empresas en México y con clientes en España y Argentina. Empecé estudiando Ingeniería Electrónica, luego Técnico en Informática, pero lo que más me enseñó fue construir cosas. En esta página vas a ver aplicaciones hechas por mí, para mí, que también están en las tiendas; mi trabajo; mi startup, que en este momento es Salvalo, y los eventos de emprendimiento y desarrollo a los que he ido. La página está en español, inglés y chino; puedes cambiarla arriba a la derecha. Toda la página está narrada y los subtítulos aparecen mientras suena el audio, así que para leerla tienes que escucharla, aunque puedes bajarle el volumen. Y sí, esta es mi voz real, no es inteligencia artificial. Bienvenido.',
+    'footer.caption':
+      'Bueno, gracias por escucharme. Si tienes algún comentario, me puedes escribir por LinkedIn o por Instagram. Y yo sigo construyendo, y sigo yendo por el platino.',
+    'song.listen': 'Escuchar el demo',
     'legal.terms': 'Términos y condiciones',
     'legal.privacy': 'Política de privacidad',
     'legal.support': 'Soporte',
@@ -203,7 +213,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s3.p1':
       'De aquí viene el nombre de Sound Shaper, de Shape: la aplicación es un moldeador de sonidos. Tienes presets listos, ecualizador manual si sabes más de música, y puedes cambiar la velocidad de la canción, lenta o rápida, como tú quieras.',
     'shaper.s3.p2':
-      'Preservar el tono fue lo más curioso de construir. En YouTube, si pones una canción lenta, la voz suena en cámara lenta. Aquí puedes escoger que suene igual, al mismo pace que va el ritmo. También hay efectos como echo y next room, que puedes combinar para que la música suene como si estuvieses en un concierto, en el estacionamiento de un concierto o escuchando la fiesta que tiene tu vecino al lado de tu casa. Y si te pones audífonos y cierras los ojos, de verdad te teletransporta a ese momento.',
+      'Preservar el tono fue lo más curioso de construir. En YouTube, si pones una canción lenta, la voz suena en cámara lenta. Aquí puedes escoger que suene igual, al mismo pace que va el ritmo. También hay efectos como echo y next room, que puedes combinar para que la música suene como si estuvieses en un concierto, en el estacionamiento de un concierto o escuchando la fiesta que tiene tu vecino al lado de tu casa. Y si te pones audífonos y cierras los ojos, de verdad te teletransporta a ese momento. Aquí te dejo un ejemplo rápido de cómo suena DÁKITI jugando con los efectos de la aplicación.',
     'shaper.s4.p1':
       'Para Clips me inspiré en la aplicación de Notas de Voz de Apple, la misma app con la que grabé las ideas para crear esta aplicación y esta página. Simplemente escoges el pedazo de la canción que más te gusta y listo.',
     'shaper.s4.p2':
@@ -301,6 +311,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     pause: '暂停',
     'hero.hi': '你好',
     'store.soon': '即将推出',
+    'hero.caption':
+      '你好，我是 Juan Villa，一名软件开发者。我做软件，就像我玩电子游戏一样：目标是白金奖杯。从 2022 年起，我远程为墨西哥的公司工作，也有西班牙和阿根廷的客户。我先学了电子工程，后来又学了计算机技术，但教会我最多的，是动手做东西。在这个网站上，你会看到我为自己做的应用，它们也上架了应用商店；还有我的工作、我的创业公司 Salvalo，以及我参加过的创业和开发活动。这个网站有西班牙语、英语和中文，可以在右上角切换。整个页面都有旁白，声音播放时会出现字幕；想读内容就要听，不过你也可以把音量调低。没错，这是我真实的声音，不是人工智能。欢迎。',
+    'footer.caption':
+      '好了，谢谢你听我说。如果你有什么想法，可以在 LinkedIn 或 Instagram 上给我发消息。我还在继续做东西，也还在继续冲白金。',
+    'song.listen': '试听示例',
     'legal.terms': '条款与条件',
     'legal.privacy': '隐私政策',
     'legal.support': '支持',
@@ -328,7 +343,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s3.p1':
       'Sound Shaper 这个名字就来自这里，来自 Shape：这个应用是一个声音塑形器。有现成的预设，懂音乐的话可以手动调均衡器，还能改变歌曲的速度，慢或快，随你喜欢。',
     'shaper.s3.p2':
-      '保持原调是做起来最有意思的部分。在 YouTube 上，把歌曲放慢，人声听起来就像慢动作。在这里，你可以选择让它听起来一样，跟着节奏的速度。还有回声和 next room 这样的音效，可以组合起来，让音乐听起来像在演唱会现场、在演唱会的停车场，或者在听隔壁邻居家的派对。戴上耳机、闭上眼睛，它真的会把你带到那个时刻。',
+      '保持原调是做起来最有意思的部分。在 YouTube 上，把歌曲放慢，人声听起来就像慢动作。在这里，你可以选择让它听起来一样，跟着节奏的速度。还有回声和 next room 这样的音效，可以组合起来，让音乐听起来像在演唱会现场、在演唱会的停车场，或者在听隔壁邻居家的派对。戴上耳机、闭上眼睛，它真的会把你带到那个时刻。这里给你一个简短的例子，听听 DÁKITI 配上应用里的音效是什么效果。',
     'shaper.s4.p1':
       'Clips 的灵感来自 Apple 的语音备忘录，我正是用它录下了做这个应用和这个页面的想法。你只要选出歌曲里最喜欢的那一段，就好了。',
     'shaper.s4.p2':
