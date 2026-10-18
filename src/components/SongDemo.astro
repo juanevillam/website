@@ -90,16 +90,16 @@ import { SONGS } from '../lib/narration';
     opacity: 1;
   }
 
-  /* The phone: the stories' own picture of one (AppsShowcase `.shot`) —
-     an iPhone's corner, 14% of its width — tall enough to read, clear of
-     the close above it and of the waves below. */
+  /* The phone: EXACTLY the stories' picture of one (AppsShowcase
+     `.shot`, Juan, 2026-10-17) — the same height, the same corners — so
+     the recording reads as the screenshot coming to life, not a smaller
+     copy of it. Keep the two in step. */
   .demo-screen {
-    --demo-h: min(calc(100svh - 2 * var(--header-h) - 14svh), 150vw);
-    height: var(--demo-h);
+    height: calc(100svh - (var(--stage-top) - 1.5rem) - var(--stage-bottom) - 5rem);
     width: auto;
-    margin-bottom: 6svh;
     border: 1px solid var(--hairline);
-    border-radius: calc(var(--demo-h) * 590 / 1278 * 0.14);
+    border-radius: var(--media-radius) var(--media-radius)
+      calc(var(--media-radius) * 1.136) calc(var(--media-radius) * 1.136);
     background: var(--surface);
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),
@@ -113,12 +113,9 @@ import { SONGS } from '../lib/narration';
     scale: 1;
   }
 
-  /* On a phone the screen is all height: the phone stands a little
-     shorter and higher, so the waves still show under it. */
-  @media (max-width: 47.99rem) {
+  @media (max-width: 48rem) {
     .demo-screen {
-      --demo-h: min(calc(78svh - 2 * var(--header-h)), 150vw);
-      margin-bottom: 12svh;
+      height: min(112vw, calc(100svh - var(--stage-top) - 16rem));
     }
   }
 
