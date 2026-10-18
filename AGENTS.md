@@ -38,11 +38,17 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 
 ## Versions
 
-`package.json`'s `version` is the site's (`0.0.1` until launch). The first
-public deploy becomes `1.0.0` and is tagged `v1.0.0`; after that only a change
-a visitor would notice as new — a section, a redesign — bumps the minor or
-major and gets a tag. Fixes and copy edits deploy without one. Tags go on the
-commit Cloudflare deployed.
+**The site takes no tags and no GitHub Releases** (Juan, 2026-10-18). It is
+deployed continuously — every push to `main` is live on Cloudflare a minute
+later — so there is only ever one version of it, and the deploy history
+(Cloudflare's list and `git log`) is the record. A tag would mark a commit no
+visitor can tell from the next one. The one tag that exists, `v1.0.0`
+(2026-10-17), marks the public launch and stays; nothing follows it.
+`package.json`'s `version` stays at `1.0.0` and is not bumped.
+
+The apps are different on purpose: a store build is a frozen binary people keep
+installed, so each version they ship gets a tag and a Release — see the
+portfolio's `AGENTS.md` → "Release tags".
 
 ## What the site is
 
