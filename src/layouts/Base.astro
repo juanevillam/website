@@ -297,6 +297,9 @@ const url = new URL(path, Astro.site);
         const p = (e as CustomEvent<HTMLElement>).detail;
         const box = p?.closest<HTMLElement>('[data-cap]');
         if (!box || box === p) return;
+        // Scrolled by hand a moment ago (director.ts `hold`): left where
+        // the visitor put it.
+        if (Number(box.dataset.heldUntil) > Date.now()) return;
         const top =
           box.scrollTop +
           p.getBoundingClientRect().top -

@@ -489,10 +489,62 @@ const endReading = () => {
   reading = null;
 };
 
+/** A box the visitor scrolls by hand is theirs: the voice stops pulling it
+ *  back to the word being said (Juan, 2026-10-17 — following every word
+ *  made a long text impossible to read ahead in). The hold ends when the
+ *  word being said is back in view, or after a while with no scrolling.
+ *  Kept on the box as `data-held-until` so Base.astro's paragraph scroll
+ *  respects it too. */
+const HOLD_MS = 8000;
+const SCROLL_KEYS = new Set([
+  'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ',
+]);
+const scrollBoxOf = (t: EventTarget | null) =>
+  t instanceof Element
+    ? t.closest<HTMLElement>('[data-narr-caption], [data-cap]')
+    : null;
+const hold = (box: HTMLElement | null) => {
+  if (box) box.dataset.heldUntil = String(Date.now() + HOLD_MS);
+};
+const held = (box: HTMLElement) =>
+  Number(box.dataset.heldUntil) > Date.now();
+for (const type of ['wheel', 'touchmove'] as const)
+  document.addEventListener(type, e => hold(scrollBoxOf(e.target)), {
+    passive: true,
+    capture: true,
+  });
+document.addEventListener(
+  'keydown',
+  e => {
+    if (SCROLL_KEYS.has(e.key)) hold(scrollBoxOf(e.target));
+  },
+  { capture: true },
+);
+// A press on the box itself, not on its words, is its scrollbar.
+document.addEventListener(
+  'pointerdown',
+  e => {
+    const box = scrollBoxOf(e.target);
+    if (box && e.target === box) hold(box);
+  },
+  { capture: true },
+);
+
 /** Keep the word being said in view inside its ten-line box — or, in a
  *  three-line caption, on its last line, so the caption rolls up a line
- *  at a time as the voice goes on. */
+ *  at a time as the voice goes on. Not while the visitor holds the box —
+ *  until the word comes back into view on its own. */
 const keepInView = (span: HTMLElement) => {
+  const own = span.closest<HTMLElement>('[data-narr-caption], [data-cap]');
+  if (own && held(own)) {
+    const b = own.getBoundingClientRect();
+    const r = span.getBoundingClientRect();
+    // Back where the follow would keep it anyway, so letting go moves
+    // nothing.
+    const floor = own === span.closest('[data-narr-caption]') ? 0 : 0.25;
+    if (r.top < b.top || r.bottom > b.bottom - b.height * floor) return;
+    delete own.dataset.heldUntil;
+  }
   const caption = span.closest<HTMLElement>('[data-narr-caption]');
   if (caption) {
     const b = caption.getBoundingClientRect();
