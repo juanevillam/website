@@ -30,7 +30,7 @@ export type ScriptClip = {
   draft?: string;
 };
 
-const shot = (app: string, name: string) => `/media/${app}/${name}.png`;
+const shot = (app: string, name: string) => `/media/${app}/${name}.webp`;
 
 export const SCRIPTS_ES: ScriptClip[] = [
   {

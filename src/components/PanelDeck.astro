@@ -1097,10 +1097,11 @@ for (const p of items)
 
     // WARM IT AHEAD (Juan, 2026-10-13): the panel's pictures are lazy, so
     // the first arrival showed an empty frame while they loaded. Once the
-    // page has settled, every picture is fetched in the background; and
-    // two screens before the panel scrolls in, each card's first video
-    // starts to load — a screen ahead was not always enough on a quick
-    // snap down the page.
+    // page has settled, every picture is fetched in the background — a
+    // video's poster among them, which is what stands in its frame first.
+    // The VIDEOS are not (2026-10-17): warming every card's first video
+    // fetched 12.5 MB before anyone scrolled. A video loads when its card
+    // plays it, inside the two beats it stands still anyway.
     if (section) {
       const warmPictures = () => {
         for (const img of section.querySelectorAll<HTMLImageElement>('img[loading="lazy"]'))
@@ -1117,12 +1118,6 @@ for (const p of items)
           if (!e.isIntersecting) return;
           io.disconnect();
           warmPictures();
-          for (const card of frames)
-            for (const f of card) {
-              const v = f.layers[0]?.querySelector('video');
-              if (v && v.preload === 'none') v.preload = 'auto';
-            }
-          for (const v of captures) if (v && v.preload === 'none') v.preload = 'auto';
         },
         { rootMargin: '200% 0px' }
       ).observe(section);

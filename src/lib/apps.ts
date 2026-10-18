@@ -39,9 +39,11 @@ const shots = (
   entries: [name: string, title: string, paras: UIKey[]][],
 ): AppSlide[] =>
   entries.map(([name, title, paras]) => ({
-    src: `/media/${app}/${name}.png`,
-    width: 1179,
-    height: 2556,
+    // WebP at the size the page ever draws (2026-10-17): the 1179 x 2556
+    // PNGs weighed 1.4 MB each and were most of the page's first load.
+    src: `/media/${app}/${name}.webp`,
+    width: 830,
+    height: 1800,
     title,
     paras,
   }));
