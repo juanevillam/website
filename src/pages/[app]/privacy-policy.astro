@@ -17,7 +17,9 @@ const books = app.content === 'books';
 const sounds = app.content === 'sounds';
 // Every claim here is checked against the apps' own code — see each app's
 // services/firebase (what is stored), useDeleteAccount (what deletion
-// removes) and firebase.json (Crashlytics). Change the app, change this.
+// removes), firebase.json (Crashlytics) and, for Sound Shaper,
+// services/firebase/analytics.ts (the only usage counts any app sends).
+// Change the app, change this.
 ---
 
 <Prose
@@ -34,7 +36,7 @@ const sounds = app.content === 'sounds';
         {app.name} is built and operated by {AUTHOR_FULL_NAME} ("I", "me").
         This policy says what data the app handles, where it lives, and how
         you remove it. The short version: the app collects the minimum it
-        needs to work, shows no ads, runs no analytics or tracking, and never
+        needs to work, shows no ads, {sounds ? 'counts which parts of it are used without knowing who uses them, tracks nothing' : 'runs no analytics or tracking'}, and never
         sells data.
         {app.publisher && (
           <>
@@ -97,6 +99,17 @@ const sounds = app.content === 'sounds';
           installation. Reports aren't linked to your account and are used
           only to fix bugs.
         </li>
+        {sounds && (
+          <li>
+            <strong>Usage counts.</strong> Which screens are opened, and when
+            a sound is added or played, a shape is opened, a clip is saved or
+            a trophy is earned — with your device model, its system version,
+            the app version and a random ID for this installation. Never your
+            sounds' titles or anything you type. These counts aren't linked
+            to your account, use no advertising ID, and are used only to
+            learn which parts of the app matter.
+          </li>
+        )}
         <li>
           <strong>Account ID.</strong> A random ID that ties your data to your
           account, so only you can reach it.
@@ -106,8 +119,8 @@ const sounds = app.content === 'sounds';
       <h2>Where it lives</h2>
       <ul>
         <li>
-          <strong>Google Firebase</strong> — sign-in, the app's database, and
-          crash reports (Crashlytics). No other account can read your
+          <strong>Google Firebase</strong> — sign-in, the app's database,
+          crash reports (Crashlytics){sounds && ', usage counts (Google Analytics for Firebase), and a check that requests come from the real app on a real device (App Check)'}. No other account can read your
           data there.
         </li>
         <li>
@@ -116,7 +129,7 @@ const sounds = app.content === 'sounds';
         </li>
         <li>
           <strong>Cloudflare</strong> — a small service of mine that deletes
-          your files from Cloudinary when you remove them. It checks that the
+          your files from Cloudinary when you remove them{sounds && ', and approves each upload into your folder'}. It checks that the
           request comes from your account and keeps none of your content;
           Cloudflare keeps a short log of each request for a few days.
         </li>
@@ -140,7 +153,7 @@ const sounds = app.content === 'sounds';
       <p>
         Only to run the app: signing you in, storing your {app.content},
         syncing them to your devices{social ? ', showing what you make public to other people' : ''},
-        and fixing crashes. There is no advertising, no analytics, no tracking
+        and fixing crashes{sounds && ', and counting which parts of it are used'}. There is no advertising{sounds ? '' : ', no analytics'}, no tracking
         across apps, and no sale or sharing of personal data with anyone
         beyond the services above.
       </p>
@@ -148,7 +161,7 @@ const sounds = app.content === 'sounds';
       <h2>How long it's kept</h2>
       <p>
         Your account and your {app.content} are kept until you delete them.
-        Crash reports are kept for 90 days. Deleting your account removes
+        Crash reports are kept for 90 days{sounds && ', usage counts for 2 months'}. Deleting your account removes
         everything right away, as described below.
       </p>
 
@@ -213,7 +226,7 @@ const sounds = app.content === 'sounds';
         {app.name} la hace y la opera {AUTHOR_FULL_NAME} ("yo"). Esta
         política explica qué datos maneja la app, dónde se guardan y cómo
         eliminarlos. En resumen: la app recopila lo mínimo que necesita para
-        funcionar, no muestra anuncios, no usa analítica ni rastreo y nunca
+        funcionar, no muestra anuncios, {sounds ? 'cuenta qué partes se usan sin saber quién las usa, no rastrea nada' : 'no usa analítica ni rastreo'} y nunca
         vende datos.
         {app.publisher && (
           <>
@@ -278,6 +291,18 @@ const sounds = app.content === 'sounds';
           instalación. Los informes no están vinculados a tu cuenta y solo se
           usan para corregir errores.
         </li>
+        {sounds && (
+          <li>
+            <strong>Recuentos de uso.</strong> Qué pantallas se abren, y
+            cuándo se añade o reproduce un sonido, se abre Moldear, se
+            guarda un clip o se gana un trofeo, con el modelo de tu
+            dispositivo, su versión del sistema, la versión de la app y un
+            identificador aleatorio de esta instalación. Nunca los títulos de
+            tus sonidos ni nada que escribas. Estos recuentos no están
+            vinculados a tu cuenta, no usan ningún identificador publicitario
+            y solo sirven para saber qué partes de la app importan.
+          </li>
+        )}
         <li>
           <strong>Identificador de cuenta.</strong> Un identificador aleatorio
           que vincula tus datos a tu cuenta, para que solo tú puedas acceder a
@@ -289,7 +314,7 @@ const sounds = app.content === 'sounds';
       <ul>
         <li>
           <strong>Google Firebase</strong>: el inicio de sesión, la base de
-          datos de la app y los informes de errores (Crashlytics). Ninguna otra
+          datos de la app{sounds ? ', los informes de errores (Crashlytics), los recuentos de uso (Google Analytics para Firebase) y una comprobación de que las solicitudes vienen de la app real en un dispositivo real (App Check)' : ' y los informes de errores (Crashlytics)'}. Ninguna otra
           cuenta puede leer tus datos ahí.
         </li>
         <li>
@@ -298,7 +323,7 @@ const sounds = app.content === 'sounds';
         </li>
         <li>
           <strong>Cloudflare</strong>: un pequeño servicio mío que elimina tus
-          archivos de Cloudinary cuando los quitas. Comprueba que la solicitud
+          archivos de Cloudinary cuando los quitas{sounds && ' y aprueba cada subida a tu carpeta'}. Comprueba que la solicitud
           viene de tu cuenta y no conserva nada de tu contenido; Cloudflare
           guarda un breve registro de cada solicitud durante unos días.
         </li>
@@ -322,7 +347,7 @@ const sounds = app.content === 'sounds';
       <p>
         Solo para que la app funcione: iniciar tu sesión, guardar tus{' '}
         {app.contentEs}, sincronizarlos con tus dispositivos{social ? ', mostrar a otras personas lo que haces público' : ''}
-        y corregir errores. No hay publicidad, ni analítica, ni rastreo entre
+        y corregir errores{sounds && ', además de contar qué partes se usan'}. No hay publicidad{sounds ? '' : ', ni analítica'}, ni rastreo entre
         apps, ni venta o cesión de datos personales a nadie más allá de los
         servicios anteriores.
       </p>
@@ -330,7 +355,7 @@ const sounds = app.content === 'sounds';
       <h2>Cuánto tiempo se conserva</h2>
       <p>
         Tu cuenta y tus {app.contentEs} se conservan hasta que los eliminas.
-        Los informes de errores se conservan 90 días. Eliminar tu cuenta lo
+        Los informes de errores se conservan 90 días{sounds && ', y los recuentos de uso, 2 meses'}. Eliminar tu cuenta lo
         borra todo de inmediato, como se explica abajo.
       </p>
 
@@ -392,7 +417,7 @@ const sounds = app.content === 'sounds';
 
     <Fragment slot="zh">
       <p>
-        {app.name} 由 {AUTHOR_FULL_NAME}（“我”）打造和运营。本政策说明应用处理哪些数据、数据存储在哪里，以及如何删除。简而言之：应用只收集运行所需的最少数据，不展示广告，不做分析或追踪，也从不出售数据。{app.publisher && `${app.name} 在 App Store 上由 ${app.publisher} 发布，${app.publisher} 仅负责分发，不会收到你的任何数据。`}
+        {app.name} 由 {AUTHOR_FULL_NAME}（“我”）打造和运营。本政策说明应用处理哪些数据、数据存储在哪里，以及如何删除。简而言之：应用只收集运行所需的最少数据，不展示广告，{sounds ? '只统计哪些功能被使用而不知道是谁在使用，不做任何追踪' : '不做分析或追踪'}，也从不出售数据。{app.publisher && `${app.name} 在 App Store 上由 ${app.publisher} 发布，${app.publisher} 仅负责分发，不会收到你的任何数据。`}
       </p>
 
       <h2>应用收集的内容</h2>
@@ -418,6 +443,11 @@ const sounds = app.content === 'sounds';
         <li>
           <strong>崩溃报告。</strong>应用崩溃或出错时，会发送一份报告，包含出错内容、设备型号、系统版本、应用版本和本次安装的随机标识符。报告不与你的账户关联，仅用于修复问题。
         </li>
+        {sounds && (
+          <li>
+            <strong>使用统计。</strong>打开了哪些屏幕，以及何时添加或播放音频、打开均衡器、存储片段或获得奖杯，连同设备型号、系统版本、应用版本和本次安装的随机标识符。绝不包括音频的标题或你输入的任何内容。这些统计不与你的账户关联，不使用任何广告标识符，仅用于了解应用的哪些部分最重要。
+          </li>
+        )}
         <li>
           <strong>账户标识符。</strong>一个将你的数据与账户关联的随机标识符，确保只有你能访问这些数据。
         </li>
@@ -426,13 +456,13 @@ const sounds = app.content === 'sounds';
       <h2>存储位置</h2>
       <ul>
         <li>
-          <strong>Google Firebase</strong>——登录、应用的数据库和崩溃报告（Crashlytics）。其他账户无法读取你在那里的数据。
+          <strong>Google Firebase</strong>——登录、应用的数据库{sounds ? '、崩溃报告（Crashlytics）、使用统计（Google Analytics for Firebase），以及确认请求来自真实设备上的正版应用的检查（App Check）' : '和崩溃报告（Crashlytics）'}。其他账户无法读取你在那里的数据。
         </li>
         <li>
           <strong>Cloudinary</strong>——你上传的{social ? '图片' : books ? '封面' : '音频、插图和你的头像'}，存放在与你的账户绑定的文件夹中。
         </li>
         <li>
-          <strong>Cloudflare</strong>——我的一个小型服务，在你移除文件时将其从 Cloudinary 删除。它会确认请求来自你的账户，不保留你的任何内容；Cloudflare 会将每个请求的简短日志保留几天。
+          <strong>Cloudflare</strong>——我的一个小型服务，在你移除文件时将其从 Cloudinary 删除{sounds && '，并批准每次上传到你的文件夹'}。它会确认请求来自你的账户，不保留你的任何内容；Cloudflare 会将每个请求的简短日志保留几天。
         </li>
         <li>
           <strong>你的设备</strong>——{
@@ -450,12 +480,12 @@ const sounds = app.content === 'sounds';
 
       <h2>用途</h2>
       <p>
-        仅用于运行应用：让你登录、存储你的{app.contentZh}、将其同步到你的设备{social ? '、向其他人展示你公开的内容' : ''}，以及修复崩溃。没有广告，没有分析，没有跨应用追踪，除上述服务外，也不会向任何人出售或共享个人数据。
+        仅用于运行应用：让你登录、存储你的{app.contentZh}、将其同步到你的设备{social ? '、向其他人展示你公开的内容' : ''}，以及修复崩溃{sounds && '，并统计哪些功能被使用'}。没有广告，{sounds ? '' : '没有分析，'}没有跨应用追踪，除上述服务外，也不会向任何人出售或共享个人数据。
       </p>
 
       <h2>保留期限</h2>
       <p>
-        你的账户和{app.contentZh}会一直保留，直到你将其删除。崩溃报告保留 90 天。删除账户会立即删除所有内容，详见下文。
+        你的账户和{app.contentZh}会一直保留，直到你将其删除。崩溃报告保留 90 天{sounds && '，使用统计保留 2 个月'}。删除账户会立即删除所有内容，详见下文。
       </p>
 
       <h2>你的选择</h2>
