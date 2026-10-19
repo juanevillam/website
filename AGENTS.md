@@ -38,17 +38,24 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 
 ## Versions
 
-**The site takes no tags and no GitHub Releases** (Juan, 2026-10-18). It is
-deployed continuously — every push to `main` is live on Cloudflare a minute
-later — so there is only ever one version of it, and the deploy history
-(Cloudflare's list and `git log`) is the record. A tag would mark a commit no
-visitor can tell from the next one. The one tag that exists, `v1.0.0`
-(2026-10-17), marks the public launch and stays; nothing follows it.
-`package.json`'s `version` stays at `1.0.0` and is not bumped.
+**Every push a visitor can see gets a tag and a GitHub Release** (Juan,
+2026-10-18). `package.json`'s `version` is the site's; it went `1.0.0` at the
+public launch (`v1.0.0`, 2026-10-17).
 
-The apps are different on purpose: a store build is a frozen binary people keep
-installed, so each version they ship gets a tag and a Release — see the
-portfolio's `AGENTS.md` → "Release tags".
+- **Bump by what a visitor notices.** Minor (`1.1.0`) for something new or gone
+  — a section, a demo, a project added or removed, a redesign. Patch
+  (`1.1.1`) for fixes, copy, performance. Docs- and tooling-only pushes take
+  no version and no tag.
+- **One tag per push, not per commit.** Bump `version` in a last
+  `chore(release): vX.Y.Z` commit and tag THAT commit — it is the one
+  Cloudflare deploys — then push the commits and the tag together.
+- **Every tag becomes a GitHub Release** the same day, notes from
+  `/release-notes` (what changed for a visitor, Apple voice, no engineering
+  detail).
+
+The apps follow the same idea with one difference: a store build waits for
+review, so its tag is made at submit and its Release when a store approves —
+see the portfolio's `AGENTS.md` → "Release tags".
 
 ## What the site is
 
