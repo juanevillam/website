@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 import sharp from 'sharp';
 
@@ -116,7 +116,9 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
   let pixels = 0;
   let chromatic = 0;
   for (const s of srcs) {
-    const file = fileURLToPath(new URL(`../../public${s}`, import.meta.url));
+    // From the project root, not import.meta.url: the build runs this from a
+    // bundled chunk whose depth under dist/ is the bundler's to choose.
+    const file = path.join(process.cwd(), 'public', s);
     const { data, info } = await sharp(file)
       .resize(64, 64, { fit: 'inside' })
       .removeAlpha()
