@@ -14,13 +14,24 @@ export default defineConfig({
   // that address. The default `{path}/index.html` would cost every one of
   // them a redirect to a slashed twin that names a different URL.
   build: { format: 'file' },
+  // Astro 7 changed the default to 'jsx', which drops the whitespace between
+  // inline elements (`a <em>b</em>` → `a<em>b</em>`) and so changes copy on
+  // the page. `true` is the minification the site was written against.
+  compressHTML: true,
   // Off in the CONFIG, not in `astro preferences` — that one lives in
   // .astro/settings.json, which any cache clear wipes, and the toolbar
   // came back twice that way.
   devToolbar: { enabled: false },
   // Dev only: the teleprompter's save button (pages/dev). `apply: 'serve'`
   // keeps it out of the build.
-  vite: { plugins: [narrationRecorder()] },
+  vite: {
+    plugins: [narrationRecorder()],
+    // Vite 8 minifies CSS with Lightning CSS, which folds
+    // `backdrop-filter` + `-webkit-backdrop-filter` into the prefixed one
+    // alone — Chrome then draws no frost behind a modal. esbuild is the
+    // minifier the site was built and measured with.
+    build: { cssMinify: 'esbuild' },
+  },
   // Dev only: let a launcher hand the server a free port (PORT env);
   // Astro itself doesn't read PORT. Production is static output.
   server: ({ command }) =>
