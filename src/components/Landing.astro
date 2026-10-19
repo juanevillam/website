@@ -117,6 +117,15 @@ const focus = page?.focus;
     opacity: 0;
     pointer-events: none;
   }
+
+  /* Closing: it leaves WITH the modal's content, on the same turn,
+     instead of standing at full ink (hovered, even) until the turn ends
+     and then blinking out on its own. */
+  :global(html.is-unfocusing) .focus-close {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-turn) var(--ease);
+  }
 </style>
 
 <script>
