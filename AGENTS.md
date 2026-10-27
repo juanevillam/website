@@ -35,12 +35,10 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 - `npm run backup` mirrors everything that is not code — the site's
   media, Juan's raw narration takes, the transcripts, every text in each
   language and the scripts — to iCloud Drive (`Life/juanevillam-website`,
-  `BACKUP_DIR` elsewhere), and copies this repo's gitignored `masters/`
-  (an event's originals at full quality, `masters/events/{slug}/`, named
-  like the site's copies) without ever deleting one. File a new event's
-  originals there before trashing them from Downloads. The More of Me
-  originals live in iCloud Drive's `Life/` (cosmos, paintings, the games),
-  which `npm run likes` reads.
+  `BACKUP_DIR` elsewhere). The site's copies are the masters: Juan keeps
+  no originals of the events (a video's sound is gone once it is made
+  silent). The More of Me originals live in iCloud Drive's `Life/`
+  (cosmos, paintings, the games), which `npm run likes` reads.
 - One dev server at a time. `.claude/launch.json`: `web` (dev, `--host` for
   the iPhone on the LAN) and `web-prod` (build + preview on :4322).
 - **Verify on a real iPhone** for anything scroll- or motion-coupled: the

@@ -4,23 +4,18 @@
 //
 //   <to>/
 //     media/          every picture, video and narration clip the site serves
-//                     (public/media), at the quality it ships
+//                     (public/media), exactly as it ships — the copies ARE
+//                     the masters: the originals are gone (Juan, 2026-10-27),
+//                     and a video's sound was taken out when it was made
 //     narration/
 //       takes/        Juan's raw takes as recorded, and the clips they
 //                     replaced (narration-takes/, never in git)
 //       transcripts/  each clip's subtitles (.vtt) and word timings (.json)
 //     texts/          every line of the site in each language (en.md, es.md,
 //                     zh.md) and the narration scripts (scripts.md)
-//     masters/        the originals at full quality — the 4K videos, the
-//                     HEICs, the screenshots — from this repo's `masters/`
-//                     folder (gitignored: far too big for git), by event
 //
 // It MIRRORS: a file changed on the site is copied again, one removed from
-// the site is removed from the backup — except `masters/`, which only ever
-// gains files: an original is never deleted from the backup. BACKUP_DIR
-// points elsewhere. (The space photos, paintings and game screenshots'
-// originals already live in iCloud Drive's Life folder, where `npm run
-// likes` reads them; they are not copied twice.)
+// the site is removed from the backup. BACKUP_DIR points elsewhere.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -32,13 +27,13 @@ const TO =
   process.env.BACKUP_DIR ??
   path.join(os.homedir(), 'Library/Mobile Documents/com~apple~CloudDocs/Life/juanevillam-website');
 
-const mirror = (from, to, { keep = false } = {}) => {
+const mirror = (from, to) => {
   if (!fs.existsSync(from)) return;
   fs.mkdirSync(to, { recursive: true });
-  // rsync: only what changed; --delete keeps the copy an exact mirror,
-  // except where it must keep everything (`keep`, the originals).
-  const flags = ['-a', '--exclude', '.DS_Store', ...(keep ? [] : ['--delete'])];
-  execFileSync('rsync', [...flags, `${from}/`, `${to}/`], { stdio: 'inherit' });
+  // rsync: only what changed, and --delete keeps the copy an exact mirror.
+  execFileSync('rsync', ['-a', '--delete', '--exclude', '.DS_Store', `${from}/`, `${to}/`], {
+    stdio: 'inherit',
+  });
 };
 
 // ---------- media and narration ----------
@@ -82,6 +77,5 @@ for (const clip of SCRIPTS_ES) {
 }
 fs.writeFileSync(path.join(texts, 'scripts.md'), scripts.join('\n'));
 
-mirror(path.join(ROOT, 'masters'), path.join(TO, 'masters'), { keep: true });
 const size = execFileSync('du', ['-sh', TO]).toString().split('\t')[0];
 console.log(`Backed up to ${TO} (${size})`);
