@@ -275,12 +275,22 @@ import T from './T.astro';
     }
   }
 
-  /* The caption: a step under the frame, inside the page's gutter,
-     wrapping onto as many lines as a long title needs. */
+  /* The caption: a step under the frame, inside the page's gutter. Its
+     row is ALWAYS two lines tall, whatever the title (Juan, 2026-10-27: a
+     row that grew with a long title shrank the frame as the arrows turned
+     — a layout shift); a title longer than two lines ends in an ellipsis,
+     and the viewer's count is still there. */
   .v-cap {
     grid-row: 3;
+    box-sizing: content-box;
+    height: 2.8em;
     margin: 0;
     padding: 1.25rem 1.5rem 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     text-align: center;
     font-size: 0.9375rem;
     font-weight: 600;
