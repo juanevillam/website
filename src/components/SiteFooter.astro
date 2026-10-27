@@ -2,6 +2,7 @@
 import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
 import { LIKES } from '../lib/likes';
+import { likesShown } from '../lib/release';
 import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
@@ -142,7 +143,8 @@ const SOCIAL = [
       }
       {/* Juan outside of work: one page per set (pages/things-i-like),
           a column like an app's pages, so the landing never loads their
-          pictures. */}
+          pictures — while More of Me is released (lib/release). */}
+      {likesShown && (
       <div class="column app-links">
         <span class="label"><T k="likes.title" /></span>
         <ul>
@@ -155,6 +157,7 @@ const SOCIAL = [
           ))}
         </ul>
       </div>
+      )}
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>

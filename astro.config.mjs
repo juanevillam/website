@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { defineConfig } from 'astro/config';
 import { narrationRecorder } from './scripts/narration-recorder.mjs';
 import { likesRanker } from './scripts/likes-ranker.mjs';
@@ -8,7 +9,25 @@ import { devTodos } from './scripts/dev-todos.mjs';
 // Node from `.node-version`.
 // Language is a client-side preference (html[data-lang]), not a URL — the
 // page re-renders in place, the way the apps do from Settings.
+
+// NOT YET RELEASED (src/data/unreleased.json, lib/release): the pages leave
+// it out of a production build, and this drops its media from the deploy,
+// so not even its files can be reached by address.
+const unreleased = JSON.parse(
+  fs.readFileSync(new URL('./src/data/unreleased.json', import.meta.url), 'utf8')
+);
+const dropUnreleased = {
+  name: 'drop-unreleased',
+  hooks: {
+    'astro:build:done': ({ dir }) => {
+      for (const rel of unreleased.media)
+        fs.rmSync(new URL(rel, dir), { recursive: true, force: true });
+    },
+  },
+};
+
 export default defineConfig({
+  integrations: [dropUnreleased],
   site: 'https://juanevillam.com',
   // Every address is written WITHOUT a trailing slash — the canonical links,
   // the shareable addresses and the legal URLs Sound Shaper opens — so each

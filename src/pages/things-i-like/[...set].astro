@@ -1,0 +1,24 @@
+---
+import ThingsILike from '../../components/ThingsILike.astro';
+import { LIKES } from '../../lib/likes';
+import { likesShown } from '../../lib/release';
+import type { DeckItem } from '../../lib/deck-items';
+
+/**
+ * More of Me's addresses: `/things-i-like`, the gallery on its first card,
+ * and `/things-i-like/{slug}`, the gallery opened at one card. None of them
+ * is built while More of Me is not released (lib/release).
+ */
+export const getStaticPaths = () =>
+  likesShown
+    ? [
+        { params: { set: undefined }, props: { card: undefined } },
+        ...LIKES.map(card => ({ params: { set: card.slug }, props: { card } })),
+      ]
+    : [];
+
+type Props = { card?: DeckItem };
+const { card } = Astro.props;
+---
+
+<ThingsILike card={card} />

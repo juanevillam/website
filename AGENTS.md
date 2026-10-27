@@ -32,6 +32,11 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   ranks the games' screenshots in duels of two (Cosmos and the paintings
   are not ranked: they show in a new random order each visit), and its Save writes
   `src/data/likes-order.json`, the order the site shows.
+- **Not yet released** (`src/data/unreleased.json`, `lib/release`): what is
+  built and kept but not published. `astro dev` shows it all; a production
+  build leaves out its cards and pages and drops its media from `dist`.
+  Today: the Summit and Platanus Hack cards and all of More of Me, until
+  their takes are re-recorded. Releasing one is taking it out of that file.
 - `/dev/todos` (dev only) is Juan's to-do list for the site: the clips to
   re-record gather by themselves (every script with a `draft` note in
   `lib/scripts`), and anything else is added and ticked off on the page,

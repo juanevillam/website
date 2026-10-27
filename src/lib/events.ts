@@ -1,4 +1,5 @@
 import type { DeckItem } from './deck-items';
+import { eventShown } from './release';
 
 /**
  * Events — where Juan has been, building and learning with other people:
@@ -51,7 +52,7 @@ const LINKS = {
 // Newest first, as a feed reads (Juan, 2026-10-13) — More Work and the
 // apps are ordered by weight, but events are a timeline. A new event goes
 // at the TOP.
-export const EVENTS: DeckItem[] = [
+const ALL_EVENTS: DeckItem[] = [
   {
     id: 'platanus',
     slug: 'platanus-hack-caracas',
@@ -228,3 +229,7 @@ export const EVENTS: DeckItem[] = [
     links: [],
   },
 ];
+
+/** The events on the site: every one but those not released yet
+ *  (lib/release), which only `astro dev` shows. */
+export const EVENTS = ALL_EVENTS.filter(e => eventShown(e.id));
