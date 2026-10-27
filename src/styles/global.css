@@ -465,12 +465,18 @@ html.is-focus {
    paint back in at the pace of the clip. TWO inks only, never three
    (Juan, 2026-10-17): still to come, and said. */
 .rw,
-.is-read-along [data-narr-para] {
+.is-read-along [data-narr-para],
+[data-narr-para].is-read-along {
   transition: color var(--dur-quick) var(--ease);
 }
 
+/* The box around the paragraph, or the paragraph that IS its box — a deck
+   card's body (PanelDeck), where the dim found nothing to dim and the
+   words lit over a paragraph at full ink. */
 .is-read-along [data-narr-para],
-.is-read-along [data-narr-para] a {
+.is-read-along [data-narr-para] a,
+[data-narr-para].is-read-along,
+[data-narr-para].is-read-along a {
   color: var(--ink-waiting);
 }
 

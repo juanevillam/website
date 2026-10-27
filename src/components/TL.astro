@@ -23,17 +23,12 @@ const parts = (text: string) =>
 ---
 
 {
+  // Each locale's span on ONE line, its words flush against its tags: Astro
+  // keeps the whitespace around a child on its own line, and it stood a
+  // space inside each link ("Pastor ,") and one before the paragraph's
+  // first word — which shifted every word off its timing, so the whole
+  // paragraph lit at once while it was read aloud (Juan, 2026-10-27).
   locales.map(l => (
-    <span class="t" lang={l}>
-      {parts(ui[l][k]).map(p =>
-        p.href ? (
-          // One line: Astro keeps the whitespace around a child on its own
-          // line, and it stood a space inside the link ("Pastor ,").
-          <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a>
-        ) : (
-          p.text
-        )
-      )}
-    </span>
+    <span class="t" lang={l}>{parts(ui[l][k]).map(p => (p.href ? <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a> : p.text))}</span>
   ))
 }
