@@ -22,6 +22,22 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 - `npm run dev` (dev server + the teleprompter's recorder), `npm run build`,
   `npm run typecheck` (`astro check`), `npm run narration` (the recording
   checklist), `npm run arcade` (refresh Space Explorer from `../games/`).
+- Things I Like (`/things-i-like`, `lib/likes`): a page built like a
+  landing section — eyebrow, one panel deck (Cosmos, paintings, video
+  games; each card its own address `/things-i-like/{slug}`) — reached from
+  the footer's own column. Any photo frame (there and in Events) opens
+  full size in `PhotoViewer` — never on the landing, which loads none of its
+  pictures: `npm run likes` remakes its pictures and thumbnails from
+  Juan's folders in `~/Downloads`; `/dev/ranker` (dev only) is where he
+  ranks the games' screenshots in duels of two (Cosmos and the paintings
+  are not ranked: they show in a new random order each visit), and its Save writes
+  `src/data/likes-order.json`, the order the site shows.
+- `npm run backup` mirrors everything that is not code — the site's
+  media, Juan's raw narration takes, the transcripts, every text in each
+  language and the scripts — to iCloud Drive
+  (`Documents/juanevillam.com`, `BACKUP_DIR` elsewhere). Its `masters/`
+  holds the originals at full quality (4K video, TIFFs) and is never
+  touched by the script: file a new event's originals there by hand.
 - One dev server at a time. `.claude/launch.json`: `web` (dev, `--host` for
   the iPhone on the LAN) and `web-prod` (build + preview on :4322).
 - **Verify on a real iPhone** for anything scroll- or motion-coupled: the
