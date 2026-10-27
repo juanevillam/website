@@ -1,0 +1,280 @@
+---
+import { SCRIPTS_ES } from '../../../lib/scripts';
+import TODOS from '../../../data/todos.json';
+import '../../../styles/global.css';
+
+/**
+ * DEV ONLY — /dev/todos. Juan's to-do list for the site, kept in the repo
+ * (src/data/todos.json) so it travels with the code:
+ *
+ * - TO RE-RECORD, gathered by itself: every narration clip whose script
+ *   carries a `draft` note (lib/scripts) — the same note the teleprompter
+ *   shows above the take. A clip leaves the list when its note is removed.
+ * - EVERYTHING ELSE, written here: added, ticked off and deleted on the
+ *   page, each change saved through the dev server (scripts/dev-todos.mjs).
+ *
+ * In a production build this route has no paths, so it does not exist.
+ */
+export const getStaticPaths = () =>
+  import.meta.env.PROD ? [] : [{ params: { all: undefined } }];
+
+const rerecord = SCRIPTS_ES.filter(c => c.draft);
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>To-dos</title>
+  </head>
+  <body>
+    <main>
+      <p class="label">juanevillam · dev</p>
+      <h1>Pendientes</h1>
+
+      <section>
+        <h2>
+          Por regrabar <span class="count">{rerecord.length}</span>
+        </h2>
+        <ul class="list">
+          {
+            rerecord.map(c => (
+              <li class="item">
+                <span class="dot" aria-hidden="true" />
+                <div>
+                  <p class="text">{c.where}</p>
+                  <p class="note">{c.draft}</p>
+                  <p class="key">{c.key}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="hint">
+          Se graban en el <a href="/dev/teleprompter">teleprompter</a>; cada una sale de aquí al
+          quitarle su nota <code>draft</code> en <code>src/lib/scripts.ts</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Otros <span class="count" data-open-count></span></h2>
+        <form class="add" data-add>
+          <input type="text" name="text" placeholder="Algo por hacer…" autocomplete="off" required />
+          <button type="submit">Agregar</button>
+        </form>
+        <ul class="list" data-list></ul>
+        <p class="state" data-state></p>
+      </section>
+    </main>
+
+    <script is:inline type="application/json" id="todos" set:html={JSON.stringify(TODOS)} />
+
+    <script>
+      type Todo = { id: string; text: string; done: boolean; at?: string };
+      let todos = JSON.parse(document.getElementById('todos')!.textContent!) as Todo[];
+      const list = document.querySelector<HTMLElement>('[data-list]')!;
+      const state = document.querySelector<HTMLElement>('[data-state]')!;
+      const openCount = document.querySelector<HTMLElement>('[data-open-count]')!;
+
+      const save = async () => {
+        state.textContent = 'Guardando…';
+        try {
+          const res = await fetch('/__todos/save', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(todos),
+          });
+          const out = await res.json();
+          if (!res.ok) throw new Error(out.error);
+          state.textContent = 'Guardado en src/data/todos.json';
+        } catch (e) {
+          state.textContent = `No se guardó: ${(e as Error).message}`;
+        }
+      };
+
+      // Open ones first, newest on top; the done ones under them.
+      const render = () => {
+        const sorted = [...todos].sort((a, b) => Number(a.done) - Number(b.done));
+        openCount.textContent = String(todos.filter(t => !t.done).length);
+        list.replaceChildren(
+          ...sorted.map(t => {
+            const li = document.createElement('li');
+            li.className = 'item' + (t.done ? ' is-done' : '');
+            li.innerHTML = `<input type="checkbox" class="check"><div><p class="text"></p><p class="key"></p></div><button type="button" class="remove" aria-label="Borrar">×</button>`;
+            const box = li.querySelector<HTMLInputElement>('.check')!;
+            box.checked = t.done;
+            box.addEventListener('change', () => {
+              t.done = box.checked;
+              render();
+              save();
+            });
+            li.querySelector('.text')!.textContent = t.text;
+            li.querySelector('.key')!.textContent = t.at ?? '';
+            li.querySelector('.remove')!.addEventListener('click', () => {
+              if (!confirm(`¿Borrar “${t.text}”?`)) return;
+              todos = todos.filter(x => x !== t);
+              render();
+              save();
+            });
+            return li;
+          })
+        );
+      };
+
+      document.querySelector<HTMLFormElement>('[data-add]')!.addEventListener('submit', e => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const input = form.elements.namedItem('text') as HTMLInputElement;
+        const text = input.value.trim();
+        if (!text) return;
+        todos.unshift({
+          id: crypto.randomUUID(),
+          text,
+          done: false,
+          at: new Date().toISOString().slice(0, 10),
+        });
+        input.value = '';
+        render();
+        save();
+      });
+
+      render();
+    </script>
+
+    <style is:global>
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-sans);
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 5rem;
+      }
+      .label,
+      .key,
+      .count,
+      .hint,
+      .state {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--ink-3);
+      }
+      .label {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: var(--track-label);
+      }
+      h1 {
+        margin: 0.5rem 0 2.5rem;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: var(--track-heading);
+      }
+      section + section {
+        margin-top: 3rem;
+      }
+      h2 {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin: 0 0 1rem;
+        font-size: 1.125rem;
+        font-weight: 700;
+      }
+      .list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid var(--hairline);
+      }
+      .item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 0.875rem;
+        align-items: start;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid var(--hairline);
+      }
+      .item p {
+        margin: 0;
+      }
+      .text {
+        font-size: 0.9375rem;
+        line-height: 1.4;
+      }
+      .note {
+        margin-top: 0.25rem !important;
+        font-size: 0.875rem;
+        color: var(--ink-2);
+      }
+      .key {
+        margin-top: 0.25rem !important;
+      }
+      .item.is-done .text {
+        color: var(--ink-3);
+        text-decoration: line-through;
+      }
+      .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-top: 0.45rem;
+        border-radius: 999px;
+        background: #e0a84a;
+      }
+      .check {
+        margin-top: 0.2rem;
+        accent-color: var(--ink);
+      }
+      .remove {
+        padding: 0 0.25rem;
+        border: 0;
+        background: none;
+        color: var(--ink-3);
+        font-size: 1.125rem;
+        cursor: pointer;
+      }
+      .remove:hover {
+        color: var(--ink);
+      }
+      .add {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .add input {
+        flex: 1;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.6rem;
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit;
+      }
+      .add button {
+        padding: 0.6rem 1rem;
+        border: 0;
+        border-radius: 0.6rem;
+        background: var(--ink);
+        color: var(--ground);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .hint {
+        margin: 1rem 0 0;
+        line-height: 1.6;
+      }
+      .hint a {
+        color: var(--ink-2);
+      }
+      .state {
+        margin: 1rem 0 0;
+      }
+    </style>
+  </body>
+</html>

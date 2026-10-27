@@ -195,6 +195,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'events.platanus.body',
     where: 'Eventos · Platanus Hack 26 Caracas',
+    draft:
+      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Saliendo del Summit el viernes, directo a Platanus Hack 26 Caracas: este año Platanus hizo su hackathon como gira por Latinoamérica.',
       'Aplicamos cada uno con su perfil de desarrollador: el mismo equipo de AlegrIA, Pastor, César, Ale y yo.',
@@ -211,6 +213,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'events.summit.body',
     where: 'Eventos · Startup Venezuela Summit',
+    draft:
+      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Fui al Startup Venezuela Summit en el Caracas Campus con mis amigos de Tripealo, el jueves y el viernes.',
       'Nunca había ido a un evento así: charlas todo el día, extranjeros hablando inglés, gente de otros países haciendo conexiones y construyendo todo tipo de productos.',
@@ -274,6 +278,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.cosmos.body',
     where: 'Más de mí · Cosmos',
+    draft:
+      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'El espacio siempre me ha fascinado.',
       'Me identifico con el nihilismo optimista: al ver lo vasto que es el espacio, mucho de lo que te preocupa deja de tener sentido.',
@@ -287,6 +293,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.paintings.body',
     where: 'Más de mí · Pinturas',
+    draft:
+      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Después de que empecé a ver el espacio, busqué pinturas que también hicieran match conmigo; tuve una época en la que quise coleccionarlas.',
       'Terminé con el mismo contraste del espacio: cielos inmensos, tormentas y luz, ciudades e imperios cayendo, y la gente diminuta en medio.',
@@ -298,6 +306,8 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.games.body',
     where: 'Más de mí · Videojuegos',
+    draft:
+      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Ghost of Yōtei y Elden Ring están en mi top, y a los dos les saqué el platino.',
       'Al terminar Ghost of Yōtei le tomé captura a los outfits con los que lo acabé, en el orden que más me gustaban: siempre los mismos charms, el outfit como yo quisiera.',
