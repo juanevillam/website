@@ -4,8 +4,8 @@
 // games he loves most (4K
 // JPEGs). The masters never enter the repo — a Cloudflare build never sees
 // them — so the copies are committed, and this script is how they are
-// refreshed: npm run likes (LIKES_DIR points elsewhere; ~/Downloads by
-// default, where each set is a folder of its own).
+// refreshed: npm run likes (LIKES_DIR points elsewhere; iCloud Drive's Life
+// folder by default, where each set is a folder of its own).
 //
 // Every picture ships twice, as WebP: a THUMBNAIL (`{id}-thumb.webp`,
 // 1000 px on its long side) for the gallery's grid, lazy, and the full
@@ -17,7 +17,8 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
-const from = process.env.LIKES_DIR ?? join(homedir(), 'Downloads');
+const from =
+  process.env.LIKES_DIR ?? join(homedir(), 'Library/Mobile Documents/com~apple~CloudDocs/Life');
 const pub = new URL('../public/media/likes/', import.meta.url).pathname;
 
 sharp.cache(false);

@@ -1,6 +1,6 @@
 // Backs up everything the site is made of that is NOT code — the code is on
-// GitHub — to a folder of Juan's own (iCloud Drive by default), so the media
-// is kept safe the way the code is (Juan, 2026-10-27): npm run backup.
+// GitHub — to iCloud Drive's Life folder (Juan, 2026-10-27), so the media is
+// kept safe the way the code is: npm run backup.
 //
 //   <to>/
 //     media/          every picture, video and narration clip the site serves
@@ -11,13 +11,16 @@
 //       transcripts/  each clip's subtitles (.vtt) and word timings (.json)
 //     texts/          every line of the site in each language (en.md, es.md,
 //                     zh.md) and the narration scripts (scripts.md)
-//     masters/        left alone: the originals Juan files there by hand
-//                     (the 4K videos, the TIFFs) — the highest quality there
-//                     is, which the repo never holds
+//     masters/        the originals at full quality — the 4K videos, the
+//                     HEICs, the screenshots — from this repo's `masters/`
+//                     folder (gitignored: far too big for git), by event
 //
 // It MIRRORS: a file changed on the site is copied again, one removed from
-// the site is removed from the backup — except `masters/`, which it never
-// touches. BACKUP_DIR points elsewhere.
+// the site is removed from the backup — except `masters/`, which only ever
+// gains files: an original is never deleted from the backup. BACKUP_DIR
+// points elsewhere. (The space photos, paintings and game screenshots'
+// originals already live in iCloud Drive's Life folder, where `npm run
+// likes` reads them; they are not copied twice.)
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -27,18 +30,15 @@ import { build } from 'esbuild';
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
 const TO =
   process.env.BACKUP_DIR ??
-  path.join(
-    os.homedir(),
-    'Library/Mobile Documents/com~apple~CloudDocs/Documents/juanevillam.com'
-  );
+  path.join(os.homedir(), 'Library/Mobile Documents/com~apple~CloudDocs/Life/juanevillam-website');
 
-const mirror = (from, to) => {
+const mirror = (from, to, { keep = false } = {}) => {
   if (!fs.existsSync(from)) return;
   fs.mkdirSync(to, { recursive: true });
-  // rsync: only what changed, and --delete keeps the copy an exact mirror.
-  execFileSync('rsync', ['-a', '--delete', '--exclude', '.DS_Store', `${from}/`, `${to}/`], {
-    stdio: 'inherit',
-  });
+  // rsync: only what changed; --delete keeps the copy an exact mirror,
+  // except where it must keep everything (`keep`, the originals).
+  const flags = ['-a', '--exclude', '.DS_Store', ...(keep ? [] : ['--delete'])];
+  execFileSync('rsync', [...flags, `${from}/`, `${to}/`], { stdio: 'inherit' });
 };
 
 // ---------- media and narration ----------
@@ -82,6 +82,6 @@ for (const clip of SCRIPTS_ES) {
 }
 fs.writeFileSync(path.join(texts, 'scripts.md'), scripts.join('\n'));
 
-fs.mkdirSync(path.join(TO, 'masters'), { recursive: true });
+mirror(path.join(ROOT, 'masters'), path.join(TO, 'masters'), { keep: true });
 const size = execFileSync('du', ['-sh', TO]).toString().split('\t')[0];
 console.log(`Backed up to ${TO} (${size})`);

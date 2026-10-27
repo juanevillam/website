@@ -8,5 +8,9 @@ dist/
 # Raw teleprompter takes and the clips they replaced (dev only)
 narration-takes/
 
+# Full-quality originals (4K video, HEIC): far too big for git; backed up
+# to iCloud Drive by npm run backup
+masters/
+
 # macOS
 .DS_Store
