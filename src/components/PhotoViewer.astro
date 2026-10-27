@@ -19,14 +19,29 @@ import T from './T.astro';
  * (the hairline, the flat picture's corner, the screens' shadow), the
  * picture whole inside it over a blur of itself, as a deck's frames
  * stand theirs (PanelDeck `.layer`).
+ *
+ * THE SCREENS' OWN SHAPE (Juan, 2026-10-27): the frame is 3:2, the size
+ * every screen on the site is (More Work, Events, More of Me) — 4:5 on a
+ * phone, as a phone's event frame — as large as the room allows. And a
+ * turn is a frame's own turn: the next picture CROSS-FADES over the one
+ * showing, at the frames' pace, once it has loaded — two layers, the way
+ * a deck's frame hands one photo to the next.
  */
 ---
 
 <dialog class="viewer" data-viewer aria-label="Viewer">
-  <div class="stage">
-    <img class="fill" alt="" aria-hidden="true" data-fill />
-    <img class="full" alt="" data-full />
-    <video class="full" data-full-video muted loop playsinline disablepictureinpicture></video>
+  <div class="room">
+    <div class="stage">
+      {
+        [0, 1].map(() => (
+          <div class="layer" data-layer>
+            <img class="fill" alt="" aria-hidden="true" data-fill />
+            <img class="full" alt="" data-full />
+            <video class="full" muted loop playsinline disablepictureinpicture data-full-video />
+          </div>
+        ))
+      }
+    </div>
   </div>
   <p class="v-cap"><span data-v-name></span> <span class="v-count" data-v-count></span></p>
   <button type="button" class="v-btn v-close" data-v-close>
@@ -52,44 +67,70 @@ import T from './T.astro';
 <script>
   type Item = { src: string; name?: string; video?: boolean };
   const dialog = document.querySelector<HTMLDialogElement>('[data-viewer]')!;
-  const img = dialog.querySelector<HTMLImageElement>('[data-full]')!;
-  const fill = dialog.querySelector<HTMLImageElement>('[data-fill]')!;
-  const video = dialog.querySelector<HTMLVideoElement>('[data-full-video]')!;
+  const layers = [...dialog.querySelectorAll<HTMLElement>('[data-layer]')].map(el => ({
+    el,
+    fill: el.querySelector<HTMLImageElement>('[data-fill]')!,
+    img: el.querySelector<HTMLImageElement>('[data-full]')!,
+    video: el.querySelector<HTMLVideoElement>('[data-full-video]')!,
+  }));
+  type Layer = (typeof layers)[number];
   const name = dialog.querySelector<HTMLElement>('[data-v-name]')!;
   const count = dialog.querySelector<HTMLElement>('[data-v-count]')!;
   let items: Item[] = [];
   let at = 0;
+  let front = 0;
+  let turn = 0;
 
+  const poster = (item: Item) => item.src.replace(/\.mp4$/, '.jpg');
   const warm = (i: number) => {
     const p = items[(i + items.length) % items.length];
-    if (p && !p.video) new Image().src = p.src;
+    if (p) new Image().src = p.video ? poster(p) : p.src;
+  };
+  const clear = (layer: Layer) => {
+    layer.video.pause();
+    layer.video.removeAttribute('src');
+    layer.video.load();
   };
 
+  // The next picture goes on the layer behind; once it can be seen, it
+  // fades in over the one in front, which then lets go of its video.
   const show = (i: number) => {
     at = (i + items.length) % items.length;
     const item = items[at];
-    img.classList.remove('is-in');
-    video.classList.remove('is-in');
+    const mine = ++turn;
+    const back = layers[1 - front];
+    back.fill.src = item.video ? poster(item) : item.src;
     if (item.video) {
-      img.removeAttribute('src');
-      video.src = item.src;
-      video.poster = item.src.replace(/\.mp4$/, '.jpg');
-      video.play().catch(() => {});
-      video.classList.add('is-in');
+      back.img.removeAttribute('src');
+      back.video.poster = poster(item);
+      back.video.src = item.src;
+      back.video.play().catch(() => {});
     } else {
-      video.pause();
-      video.removeAttribute('src');
-      img.src = item.src;
-      img.alt = item.name ?? '';
+      clear(back);
+      back.img.alt = item.name ?? '';
+      back.img.src = item.src;
     }
-    // The blur behind: the picture itself, or a video's poster.
-    fill.src = item.video ? item.src.replace(/\.mp4$/, '.jpg') : item.src;
+    const reveal = () => {
+      if (mine !== turn) return;
+      const was = layers[front];
+      was.el.classList.remove('is-on');
+      back.el.classList.add('is-on');
+      front = 1 - front;
+      setTimeout(() => {
+        if (mine === turn) clear(was);
+      }, 700);
+    };
+    if (item.video || (back.img.complete && back.img.naturalWidth)) reveal();
+    else {
+      back.img.onload = reveal;
+      // A slow picture still turns: its blur stands in while it loads.
+      setTimeout(reveal, 1200);
+    }
     name.textContent = item.name ?? '';
     count.textContent = items.length > 1 ? `${at + 1} / ${items.length}` : '';
     warm(at + 1);
     warm(at - 1);
   };
-  img.addEventListener('load', () => img.classList.add('is-in'));
 
   document.addEventListener('viewer:open', e => {
     const { detail } = e as CustomEvent<{ items: Item[]; at: number }>;
@@ -99,8 +140,11 @@ import T from './T.astro';
     dialog.showModal();
   });
   dialog.addEventListener('close', () => {
-    video.pause();
-    video.removeAttribute('src');
+    turn++;
+    for (const layer of layers) {
+      clear(layer);
+      layer.el.classList.remove('is-on');
+    }
     document.dispatchEvent(new CustomEvent('viewer:closed', { detail: at }));
   });
 
@@ -109,7 +153,7 @@ import T from './T.astro';
   dialog.querySelector('[data-v-close]')!.addEventListener('click', () => dialog.close());
   // A click on the dark around the picture closes it.
   dialog.addEventListener('click', e => {
-    if (e.target === dialog) dialog.close();
+    if (e.target === dialog || (e.target as HTMLElement).classList.contains('room')) dialog.close();
   });
   dialog.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') show(at + 1);
@@ -145,14 +189,27 @@ import T from './T.astro';
     background: rgba(0, 0, 0, 0.6);
   }
 
-  /* THE FRAME: one size for every picture — the room between the close
-     button (1rem + 2.5rem) and the caption, clear of each by 2rem, and of
-     the arrows — framed like every screen on the site. */
-  .stage {
+  /* THE ROOM the frame stands in: between the close button (1rem +
+     2.5rem) and the caption, clear of each by 2rem, and 2.5rem clear of the
+     arrows (1rem in, 2.5rem wide). */
+  .room {
     position: absolute;
-    /* The arrows stand 1rem in and 2.5rem wide: the frame keeps 2.5rem
-       clear of them (Juan, 2026-10-27: 1rem stood it against them). */
     inset: 5.5rem 6rem 5rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .viewer.is-single .room {
+    inset: 5.5rem 1.5rem 5rem;
+  }
+
+  /* THE FRAME: 3:2 like every screen on the site, as large as the room
+     allows, framed the same way — the hairline, the flat picture's corner,
+     the screens' shadow. */
+  .stage {
+    position: relative;
+    width: min(100%, calc((100dvh - 10.5rem) * 3 / 2));
+    aspect-ratio: 3 / 2;
     overflow: hidden;
     border: 1px solid var(--hairline);
     border-radius: var(--media-radius-flat);
@@ -162,12 +219,21 @@ import T from './T.astro';
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
   }
 
-  .viewer.is-single .stage {
-    inset: 5.5rem 1.5rem 5rem;
+  /* Two layers, one in front: a turn cross-fades them at a frame's own
+     pace (PanelDeck `.layer`). */
+  .layer {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--dur-settle) linear;
   }
 
-  .stage img,
-  .stage video {
+  .layer.is-on {
+    opacity: 1;
+  }
+
+  .layer img,
+  .layer video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -185,17 +251,17 @@ import T from './T.astro';
 
   .full {
     object-fit: contain;
-    opacity: 0;
-    transition: opacity var(--dur-quick) var(--ease);
   }
 
-  .stage img:not([src]),
-  .full:not([src]) {
+  .layer img:not([src]),
+  .layer video:not([src]) {
     display: none;
   }
 
-  .full.is-in {
-    opacity: 1;
+  @media (prefers-reduced-motion: reduce) {
+    .layer {
+      transition: none;
+    }
   }
 
   .v-cap {
@@ -283,9 +349,15 @@ import T from './T.astro';
       bottom: 5rem;
     }
 
-    .stage,
-    .viewer.is-single .stage {
+    .room,
+    .viewer.is-single .room {
       inset: 5rem 0.75rem 8.5rem;
+    }
+
+    /* A phone's frame is upright, as a phone's event frame (PanelDeck). */
+    .stage {
+      width: min(100%, calc((100dvh - 13.5rem) * 4 / 5));
+      aspect-ratio: 4 / 5;
     }
   }
 </style>
