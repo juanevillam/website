@@ -1,0 +1,585 @@
+---
+import { RANK_SETS } from '../../../lib/likes';
+import SAVED from '../../../data/likes-order.json';
+import '../../../styles/global.css';
+
+/**
+ * DEV ONLY — /dev/ranker. Juan puts each set of his likes (lib/likes) in
+ * order the way it is easiest to decide: two pictures side by side, and
+ * he picks the one he likes more. A tournament of pairs — a binary
+ * insertion sort, each comparison one duel — finds the whole order in
+ * about n·log2(n) duels (~110 for the 31 space photos), never asking the
+ * same pair twice.
+ *
+ * Every answer is kept in the browser (localStorage), so a set can be
+ * left halfway and picked up later, and the last answer undone. At the
+ * end, Save writes the order into src/data/likes-order.json through the
+ * dev server (scripts/likes-ranker.mjs), and the site shows it.
+ *
+ * In a production build this route has no paths, so it does not exist.
+ */
+export const getStaticPaths = () =>
+  import.meta.env.PROD ? [] : [{ params: { set: undefined } }];
+
+const data = { sets: RANK_SETS, saved: SAVED };
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Ranker</title>
+  </head>
+  <body>
+    <header class="top">
+      <p class="label">Ranker</p>
+      <nav class="sets" role="tablist">
+        {
+          RANK_SETS.map(s => (
+            <button type="button" role="tab" data-set={s.id}>
+              <span class="set-name">{s.name}</span>
+              <span class="set-state" data-state={s.id} />
+            </button>
+          ))
+        }
+      </nav>
+      <p class="progress" data-progress></p>
+    </header>
+
+    <main>
+      <!-- THE DUEL: two pictures, the one liked more is clicked. -->
+      <section class="duel" data-duel hidden>
+        <p class="ask">¿Cuál te gusta más?</p>
+        <div class="pair">
+          {
+            [0, 1].map(side => (
+              <button type="button" class="pick" data-side={side}>
+                <span class="frame">
+                  <img class="fill" alt="" aria-hidden="true" />
+                  <img class="whole" alt="" />
+                </span>
+                <span class="pick-foot">
+                  <kbd>{side === 0 ? '←' : '→'}</kbd>
+                  <span class="pick-name" />
+                </span>
+              </button>
+            ))
+          }
+        </div>
+        <div class="bar">
+          <span class="meter"><span class="meter-fill" data-meter></span></span>
+        </div>
+        <div class="tools">
+          <button type="button" class="tool" data-undo>
+            <kbd>Z</kbd> Deshacer
+          </button>
+          <button type="button" class="tool" data-restart>Empezar de nuevo</button>
+        </div>
+      </section>
+
+      <!-- THE RESULT: the whole set, first to last, ready to save. -->
+      <section class="result" data-result hidden>
+        <div class="result-head">
+          <div>
+            <p class="label">Tu orden</p>
+            <h1 class="result-title" data-result-title></h1>
+          </div>
+          <div class="result-actions">
+            <span class="save-state" data-save-state></span>
+            <button type="button" class="tool" data-undo-last>Deshacer último</button>
+            <button type="button" class="tool" data-restart-result>Empezar de nuevo</button>
+            <button type="button" class="save" data-save>Guardar en el sitio</button>
+          </div>
+        </div>
+        <ol class="grid" data-grid></ol>
+      </section>
+    </main>
+
+    <script is:inline type="application/json" id="ranker" set:html={JSON.stringify(data)} />
+
+    <script>
+      type Item = { id: string; name: string; src: string };
+      type Set = { id: string; name: string; items: Item[] };
+      /** One duel's answer: the pair, then the winner. */
+      type Answer = [string, string, string];
+
+      const { sets, saved } = JSON.parse(document.getElementById('ranker')!.textContent!) as {
+        sets: Set[];
+        saved: Record<string, string[]>;
+      };
+
+      const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+      const duel = $('[data-duel]');
+      const result = $('[data-result]');
+      const progress = $('[data-progress]');
+      const meter = $('[data-meter]');
+      const picks = [...document.querySelectorAll<HTMLButtonElement>('.pick')];
+
+      const store = {
+        get: (set: string): Answer[] => {
+          try {
+            return JSON.parse(localStorage.getItem(`ranker:${set}`) ?? '[]');
+          } catch {
+            return [];
+          }
+        },
+        put: (set: string, answers: Answer[]) => {
+          try {
+            localStorage.setItem(`ranker:${set}`, JSON.stringify(answers));
+          } catch {}
+        },
+      };
+
+      const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+      // Which side each picture stands on: fixed per pair (so a replay
+      // asks the same way) but mixed across pairs, so neither side wins
+      // by habit.
+      const flip = (key: string) => {
+        let h = 0;
+        for (const c of key) h = (h * 31 + c.charCodeAt(0)) | 0;
+        return (h & 1) === 1;
+      };
+
+      // The most duels a binary insertion of n can take.
+      const most = (n: number) => {
+        let total = 0;
+        for (let k = 1; k < n; k++) total += Math.ceil(Math.log2(k + 1));
+        return total;
+      };
+
+      let set: Set;
+      let answers: Answer[] = [];
+      let run = 0;
+      let pending: ((winner: string) => void) | null = null;
+      let order: Item[] = [];
+
+      const preload = (src: string) => {
+        const img = new Image();
+        img.src = src;
+      };
+
+      // One duel: answered already (a replay), or put on screen.
+      const better = (a: Item, b: Item, gen: number): Promise<boolean> => {
+        const key = pairKey(a.id, b.id);
+        const known = answers.find(([x, y]) => pairKey(x, y) === key);
+        if (known) return Promise.resolve(known[2] === a.id);
+        return new Promise(resolve => {
+          if (gen !== run) return;
+          const [left, right] = flip(key) ? [b, a] : [a, b];
+          [left, right].forEach((item, i) => {
+            const pick = picks[i];
+            pick.dataset.id = item.id;
+            for (const img of pick.querySelectorAll('img')) img.src = item.src;
+            pick.querySelector('.whole')!.setAttribute('alt', item.name);
+            pick.querySelector('.pick-name')!.textContent = item.name;
+            pick.classList.remove('is-chosen', 'is-lost');
+          });
+          duel.hidden = false;
+          result.hidden = true;
+          show();
+          pending = winner => {
+            answers.push([a.id, b.id, winner]);
+            store.put(set.id, answers);
+            resolve(winner === a.id);
+          };
+        });
+      };
+
+      // Binary insertion: each picture finds its place among the ones
+      // already in order, halving the range with every duel.
+      const sort = async () => {
+        const gen = ++run;
+        pending = null;
+        const sorted: Item[] = [set.items[0]];
+        for (const x of set.items.slice(1)) {
+          let lo = 0;
+          let hi = sorted.length;
+          while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            const wins = await better(x, sorted[mid], gen);
+            if (gen !== run) return;
+            if (wins) hi = mid;
+            else lo = mid + 1;
+          }
+          sorted.splice(lo, 0, x);
+        }
+        if (gen !== run) return;
+        order = sorted;
+        finish();
+      };
+
+      const show = () => {
+        const total = most(set.items.length);
+        const done = answers.length;
+        progress.textContent = `Duelo ${done + 1} · como mucho ${total}`;
+        meter.style.width = `${Math.min(100, (done / total) * 100)}%`;
+        markStates();
+      };
+
+      const finish = () => {
+        duel.hidden = true;
+        result.hidden = false;
+        progress.textContent = `${answers.length} duelos · listo`;
+        $('[data-result-title]').textContent = set.name;
+        const same = (saved[set.id] ?? []).join() === order.map(i => i.id).join();
+        $('[data-save-state]').textContent = same ? 'Guardado en el sitio' : 'Sin guardar';
+        $('[data-save]').toggleAttribute('disabled', same);
+        const grid = $('[data-grid]');
+        grid.replaceChildren(
+          ...order.map((item, i) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="frame"><img class="whole" loading="lazy" alt=""></span>
+              <span class="rank"><b>#${i + 1}</b> <span></span></span>`;
+            li.querySelector('img')!.src = item.src;
+            li.querySelector('.rank span')!.textContent = item.name;
+            return li;
+          })
+        );
+        markStates();
+      };
+
+      const answer = (side: number) => {
+        if (!pending || duel.hidden) return;
+        const chosen = picks[side];
+        chosen.classList.add('is-chosen');
+        picks[1 - side].classList.add('is-lost');
+        const resolve = pending;
+        pending = null;
+        // A beat to see the choice land, then the next duel.
+        setTimeout(() => resolve(chosen.dataset.id!), 160);
+      };
+
+      const undo = () => {
+        if (!answers.length) return;
+        answers.pop();
+        store.put(set.id, answers);
+        sort();
+      };
+
+      const restart = () => {
+        if (answers.length && !confirm(`¿Borrar los ${answers.length} duelos de ${set.name}?`)) return;
+        answers = [];
+        store.put(set.id, answers);
+        sort();
+      };
+
+      const save = async () => {
+        const button = $<HTMLButtonElement>('[data-save]');
+        button.disabled = true;
+        $('[data-save-state]').textContent = 'Guardando…';
+        try {
+          const res = await fetch('/__likes/save', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ set: set.id, order: order.map(i => i.id) }),
+          });
+          const out = await res.json();
+          if (!res.ok) throw new Error(out.error);
+          saved[set.id] = order.map(i => i.id);
+          $('[data-save-state]').textContent = 'Guardado en el sitio';
+          markStates();
+        } catch (e) {
+          button.disabled = false;
+          $('[data-save-state]').textContent = `No se guardó: ${(e as Error).message}`;
+        }
+      };
+
+      // Each tab says where its set stands: saved, ranked, halfway, new.
+      const markStates = () => {
+        for (const s of sets) {
+          const el = document.querySelector<HTMLElement>(`[data-state="${s.id}"]`)!;
+          const n = s.id === set?.id ? answers.length : store.get(s.id).length;
+          const isSaved = (saved[s.id] ?? []).length === s.items.length;
+          el.textContent = isSaved ? 'guardado' : n ? `${n} duelos` : `${s.items.length} fotos`;
+          el.toggleAttribute('data-saved', isSaved);
+        }
+      };
+
+      const pick = (id: string) => {
+        set = sets.find(s => s.id === id) ?? sets[0];
+        for (const tab of document.querySelectorAll<HTMLElement>('[data-set]'))
+          tab.setAttribute('aria-selected', String(tab.dataset.set === set.id));
+        answers = store.get(set.id);
+        history.replaceState(null, '', `#${set.id}`);
+        // Warm the set: a duel's next picture is then already here.
+        set.items.forEach(i => preload(i.src));
+        sort();
+      };
+
+      for (const tab of document.querySelectorAll<HTMLElement>('[data-set]'))
+        tab.addEventListener('click', () => pick(tab.dataset.set!));
+      picks.forEach((p, i) => p.addEventListener('click', () => answer(i)));
+      $('[data-undo]').addEventListener('click', undo);
+      $('[data-undo-last]').addEventListener('click', undo);
+      $('[data-restart]').addEventListener('click', restart);
+      $('[data-restart-result]').addEventListener('click', restart);
+      $('[data-save]').addEventListener('click', save);
+      addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') answer(0);
+        else if (e.key === 'ArrowRight') answer(1);
+        else if (e.key === 'z' || e.key === 'Backspace') undo();
+      });
+
+      pick(location.hash.slice(1));
+    </script>
+
+    <style is:global>
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-sans);
+      }
+      .label,
+      kbd,
+      .progress,
+      .set-state,
+      .save-state {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.02em;
+        color: var(--ink-3);
+      }
+      .label {
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: var(--track-label);
+        color: var(--ink-2);
+      }
+      kbd {
+        padding: 0.05rem 0.4rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.3rem;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--hairline);
+      }
+      .sets {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .sets button {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.45rem 0.85rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: none;
+        color: var(--ink-2);
+        cursor: pointer;
+      }
+      .sets button[aria-selected='true'] {
+        border-color: var(--ink-3);
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .set-state[data-saved] {
+        color: #7fd18b;
+      }
+      .progress {
+        margin: 0 0 0 auto;
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem;
+      }
+
+      /* ---------- the duel ---------- */
+      .duel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .duel[hidden],
+      .result[hidden] {
+        display: none;
+      }
+      .ask {
+        margin: 0;
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: var(--track-heading);
+      }
+      .pair {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        min-height: 0;
+      }
+      .pick {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        text-align: left;
+      }
+      .frame {
+        position: relative;
+        display: block;
+        overflow: hidden;
+        border: 1px solid var(--hairline);
+        border-radius: var(--media-radius-flat);
+        background: var(--surface);
+      }
+      .pick .frame {
+        flex: 1;
+        min-height: 60vh;
+        transition:
+          transform var(--dur-quick) var(--ease),
+          border-color var(--dur-quick) var(--ease),
+          opacity var(--dur-quick) var(--ease);
+      }
+      .pick:hover .frame,
+      .pick:focus-visible .frame {
+        border-color: var(--ink-3);
+        transform: scale(1.01);
+      }
+      .pick.is-chosen .frame {
+        border-color: var(--ink);
+        transform: scale(1.02);
+      }
+      .pick.is-lost .frame {
+        opacity: 0.35;
+      }
+      .frame img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+      }
+      .frame .fill {
+        object-fit: cover;
+        transform: scale(1.2);
+        filter: blur(28px) brightness(0.55);
+      }
+      .frame .whole {
+        object-fit: contain;
+      }
+      .pick-foot {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+      }
+      .bar {
+        display: flex;
+        justify-content: center;
+      }
+      .meter {
+        width: min(24rem, 100%);
+        height: 3px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--hairline);
+      }
+      .meter-fill {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--ink);
+        transition: width var(--dur-quick) var(--ease);
+      }
+      .tools,
+      .result-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+      }
+      .tool,
+      .save {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: none;
+        color: var(--ink-2);
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+      .tool:hover {
+        color: var(--ink);
+        border-color: var(--ink-3);
+      }
+      .save {
+        border-color: var(--ink);
+        background: var(--ink);
+        color: var(--ground);
+        font-weight: 700;
+      }
+      .save:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+
+      /* ---------- the result ---------- */
+      .result-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+      }
+      .result-title {
+        margin: 0.25rem 0 0;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: var(--track-heading);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+        gap: 1rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .grid li {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .grid .frame {
+        aspect-ratio: 3 / 2;
+      }
+      .grid li:first-child .frame {
+        border-color: var(--ink-3);
+      }
+      .rank {
+        font-size: 0.875rem;
+        color: var(--ink-2);
+      }
+      .rank b {
+        color: var(--ink);
+      }
+    </style>
+  </body>
+</html>

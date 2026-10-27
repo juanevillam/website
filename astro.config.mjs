@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import { narrationRecorder } from './scripts/narration-recorder.mjs';
+import { likesRanker } from './scripts/likes-ranker.mjs';
 
 // juanevillam.com — static output, near-zero JS. Deployed on Cloudflare Pages
 // from this repository's root: build command `npm run build`, output `dist`,
@@ -22,10 +23,10 @@ export default defineConfig({
   // .astro/settings.json, which any cache clear wipes, and the toolbar
   // came back twice that way.
   devToolbar: { enabled: false },
-  // Dev only: the teleprompter's save button (pages/dev). `apply: 'serve'`
-  // keeps it out of the build.
+  // Dev only: the teleprompter's and the ranker's save buttons (pages/dev).
+  // `apply: 'serve'` keeps them out of the build.
   vite: {
-    plugins: [narrationRecorder()],
+    plugins: [narrationRecorder(), likesRanker()],
     // Vite 8 minifies CSS with Lightning CSS, which folds
     // `backdrop-filter` + `-webkit-backdrop-filter` into the prefixed one
     // alone — Chrome then draws no frost behind a modal. esbuild is the

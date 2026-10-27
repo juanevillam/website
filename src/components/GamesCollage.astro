@@ -1,0 +1,207 @@
+---
+import T from './T.astro';
+import { GAMES } from '../lib/likes';
+
+/**
+ * THE VIDEO GAMES CARD'S SCREEN (ThingsILike) — one COLLAGE a game, every
+ * screenshot of it at once (Juan, 2026-10-27): Ghost of Yōtei's loadouts
+ * and Elden Ring's photos, in the order Juan ranked them. The arrows go
+ * from one game to the other; a click on a screenshot opens it whole, with
+ * the rest of its game (PhotoViewer).
+ *
+ * Every tile is filled by its screenshot, centred; the viewer shows each
+ * one whole. No zoom on hover: no picture on the site moves under the
+ * pointer but by the screen's tilt (lib/tilt).
+ */
+const items = GAMES.map(g => JSON.stringify(g.pictures.map(p => ({ src: p.src, name: g.name }))));
+---
+
+<div class="games" data-games>
+  {
+    GAMES.map((game, g) => (
+      <div
+        class:list={['collage', g === 0 && 'is-on']}
+        data-count={game.pictures.length}
+        data-items={items[g]}
+      >
+        {game.pictures.map((p, i) => (
+          <button type="button" class="shot" data-shot={i}>
+            <img src={p.thumb} alt={`${game.name} ${i + 1}`} loading="lazy" decoding="async" draggable="false" />
+            <span class="sr"><T k="photo.open" /></span>
+          </button>
+        ))}
+        <span class="game-name">{game.name}</span>
+      </div>
+    ))
+  }
+  <button type="button" class="step prev" data-game-step="-1">
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+      <path d="M10 3 L5 8 L10 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="sr"><T k="deck.prev" /></span>
+  </button>
+  <button type="button" class="step next" data-game-step="1">
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+      <path d="M6 3 L11 8 L6 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="sr"><T k="deck.next" /></span>
+  </button>
+</div>
+
+<style>
+  .games {
+    position: absolute;
+    inset: 0;
+    background: var(--ground);
+  }
+
+  .collage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: 3px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-settle) linear;
+  }
+
+  .collage.is-on {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Four: two by two. */
+  .collage[data-count='4'] {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  /* Five: two across the top, three under them. */
+  .collage[data-count='5'] {
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .collage[data-count='5'] .shot:nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+
+  .collage[data-count='5'] .shot:nth-child(n + 3) {
+    grid-column: span 2;
+  }
+
+  .shot {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    background: var(--surface);
+    cursor: zoom-in;
+  }
+
+  .shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* The game's name: the header's pill recipe, in the label's type. */
+  .game-name {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+
+  /* The deck's own arrows (DeckControls), a step smaller, quiet like a
+     photo frame's (PanelDeck `.photo-step`). */
+  .step {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0.3;
+    transform: translateY(-50%);
+    transition:
+      opacity var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease);
+  }
+
+  .games:hover .step {
+    opacity: 0.7;
+  }
+
+  .games .step:hover,
+  .step:focus-visible {
+    opacity: 1;
+    border-color: var(--ink-3);
+  }
+
+  .prev {
+    left: 0.75rem;
+  }
+
+  .next {
+    right: 0.75rem;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .collage {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-games]')) {
+    const collages = [...root.querySelectorAll<HTMLElement>('.collage')];
+    let at = 0;
+    for (const b of root.querySelectorAll<HTMLElement>('[data-game-step]'))
+      b.addEventListener('click', () => {
+        collages[at].classList.remove('is-on');
+        at = (at + Number(b.dataset.gameStep) + collages.length) % collages.length;
+        collages[at].classList.add('is-on');
+      });
+    for (const collage of collages)
+      for (const shot of collage.querySelectorAll<HTMLElement>('[data-shot]'))
+        shot.addEventListener('click', () =>
+          document.dispatchEvent(
+            new CustomEvent('viewer:open', {
+              detail: { items: JSON.parse(collage.dataset.items!), at: Number(shot.dataset.shot) },
+            })
+          )
+        );
+  }
+</script>

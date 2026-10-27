@@ -193,6 +193,37 @@ export const SCRIPTS_ES: ScriptClip[] = [
 
   // Events
   {
+    key: 'events.platanus.body',
+    where: 'Eventos · Platanus Hack 26 Caracas',
+    ideas: [
+      'Saliendo del Summit el viernes, directo a Platanus Hack 26 Caracas: este año Platanus hizo su hackathon como gira por Latinoamérica.',
+      'Aplicamos cada uno con su perfil de desarrollador: el mismo equipo de AlegrIA, Pastor, César, Ale y yo.',
+      'Casi un año después, de vuelta en las oficinas de Yummy, pero en una hackathon mucho más fuerte técnicamente.',
+      'Construimos Tridi: convierte un video normal de una persona en data de movimiento para robots; un robot simulado en MuJoCo aprende a moverse solo imitándola.',
+      'Dormimos poco, pero lo que aprendí en AlegrIA me sirvió para manejar mi mente y mi foco.',
+      'Yummy nos daba de comer en su comedor; una noche, pabellón criollo, el plato típico de Venezuela: arroz, carne mechada, caraotas y tajadas.',
+      'Nuestro mentor: Sebastián Alcalá, product engineer en Yummy y cofundador de Wink. Pastor dio el pitch y yo estuve con él en el escenario.',
+      'No ganamos, pero el nivel fue impresionante: había visto los videos de Buenos Aires, México y Bogotá, y Caracas estuvo a la altura. Ganó Museo 3D, en nuestro track.',
+      'Nuestro puesto estaba al lado del arcade: vi a dos grupos jugando Space Explorer sin que yo dijera nada.',
+      'También conocimos a Adirson Martínez, CTO de Rial, que fue muy pana con nosotros.',
+    ],
+  },
+  {
+    key: 'events.summit.body',
+    where: 'Eventos · Startup Venezuela Summit',
+    ideas: [
+      'Fui al Startup Venezuela Summit en el Caracas Campus con mis amigos de Tripealo, el jueves y el viernes.',
+      'Nunca había ido a un evento así: charlas todo el día, extranjeros hablando inglés, gente de otros países haciendo conexiones y construyendo todo tipo de productos.',
+      'Escuchamos a Víctor Cárdenas de Slash y a Pedro Vallenilla de Cashea.',
+      'Por nuestras chaquetas de Salvalo y Tripealo, alguien de SquareOne Capital nos dijo que eran de founders y nos invitó a un workshop privado con Enrique Rivas de Fina e Innoven.',
+      'En el stand de Innoven postulamos a Salvalo y pegamos nuestra foto en la pared de founders venezolanos: dejar la huella.',
+      'Conocimos a founders como los de Rial.',
+      'Me llevé: hacer una startup es difícil pero vale la pena; con ambición y ganas lo logras; no importa tu edad, tu país ni de dónde vienes.',
+      'Como dijo Steve Jobs: los que están lo suficientemente locos como para creer que pueden cambiar el mundo son los que lo hacen.',
+      'Llegué a mi casa emocionadísimo, y todavía lo estoy procesando.',
+    ],
+  },
+  {
     key: 'events.panal.body',
     where: 'Eventos · El Panal',
     ideas: [
@@ -236,6 +267,42 @@ export const SCRIPTS_ES: ScriptClip[] = [
       'No ganamos, pero escuché a fundadores que hoy compiten en Silicon Valley, y salimos con el impulso de seguir.',
       'Ellos siguieron con Tripealo; yo con Abrahan, mi cofundador en Salvalo. Hoy las dos operan: mis founder bros, juntos pero no revueltos.',
       'Fue el punto de inflexión entre el Juan solo programador y el Juan cuasi emprendedor. Súper agradecido.',
+    ],
+  },
+
+  // More of Me (pages/things-i-like)
+  {
+    key: 'likes.cosmos.body',
+    where: 'Más de mí · Cosmos',
+    ideas: [
+      'El espacio siempre me ha fascinado.',
+      'Me identifico con el nihilismo optimista: al ver lo vasto que es el espacio, mucho de lo que te preocupa deja de tener sentido.',
+      'Hay cosas tan imponentes allá afuera, y nosotros: una mente tan compleja en un cuerpo tan débil y mortal.',
+      'Ahora mismo alguien compra una casa y alguien la vende; alguien celebra un nacimiento y alguien llora una muerte. Nadie es especial, aunque nos sintamos especiales.',
+      'En vez de rechazar ese sentimiento, decidí admirarlo y amarlo, como la existencia misma.',
+      'Por eso empecé a ver las fotos del James Webb y del Hubble: duraba una hora viéndolas con música.',
+      'Estas son las que me encantan, en un orden distinto cada vez.',
+    ],
+  },
+  {
+    key: 'likes.paintings.body',
+    where: 'Más de mí · Pinturas',
+    ideas: [
+      'Después de que empecé a ver el espacio, busqué pinturas que también hicieran match conmigo; tuve una época en la que quise coleccionarlas.',
+      'Terminé con el mismo contraste del espacio: cielos inmensos, tormentas y luz, ciudades e imperios cayendo, y la gente diminuta en medio.',
+      'La mayoría son de John Martin y Thomas Cole, pintores del siglo XIX que pintaban el fin del mundo como si lo hubieran visto.',
+      'También el Sermón del Monte de Carl Bloch, Las hilanderas de Velázquez y algunas recientes de las que todavía no sé el pintor.',
+      'No tienen ranking, porque me gustan todas: salen en un orden distinto cada vez.',
+    ],
+  },
+  {
+    key: 'likes.games.body',
+    where: 'Más de mí · Videojuegos',
+    ideas: [
+      'Ghost of Yōtei y Elden Ring están en mi top, y a los dos les saqué el platino.',
+      'Al terminar Ghost of Yōtei le tomé captura a los outfits con los que lo acabé, en el orden que más me gustaban: siempre los mismos charms, el outfit como yo quisiera.',
+      'Elden Ring es muy cinematográfico. Mi hermano ya lo había jugado, así que desde el principio tenía mapeadas las fotos que quería tomar al platinarlo.',
+      'Me tomó 78 horas, y con esa armadura me hice todos los finales.',
     ],
   },
 

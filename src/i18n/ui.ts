@@ -104,6 +104,7 @@ const en = {
   'work.title': 'More Work',
   'deck.prev': 'Previous',
   'deck.next': 'Next',
+  'photo.open': 'View Full Size',
   'work.present': 'Present',
   'work.cofounder': 'Co-founder',
   'work.freelance': 'Freelance',
@@ -162,6 +163,31 @@ const en = {
     "[El Panal](panal) is a movement [Manuel Sira](manuel) started here in Barquisimeto: lots of people building all kinds of things. There are people in marketing, fashion, CRM, inventory, psychology and health apps, and there were talks on artificial intelligence, on growing your company by measuring its data correctly, and on standing out now that we're in the age of AI and you need taste to make things. Every startup at the event had exactly 30 seconds to pitch, and I, nervous, gave [Salvalo](salvalo)'s. It wasn't the best one I've given, but it was Salvalo's first official pitch at an event of that caliber. I went with my friends from [Tripealo](tripealo) and left with new friends from other apps, new contacts and the odd lead for Salvalo. It's like a preview of Startup Summit Caracas: as I record this we haven't gone yet, but we are going, and this was the practice for the practice.",
   'events.panal.m':
     'A night of [El Panal](panal) in Barquisimeto: talks on AI, data and taste, and 30 seconds to pitch [Salvalo](salvalo). Nervous, but I gave it, and left with new friends and a lead or two.',
+  'events.summit':
+    'Summit',
+  'events.summit.when':
+    'Oct 2026',
+  'events.summit.body':
+    "On October 22 and 23 I was at the [Startup Venezuela Summit](summit), at Caracas Campus. Honestly, I had never been to an event this lively and interesting: talks all day, people from abroad, and everyone making connections and building every kind of product. We heard [Víctor Cárdenas](slash) of Slash again, and [Pedro Vallenilla](pedro) of [Cashea](cashea). [Enrique Rivas](enrique) and [SquareOne Capital](squareone) invited us to a workshop, and it was super interesting to hear the story of [Fina](fina) and how a startup works at the start when it comes to investment. We also applied with [Salvalo](salvalo) at [Innoven](innoven)'s stand, and I stuck my photo on the wall of Venezuelan founders to leave my mark, as high as I could. I also met one of the cofounders of [Rial](rial). What stayed with me most is that building a startup is hard, but it's worth it: with ambition, drive and hunger you can make it, whatever your age, your country or where you come from. It reminded me a lot of Steve Jobs's line: the people crazy enough to think they can change the world are the ones who do. I got home super excited about everything I learned and heard, so much that I recorded the talks I went to and I'm still processing them, so it isn't just 'I was there' but 'I was there, I learned, and I put it into practice'. Honestly, the Startup Venezuela Summit was a turning point in my life.",
+  'events.summit.m':
+    "Two days at the Startup Venezuela Summit with [Tripealo](tripealo): talks by [Slash](slash) and [Cashea](cashea), a private workshop with Fina and Innoven we were invited to for our founders' jackets, and [Salvalo](salvalo) on the wall of Venezuelan founders.",
+  'events.platanus.when':
+    'Oct 2026',
+  'events.platanus.body':
+    "Leaving the Startup Venezuela Summit, we went straight to [Platanus Hack 26 Caracas](platanus). This year Platanus ran its hackathon as a tour of Latin America, and my team and I got into the Caracas edition. We didn't apply as [Tripealo](tripealo) or as [Salvalo](salvalo), but with our own technical developer profiles. It was funny: almost a year after the AlegrIA hackathon in [Yummy](yummy)'s offices, in October 2025, we were back in October 2026 for another hackathon in the same offices. We built [Tridi](tridi), which turns an ordinary video of a person into movement data for training robots: a simulated robot that learns to move on its own by imitating you, whether from a video or live from the camera. What I learned at AlegrIA helped me a lot, and I was really locked in, working on the product with the rest of the team and with the other participants. It was a very technical hackathon and super interesting, surrounded by every kind of profile, not just frontend or mobile developers like me. There was unlimited food, and we slept a few nights right there in Yummy's offices. Our mentor was [Sebastián Alcalá](sebastian), a product engineer at Yummy and a cofounder of [Wink](wink), a company Yummy later acquired. We didn't win, but the level was impressive: I had already watched the videos from Buenos Aires, Mexico and Bogotá, and Venezuela lived up to them, not just my team but the finalists of every track, and I take my hat off to them. Our workspace was right next to the arcade, and it moved me to see, while I worked on Tridi, people playing Space Explorer on its screen. I didn't tell them to play it, there were plenty of games to choose from, and you could see how impressed they were: I'll always remember that. We met a lot of people, and once again I'm super grateful to the team. Hopefully next year we'll be back at a hackathon in Yummy's offices, and win, because third time's the charm. A huge event to close a huge week: first the Summit, then Platanus Hack.",
+  'events.platanus.m':
+    "Straight from the summit to Platanus Hack 26 Caracas, back in [Yummy](yummy)'s offices with the AlegrIA team: we built [Tridi](tridi), video turned into movement data for robots. No prize, but a much tougher hackathon, and people playing Space Explorer next door.",
+  'likes.paintings.meta': 'My Collection',
+  'likes.paintings.body':
+    "After I started looking at the photos of space, I also went looking for paintings made by people that matched my style. Someday I'd like to have screens, wherever my home ends up being, showing both the photos of the cosmos and these paintings. I like paintings with a contrast like space's, with so much happening in them that from a single one you could build a film, or a series of films: they're paintings that are poems at the same time. Most are by similar painters, which is why they look so alike, but honestly they're really cool. There's also one by the Spanish painter Velázquez, and others whose painter I don't know, or I do and prefer not to name. These aren't ranked either, because I like them all and they show in random order.",
+  'likes.title': 'More of Me',
+  'likes.cosmos.name': 'Cosmos',
+  'likes.paintings.name': 'Paintings',
+  'likes.games.name': 'Video Games',
+  'likes.games.body':
+    "[Ghost of Yōtei](yotei) and [Elden Ring](elden) are among my top games, and I got the platinum in both, as I always say. When I finished Ghost of Yōtei I took photos of the outfits I finished it in, because there are several and I wanted to remember the ones I liked most. I always kept the same setup, but I ordered the outfits carefully so I could change them however I wanted. Elden Ring is a mega cinematic game: Ghost of Yōtei is good, but Elden Ring is something else, there's no word for it. My brother had already played it, so from the start I had mapped out the photos I wanted to take once I got the platinum, with my setup and the armor I chose. Since I roughly knew how it went, from start to finish I had mapped everything I'd do and everything I had to get, and anyone who has played Elden Ring knows how hard it is to plan that from the very beginning. My brother is a pro and helped me a lot. It took me 78 hours, and in that armor, which I think is called the armor of the night, it looks so, so tough.",
+  'likes.cosmos.body':
+    "Space has always fascinated me. I identify a lot with optimistic nihilism: when you see how vast space is, the universe, the cosmos, a lot of what worries you in life stops making sense, at least in my case. There are things out there so immense, beyond this planet and this galaxy, and we are a mind this complex in a body this weak and mortal: a contrast on another scale. Right now there may be people buying houses and people selling them, someone celebrating a birth and someone grieving, and you realize nobody is special, even if we feel we are, and that what happens is nothing to the universe. Instead of rejecting that feeling, heavy and crazy as it is, I decided to admire it and love it: the very existence of a universe so complex, and us, a body so fragile with a mind so complex. That's why I fell for space, the books and the photos of space, and I started looking at photos from the [James Webb](webb) and the [Hubble](hubble) telescope for hours and hours. The ones you're seeing are the ones I like most, and they show in random order: they're all so good I can't find a way to rank them.",
 };
 
 export type UIKey = keyof typeof en;
@@ -237,6 +263,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.title': 'Más proyectos',
     'deck.prev': 'Anterior',
     'deck.next': 'Siguiente',
+    'photo.open': 'Ver en tamaño completo',
     'work.present': 'Actualidad',
     'work.cofounder': 'Cofundador',
     'work.freelance': 'Freelance',
@@ -295,6 +322,31 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '[El Panal](panal) es un movimiento que creó [Manuel Sira](manuel) aquí en Barquisimeto: muchas personas construyendo de todo. Hay gente de marketing, de moda, CRM, inventario, aplicaciones de psicología y de salud, y hubo charlas de inteligencia artificial, de cómo crecer tu empresa midiendo sus datos correctamente y de cómo diferenciarte ahora que estamos en la era de la inteligencia artificial y tienes que tener gusto para hacer las cosas. Cada startup que fue al evento tenía 30 segundos exactos de pitch, y yo, nervioso, di el de [Salvalo](salvalo). No fue el mejor que he dado, pero sí fue el primer pitch oficial de Salvalo en un evento de alto calibre. Fui con mis amigos de [Tripealo](tripealo) y salí con amigos nuevos de otras aplicaciones, nuevos contactos y uno que otro lead para Salvalo. Esto es como un adelanto del Startup Summit Caracas: al momento de grabar esto no hemos ido, pero sí vamos, y esta fue la práctica de la práctica.',
     'events.panal.m':
       'Una noche de [El Panal](panal) en Barquisimeto: charlas de IA, datos y gusto, y 30 segundos para el pitch de [Salvalo](salvalo). Nervioso, pero lo di, y me fui con amigos nuevos y uno que otro lead.',
+    'events.summit':
+      'Summit',
+    'events.summit.when':
+      'oct 2026',
+    'events.summit.body':
+      'El 22 y 23 de octubre estuve en el [Startup Venezuela Summit](summit), en el Caracas Campus. La verdad es que nunca había ido a un evento así de movido e interesante: charlas todo el día, gente del extranjero, y todo el mundo haciendo conexiones y construyendo todo tipo de productos. Escuchamos de nuevo a [Víctor Cárdenas](slash), de Slash, y a [Pedro Vallenilla](pedro), de [Cashea](cashea). [Enrique Rivas](enrique) y [SquareOne Capital](squareone) nos invitaron a un workshop, y fue súper interesante escuchar la historia de [Fina](fina) y cómo funciona una startup al principio con el tema de la inversión. También postulamos a [Salvalo](salvalo) en el stand de [Innoven](innoven) y pegué mi foto en la pared de founders venezolanos para dejar la huella, lo más alto que pude. También conocí a uno de los cofundadores de [Rial](rial). Lo que más me marcó fue que hacer una startup es difícil, pero vale la pena: con ambición, ganas y hambre lo puedes lograr, sin importar tu edad, tu país ni de dónde vienes. Me recordó mucho la frase de Steve Jobs: los que están lo suficientemente locos como para creer que pueden cambiar el mundo son los que lo hacen. Llegué a mi casa súper emocionado con todo lo que aprendí y escuché, tanto que grabé las charlas a las que fui y todavía las sigo procesando, para que no sea solo «estuve», sino «estuve, aprendí y lo puse en práctica». La verdad es que el Startup Venezuela Summit fue un turning point en mi vida.',
+    'events.summit.m':
+      'Dos días en el Startup Venezuela Summit con [Tripealo](tripealo): charlas de [Slash](slash) y [Cashea](cashea), un workshop privado con Fina e Innoven al que nos invitaron por nuestras chaquetas de founders, y [Salvalo](salvalo) en la pared de founders venezolanos.',
+    'events.platanus.when':
+      'oct 2026',
+    'events.platanus.body':
+      'Saliendo del Startup Venezuela Summit, fuimos directo a [Platanus Hack 26 Caracas](platanus). Este año Platanus hizo su hackathon en modo gira por Latinoamérica, y mi equipo y yo quedamos en la edición de Caracas. No aplicamos como [Tripealo](tripealo) ni como [Salvalo](salvalo), sino con nuestros perfiles técnicos de desarrollador. Fue gracioso: casi un año después de la hackathon de AlegrIA en las oficinas de [Yummy](yummy), en octubre de 2025, volvimos en octubre de 2026 a otra hackathon en las mismas oficinas. Construimos [Tridi](tridi), que convierte un video normal de una persona en data de movimiento para entrenar robots: un robot simulado que aprende a moverse solo imitándote, ya sea desde un video o en vivo con la cámara. Lo que aprendí en AlegrIA me sirvió mucho, y estuve muy locked in, trabajando en el producto con el resto del equipo y con los demás participantes. Fue una hackathon muy técnica y súper interesante, rodeado de todo tipo de perfiles, no solo desarrolladores frontend o móviles como yo. Había comida ilimitada y dormimos unas noches tal cual en las oficinas de Yummy. Nuestro mentor fue [Sebastián Alcalá](sebastian), product engineer en Yummy y cofundador de [Wink](wink), una empresa que después adquirió Yummy. No ganamos, pero el nivel fue impresionante: ya había visto los videos de Buenos Aires, México y Bogotá, y Venezuela estuvo a la altura, no solo mi equipo sino los finalistas de todos los tracks, y me quito el sombrero. Nuestro espacio de trabajo estaba justo al lado del arcade, y me emocionó mucho ver, mientras trabajaba en Tridi, a personas jugando Space Explorer en su pantalla. Yo no les dije que lo jugaran, había muchísimos juegos para escoger y se les veía la cara de impresión: eso siempre lo voy a recordar. Conocimos a muchas personas, y estoy súper agradecido de nuevo con el team. Ojalá el próximo año volvamos a una hackathon en las oficinas de Yummy, y ganemos, porque la tercera es la vencida. Un evento madre para cerrar una semana madre: primero el Summit y después Platanus Hack.',
+    'events.platanus.m':
+      'Del Summit directo a Platanus Hack 26 Caracas, de vuelta en las oficinas de [Yummy](yummy) con el equipo de AlegrIA: construimos [Tridi](tridi), video convertido en data de movimiento para robots. Sin premio, pero una hackathon mucho más fuerte, y gente jugando Space Explorer al lado.',
+    'likes.paintings.meta': 'Mi colección',
+    'likes.paintings.body':
+      'Después de que empecé a ver las fotos del espacio, busqué también pinturas hechas por humanos que hicieran match con mi estilo. En el futuro me gustaría tener, donde sea que sea mi casa, pantallas que muestren tanto las fotos del cosmos como estas pinturas. Me gustan las pinturas con un contraste parecido al del espacio, con tanto pasando en ellas que con una sola podrías armar una película, o una serie de películas: son pinturas que son poemas al mismo tiempo. La mayoría son de pintores parecidos, por eso se parecen tanto, pero la verdad es que están muy cool. También hay una del pintor español Velázquez, y otras de las que no sé el pintor, o sí lo sé pero prefiero no ponerlo. Estas tampoco tienen ranking, porque me gustan todas y salen aleatoriamente.',
+    'likes.title': 'Más de mí',
+    'likes.cosmos.name': 'Cosmos',
+    'likes.paintings.name': 'Pinturas',
+    'likes.games.name': 'Videojuegos',
+    'likes.games.body':
+      '[Ghost of Yōtei](yotei) y [Elden Ring](elden) son de mis juegos top, y a los dos les saqué el platino, como siempre digo. Al terminar Ghost of Yōtei tomé fotos de los outfits con los que lo terminé, porque hay varios y quería recordar cuáles me gustaron más. Siempre tenía la misma configuración, pero ordené muy bien los outfits para cambiarlos como quisiera. Elden Ring es un juego mega cinematográfico: Ghost of Yōtei es bueno, pero Elden Ring es otra cosa, no tiene nombre. Mi hermano ya se lo había jugado, así que desde el principio tenía mapeadas las fotos que quería tomar cuando lo platinara, con mi configuración y la armadura que escogí. Como ya sabía más o menos cómo era, desde el principio hasta el final tenía mapeado todo lo que iba a hacer y lo que tenía que conseguir, y quienes hayan jugado Elden Ring saben lo difícil que es planear eso desde el principio. Mi hermano es un pro y me ayudó mucho. Me tomó 78 horas, y con esa armadura, que creo que se llama la armadura de la noche, se ve demasiado, demasiado duro.',
+    'likes.cosmos.body':
+      'El espacio siempre me ha fascinado. Me identifico mucho con el nihilismo optimista: al ver lo vasto que es el espacio, el universo, el cosmos, mucho de lo que te preocupa en la vida deja de tener sentido, al menos en mi caso. Hay cosas tan imponentes allá afuera, fuera de este planeta y de esta galaxia, y nosotros somos una mente tan compleja en un cuerpo tan débil y mortal: un contraste de otra escala. Ahorita mismo puede haber gente comprando casas y gente vendiéndolas, alguien que celebra un nacimiento y alguien que llora una pena, y te das cuenta de que nadie es especial, aunque nos sintamos especiales, y de que al universo lo que pasa le es indiferente. En vez de rechazar ese sentimiento, por lo heavy y lo loco que es, decidí admirarlo y amarlo: la existencia misma de un universo tan complejo, y nosotros, un cuerpo tan frágil con una mente tan compleja. Por eso me gustó tanto el espacio, los libros y las fotos del espacio, y empecé a ver fotos del [James Webb](webb) y del telescopio [Hubble](hubble) durante horas y horas. Estas que están viendo son las que más me gustan, y salen aleatoriamente: son tan buenas todas que no encuentro manera de rankearlas.',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -365,6 +417,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.title': '更多作品',
     'deck.prev': '上一个',
     'deck.next': '下一个',
+    'photo.open': '查看原图',
     'work.present': '至今',
     'work.cofounder': '联合创始人',
     'work.freelance': '自由职业',
@@ -421,5 +474,30 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '[El Panal](panal) 是 [Manuel Sira](manuel) 在巴基西梅托发起的一个运动：很多人在这里做各种各样的东西。有做营销、时尚、CRM、库存，以及心理和健康应用的人，还有关于人工智能、如何正确衡量数据来发展公司、以及在人工智能时代如何靠品味脱颖而出的演讲。每个到场的初创公司都有整整 30 秒的路演时间，我很紧张，但讲了 [Salvalo](salvalo) 的。那不是我讲得最好的一次，却是 Salvalo 在这种级别活动上的第一次正式路演。我和 [Tripealo](tripealo) 的朋友们一起去，离开时多了来自其他应用的新朋友、新联系人，还有几个 Salvalo 的潜在客户。这算是加拉加斯 Startup Summit 的预演：录这段话时我们还没去，但一定会去，而这次是练习的练习。',
     'events.panal.m':
       '在巴基西梅托参加 [El Panal](panal) 的一个夜晚：关于 AI、数据和品味的讲座，还有 30 秒为 [Salvalo](salvalo) 路演。很紧张，但我讲完了，带走了新朋友和几条潜在客户线索。',
+    'events.summit':
+      '峰会',
+    'events.summit.when':
+      '2026 年 10 月',
+    'events.summit.body':
+      '10 月 22 日和 23 日，我参加了在 Caracas Campus 举办的 [Startup Venezuela Summit](summit)。说实话，我从没去过这么热闹又有意思的活动：一整天的讲座，来自国外的人，每个人都在建立联系、做着各种各样的产品。我们再次听了 Slash 的 [Víctor Cárdenas](slash)，还有 [Cashea](cashea) 的 [Pedro Vallenilla](pedro)。[Enrique Rivas](enrique) 和 [SquareOne Capital](squareone) 邀请我们参加了一场工作坊，听 [Fina](fina) 的故事、了解创业公司早期在融资方面如何运作，非常有意思。我们还在 [Innoven](innoven) 的展位为 [Salvalo](salvalo) 报了名，我把我的照片贴在委内瑞拉创始人墙上留下印记，贴得尽可能高。我还认识了 [Rial](rial) 的一位联合创始人。最打动我的是：创业很难，但值得；只要有野心、动力和渴望，你就能做到，无论你多大、来自哪个国家、出身如何。这让我想起史蒂夫·乔布斯的那句话：那些疯狂到以为自己能改变世界的人，才是真正改变世界的人。回到家时，我对学到和听到的一切都非常兴奋，甚至把参加的讲座都录了下来，至今仍在消化，好让它不只是“我去过”，而是“我去过、学到了，并且用上了”。说实话，Startup Venezuela Summit 是我人生的一个转折点。',
+    'events.summit.m':
+      '和 [Tripealo](tripealo) 在 Startup Venezuela Summit 的两天：[Slash](slash) 和 [Cashea](cashea) 的分享，因为创始人夹克被邀请参加的 Fina 与 Innoven 私人工作坊，还有贴上委内瑞拉创始人墙的 [Salvalo](salvalo)。',
+    'events.platanus.when':
+      '2026 年 10 月',
+    'events.platanus.body':
+      '离开 Startup Venezuela Summit 后，我们直接去了 [Platanus Hack 26 Caracas](platanus)。今年 Platanus 把黑客松办成了拉美巡回，我和我的团队入选了加拉加斯站。我们不是以 [Tripealo](tripealo) 或 [Salvalo](salvalo) 的名义报名，而是以各自的开发者技术背景报名。很有意思：距离 2025 年 10 月在 [Yummy](yummy) 办公室举办的 AlegrIA 黑客松差不多一年后，2026 年 10 月我们又回到同一个办公室参加另一场黑客松。我们做了 [Tridi](tridi)，它把一段普通的人物视频变成训练机器人的动作数据：一个模拟机器人通过模仿你自己学会移动，无论来自视频还是摄像头的实时画面。在 AlegrIA 学到的东西帮了我很多，我非常投入，和团队其他成员以及其他参赛者一起打磨产品。这是一场技术性很强、非常有意思的黑客松，身边有各种背景的人，不只是像我这样的前端或移动端开发者。食物无限量供应，我们有几晚就直接睡在 Yummy 的办公室里。我们的导师是 [Sebastián Alcalá](sebastian)，Yummy 的产品工程师，也是 [Wink](wink) 的联合创始人，这家公司后来被 Yummy 收购。我们没有赢，但整体水平令人惊叹：我之前看过布宜诺斯艾利斯、墨西哥和波哥大的视频，委内瑞拉完全不逊色，不只是我的团队，所有赛道的决赛队伍都很强，我向他们致敬。我们的工作区就在街机旁边，一边做 Tridi，一边看到有人在屏幕上玩 Space Explorer，让我非常激动。我没让他们玩，可选的游戏有很多，从他们脸上能看出惊叹：这一幕我会一直记得。我们认识了很多人，再次非常感谢我的团队。希望明年我们能再回到 Yummy 的办公室参加黑客松，并且赢下来，因为事不过三。一场重量级的活动，为重量级的一周收尾：先是峰会，然后是 Platanus Hack。',
+    'events.platanus.m':
+      '从峰会直接去了 Platanus Hack 26 Caracas，和 AlegrIA 的队友回到 [Yummy](yummy) 的办公室：我们做了 [Tridi](tridi)，把视频变成机器人的动作数据。没有拿奖，但这是一场难得多的黑客松，旁边还有人在玩 Space Explorer。',
+    'likes.paintings.meta': '我的收藏',
+    'likes.paintings.body':
+      '开始看太空照片之后，我也去寻找和我风格契合的、由人画出来的画作。将来不管我的家在哪里，我都希望有几块屏幕，同时展示宇宙的照片和这些画作。我喜欢和太空有类似反差的画，里面发生的事情多到仅凭一幅就能拍成一部电影，甚至一个系列：这些画同时也是诗。大多数出自风格相近的画家，所以看起来很像，但说实话真的很酷。还有一幅是西班牙画家委拉斯开兹的，另外几幅我不知道作者，或者知道但宁愿不写。它们同样没有排名，因为我全都喜欢，顺序是随机的。',
+    'likes.title': '更多关于我',
+    'likes.cosmos.name': '宇宙',
+    'likes.paintings.name': '画作',
+    'likes.games.name': '电子游戏',
+    'likes.games.body':
+      '[《对马岛之魂：羊蹄山》](yotei)和[《艾尔登法环》](elden)都是我的最爱游戏，两款我都拿到了白金，我总是这么说。打通《羊蹄山》时，我给最后穿过的装束拍了照，因为有好几套，我想记住最喜欢的是哪些。我的配置一直不变，但我把装束整理得很好，想怎么换就怎么换。《艾尔登法环》是一款超级有电影感的游戏：《羊蹄山》很好，但《艾尔登法环》是另一回事，简直无法形容。我哥哥已经玩过，所以我从一开始就规划好了拿白金时要拍哪些照片，用我的配置和我选的盔甲。因为我大概知道游戏的走向，从头到尾我都规划好了要做的每件事和要拿到的东西，玩过《艾尔登法环》的人都知道从一开始就这样规划有多难。我哥哥是高手，帮了我很多。我花了 78 个小时，穿着那套盔甲，我记得叫夜之盔甲，看起来超级超级帅。',
+    'likes.cosmos.body':
+      '太空一直让我着迷。我很认同乐观虚无主义：当你看到太空、宇宙有多么浩瀚，生活中很多让你担心的事就不再有意义，至少对我来说是这样。外面有那么宏伟的东西，在这颗星球和这个星系之外，而我们是一个如此复杂的头脑，住在如此脆弱、终有一死的身体里：这是另一种尺度的反差。此刻可能有人在买房，有人在卖房，有人在庆祝新生，有人在悲伤，你会意识到没有人是特别的，即使我们觉得自己特别，而发生的一切对宇宙来说都无关紧要。我没有排斥这种感觉，尽管它沉重又疯狂，而是决定欣赏它、热爱它：一个如此复杂的宇宙本身的存在，以及我们，脆弱的身体里装着如此复杂的头脑。所以我爱上了太空，关于太空的书和照片，我开始一连几个小时地看[詹姆斯·韦伯](webb)和[哈勃](hubble)望远镜的照片。你们看到的是我最喜欢的，顺序是随机的：它们都太好了，我找不到给它们排名的办法。',
   },
 };

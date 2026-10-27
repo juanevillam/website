@@ -9,6 +9,8 @@
     "preview": "astro preview",
     "typecheck": "astro check",
     "arcade": "node scripts/sync-arcade.mjs",
+    "likes": "node scripts/sync-likes.mjs",
+    "backup": "node scripts/backup-media.mjs",
     "narration": "node scripts/narration-status.mjs",
     "format": "prettier --write ."
   },

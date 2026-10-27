@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+import PanelDeck from './PanelDeck.astro';
+import PhotoViewer from './PhotoViewer.astro';
+import GamesCollage from './GamesCollage.astro';
+import NarrationPlayer from './NarrationPlayer.astro';
+import SiteFooter from './SiteFooter.astro';
+import { LIKES } from '../lib/likes';
+import { ui } from '../i18n/ui';
+import type { DeckItem } from '../lib/deck-items';
+
+/**
+ * THINGS I LIKE — what Juan loves outside of work, on a page of its own
+ * (pages/things-i-like), reached from the footer: the landing loads none
+ * of its pictures. It is built the way the landing's sections are (Juan,
+ * 2026-10-27) — the section's eyebrow, then one panel deck, a card per
+ * set (Cosmos, paintings, video games), each its words beside its frame —
+ * and closes on the same footer.
+ */
+type Props = {
+  /** The card the deck opens on: each card has its own address. */
+  card?: DeckItem;
+};
+const { card } = Astro.props;
+const name = (c: DeckItem) => (typeof c.name === 'string' ? c.name : ui.en[c.name.k]);
+// A card's words as one plain sentence, its links unmarked.
+const plain = (c: DeckItem) => {
+  const key = typeof c.body === 'string' ? c.body : 'k' in c.body ? c.body.k : c.body.before;
+  return ui.en[key].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+};
+---
+
+<Base
+  title={`${card ? `${name(card)} — ` : ''}${ui.en['likes.title']} — juanevillam`}
+  description={plain(card ?? LIKES[0])}
+  image={(() => {
+    const shown = (card ?? LIKES[0]).image;
+    return Array.isArray(shown) ? shown[0] : (card ?? LIKES[0]).scene;
+  })()}
+  path={card ? `/things-i-like/${card.slug}` : '/things-i-like'}
+>
+  <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id}>
+    <GamesCollage slot="games" />
+  </PanelDeck>
+  <SiteFooter panel />
+  <NarrationPlayer />
+  <PhotoViewer />
+</Base>

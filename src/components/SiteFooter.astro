@@ -1,6 +1,7 @@
 ---
 import T from './T.astro';
 import { LEGAL_APPS } from '../lib/legal';
+import { LIKES } from '../lib/likes';
 import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
@@ -139,6 +140,21 @@ const SOCIAL = [
           </details>
         ))
       }
+      {/* Juan outside of work: one page per set (pages/things-i-like),
+          a column like an app's pages, so the landing never loads their
+          pictures. */}
+      <div class="column app-links">
+        <span class="label"><T k="likes.title" /></span>
+        <ul>
+          {LIKES.map(card => (
+            <li>
+              <a href={`/things-i-like/${card.slug}`}>
+                {typeof card.name === 'string' ? card.name : <T k={card.name.k} />}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
@@ -331,8 +347,12 @@ const SOCIAL = [
     }
   }
 
+  /* Sound Shaper's pages, then More of Me, side by side. */
   .columns {
     display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    column-gap: var(--space-4);
   }
 
   ul {
