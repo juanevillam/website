@@ -41,6 +41,7 @@ export type FocusPage = {
 export const eventPath = (item: DeckItem) =>
   `/events/${item.slug}${item.date ? `-${item.date}` : ''}`;
 export const workPath = (item: DeckItem) => `/work/${item.slug}`;
+export const likePath = (item: DeckItem) => `/things-i-like/${item.slug}`;
 
 const en = ui.en;
 

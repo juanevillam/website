@@ -59,6 +59,11 @@ const NEUTRAL_STRENGTH = 0.7;
 
 const cache = new Map<string, Scene>();
 
+/** Where the site's pictures are on disk, at build time — from the project
+ *  root, not import.meta.url: the build runs this from a bundled chunk
+ *  whose depth under dist/ is the bundler's to choose. */
+const PUBLIC = path.join(process.cwd(), 'public');
+
 const hsv = (r: number, g: number, b: number) => {
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -116,9 +121,7 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
   let pixels = 0;
   let chromatic = 0;
   for (const s of srcs) {
-    // From the project root, not import.meta.url: the build runs this from a
-    // bundled chunk whose depth under dist/ is the bundler's to choose.
-    const file = path.join(process.cwd(), 'public', s);
+    const file = path.join(PUBLIC, s);
     const { data, info } = await sharp(file)
       .resize(64, 64, { fit: 'inside' })
       .removeAlpha()
@@ -200,3 +203,10 @@ export const NAME_SCENE = sceneAttr({
   colours: [NEUTRAL_LIGHT],
   strength: NEUTRAL_STRENGTH,
 });
+
+/** Whether a picture (site-relative, under public/) is wider than tall —
+ *  so a frame can alternate upright and sideways (PanelDeck). */
+export const isSideways = async (src: string) => {
+  const { width = 0, height = 0 } = await sharp(path.join(PUBLIC, src)).metadata();
+  return width > height;
+};

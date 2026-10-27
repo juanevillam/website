@@ -1,0 +1,289 @@
+---
+import T from './T.astro';
+
+/**
+ * THE VIEWER — a picture whole, over the page, at its full size: an
+ * event's photo or video, a space photo, a painting (Juan, 2026-10-27).
+ * One per page, drawn once; whatever shows pictures opens it with
+ *
+ *   document.dispatchEvent(new CustomEvent('viewer:open', {
+ *     detail: { items: [{ src, name, video? }], at },
+ *   }))
+ *
+ * and the arrows, the keys or a swipe go through the rest of `items`.
+ * The full picture is fetched only here, and its two neighbours with it,
+ * so the arrows never wait. The picture keeps clear of the close button
+ * above it and the caption below it, and stands in ONE FIXED FRAME for
+ * every picture (Juan, 2026-10-27: frames hugging each picture grew and
+ * shrank as the arrows turned) — framed like every screen on the site
+ * (the hairline, the flat picture's corner, the screens' shadow), the
+ * picture whole inside it over a blur of itself, as a deck's frames
+ * stand theirs (PanelDeck `.layer`).
+ */
+---
+
+<dialog class="viewer" data-viewer aria-label="Viewer">
+  <div class="stage">
+    <img class="fill" alt="" aria-hidden="true" data-fill />
+    <img class="full" alt="" data-full />
+    <video class="full" data-full-video muted loop playsinline disablepictureinpicture></video>
+  </div>
+  <p class="v-cap"><span data-v-name></span> <span class="v-count" data-v-count></span></p>
+  <button type="button" class="v-btn v-close" data-v-close>
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+    </svg>
+    <span class="sr"><T k="focus.close" /></span>
+  </button>
+  <button type="button" class="v-btn v-prev" data-v-step="-1">
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M10 3 L5 8 L10 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="sr"><T k="deck.prev" /></span>
+  </button>
+  <button type="button" class="v-btn v-next" data-v-step="1">
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M6 3 L11 8 L6 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="sr"><T k="deck.next" /></span>
+  </button>
+</dialog>
+
+<script>
+  type Item = { src: string; name?: string; video?: boolean };
+  const dialog = document.querySelector<HTMLDialogElement>('[data-viewer]')!;
+  const img = dialog.querySelector<HTMLImageElement>('[data-full]')!;
+  const fill = dialog.querySelector<HTMLImageElement>('[data-fill]')!;
+  const video = dialog.querySelector<HTMLVideoElement>('[data-full-video]')!;
+  const name = dialog.querySelector<HTMLElement>('[data-v-name]')!;
+  const count = dialog.querySelector<HTMLElement>('[data-v-count]')!;
+  let items: Item[] = [];
+  let at = 0;
+
+  const warm = (i: number) => {
+    const p = items[(i + items.length) % items.length];
+    if (p && !p.video) new Image().src = p.src;
+  };
+
+  const show = (i: number) => {
+    at = (i + items.length) % items.length;
+    const item = items[at];
+    img.classList.remove('is-in');
+    video.classList.remove('is-in');
+    if (item.video) {
+      img.removeAttribute('src');
+      video.src = item.src;
+      video.poster = item.src.replace(/\.mp4$/, '.jpg');
+      video.play().catch(() => {});
+      video.classList.add('is-in');
+    } else {
+      video.pause();
+      video.removeAttribute('src');
+      img.src = item.src;
+      img.alt = item.name ?? '';
+    }
+    // The blur behind: the picture itself, or a video's poster.
+    fill.src = item.video ? item.src.replace(/\.mp4$/, '.jpg') : item.src;
+    name.textContent = item.name ?? '';
+    count.textContent = items.length > 1 ? `${at + 1} / ${items.length}` : '';
+    warm(at + 1);
+    warm(at - 1);
+  };
+  img.addEventListener('load', () => img.classList.add('is-in'));
+
+  document.addEventListener('viewer:open', e => {
+    const { detail } = e as CustomEvent<{ items: Item[]; at: number }>;
+    items = detail.items;
+    dialog.classList.toggle('is-single', items.length < 2);
+    show(detail.at);
+    dialog.showModal();
+  });
+  dialog.addEventListener('close', () => {
+    video.pause();
+    video.removeAttribute('src');
+    document.dispatchEvent(new CustomEvent('viewer:closed', { detail: at }));
+  });
+
+  for (const b of dialog.querySelectorAll<HTMLElement>('[data-v-step]'))
+    b.addEventListener('click', () => show(at + Number(b.dataset.vStep)));
+  dialog.querySelector('[data-v-close]')!.addEventListener('click', () => dialog.close());
+  // A click on the dark around the picture closes it.
+  dialog.addEventListener('click', e => {
+    if (e.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') show(at + 1);
+    else if (e.key === 'ArrowLeft') show(at - 1);
+  });
+
+  // A finger's swipe sideways turns it.
+  let x0: number | null = null;
+  dialog.addEventListener('pointerdown', e => (x0 = e.clientX));
+  dialog.addEventListener('pointerup', e => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 50) show(at + (dx < 0 ? 1 : -1));
+  });
+</script>
+
+<style>
+  .viewer {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(8, 8, 8, 0.94);
+    color: var(--ink);
+    touch-action: pan-y;
+  }
+
+  .viewer::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  /* THE FRAME: one size for every picture — the room between the close
+     button (1rem + 2.5rem) and the caption, clear of each by 2rem, and of
+     the arrows — framed like every screen on the site. */
+  .stage {
+    position: absolute;
+    inset: 5.5rem 4.5rem 5rem;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--media-radius-flat);
+    background: var(--ground);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+  }
+
+  .viewer.is-single .stage {
+    inset: 5.5rem 1.5rem 5rem;
+  }
+
+  .stage img,
+  .stage video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    user-select: none;
+  }
+
+  /* The picture's own blur fills what its shape leaves of the frame. */
+  .fill {
+    object-fit: cover;
+    transform: scale(1.2);
+    filter: blur(28px) brightness(0.55);
+  }
+
+  .full {
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .stage img:not([src]),
+  .full:not([src]) {
+    display: none;
+  }
+
+  .full.is-in {
+    opacity: 1;
+  }
+
+  .v-cap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.75rem;
+    margin: 0;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .v-count {
+    margin-left: 0.5rem;
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+
+  /* The deck's own arrows (DeckControls): the header's pill recipe as a
+     circle. */
+  .v-btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: var(--float-h);
+    height: var(--float-h);
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color var(--dur-micro) var(--ease);
+  }
+
+  .v-btn:hover {
+    border-color: var(--ink-3);
+  }
+
+  .v-close {
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .v-prev,
+  .v-next {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .v-prev {
+    left: 1rem;
+  }
+
+  .v-next {
+    right: 1rem;
+  }
+
+  .viewer.is-single .v-prev,
+  .viewer.is-single .v-next {
+    display: none;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* A phone: the arrows move to the foot, the picture takes the width. */
+  @media (max-width: 48rem) {
+    .v-prev,
+    .v-next {
+      top: auto;
+      bottom: 1rem;
+      transform: none;
+    }
+
+    .v-cap {
+      bottom: 5rem;
+    }
+
+    .stage,
+    .viewer.is-single .stage {
+      inset: 5rem 0.75rem 8.5rem;
+    }
+  }
+</style>

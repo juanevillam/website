@@ -7,6 +7,7 @@ import SongDemo from './SongDemo.astro';
 import SiteFooter from './SiteFooter.astro';
 import WorkCarousel from './WorkCarousel.astro';
 import EventsDeck from './EventsDeck.astro';
+import PhotoViewer from './PhotoViewer.astro';
 import T from './T.astro';
 import { APPS } from '../lib/apps';
 import { ui } from '../i18n/ui';
@@ -70,6 +71,9 @@ const focus = page?.focus;
 
   <!-- A song's demo, over the whole page when it plays. -->
   <SongDemo />
+
+  <!-- An event's photo or video whole, over the page, when it is clicked. -->
+  <PhotoViewer />
 </Base>
 
 <style>

@@ -3,10 +3,10 @@ import T from './T.astro';
 import TL from './TL.astro';
 import DeckControls from './DeckControls.astro';
 import CopyLink from './CopyLink.astro';
-import type { UIKey } from '../i18n/ui';
+import { ui, type UIKey } from '../i18n/ui';
 import { clipFor, voiceAttrs } from '../lib/narration';
-import { sceneAttr, sceneOf } from '../lib/scene';
-import { eventPath, workPath } from '../lib/links';
+import { isSideways, sceneAttr, sceneOf } from '../lib/scene';
+import { eventPath, likePath, workPath } from '../lib/links';
 
 /**
  * A PANEL DECK — one full panel holding a sideways deck of cards, each the
@@ -23,9 +23,10 @@ import { eventPath, workPath } from '../lib/links';
  * An event's VIDEO (a phone's too, silent) is one turn of the RIGHT
  * frame, its last, and holds it until it ends (Juan, 2026-10-11: shown
  * all the time, it read as the card's only picture); beside one photo it
- * IS the right frame, looping. Every picture
- * keeps its own aspect ratio — whole, over a blur of itself, never
- * cropped to the frame (Juan, 2026-10-11).
+ * IS the right frame, looping. Every picture keeps its own aspect ratio —
+ * whole, over a blur of itself, never cropped to the frame (Juan,
+ * 2026-10-11, and again 2026-10-27: filling the frame lost the blur); a
+ * click opens it in the viewer (PhotoViewer), in one fixed frame too.
  *
  * The deck is the page's one deck (lib/deck.ts): ENDLESS, one card on
  * stage, and a turn that brings the screen in first and the words after
@@ -51,33 +52,127 @@ type Props = {
    *  over the page as a modal, on that card alone. */
   focus?: string;
   /** Whose addresses the cards' Copy Link gives (lib/links). */
-  share: 'work' | 'events';
+  share: 'work' | 'events' | 'likes';
+  /** The card the deck starts on, in the page (not as a modal): a page
+   *  that is the deck, opened at one card (pages/things-i-like). */
+  start?: string;
 };
 
-const { id, title, items, focus, share } = Astro.props;
-const pathOf = (p: DeckItem) => (share === 'events' ? eventPath(p) : workPath(p));
+const { id, title, items, focus, share, start } = Astro.props;
+const pathOf = (p: DeckItem) =>
+  share === 'events' ? eventPath(p) : share === 'likes' ? likePath(p) : workPath(p);
 const focusCard = focus ? items.findIndex(p => p.id === focus) : -1;
+const startCard = Math.max(0, start ? items.findIndex(p => p.id === start) : focusCard);
+// A card's name for attributes, where a translation cannot follow the
+// page's language: the English one.
+const plainName = (p: DeckItem) => (typeof p.name === 'string' ? p.name : ui.en[p.name.k]);
 
 const isVideo = (m: Media) => m.endsWith('.mp4');
 // A video lights the page, stands before it plays, and blurs behind
 // itself by its poster.
 const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
 
+// Which pictures are SIDEWAYS: read off each file at build time (a
+// video by its poster), so a frame can alternate upright and sideways.
+const wide = new Set<Media>();
+for (const p of items)
+  if (Array.isArray(p.image))
+    for (const m of p.image) if (await isSideways(still(m))) wide.add(m);
+
 // The frames of a card whose screen is photos: three pictures or fewer
 // take ONE frame, one at a time (two frames of one picture each read as
-// static, Juan, 2026-10-11); more take two. The VIDEOS come first, in the
-// order listed (Juan, 2026-10-13): arriving at a card shows it moving,
-// then its photos — and in two frames they all lead the right one. The
-// photos fill the LEFT frame, in order, until it holds as many as the
-// right will, and the rest follow the videos — so both frames turn
-// through the same number of pictures.
+// static, Juan, 2026-10-11); more take two. A card lists its videos and
+// its photos each by what matters most — the ones Juan is in longest
+// first (Juan, 2026-10-27). Every frame ALTERNATES photo and video (video
+// after video read as a reel), the two frames crossed — the left opens on
+// a photo, the right on a video — so one stands still while the other
+// moves; when one kind runs out, the other fills the rest.
+//
+// SHAPES ALTERNATE TOO (Juan, 2026-10-27): upright after sideways down a
+// frame, and the two frames unlike each other at the same turn — a
+// sideways photo beside a sideways video read as repetitive. With two
+// shapes there are few enough ways to lay a card out (2^n, 4,096 for a
+// twelve) to try them all: the layout with the fewest repeats wins, and
+// among those the one that moves pictures least from their importance.
+// Each kind then fills its slots of each shape in its own order.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
-  const videos = all.filter(isVideo);
   const photos = all.filter(m => !isVideo(m));
-  if (all.length <= 3) return [[...videos, ...photos]];
-  const half = Math.min(photos.length, Math.ceil(all.length / 2));
-  return [photos.slice(0, half), [...videos, ...photos.slice(half)]];
+  const videos = all.filter(isVideo);
+  // A card that says where its frames split keeps its own order: the
+  // first `split` pictures run the left frame, the rest the right.
+  if (p.split && all.length > 3 && !p.wide)
+    return [all.slice(0, p.split), all.slice(p.split)];
+  const count = all.length <= 3 || p.wide ? 1 : 2;
+
+  // The slots, turn by turn: which frame, which turn, which kind.
+  type Slot = { f: number; k: number; photo: boolean };
+  const slots: Slot[] = [];
+  let left = { photo: photos.length, video: videos.length };
+  for (let k = 0; left.photo + left.video > 0; k++)
+    for (let f = 0; f < count && left.photo + left.video > 0; f++) {
+      const want = (k % 2 === 0) === (f === 0);
+      const photo = want ? left.photo > 0 : left.video === 0;
+      slots.push({ f, k, photo });
+      if (photo) left.photo--;
+      else left.video--;
+    }
+
+  const sideways = (ms: Media[]) => ms.filter(m => wide.has(m)).length;
+  const need = { photo: sideways(photos), video: sideways(videos) };
+  const n = slots.length;
+  let best: { mask: number; repeats: number; moved: number } | undefined;
+  // Too many to try (a long list on one frame): keep the given order.
+  if (n <= 14)
+    for (let mask = 0; mask < 1 << n; mask++) {
+      // As many sideways slots of each kind as there are sideways pictures.
+      let ph = 0;
+      let vi = 0;
+      for (let i = 0; i < n; i++)
+        if (mask & (1 << i)) slots[i].photo ? ph++ : vi++;
+      if (ph !== need.photo || vi !== need.video) continue;
+      const shapeOf = (i: number) => (mask >> i) & 1;
+      let repeats = 0;
+      for (let i = 0; i < n; i++)
+        for (let j = i + 1; j < n; j++) {
+          const a = slots[i];
+          const b = slots[j];
+          // The same frame, one turn apart; or the two frames at one turn.
+          const near = (a.f === b.f && b.k === a.k + 1) || (a.k === b.k && a.f !== b.f);
+          if (near && shapeOf(i) === shapeOf(j)) repeats++;
+        }
+      // How far each picture lands from its place in its kind's order.
+      let moved = 0;
+      const seen = { photo: [0, 0], video: [0, 0] };
+      const order = { photo: [] as number[], video: [] as number[] };
+      for (let i = 0; i < n; i++) order[slots[i].photo ? 'photo' : 'video'].push(i);
+      for (const kind of ['photo', 'video'] as const) {
+        const list = kind === 'photo' ? photos : videos;
+        const byShape = [list.filter(m => !wide.has(m)), list.filter(m => wide.has(m))];
+        order[kind].forEach((slot, place) => {
+          const shape = shapeOf(slot);
+          const m = byShape[shape][seen[kind][shape]++];
+          moved += Math.abs(place - list.indexOf(m));
+        });
+      }
+      if (!best || repeats < best.repeats || (repeats === best.repeats && moved < best.moved))
+        best = { mask, repeats, moved };
+    }
+
+  const frames: Media[][] = Array.from({ length: count }, () => []);
+  const queues = {
+    photo: [photos.filter(m => !wide.has(m)), photos.filter(m => wide.has(m))],
+    video: [videos.filter(m => !wide.has(m)), videos.filter(m => wide.has(m))],
+  };
+  slots.forEach((slot, i) => {
+    const kind = slot.photo ? 'photo' : 'video';
+    const list = kind === 'photo' ? photos : videos;
+    const m = best
+      ? queues[kind][(best.mask >> i) & 1].shift()!
+      : list.find(x => !frames.flat().includes(x))!;
+    frames[slot.f].push(m);
+  });
+  return frames;
 };
 
 // Screens of their own (the game's), rendered from the named slots.
@@ -99,6 +194,18 @@ const scenes = await Promise.all(
     return src ? sceneOf(src).then(sceneAttr) : undefined;
   })
 );
+// THE VIEWER (PhotoViewer): a click on a frame opens its card's pictures
+// whole, at full size — every one, in the card's own order, a thumbnail
+// (`-thumb.webp`) by its full picture, with its caption.
+const viewerOf = (p: DeckItem) =>
+  JSON.stringify(
+    (p.image as Media[]).map((m, i) => ({
+      src: m.replace(/-thumb\.webp$/, '.webp'),
+      name: p.captions?.[i] ?? plainName(p),
+      video: isVideo(m) || undefined,
+    }))
+  );
+
 // ...and each event photo its own: two cycle in a frame, so the light
 // follows the ones showing instead of the card's average.
 const photoScenes: Record<string, string> = {};
@@ -114,6 +221,7 @@ for (const p of items)
   data-focused={focusCard >= 0 ? '' : null}
   data-focus-lone={focusCard >= 0 ? '' : null}
   data-focus-card={focusCard >= 0 ? focusCard : null}
+  data-start-card={startCard > 0 ? startCard : null}
 >
   <!-- An eyebrow, not a headline: the stars above open on big titles and
        air; a panel like this is secondary, and a headline plus an intro
@@ -146,7 +254,7 @@ for (const p of items)
           >
             <div class="words">
               <h3 class="name" data-deck-part="text" style="--i: 1">
-                {p.name}<CopyLink path={pathOf(p)} />
+                {typeof p.name === 'string' ? p.name : <T k={p.name.k} />}<CopyLink path={pathOf(p)} />
               </h3>
               <p class="label meta" data-deck-part="text" style="--i: 2">
                 {p.meta.map((group, g) => (
@@ -207,7 +315,7 @@ for (const p of items)
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
                   <span class="cap-name">
-                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                    {typeof p.name === 'string' ? p.name : <T k={p.name.k} />}<CopyLink path={pathOf(p)} decorative />
                   </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
@@ -232,7 +340,7 @@ for (const p of items)
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
                   <span class="cap-name">
-                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                    {typeof p.name === 'string' ? p.name : <T k={p.name.k} />}<CopyLink path={pathOf(p)} decorative />
                   </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
@@ -291,7 +399,7 @@ for (const p of items)
                 ) : (
                   <img
                     src={p.image}
-                    alt={p.name}
+                    alt={plainName(p)}
                     width="1440"
                     height="960"
                     loading="lazy"
@@ -301,11 +409,17 @@ for (const p of items)
                 )}
               </div>
             ) : (
-              <div class="screen is-photos" data-deck-part="picture" data-frames={columns(p).length}>
+              <div
+                class:list={['screen is-photos', p.wide && 'is-wide']}
+                data-deck-part="picture"
+                data-frames={columns(p).length}
+                data-viewer-items={viewerOf(p)}
+                data-shuffle={p.shuffle ? '' : null}
+              >
                 {/* A phone's name and facts, ON the picture (the CSS). */}
                 <div class="screen-caption" aria-hidden="true">
                   <span class="cap-name">
-                    {p.name}<CopyLink path={pathOf(p)} decorative />
+                    {typeof p.name === 'string' ? p.name : <T k={p.name.k} />}<CopyLink path={pathOf(p)} decorative />
                   </span>
                   <span class="label cap-meta">
                     {/* Thin spaces round the separators: on the picture the
@@ -328,53 +442,78 @@ for (const p of items)
                     contact sheet. Each picture stands whole over a still
                     blur of itself, so a sideways photo or a video keeps
                     its shape and every event card is the same size. */}
-                {columns(p).map((layers, c) => {
-                  // A frame with more than one picture turns on a click
-                  // too, so a person can go through them at their own
-                  // pace (Juan, 2026-10-13).
-                  const Cell = layers.length > 1 ? 'button' : 'div';
-                  return (
-                  <Cell
-                    class:list={['photo-cell', layers.length > 1 && 'is-turnable']}
-                    data-col={c}
-                    {...(layers.length > 1 ? { type: 'button' } : {})}
-                  >
+                {columns(p).map((layers, c) => (
+                  // A click on a frame opens its picture whole (PhotoViewer);
+                  // a frame with more than one picture turns by its own
+                  // arrows too, so a person goes through them at their own
+                  // pace (Juan, 2026-10-13; the viewer, 2026-10-27).
+                  <div class:list={['photo-cell', layers.length > 1 && 'is-turnable']} data-col={c}>
+                    {layers.map((m, k) => {
+                      const at = (p.image as Media[]).indexOf(m);
+                      // Past the first two of a frame, a picture waits for
+                      // its turn to come near (the script): a set of 31
+                      // would otherwise fetch all 31.
+                      const src = k < 2 ? still(m) : undefined;
+                      const later = k < 2 ? undefined : still(m);
+                      return (
+                        <div
+                          class:list={['layer', k === 0 && 'is-on']}
+                          data-scene-photo={photoScenes[m]}
+                          data-at={at}
+                          data-wide={wide.has(m) ? '' : null}
+                        >
+                          <img class="fill" src={src} data-src={later} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+                          {isVideo(m) ? (
+                            // Silent by construction: the file carries no
+                            // audio track. It plays only while its card is
+                            // in front and on screen (the script below).
+                            <video
+                              class="whole"
+                              src={m}
+                              poster={still(m)}
+                              aria-label={plainName(p)}
+                              muted
+                              loop={layers.length === 1}
+                              playsinline
+                              preload="none"
+                              disablepictureinpicture
+                            />
+                          ) : (
+                            <img
+                              class="whole"
+                              src={src}
+                              data-src={later}
+                              alt={k === 0 ? plainName(p) : ''}
+                              loading="lazy"
+                              decoding="async"
+                              draggable="false"
+                            />
+                          )}
+                          {p.captions?.[at] && <span class="photo-cap">{p.captions[at]}</span>}
+                        </div>
+                      );
+                    })}
+                    <button type="button" class="photo-open" data-photo-open>
+                      <span class="sr"><T k="photo.open" /></span>
+                    </button>
                     {layers.length > 1 && (
-                      <span class="sr"><T k="deck.next" /></span>
+                      <>
+                        <button type="button" class="photo-step prev" data-photo-step="-1">
+                          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                            <path d="M10 3 L5 8 L10 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                          <span class="sr"><T k="deck.prev" /></span>
+                        </button>
+                        <button type="button" class="photo-step next" data-photo-step="1">
+                          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                            <path d="M6 3 L11 8 L6 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                          <span class="sr"><T k="deck.next" /></span>
+                        </button>
+                      </>
                     )}
-                    {layers.map((m, k) => (
-                      <div class:list={['layer', k === 0 && 'is-on']} data-scene-photo={photoScenes[m]}>
-                        <img class="fill" src={still(m)} alt="" aria-hidden="true" loading="lazy" decoding="async" />
-                        {isVideo(m) ? (
-                          // Silent by construction: the file carries no
-                          // audio track. It plays only while its card is
-                          // in front and on screen (the script below).
-                          <video
-                            class="whole"
-                            src={m}
-                            poster={still(m)}
-                            aria-label={p.name}
-                            muted
-                            loop={layers.length === 1}
-                            playsinline
-                            preload="none"
-                            disablepictureinpicture
-                          />
-                        ) : (
-                          <img
-                            class="whole"
-                            src={m}
-                            alt={k === 0 ? p.name : ''}
-                            loading="lazy"
-                            decoding="async"
-                            draggable="false"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </Cell>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </article>
@@ -396,7 +535,7 @@ for (const p of items)
     {
       items.length > 1 && (
         <div class="inner controls" data-dock>
-          <DeckControls names={items.map(p => p.name)} />
+          <DeckControls names={items.map(plainName)} />
         </div>
       )
     }
@@ -636,17 +775,88 @@ for (const p of items)
     overflow: hidden;
   }
 
-  /* A frame that turns on a click: a bare button over the pictures. */
-  button.photo-cell {
-    display: block;
-    width: 100%;
-    height: 100%;
+  /* The whole frame opens its picture in the viewer: a bare button over
+     the pictures. */
+  .photo-open {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     padding: 0;
     border: 0;
     background: none;
-    color: inherit;
-    font: inherit;
+    cursor: zoom-in;
+  }
+
+  /* A frame's own arrows, at its sides over the picture: the deck's own
+     arrows (DeckControls) — the header's pill recipe as a circle — a step
+     smaller, and QUIET (Juan, 2026-10-27): faint while the eye is on the
+     picture elsewhere, clearer with the pointer on the frame, full on the
+     arrow itself. A click on the picture opens all of them anyway. */
+  .photo-step {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--ink);
     cursor: pointer;
+    opacity: 0.3;
+    transform: translateY(-50%);
+    transition:
+      opacity var(--dur-micro) var(--ease),
+      border-color var(--dur-micro) var(--ease);
+  }
+
+  .photo-cell:hover .photo-step {
+    opacity: 0.7;
+  }
+
+  .photo-cell .photo-step:hover,
+  .photo-step:focus-visible {
+    opacity: 1;
+    border-color: var(--ink-3);
+  }
+
+  .photo-step.prev {
+    left: 0.75rem;
+  }
+
+  .photo-step.next {
+    right: 0.75rem;
+  }
+
+  /* A picture's own caption (its name), at the top of the frame — the
+     header's pill recipe, in the label's type; a phone's card caption
+     takes the foot. */
+  .photo-cap {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+    overflow: hidden;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Sideways pictures keep the page's 3:2 everywhere, phones included:
+     a tall frame would only add blur above and below them. */
+  .screen.is-photos.is-wide {
+    aspect-ratio: 3 / 2;
   }
 
   .sr {
@@ -677,6 +887,12 @@ for (const p of items)
     opacity: 1;
   }
 
+  /* A shuffled frame stays blank until its pictures are dealt (the
+     script), so the first one never flashes before the new order. */
+  .screen[data-shuffle]:not([data-shuffled]) .layer {
+    opacity: 0;
+  }
+
   .layer .fill,
   .layer .whole {
     position: absolute;
@@ -692,8 +908,16 @@ for (const p of items)
     filter: blur(28px) brightness(0.55);
   }
 
+  /* Whole and centred both ways: `.screen img` stands a site's capture
+     at its top, and that stood a short photo or a tall painting against
+     the frame's upper edge (Juan, 2026-10-27). */
   .layer .whole {
     object-fit: contain;
+    object-position: center;
+  }
+
+  .layer .fill {
+    object-position: center;
   }
 
   /* ---------- controls ---------- */
@@ -887,21 +1111,71 @@ for (const p of items)
     // ONE FRAME ON A PHONE (Juan, 2026-10-13): two upright columns across
     // a phone's width stood each photo about 195 x 260 — too small for
     // pictures taken on a camera. A phone folds them into one tall frame
-    // (the CSS), in the same order a desk shows them: the videos first,
-    // then the left frame's photos, then the right's.
+    // (the CSS), alternating photo and video the way a desk's frames do,
+    // each kind in the order the card lists it.
     if (matchMedia('(max-width: 48rem)').matches)
       for (const screen of carousel.querySelectorAll<HTMLElement>('.screen.is-photos')) {
         const [left, right] = [...screen.querySelectorAll<HTMLElement>('.photo-cell')];
         if (!left || !right) continue;
-        const theirs = [...right.querySelectorAll<HTMLElement>('.layer')];
-        const videos = theirs.filter(l => l.querySelector('video'));
-        const photos = theirs.filter(l => !l.querySelector('video'));
-        const all = [...videos, ...left.querySelectorAll<HTMLElement>('.layer'), ...photos];
+        const byAt = (a: HTMLElement, b: HTMLElement) =>
+          Number(a.dataset.at ?? 0) - Number(b.dataset.at ?? 0);
+        const layers = [...screen.querySelectorAll<HTMLElement>('.layer')];
+        const photoLayers = layers.filter(l => !l.querySelector('video')).sort(byAt);
+        const videoLayers = layers.filter(l => l.querySelector('video')).sort(byAt);
+        // As a desk's frames deal them (`columns` above): photo and video
+        // by turns, upright and sideways by turns where it can.
+        const all: HTMLElement[] = [];
+        const take = (queue: HTMLElement[]) => {
+          const last = all.at(-1);
+          const i = last
+            ? queue.findIndex(l => l.hasAttribute('data-wide') !== last.hasAttribute('data-wide'))
+            : 0;
+          return queue.splice(i < 0 ? 0 : i, 1)[0];
+        };
+        for (let k = 0; photoLayers.length || videoLayers.length; k++) {
+          const mine = k % 2 === 0 ? photoLayers : videoLayers;
+          all.push(take(mine.length ? mine : k % 2 === 0 ? videoLayers : photoLayers));
+        }
         all.forEach((layer, i) => layer.classList.toggle('is-on', i === 0));
-        left.append(...all);
+        // The layers go under the frame's own buttons, which stay on top.
+        left.prepend(...all);
+        if (!left.querySelector('[data-photo-step]'))
+          left.append(...right.querySelectorAll('[data-photo-step]'));
+        // The first two of the folded frame are loaded at once.
+        for (const layer of all.slice(0, 2))
+          for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+            img.src = img.dataset.src!;
+            img.removeAttribute('data-src');
+          }
         right.remove();
         screen.dataset.frames = '1';
       }
+    // A NEW ORDER EVERY VISIT for a set that is loved whole (`shuffle`):
+    // the frame's pictures, and the viewer's with them, are dealt again
+    // before the first one shows (the CSS holds the frame blank till then).
+    for (const screen of carousel.querySelectorAll<HTMLElement>('.screen[data-shuffle]')) {
+      const cell = screen.querySelector<HTMLElement>('.photo-cell');
+      if (!cell) continue;
+      const layers = [...cell.querySelectorAll<HTMLElement>('.layer')];
+      for (let i = layers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [layers[i], layers[j]] = [layers[j], layers[i]];
+      }
+      const items = JSON.parse(screen.dataset.viewerItems!);
+      screen.dataset.viewerItems = JSON.stringify(layers.map(l => items[Number(l.dataset.at)]));
+      layers.forEach((l, i) => {
+        l.dataset.at = String(i);
+        l.classList.toggle('is-on', i === 0);
+      });
+      cell.prepend(...layers);
+      for (const layer of layers.slice(0, 2))
+        for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+          img.src = img.dataset.src!;
+          img.removeAttribute('data-src');
+        }
+      screen.toggleAttribute('data-shuffled', true);
+    }
+
     const section = carousel.closest<HTMLElement>('section');
     const paras = cards.map(c => c.querySelector<HTMLElement>('[data-narr-para]'));
     const stillAnchor = carousel.querySelector<HTMLElement>('.narr-static .narr-anchor');
@@ -917,7 +1191,7 @@ for (const p of items)
 
     // A shared address opens the panel on its card, ALONE: while it is
     // the modal the deck does not turn (lib/links).
-    const focusCard = Number(section?.dataset.focusCard ?? 0);
+    const focusCard = Number(section?.dataset.focusCard ?? section?.dataset.startCard ?? 0);
     const deck = createDeck({
       cards,
       start: focusCard,
@@ -995,32 +1269,60 @@ for (const p of items)
         if (f.layers.length > 1) v.onended = () => turn(f);
       } else if (f.layers.length > 1) f.timer = window.setTimeout(() => turn(f), wait);
     };
-    const turn = (f: Frame) => {
+    // A picture past a frame's first two has no src until its turn comes
+    // near: the one showing and the one after it are always loaded.
+    const wake = (layer?: HTMLElement) => {
+      for (const img of layer?.querySelectorAll<HTMLImageElement>('img[data-src]') ?? []) {
+        img.src = img.dataset.src!;
+        img.removeAttribute('data-src');
+      }
+    };
+    const step = (f: Frame, by: number) => {
+      const n = f.layers.length;
       f.layers[f.i].classList.remove('is-on');
-      f.i = (f.i + 1) % f.layers.length;
+      f.i = (f.i + by + n) % n;
+      wake(f.layers[f.i]);
+      wake(f.layers[(f.i + 1) % n]);
       f.layers[f.i].classList.add('is-on');
+    };
+    const turn = (f: Frame, by = 1) => {
+      step(f, by);
       const v = videoOf(f);
       if (v) v.currentTime = 0;
       hold(f, BEAT * 10);
     };
-    // A click turns the frame now, whatever it was holding — a photo's
+    // A frame's arrows turn it now, whatever it was holding — a photo's
     // beat or a video mid-play — and the next turn counts from here.
     for (const f of frames.flat())
-      if (f.layers.length > 1)
-        f.cell.addEventListener('click', () => {
+      for (const button of f.cell.querySelectorAll<HTMLElement>('[data-photo-step]'))
+        button.addEventListener('click', () => {
+          const by = Number(button.dataset.photoStep);
           const v = videoOf(f);
           if (v) {
             v.onended = null;
             v.pause();
           }
-          if (f.running) turn(f);
+          if (f.running) turn(f, by);
           else {
             clearTimeout(f.timer);
-            f.layers[f.i].classList.remove('is-on');
-            f.i = (f.i + 1) % f.layers.length;
-            f.layers[f.i].classList.add('is-on');
+            step(f, by);
           }
         });
+    // A click on the picture itself opens it whole, with the rest of its
+    // card's pictures (PhotoViewer).
+    for (const f of frames.flat())
+      f.cell.querySelector('[data-photo-open]')?.addEventListener('click', () => {
+        const screen = f.cell.closest<HTMLElement>('[data-viewer-items]');
+        if (!screen) return;
+        document.dispatchEvent(
+          new CustomEvent('viewer:open', {
+            detail: {
+              items: JSON.parse(screen.dataset.viewerItems!),
+              at: Number(f.layers[f.i].dataset.at ?? 0),
+            },
+          })
+        );
+      });
     const sync = () =>
       frames.forEach((card, i) =>
         card.forEach(f => {

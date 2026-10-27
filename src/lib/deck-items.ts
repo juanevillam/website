@@ -22,7 +22,8 @@ export type DeckItem = {
   /** An event's month, `YYYY-MM`: the last part of its address, so two
    *  nights at the same place never share one. */
   date?: string;
-  name: string;
+  /** A proper name as is; a word that is translated, as a key. */
+  name: string | { k: UIKey };
   /** The line of facts under the name: groups joined by " · ", the parts
    *  of a group by " – " (a role; a span of years; a place; a date). */
   meta: Segment[][];
@@ -34,6 +35,20 @@ export type DeckItem = {
    *  or more — two frames, each cycling through its share); or a screen
    *  of its own, passed in as the named slot `{ slot }`. */
   image: string | Media[] | { slot: string };
+  /** Sideways or mixed pictures (a gallery's): ONE frame however many
+   *  there are, and the screen keeps its 3:2 on a phone too. */
+  wide?: boolean;
+  /** Where two frames split, when a card chooses its own: the first
+   *  `split` of `image` run the left frame, in order, and the rest the
+   *  right — a video may stand in either. Without it, the photos fill the
+   *  left and the videos lead the right (PanelDeck `columns`). */
+  split?: number;
+  /** Each picture's caption, in the order of `image`: on the frame and
+   *  in the viewer (a ranking's place and name). */
+  captions?: string[];
+  /** Show the pictures in a new random order on every visit: a set that
+   *  is loved whole, not ranked (Juan, 2026-10-27). */
+  shuffle?: boolean;
   links: { label: Segment; href: string }[];
   /** Where the picture itself goes when clicked: the site it shows. A
    *  mouse shortcut only — the same place is a link in the words. */
