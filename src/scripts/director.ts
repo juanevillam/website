@@ -1170,7 +1170,10 @@ const render = (force = false) => {
     return;
   }
   const vh = window.innerHeight;
-  const hp = step(clamp(window.scrollY / vh, 0, 1));
+  // How far the page has come past its hero — every panel's share waits
+  // on it. A page with no hero (More of Me) opens on a panel, which owns
+  // the narrator from the first paint.
+  const hp = heroNarr ? step(clamp(window.scrollY / vh, 0, 1)) : 1;
 
   // Where the narrator stands: a weighted blend of every anchor, each
   // weighted by how much of the page its block owns right now — so it

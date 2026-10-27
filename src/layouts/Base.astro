@@ -163,8 +163,15 @@ const url = new URL(path, Astro.site);
         const now = lit.find(el => el.getClientRects().length && showing(el, y));
         standLight(now);
         const value = now && photosOf(now);
-        if (value === last) return;
-        last = value;
+        // The light's SHAPE is part of what changed: a grey screen and the
+        // foot's name lend the same neutral light, and comparing the hues
+        // alone left the screen's wide shape standing over the name.
+        const kind =
+          now &&
+          (now.dataset.sceneKind ??
+            (now.closest('[data-story], [data-phone-scene]') ? 'phone' : 'screen'));
+        if (`${value}#${kind}` === last) return;
+        last = `${value}#${kind}`;
         // "#a #b|0.8": the hues, then how strongly they light the page. The
         // hues of a screen with none stay as they were, so the light FADES
         // to the ground instead of turning grey on its way out.
@@ -183,10 +190,7 @@ const url = new URL(path, Astro.site);
         // A story's phone and a panel's screen hide the light differently
         // (global.css): the light keeps the shape of the last picture
         // while it fades out of every lit block.
-        if (now)
-          scene.dataset.kind =
-            now.dataset.sceneKind ??
-            (now.closest('[data-story], [data-phone-scene]') ? 'phone' : 'screen');
+        if (kind) scene.dataset.kind = kind;
       };
       if (scene && lit.length) {
         // Cheap enough to ask often: a deck can turn by itself (the voice

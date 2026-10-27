@@ -27,9 +27,9 @@ const parts = (text: string) =>
     <span class="t" lang={l}>
       {parts(ui[l][k]).map(p =>
         p.href ? (
-          <a href={p.href} target="_blank" rel="noopener noreferrer">
-            {p.text}
-          </a>
+          // One line: Astro keeps the whitespace around a child on its own
+          // line, and it stood a space inside the link ("Pastor ,").
+          <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a>
         ) : (
           p.text
         )
