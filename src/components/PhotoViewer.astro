@@ -150,7 +150,9 @@ import T from './T.astro';
      the arrows — framed like every screen on the site. */
   .stage {
     position: absolute;
-    inset: 5.5rem 4.5rem 5rem;
+    /* The arrows stand 1rem in and 2.5rem wide: the frame keeps 2.5rem
+       clear of them (Juan, 2026-10-27: 1rem stood it against them). */
+    inset: 5.5rem 6rem 5rem;
     overflow: hidden;
     border: 1px solid var(--hairline);
     border-radius: var(--media-radius-flat);
