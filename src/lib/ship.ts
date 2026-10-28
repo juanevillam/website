@@ -82,6 +82,11 @@ const ACE_R = 66; // 22 × HUNTER_SCALE
 const ACE_HP = 4;
 const ACE_FIRE = 2.2; // s between shots
 const ACE_RANGE = 1300;
+// The kamikaze: a hunter that goes flat out, never breaks off and never
+// fires — it means to ram you.
+const KZ_SPEED = 470;
+const KZ_TURN = 1.5;
+const KZ_R = 48; // 16 × HUNTER_SCALE
 const SHOT_SPEED = 250; // the aces' embers: slow, so you see them come
 const SHOT_LIFE = 6;
 const SD_SCALE = 1.6;
@@ -485,17 +490,17 @@ const drawPlayer = (s: Stage, p: Player, now: number) => {
 // ----- an ace: the game's AI for the hunters (k = 1) -----
 type Ace = {
   P: V3; v: V3; E: number; qo: number; M: number; g: number; fl: number; m: number; cd: number;
-  alive: boolean; target: Target;
+  alive: boolean; target: Target; Y: V3[]; tt: number; kz: boolean; t: number;
 };
-const newAce = (s: Stage, P: V3, v: V3, side: number, cd: number): Ace => {
+const newAce = (s: Stage, P: V3, v: V3, side: number, cd: number, kz = false): Ace => {
   const a: Ace = {
-    P, v, E: Math.atan2(v[0], v[2]), qo: 0, M: ACE_HP, g: 0, fl: 0, m: side, cd, alive: true,
+    P, v, E: Math.atan2(v[0], v[2]), qo: 0, M: kz ? 1 : ACE_HP, g: 0, fl: 0, m: side, cd, alive: true, Y: [], tt: 0, kz, t: 0,
     target: undefined as unknown as Target,
   };
   a.target = {
     pos: () => a.P,
     vel: () => a.v,
-    r: ACE_R,
+    r: kz ? KZ_R : ACE_R,
     alive: () => a.alive,
     // Qf: damage, the white flash, a small late ring; at nothing left, the
     // game's death — the ring and the spray.
@@ -520,24 +525,42 @@ const steerAce = (s: Stage, a: Ace, dt: number, p: Player) => {
     a.fl -= dt;
     // breaking away: off from you, with a sideways turn
     goal = [a.P[0] - (d[0] / dist) * 1500 + (d[2] / dist) * 500 * a.m, a.P[1] - (d[1] / dist) * 600, a.P[2] - (d[2] / dist) * 1500 - (d[0] / dist) * 500 * a.m];
-  } else if (dist < 650 || (dist < 1000 && dot(p.F, d) / dist < -0.93)) a.fl = 1.6;
-  const k = Math.min(1, (a.fl > 0 ? ACE_BREAK_TURN : ACE_TURN) * dt);
+  } else if (!a.kz && (dist < 650 || (dist < 1000 && dot(p.F, d) / dist < -0.93))) a.fl = 1.6;
+  const k = Math.min(1, (a.kz ? KZ_TURN : a.fl > 0 ? ACE_BREAK_TURN : ACE_TURN) * dt);
   const n = norm(add(norm(a.v), sub(norm(sub(goal, a.P)), norm(a.v)), k));
-  a.v = mul(n, ACE_SPEED);
+  a.v = mul(n, a.kz ? KZ_SPEED : ACE_SPEED);
+  a.t += dt;
   a.P = add(a.P, a.v, dt);
+  // what moves leaves a trail, so you read where it goes
+  if ((a.tt += dt) > 0.05) {
+    a.tt = 0;
+    a.Y.push(a.P);
+    if (a.Y.length > 12) a.Y.shift();
+  }
   const E = Math.atan2(a.v[0], a.v[2]);
   // its visual roll comes from its own turn
   a.qo += (clamp((wrap(E - a.E) / dt) * (14 / 60), -0.9, 0.9) - a.qo) * Math.min(1, 6 * dt);
   a.E = E;
   a.g -= dt;
   a.cd -= dt;
-  if (a.cd <= 0 && dist < ACE_RANGE) {
+  // contact: it bursts against you
+  if (a.kz && dist < a.target.r + 16) {
+    a.alive = false;
+    s.boom(a.P);
+    s.spray(a.P, 6);
+    return;
+  }
+  if (!a.kz && a.cd <= 0 && dist < ACE_RANGE) {
     a.cd = ACE_FIRE;
     s.enemyShot(a.P, p, SHOT_SPEED);
   }
 };
 const drawAce = (s: Stage, a: Ace) => {
   if (!a.alive) return;
+  for (let i = 1; i < a.Y.length; i++) s.line(a.Y[i - 1], i === a.Y.length - 1 ? a.P : a.Y[i], 2 * s.px, RUST_HI, (i / a.Y.length) * 0.5);
+  // the kamikaze pulses in light rust: you see it coming
+  const c = a.kz ? s.project(a.P) : null;
+  if (c) s.ring(c, Math.max(8, 60 * c[2]) * (1 + 0.2 * Math.sin(a.t * 14)), 2 * s.px, RUST_HI, 0.6);
   s.stroke(s.placed(SHIP, a.P, yawBasis(a.E), ACE_SCALE, a.qo), SHIP[1], a.g > 0 ? INK_HI : RUST, 1);
 };
 
@@ -637,46 +660,58 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
 };
 
 /**
- * MORE WORK: THE ESCAPE, over the game's card, as one tracking shot. You
- * cruise right to left and the camera rides with you. Two aces come in
- * from off the right edge — faster than you, as the game's are, so they
- * close — firing their slow embers after you, which creep up but cannot
- * catch a ship on the run. When they close to striking distance you dash
- * (the game's straight kick forward, with its ghosts) and light the
- * nitro: you burst out of the frame to the left, the camera lets you go,
- * and the aces stream after you and out. Nothing turns, nothing flips:
- * every ship flies straight across the strip.
+ * MORE WORK: THE ESCAPE, over the game's card. You run right to left,
+ * jinking, the game's dust streaking past you. Two kamikazes come in on
+ * your tail from off the right edge — the game's hunters that go flat
+ * out (470 to your 220), never break off and never fire: they mean to
+ * ram you — and an ace behind them fires its slow embers after you. When
+ * the nearer is about to touch you, you dash (the game's straight kick
+ * forward, with its ghosts) and hold the nitro: it lunges through where
+ * you were, and you pull away from them, out of the frame to the left;
+ * they stream after you and out. Nothing turns, nothing flips.
  */
 export const chase = (band: HTMLCanvasElement): Battle => {
   const s = stage(band);
   const { W, H } = s;
   const phone = W < 600;
-  // How much of the world the frame takes in, across; you ride at a third
-  // of it from the left, so the aces have room to come in behind you.
-  const VIEW = phone ? 1000 : 1300;
-  const RIDE = VIEW * (phone ? 0.28 : 0.18); // the frame's middle, this far behind you
+  const rand = rng(5);
+  // How much of the world the frame takes in, across; you ride a fifth of
+  // the way in from the left, so the frame holds them closing in.
+  const VIEW = phone ? 950 : 1150;
+  const RIDE = VIEW * 0.3; // the frame's middle, this far behind you
   const p = newPlayer([0, 0, 0], [-1, 0, 0]);
-  // Just past the right edge.
-  const edge = VIEW / 2 + RIDE + 90;
-  const aces = [newAce(s, [edge, -20, 90], [-ACE_SPEED, 0, 0], 1, 1.1), newAce(s, [edge + 220, 30, -90], [-ACE_SPEED, 0, 0], -1, 1.9)];
+  // Just past the right edge, one a little above your line, one below.
+  const edge = VIEW / 2 + RIDE + 70;
+  const alt = phone ? 30 : 50;
+  const aces = [
+    newAce(s, [edge, -alt, alt], [-KZ_SPEED, 0, 0], 1, 9, true),
+    newAce(s, [edge + 260, alt * 0.6, -alt], [-KZ_SPEED, 0, 0], -1, 9, true),
+    newAce(s, [edge + 120, -alt * 0.3, -2 * alt], [-ACE_SPEED, 0, 0], 1, 0.4),
+  ];
   s.setTargets(aces.map(a => a.target));
+  // The game's dust: near motes, wrapped round you, that turn your speed
+  // into streaks — what says you are flying.
+  const L = 560;
+  const motes: V3[] = Array.from({ length: 96 }, () => [(rand() - 0.5) * L, (rand() - 0.5) * L, (rand() - 0.5) * L]);
+  const wrapL = (x: number) => x - L * Math.floor(x / L + 0.5);
   let t = 0;
   let run = -1;
-  let seen = -1; // when the first ace came on screen
-  // The camera dollies at your cruise speed, and eases to a stop once you
-  // are gone, so the aces can cross after you.
+  // The camera dollies a little slower than you cruise, so you gain on
+  // it; once you are gone it eases to a stop and lets them cross.
   let camX = RIDE;
-  let camV = -CRUISE;
+  let camV = -CRUISE * 0.92;
   const frame = (dt: number) => {
     t += dt;
-    const near = Math.min(...aces.map(a => len(sub(a.P, p.P))));
-    // once you have seen them come, and before they close to where the
-    // game's aces break off: the dash, and the nitro held
-    if (run < 0 && ((seen >= 0 && t - seen > 0.9) || near < 690)) {
+    const close = Math.min(...aces.filter(a => a.kz && a.alive).map(a => len(sub(a.P, p.P))));
+    // the nearer kamikaze about to touch you: the dash, and the nitro held
+    if (run < 0 && close < 170) {
       run = t;
       dash(p, t);
     }
-    fly(p, dt, { nitro: run >= 0 });
+    // until then, jinking on the stick, so they are never quite on you
+    // (the stick swings both ways, so your heading weaves about your line)
+    const stick: Stick = run < 0 ? { turn: 0.3 * Math.cos(t * 2.1), pitch: 0.05 * Math.cos(t * 1.4) } : { nitro: true };
+    fly(p, dt, stick);
     for (const a of aces) steerAce(s, a, dt, p);
     s.update(dt, p, t);
     const gone = run >= 0 && s.off(s.project(p.P), 40);
@@ -684,13 +719,19 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     camX += camV * dt;
     const at: V3 = [camX, 0, 0];
     const D = 2400;
-    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.22));
-    if (seen < 0 && aces.some(a => !s.off(s.project(a.P), -30))) seen = t;
+    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.3));
     s.clear();
+    // the dust, as the game streaks it
+    const trail = 0.016 + (p.H / 470) * 0.065;
+    for (const m of motes) {
+      const w: V3 = [p.P[0] + wrapL(m[0] - p.P[0]), p.P[1] + wrapL(m[1] - p.P[1]), p.P[2] + wrapL(m[2] - p.P[2])];
+      const a = clamp(1 - len(sub(w, p.P)) / 420, 0, 1) * 0.5 * (p.H / 470 + 0.3);
+      if (a > 0.02) s.line(w, add(w, p.F, p.H * trail), 1, INK, a);
+    }
     for (const a of aces) drawAce(s, a);
     s.paintFire();
     drawPlayer(s, p, t);
-    const out = gone && aces.every(a => s.off(s.project(a.P), 60));
+    const out = gone && aces.every(a => !a.alive || s.off(s.project(a.P), 60));
     return t < 14 && !(out && s.settled());
   };
   return { frame, at: () => s.project(p.P) ?? [-99, -99, 1] };

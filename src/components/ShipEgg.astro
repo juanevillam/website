@@ -167,7 +167,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       async () => {
         if (!stand()) return;
         const ship = await import('../lib/ship');
-        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.2);
+        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.8);
         else await ship.play(band, null, ship.chase, front);
       },
       front,
