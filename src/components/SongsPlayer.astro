@@ -1065,6 +1065,8 @@ const groups = [
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 -0.5rem 2.5rem rgb(0 0 0 / 0.5);
+    /* The scroll stays inside the sheet's rounded edge. */
+    overflow: hidden;
     transform: translateY(103%);
     visibility: hidden;
     transition:
@@ -1114,12 +1116,15 @@ const groups = [
     display: none;
   }
 
-  .sheet.is-floating .section {
-    margin-top: 1.125rem;
+  /* A phone's sheet keeps finger-sized rows and thumbs. */
+  .songs[data-narrow] .cell {
+    min-height: 2.75rem;
   }
 
-  .sheet.is-floating .band {
-    min-height: 2.5rem;
+  .songs[data-narrow] .slider::-webkit-slider-thumb {
+    width: 1.625rem;
+    height: 1.625rem;
+    margin-top: -0.6875rem;
   }
 
   /* The player under a sheet steps back, as iOS's does. */
@@ -1136,18 +1141,17 @@ const groups = [
   }
 
   /* iOS's SCROLL-EDGE header: at rest the bar has no ground; once what is
-     under it scrolls, it takes a ground and a hairline foot. */
+     under it scrolls, it takes a ground and a hairline foot. It stands in
+     the sheet's flow, so the scrolling part — and its scrollbar — start
+     under it and end at the sheet's foot, inside its rounded edge. */
   .bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: relative;
     z-index: 2;
+    flex: none;
     display: grid;
-    grid-template-columns: 2.25rem 1fr 2.25rem;
+    grid-template-columns: 1.875rem 1fr 1.875rem;
     align-items: center;
-    padding: 1rem 0.875rem 0.5rem;
-    border-radius: 1.25rem 1.25rem 0 0;
+    padding: 0.875rem 0.75rem 0.5rem;
     transition:
       background-color var(--dur-quick) linear,
       box-shadow var(--dur-quick) linear;
@@ -1172,7 +1176,7 @@ const groups = [
   .bar-title {
     grid-column: 2;
     margin: 0;
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     text-align: center;
   }
@@ -1186,8 +1190,8 @@ const groups = [
     grid-column: 3;
     display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.875rem;
+    height: 1.875rem;
     padding: 0;
     border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 50%;
@@ -1197,8 +1201,8 @@ const groups = [
   }
 
   .close svg {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 0.9375rem;
+    height: 0.9375rem;
   }
 
 
@@ -1213,7 +1217,7 @@ const groups = [
   .form {
     flex: 1;
     min-height: 0;
-    padding: 3.5rem 1rem 1.5rem;
+    padding: 0.25rem 0.875rem 1rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -1222,7 +1226,7 @@ const groups = [
 
   .section {
     max-width: 30rem;
-    margin: 1.5rem auto 0;
+    margin: 1.125rem auto 0;
   }
 
   .section:first-child {
@@ -1232,9 +1236,9 @@ const groups = [
   .section-head {
     display: flex;
     justify-content: space-between;
-    margin: 0 0 0.4375rem;
-    padding: 0 1rem;
-    font-size: 0.8125rem;
+    margin: 0 0 0.3125rem;
+    padding: 0 0.875rem;
+    font-size: 0.75rem;
     font-weight: 400;
     color: var(--muted);
   }
@@ -1246,7 +1250,7 @@ const groups = [
 
   .card,
   .section > .picker {
-    border-radius: 0.75rem;
+    border-radius: 0.625rem;
     background: var(--cell-bg);
     overflow: hidden;
   }
@@ -1256,26 +1260,26 @@ const groups = [
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 2.75rem;
-    padding: 0.375rem 1rem;
-    font-size: 1.0625rem;
+    gap: 0.625rem;
+    min-height: 2.375rem;
+    padding: 0.25rem 0.875rem;
+    font-size: 0.9375rem;
   }
 
   .cell + .cell::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 1rem;
+    left: 0.875rem;
     right: 0;
     height: 1px;
     background: var(--separator);
   }
 
   .section-foot {
-    margin: 0.4375rem 0 0;
-    padding: 0 1rem;
-    font-size: 0.8125rem;
+    margin: 0.3125rem 0 0;
+    padding: 0 0.875rem;
+    font-size: 0.75rem;
     line-height: 1.35;
     color: var(--muted);
   }
@@ -1306,7 +1310,7 @@ const groups = [
     background: none;
     color: inherit;
     font: inherit;
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
     text-align: right;
     text-align-last: right;
     cursor: pointer;
@@ -1326,7 +1330,7 @@ const groups = [
   .picker:has(select:focus-visible) {
     outline: 2px solid var(--ink);
     outline-offset: -2px;
-    border-radius: 0.75rem;
+    border-radius: 0.625rem;
   }
 
   .picker select:focus-visible {
@@ -1335,13 +1339,13 @@ const groups = [
 
   .band {
     display: grid;
-    grid-template-columns: 2rem 1fr 2rem;
-    gap: 0.75rem;
+    grid-template-columns: 1.75rem 1fr 1.75rem;
+    gap: 0.625rem;
   }
 
   .band-hz,
   .band-db {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--muted);
     text-align: center;
     font-variant-numeric: tabular-nums;
@@ -1358,7 +1362,7 @@ const groups = [
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 2rem;
+    height: 1.75rem;
     margin: 0;
     background: none;
     cursor: pointer;
@@ -1379,9 +1383,9 @@ const groups = [
 
   .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 1.75rem;
-    height: 1.75rem;
-    margin-top: -0.75rem;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin-top: -0.5625rem;
     border: 0;
     border-radius: 50%;
     background: #fff;
@@ -1392,8 +1396,8 @@ const groups = [
   }
 
   .slider::-moz-range-thumb {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.375rem;
+    height: 1.375rem;
     border: 0;
     border-radius: 50%;
     background: #fff;
@@ -1405,12 +1409,13 @@ const groups = [
     border-radius: 0.5rem;
   }
 
-  /* iOS's switch, 51 × 31, systemGreen when on — the app's own. */
+  /* iOS's switch, systemGreen when on — the app's own — at the sheet's
+     smaller scale. */
   .switch {
     position: relative;
     flex: none;
-    width: 3.1875rem;
-    height: 1.9375rem;
+    width: 2.625rem;
+    height: 1.625rem;
     padding: 0;
     border: 0;
     border-radius: 999px;
@@ -1427,8 +1432,8 @@ const groups = [
     position: absolute;
     top: 0.125rem;
     left: 0.125rem;
-    width: 1.6875rem;
-    height: 1.6875rem;
+    width: 1.375rem;
+    height: 1.375rem;
     border-radius: 50%;
     background: #fff;
     box-shadow:
@@ -1438,7 +1443,7 @@ const groups = [
   }
 
   .switch[aria-checked='true'] .knob {
-    translate: 1.25rem 0;
+    translate: 1rem 0;
   }
 
   /* ---------- a phone's upright screen ---------- */
@@ -1510,7 +1515,7 @@ const groups = [
   }
 
   .songs[data-narrow] .list {
-    padding: 3.5rem 0.5rem 1rem;
+    padding: 0 0.5rem 1rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1794,8 +1799,11 @@ const groups = [
     const place = () => {
       const r = screen.getBoundingClientRect();
       const m = 16;
-      const w = Math.min(r.width, 30 * 16);
-      const h = Math.min(innerHeight - 2 * m, r.height * 1.85);
+      const w = Math.min(r.width, 26 * 16);
+      // As tall as the form, and never shorter than a little past the card.
+      sheet.style.height = 'auto';
+      sheet.style.width = `${w}px`;
+      const h = Math.min(innerHeight - 2 * m, Math.max(sheet.scrollHeight, r.height * 1.15));
       const top = Math.min(Math.max(r.top + r.height / 2 - h / 2, m), innerHeight - m - h);
       Object.assign(sheet.style, {
         top: `${top}px`,
