@@ -187,7 +187,7 @@ const en = {
   'likes.songs.name': 'Songs',
   'likes.songs.meta': 'My Ranking',
   'likes.songs.body':
-    'These are the songs I play the most, ranked by me, two at a time, until the order felt right. Every one of them is in my own Sound Shaper library. Press play and shape them here, the way I do in the app.',
+    'These are the songs I play the most, ranked by me, two at a time, until the order felt right. Every one of them is in my own [Sound Shaper](shaper) library. Press play and shape them here, the way I do in the app.',
   'songs.top': 'My Top',
   'songs.more': 'More Songs',
   'songs.moreNote': 'The rest of my library, not ranked, from A to Z.',
@@ -381,7 +381,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': 'Canciones',
     'likes.songs.meta': 'Mi ranking',
     'likes.songs.body':
-      'Estas son las canciones que más escucho, rankeadas por mí, de dos en dos, hasta que el orden se sintió bien. Todas están en mi propia biblioteca de Sound Shaper. Dale play y moldéalas aquí, como lo hago yo en la app.',
+      'Estas son las canciones que más escucho, rankeadas por mí, de dos en dos, hasta que el orden se sintió bien. Todas están en mi propia biblioteca de [Sound Shaper](shaper). Dale play y moldéalas aquí, como lo hago yo en la app.',
     'songs.top': 'Mi top',
     'songs.more': 'Más canciones',
     'songs.moreNote': 'El resto de mi biblioteca, sin ranking, de la A a la Z.',
@@ -570,7 +570,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': '歌曲',
     'likes.songs.meta': '我的排行',
     'likes.songs.body':
-      '这些是我听得最多的歌，由我两首两首地比较排出来，直到顺序感觉对了。每一首都在我自己的 Sound Shaper 曲库里。点播放，在这里塑造它们，就像我在 App 里那样。',
+      '这些是我听得最多的歌，由我两首两首地比较排出来，直到顺序感觉对了。每一首都在我自己的 [Sound Shaper](shaper) 曲库里。点播放，在这里塑造它们，就像我在 App 里那样。',
     'songs.top': '我的最爱',
     'songs.more': '更多歌曲',
     'songs.moreNote': '我曲库里的其余歌曲，未排名，按字母顺序。',

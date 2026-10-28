@@ -243,7 +243,9 @@ export const LIKES: DeckItem[] = [
           slug: 'songs',
           name: { k: 'likes.songs.name' },
           meta: [[{ k: 'likes.songs.meta' }], ['Sound Shaper']],
-          body: 'likes.songs.body',
+          // The app's name takes you to it: someone who lands here first
+          // can reach Sound Shaper's own section of the landing.
+          body: { k: 'likes.songs.body', links: { shaper: '/sound-shaper' } },
           clip: 'likes.songs.body',
           image: { slot: 'songs' },
           scene: SONGS.map(coverSrc).find(Boolean),

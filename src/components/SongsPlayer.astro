@@ -10,14 +10,15 @@ import type { UIKey } from '../i18n/ui';
  * THE SONGS CARD'S SCREEN (ThingsILike) — Juan's library in a small
  * player that is Sound Shaper on the web: a "Powered by Sound Shaper"
  * easter egg. It is drawn the way the app's player is (sound-shaper:
- * PlayerConsole.ios, PlayerScrubber.ios, the glass footer): the artwork
- * edge to edge, the title bold over a muted artist, Apple's media
- * scrubber with the time played and the length, the plain transport, and
- * the Shape card in a glass bar under it — with the song and its shape
- * as its summary. The Shape sheet is the app's iOS Form, row for row
- * (lib/shaper has its numbers): Presets, Equalizer, Playback Speed,
- * Preserve Pitch, Echo, Next Room, every one heard live. A read-only
- * preview — no clips, nothing saved, no account.
+ * PlayerConsole.ios, PlayerScrubber.ios, the glass footer): the cover
+ * whole at its own shape, the plain transport over its middle, the title
+ * bold over a muted artist and Apple's media scrubber under it, and the
+ * Shape card in the bar — with the song and its shape as its summary.
+ * The Shape sheet is the app's iOS Form, row for row (lib/shaper has its
+ * numbers): Presets, Equalizer, Playback Speed, Preserve Pitch, Echo,
+ * Next Room, every one heard live. A read-only preview — no clips,
+ * nothing saved, no account. The mark links to Sound Shaper's own
+ * section of the landing.
  *
  * The list is his top, ranked, then the rest of his library from A to Z,
  * apart and named as not part of it. On a desk it stands beside the
@@ -83,30 +84,12 @@ const groups = [
   </div>
   <div class="frame">
     <div class="now">
-      <div class="art" aria-hidden="true">
-        <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
-        <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
-      </div>
-      <div class="console">
-        <div class="info" data-settle>
-          <span class="now-title" data-now-title>{first.title}</span>
-          <span class="now-artist" data-now-artist>{first.artist}</span>
-        </div>
-        <div class="scrub">
-          <input
-            type="range"
-            class="seek"
-            data-seek
-            min="0"
-            max="1000"
-            step="1"
-            value="0"
-            aria-labelledby="songs-seek-name"
-            aria-valuetext={`0:00 / ${time(first.seconds)}`}
-          />
-          <span class="sr" id="songs-seek-name"><T k="songs.seek" /></span>
-          <span class="time" data-now-at>0:00</span>
-          <span class="time end" data-now-total>{time(first.seconds)}</span>
+      <!-- THE COVER AT ITS OWN SHAPE: whole, never cropped, over a fill of its
+           own colours; the transport stands over its middle. -->
+      <div class="art-frame" data-art-frame>
+        <div class="art" aria-hidden="true">
+          <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
+          <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
         </div>
         <div class="transport">
           <button type="button" class="glyph skip" data-step="-1">
@@ -133,12 +116,34 @@ const groups = [
           </button>
         </div>
       </div>
+      <div class="console">
+        <div class="info">
+          <span class="now-title" data-now-title>{first.title}</span>
+          <span class="now-artist" data-now-artist>{first.artist}</span>
+        </div>
+        <div class="scrub">
+          <input
+            type="range"
+            class="seek"
+            data-seek
+            min="0"
+            max="1000"
+            step="1"
+            value="0"
+            aria-labelledby="songs-seek-name"
+            aria-valuetext={`0:00 / ${time(first.seconds)}`}
+          />
+          <span class="sr" id="songs-seek-name"><T k="songs.seek" /></span>
+          <span class="time" data-now-at>0:00</span>
+          <span class="time end" data-now-total>{time(first.seconds)}</span>
+        </div>
+      </div>
     </div>
 
-    <p class="powered in-frame">
-      <span class="tile" aria-hidden="true"><AppTile app="shaper" size={36} /></span>
+    <a class="powered in-frame" href="/sound-shaper">
+      <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
       <span class="powered-words"><T k="songs.powered" /></span>
-    </p>
+    </a>
 
     <!-- The app's glass footer: Shape, and on a phone the list beside it. -->
     <div class="dock">
@@ -183,10 +188,10 @@ const groups = [
       </div>
       <div class="list" data-list data-scroll-edge>
         {/* On a desk the mark heads the list and scrolls with it. */}
-        <p class="powered in-list">
-          <span class="tile" aria-hidden="true"><AppTile app="shaper" size={36} /></span>
+        <a class="powered in-list" href="/sound-shaper">
+          <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
           <span class="powered-words"><T k="songs.powered" /></span>
-        </p>
+        </a>
         {
           groups.map(g => (
             <section class="group-list" aria-labelledby={`songs-${g.head}`}>
@@ -254,7 +259,6 @@ const groups = [
       </button>
     </div>
     <div class="form" data-scroll-edge>
-      <div class="col">
       <div class="section">
         <label class="cell picker">
           <span class="cell-name"><T k="shape.presets" /></span>
@@ -299,8 +303,6 @@ const groups = [
         </div>
         <p class="section-foot"><T k="eq.hint" /></p>
       </section>
-      </div>
-      <div class="col">
 
       <section class="section" aria-labelledby="songs-speed">
         <h5 class="section-head split" id="songs-speed">
@@ -377,7 +379,6 @@ const groups = [
           </section>
         ))
       }
-      </div>
     </div>
   </div>
 </div>
@@ -385,18 +386,20 @@ const groups = [
 <style>
   /* iOS's dark materials, said in the site's neutrals: the player's ground,
      the glass over the artwork, the grouped sheet and its cards. */
-  .songs {
+  .songs,
+  .sheet {
     --player-bg: #101010;
-    --glass: rgb(255 255 255 / 0.12);
-    --glass-hover: rgb(255 255 255 / 0.17);
     --glass-ink: #2a2a2a;
-    --sheet-bg: rgb(24 24 24 / 0.9);
+    --sheet-bg: rgb(26 26 26 / 0.97);
     --cell-bg: rgb(255 255 255 / 0.075);
     --separator: rgb(255 255 255 / 0.1);
     --muted: rgb(235 235 245 / 0.6);
     --faint: rgb(235 235 245 / 0.3);
     --track: rgb(120 120 128 / 0.36);
     --switch-on: #30d158;
+  }
+
+  .songs {
     position: absolute;
     inset: 0;
     background: var(--player-bg);
@@ -458,13 +461,48 @@ const groups = [
 
   .now {
     grid-area: now;
-    position: relative;
-    overflow: hidden;
-    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
   }
 
-  /* EDGE TO EDGE, as the app draws it. */
-  .art,
+  /* THE COVER AT ITS OWN SHAPE, whole (Juan, 2026-10-28): contained in
+     its frame, the rest of the frame filled with its own colours — the
+     site's frames do the same with a picture that is not their shape.
+     The fill's colours are registered, so they glide to the next song's. */
+  @property --fill-a {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #1a1a1a;
+  }
+
+  @property --fill-b {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #101010;
+  }
+
+  .art-frame {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--fill-a) 45%, #0d0d0d),
+      color-mix(in srgb, var(--fill-b) 30%, #0d0d0d)
+    );
+    transition:
+      --fill-a var(--dur-settle) var(--ease),
+      --fill-b var(--dur-settle) var(--ease);
+  }
+
+  .art {
+    position: absolute;
+    inset: 0;
+  }
+
   .art img {
     position: absolute;
     inset: 0;
@@ -475,7 +513,7 @@ const groups = [
   /* A new song's cover fades in over the last one. */
   .art img {
     display: block;
-    object-fit: cover;
+    object-fit: contain;
     opacity: 0;
     transition: opacity var(--dur-settle) var(--ease);
   }
@@ -484,36 +522,13 @@ const groups = [
     opacity: 1;
   }
 
-  /* ...and its words and time settle in under it, the site's entrance. */
-  .is-settling {
-    animation: settle var(--dur-settle) var(--ease);
-  }
 
-  @keyframes settle {
-    from {
-      opacity: 0;
-      transform: translateY(0.5rem);
-    }
-  }
-
-  /* The console lies over the artwork's foot on a long, eased scrim. */
+  /* The words and the time under the cover, on the player's own ground. */
   .console {
-    position: absolute;
-    inset: auto 0 0;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 4.5rem 1.25rem 1rem;
-    background: linear-gradient(
-      to bottom,
-      rgb(0 0 0 / 0) 0%,
-      rgb(0 0 0 / 0.05) 12%,
-      rgb(0 0 0 / 0.18) 25%,
-      rgb(0 0 0 / 0.38) 40%,
-      rgb(0 0 0 / 0.58) 55%,
-      rgb(0 0 0 / 0.72) 70%,
-      rgb(0 0 0 / 0.8) 100%
-    );
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem 0.875rem;
   }
 
   .info {
@@ -532,13 +547,13 @@ const groups = [
   }
 
   .now-title {
-    font-size: 1.375rem;
+    font-size: 1.1875rem;
     letter-spacing: -0.02em;
     line-height: 1.2;
   }
 
   .now-artist {
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -621,10 +636,14 @@ const groups = [
   /* THE TRANSPORT — Apple Music's: plain filled glyphs, play the largest,
      nothing round behind them. */
   .transport {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1.5rem;
+    gap: 1.75rem;
+    /* A soft dim at the middle only, so white glyphs read on a white cover. */
+    background: radial-gradient(closest-side, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0) 85%);
   }
 
   .glyph {
@@ -639,7 +658,14 @@ const groups = [
     background: none;
     color: #fff;
     cursor: pointer;
-    transition: scale var(--dur-micro) var(--ease);
+    filter: drop-shadow(0 0.0625rem 0.375rem rgb(0 0 0 / 0.45));
+    transition: opacity var(--dur-micro) var(--ease);
+  }
+
+  @media (hover: hover) {
+    .glyph:hover {
+      opacity: 0.8;
+    }
   }
 
   .glyph svg {
@@ -656,9 +682,6 @@ const groups = [
     height: 2.5rem;
   }
 
-  .glyph:active {
-    scale: 0.86;
-  }
 
   .play .g-pause,
   .songs[data-playing] .play .g-play {
@@ -684,6 +707,12 @@ const groups = [
     letter-spacing: var(--track-label);
     text-transform: uppercase;
     color: var(--ink-3);
+    text-decoration: none;
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .powered:hover {
+    color: var(--ink-2);
   }
 
   /* On a desk the mark heads the list and scrolls away with it; on a
@@ -701,17 +730,21 @@ const groups = [
     display: flex;
   }
 
+  /* The app's own tile (AppTile, as the landing's lockups draw it): its
+     SVG carries its shadow's margin, so it keeps its drawn size. */
   .tile {
     display: flex;
     flex: none;
-    filter: drop-shadow(0 0.375rem 0.75rem rgb(0 0 0 / 0.6));
+  }
+
+  .tile :global(svg) {
+    max-width: none;
   }
 
   /* ---------- the dock: the app's glass footer ---------- */
 
-  /* LIQUID GLASS: no ground of its own — the list scrolls under it and
-     the backdrop's colour comes through, bent by the blur, with a lit
-     rim along its top edge and a sheen across it. */
+  /* A HINT OF GLASS, no more: a dark, mostly solid bar the list slides
+     under, with a faint blur and a thin lit edge. */
   .dock {
     grid-area: side;
     align-self: end;
@@ -720,18 +753,14 @@ const groups = [
     align-items: stretch;
     margin: 0 0.75rem 0.75rem;
     min-height: 3.75rem;
-    border: 1px solid rgb(255 255 255 / 0.2);
+    border: 1px solid rgb(255 255 255 / 0.1);
     border-radius: 1.25rem;
-    background:
-      linear-gradient(160deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.05) 42%, rgb(255 255 255 / 0.1)),
-      rgb(255 255 255 / 0.04);
-    backdrop-filter: blur(24px) saturate(1.8) brightness(1.08);
-    -webkit-backdrop-filter: blur(24px) saturate(1.8) brightness(1.08);
+    background: rgb(30 30 30 / 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      inset 0 -1px 0 rgb(255 255 255 / 0.06),
-      inset 0 0 1.5rem rgb(255 255 255 / 0.04),
-      0 0.75rem 2rem rgb(0 0 0 / 0.45);
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
     overflow: hidden;
   }
 
@@ -746,9 +775,7 @@ const groups = [
     background: none;
     text-align: left;
     cursor: pointer;
-    transition:
-      background-color var(--dur-micro) linear,
-      scale var(--dur-micro) var(--ease);
+    transition: background-color var(--dur-micro) var(--ease);
   }
 
   @media (hover: hover) {
@@ -757,9 +784,6 @@ const groups = [
     }
   }
 
-  .dock-cell:active {
-    scale: 0.97;
-  }
 
   .dock-cell:focus-visible {
     outline-offset: -3px;
@@ -851,14 +875,16 @@ const groups = [
   }
 
   .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* ROWS TOUCH, and nothing animates between them: the highlight moves
-     from one row to the next in the same frame — no fade, no gap where
-     the pointer is over neither (the flicker Juan saw). */
+  /* A row lights gently under the pointer, with the site's own hover
+     timing (DeckControls, the header's pills). */
   .row {
     display: grid;
     grid-template-columns: 1.125rem 2.5rem minmax(0, 1fr) auto;
@@ -873,6 +899,7 @@ const groups = [
     background: none;
     text-align: left;
     cursor: pointer;
+    transition: background-color var(--dur-micro) var(--ease);
   }
 
   .is-plain .row {
@@ -881,13 +908,13 @@ const groups = [
 
   @media (hover: hover) {
     .row:hover {
-      background: rgb(255 255 255 / 0.06);
+      background: rgb(255 255 255 / 0.045);
     }
   }
 
   .row[aria-current='true'],
   .row[aria-current='true']:hover {
-    background: rgb(255 255 255 / 0.1);
+    background: rgb(255 255 255 / 0.08);
   }
 
   .row:focus-visible {
@@ -1033,8 +1060,8 @@ const groups = [
     flex-direction: column;
     border-radius: 1.25rem 1.25rem 0 0;
     background: var(--sheet-bg);
-    backdrop-filter: blur(30px) saturate(1.6);
-    -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 -0.5rem 2.5rem rgb(0 0 0 / 0.5);
     transform: translateY(103%);
     visibility: hidden;
@@ -1043,11 +1070,54 @@ const groups = [
       visibility 0s linear var(--dur-turn);
   }
 
-  .songs[data-sheet='shape'] .sheet,
+  .sheet.is-open,
   .songs[data-narrow][data-sheet='songs'] .side {
     transform: none;
     visibility: visible;
     transition: transform var(--dur-turn) var(--ease);
+  }
+
+  /* ON A DESK THE SHAPE SHEET GROWS OUT OF THE CARD (Juan, 2026-10-28):
+     lifted to the page (the script), it stands over the card's middle,
+     taller than it above and below, within the window — so the whole
+     form fits with no scrolling. It opens the way the site's modals do:
+     a fade and a slight scale, on --dur-turn. */
+  .sheet.is-floating {
+    position: fixed;
+    inset: auto;
+    z-index: 20;
+    border-radius: 1.25rem;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 2rem 4rem rgb(0 0 0 / 0.55),
+      0 0.5rem 1.25rem rgb(0 0 0 / 0.4);
+    transform: none;
+    opacity: 0;
+    scale: 0.96;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .sheet.is-floating.is-open {
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease);
+  }
+
+  .sheet.is-floating .grabber {
+    display: none;
+  }
+
+  .sheet.is-floating .section {
+    margin-top: 1.125rem;
+  }
+
+  .sheet.is-floating .band {
+    min-height: 2.5rem;
   }
 
   /* The player under a sheet steps back, as iOS's does. */
@@ -1064,7 +1134,7 @@ const groups = [
   }
 
   /* iOS's SCROLL-EDGE header: at rest the bar has no ground; once what is
-     under it scrolls, it turns to glass with a hairline foot. */
+     under it scrolls, it takes a ground and a hairline foot. */
   .bar {
     position: absolute;
     top: 0;
@@ -1082,9 +1152,7 @@ const groups = [
   }
 
   [data-edge] > .bar {
-    background: rgb(36 36 36 / 0.72);
-    backdrop-filter: blur(20px) saturate(1.6);
-    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    background: rgb(36 36 36 / 0.96);
     box-shadow: 0 1px 0 var(--separator);
   }
 
@@ -1111,7 +1179,7 @@ const groups = [
     outline: none;
   }
 
-  /* iOS 26's close: a round glass button with an xmark. */
+  /* iOS's close: a round button with an xmark. */
   .close {
     grid-column: 3;
     display: grid;
@@ -1121,9 +1189,9 @@ const groups = [
     padding: 0;
     border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 50%;
-    background: var(--glass);
+    background: rgb(255 255 255 / 0.1);
     cursor: pointer;
-    transition: scale var(--dur-micro) var(--ease);
+    transition: background-color var(--dur-micro) var(--ease);
   }
 
   .close svg {
@@ -1131,13 +1199,10 @@ const groups = [
     height: 1.125rem;
   }
 
-  .close:active {
-    scale: 0.9;
-  }
 
   @media (hover: hover) {
     .close:hover {
-      background: var(--glass-hover);
+      background: rgb(255 255 255 / 0.16);
     }
   }
 
@@ -1158,32 +1223,8 @@ const groups = [
     margin: 1.5rem auto 0;
   }
 
-  .col:first-child > .section:first-child {
+  .section:first-child {
     margin-top: 0.5rem;
-  }
-
-  /* TWO COLUMNS ON A DESK: the curve on the left, speed and the effects on
-     the right, so every setting is in reach without scrolling. */
-  .songs:not([data-narrow]) .form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-    column-gap: 1.25rem;
-    padding-inline: 1.25rem;
-    padding-bottom: 0.5rem;
-  }
-
-  .songs:not([data-narrow]) .section {
-    max-width: none;
-    margin-top: 0.875rem;
-  }
-
-  .songs:not([data-narrow]) .col > .section:first-child {
-    margin-top: 0.25rem;
-  }
-
-  .songs:not([data-narrow]) .band {
-    min-height: 2.5rem;
   }
 
   .section-head {
@@ -1346,7 +1387,6 @@ const groups = [
       0 0.1875rem 0.5rem rgb(0 0 0 / 0.25),
       0 0.1875rem 0.0625rem rgb(0 0 0 / 0.1),
       0 0 0 0.03rem rgb(0 0 0 / 0.04);
-    transition: scale var(--dur-micro) var(--ease);
   }
 
   .slider::-moz-range-thumb {
@@ -1356,10 +1396,6 @@ const groups = [
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 0.1875rem 0.5rem rgb(0 0 0 / 0.25);
-  }
-
-  .slider:active::-webkit-slider-thumb {
-    scale: 1.08;
   }
 
   .slider:focus-visible {
@@ -1404,12 +1440,12 @@ const groups = [
   }
 
   /* ---------- a phone's upright screen ---------- */
-  /* The artwork full width on top, the glass bar and the mark under it;
+  /* The cover on top, its words under it, then the bar and the mark;
      the list is a sheet the bar opens. */
 
   .songs[data-narrow] .frame {
     grid-template-columns: 1fr;
-    grid-template-rows: 100cqw minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto auto;
     grid-template-areas:
       'now'
       'dock'
@@ -1425,26 +1461,18 @@ const groups = [
   }
 
   .songs[data-narrow] .console {
-    gap: 0.5rem;
-    padding: 3.5rem 1rem 0.625rem;
+    padding: 0.75rem 1rem 0.25rem;
   }
 
-  .songs[data-narrow] .now-title {
-    font-size: 1.1875rem;
-  }
 
-  .songs[data-narrow] .now-artist {
-    font-size: 0.9375rem;
-  }
 
   .songs[data-narrow] .transport {
     gap: 1.25rem;
   }
 
   .songs[data-narrow] .dock {
-    align-self: center;
     min-height: 3.5rem;
-    margin: 0.5rem 0.625rem 0;
+    margin: 0.25rem 0.625rem 0;
   }
 
   .songs[data-narrow] .dock-divider,
@@ -1472,7 +1500,7 @@ const groups = [
 
   .songs[data-narrow] .powered {
     justify-content: center;
-    padding: 0.25rem 1rem 0.5rem;
+    padding: 0.625rem 1rem 0.75rem;
   }
 
   .songs[data-narrow] .list-bar {
@@ -1485,7 +1513,10 @@ const groups = [
 
   @media (prefers-reduced-motion: reduce) {
     .sheet,
-    .songs[data-sheet='shape'] .sheet,
+    .sheet.is-open,
+    .sheet.is-floating,
+    .sheet.is-floating.is-open,
+    .art-frame,
     .songs[data-narrow] .side,
     .songs[data-narrow][data-sheet='songs'] .side,
     .seek::-webkit-slider-runnable-track {
@@ -1496,14 +1527,11 @@ const groups = [
       animation: none;
     }
 
-    .is-settling {
-      animation: none;
-    }
   }
 
   /* A phone's screen stands upright for the player — 3:4 at any height,
-     so the artwork square leaves its bar room — and the card's name rides
-     the artwork's head instead of its foot, where the console is. */
+     the cover taking what its words and the bar leave — and the card's name
+     rides the cover's head, clear of the console under it. */
   @media (max-width: 48rem) {
     :global(.screen.is-own:has(> [data-songs])) {
       aspect-ratio: 3 / 4 !important;
@@ -1536,12 +1564,14 @@ const groups = [
     const items: Item[] = JSON.parse(root.dataset.items!);
     const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
     const shaper = createShaper(audio);
-    const $ = <E extends Element = HTMLElement>(s: string) => root.querySelector<E>(s)!;
+    // The Shape sheet may be lifted out to the page (see `place`): what is
+    // looked up is looked for in the player, then in the sheet.
+    const sheet = root.querySelector<HTMLElement>('[data-sheet]')!;
+    const $ = <E extends Element = HTMLElement>(s: string) => (root.querySelector<E>(s) ?? sheet.querySelector<E>(s))!;
     const rows = [...root.querySelectorAll<HTMLButtonElement>('[data-song]')];
     const seek = $<HTMLInputElement>('[data-seek]');
     const play = $<HTMLButtonElement>('[data-play]');
     const side = $('[data-side]');
-    const sheet = $('[data-sheet]');
     const openers = [...root.querySelectorAll<HTMLButtonElement>('[data-open]')];
     const bandInputs = [...root.querySelectorAll<HTMLInputElement>('[data-band]')];
     const rateInput = $<HTMLInputElement>('[data-rate]');
@@ -1613,14 +1643,15 @@ const groups = [
           });
       }
     };
-    // ...the words and the time settle in, and the page's light turns to
-    // the new cover's colours (Base.astro reads the card's `data-scene`).
-    const settle = () => {
-      for (const el of root.querySelectorAll<HTMLElement>('.info, .scrub')) {
-        el.classList.remove('is-settling');
-        void el.offsetWidth;
-        el.classList.add('is-settling');
-      }
+    // Only the cover moves: the words and the time change in place. The
+    // cover's frame fills with its colours, and the page's light turns to
+    // them (Base.astro reads the card's `data-scene`).
+    const artFrame = $('[data-art-frame]');
+    const colour = (scene?: string) => {
+      const [a, b = a] = (scene ?? '').split('|')[0].split(' ').filter(Boolean);
+      if (!a) return;
+      artFrame.style.setProperty('--fill-a', a);
+      artFrame.style.setProperty('--fill-b', b);
     };
 
     // ----- now playing -----
@@ -1634,12 +1665,12 @@ const groups = [
     const length = () => (Number.isFinite(audio.duration) ? audio.duration : items[at].seconds);
 
     const show = (i: number) => {
-      if (i !== at) settle();
       at = i;
       const s = items[i];
       $('[data-now-title]').textContent = s.title;
       $('[data-now-artist]').textContent = s.artist;
       paintCover();
+      colour(s.scene);
       if (card && s.scene) card.dataset.scene = s.scene;
       rows.forEach((r, n) => (n === i ? r.setAttribute('aria-current', 'true') : r.removeAttribute('aria-current')));
       progress(0, s.seconds);
@@ -1762,9 +1793,67 @@ const groups = [
         side.removeAttribute('aria-modal');
       }
     };
+    // ON A DESK THE SHAPE SHEET IS LIFTED TO THE PAGE: the card's frame
+    // clips and turns (a transformed ancestor captures anything fixed), so
+    // the sheet goes to <body> and stands over the card's middle, taller
+    // than the card, kept inside the window. A phone keeps it in the card.
+    const screen = root.closest<HTMLElement>('.screen') ?? root;
+    const place = () => {
+      const r = screen.getBoundingClientRect();
+      const m = 16;
+      const w = Math.min(r.width, 30 * 16);
+      const h = Math.min(innerHeight - 2 * m, r.height * 1.85);
+      const top = Math.min(Math.max(r.top + r.height / 2 - h / 2, m), innerHeight - m - h);
+      Object.assign(sheet.style, {
+        top: `${top}px`,
+        left: `${r.left + r.width / 2 - w / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      });
+    };
+    let placing = 0;
+    const replace = () => {
+      if (!placing) placing = requestAnimationFrame(() => ((placing = 0), place()));
+    };
+    const showShape = (on: boolean) => {
+      const floating = on && !root.hasAttribute('data-narrow');
+      if (on) {
+        if (floating) {
+          document.body.append(sheet);
+          sheet.classList.add('is-floating');
+          place();
+          addEventListener('scroll', replace, { passive: true });
+          addEventListener('resize', replace, { passive: true });
+        } else {
+          root.append(sheet);
+          sheet.classList.remove('is-floating');
+          sheet.removeAttribute('style');
+        }
+        // The next frame, so it opens from its resting state.
+        requestAnimationFrame(() => sheet.classList.add('is-open'));
+      } else {
+        sheet.classList.remove('is-open');
+        removeEventListener('scroll', replace);
+        removeEventListener('resize', replace);
+      }
+    };
+    // A click outside the lifted sheet closes it, as a tap outside does.
+    document.addEventListener('pointerdown', e => {
+      if (root.dataset.sheet !== 'shape' || !sheet.classList.contains('is-floating')) return;
+      const t = e.target as Node;
+      if (!sheet.contains(t) && !openers.some(o => o.contains(t))) setSheet(null);
+    });
+    sheet.addEventListener('keydown', e => {
+      if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input, select')) e.stopPropagation();
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setSheet(null);
+    });
+
     const setSheet = (name: Sheet) => {
       if (name) root.dataset.sheet = name;
       else delete root.dataset.sheet;
+      showShape(name === 'shape');
       sync(name);
       if (name) {
         opener = openers.find(o => o.dataset.open === name) ?? null;
@@ -1803,7 +1892,7 @@ const groups = [
         input.value = String(gains[i]);
         fill(input);
         const db = gains[i] > 0 ? `+${gains[i]}` : `${gains[i]}`;
-        root.querySelector(`[data-band-db="${i}"]`)!.textContent = db;
+        $(`[data-band-db="${i}"]`).textContent = db;
         input.setAttribute('aria-valuetext', `${db} dB`);
       });
       const preset = presetOf(gains);
