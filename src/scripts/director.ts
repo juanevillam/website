@@ -79,17 +79,22 @@ voice.preload = 'auto';
 // metadata Safari falls back to the favicon, whose rounded tile has
 // transparent corners that the Lock Screen paints white. The artwork is
 // the same mark, square and opaque, because the OS rounds it itself.
-if ('mediaSession' in navigator)
-  navigator.mediaSession.metadata = new MediaMetadata({
-    title: document.title,
-    artwork: [
-      {
-        src: '/media/brand/now-playing.jpg',
-        sizes: '512x512',
-        type: 'image/jpeg',
-      },
-    ],
-  });
+// Set again whenever the voice starts (`start`): the Songs card's player
+// (SongsPlayer) takes the session over while a song plays.
+const claimMetadata = () => {
+  if ('mediaSession' in navigator)
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: document.title,
+      artwork: [
+        {
+          src: '/media/brand/now-playing.jpg',
+          sizes: '512x512',
+          type: 'image/jpeg',
+        },
+      ],
+    });
+};
+claimMetadata();
 // Dev only: lets a check drive the narrator SILENTLY — the analyser
 // still hears the voice (bars, subtitles, field all run), the speakers
 // do not. Never shipped.
@@ -712,9 +717,11 @@ const start = (block: Narr, para: number) => {
   ctx?.resume();
   session = { block, para };
   running = true;
+  claimSession();
   voice.src = src;
   voice.play().catch(() => stop());
   paint();
+  document.dispatchEvent(new CustomEvent('narr:voice'));
   // Whatever shows this paragraph can follow the voice to it (a deck
   // turns to the card being told).
   document.dispatchEvent(new CustomEvent('narr:para', { detail: p }));
@@ -728,9 +735,11 @@ const pause = () => {
 
 const resume = () => {
   running = true;
+  claimSession();
   ctx?.resume();
   voice.play().catch(() => stop());
   paint();
+  document.dispatchEvent(new CustomEvent('narr:voice'));
 };
 
 // The voice is heard THROUGH the AudioContext, and iOS suspends that the
@@ -744,12 +753,24 @@ document.addEventListener('visibilitychange', () => {
 // The system's own controls (Lock Screen, Dynamic Island) go through the
 // session, never straight to the element, so the pill and the graph stay
 // in step with them.
-if ('mediaSession' in navigator) {
+const claimSession = () => {
+  if (!('mediaSession' in navigator)) return;
+  claimMetadata();
   navigator.mediaSession.setActionHandler('play', () => {
     if (session) resume();
   });
   navigator.mediaSession.setActionHandler('pause', () => pause());
-}
+  navigator.mediaSession.setActionHandler('previoustrack', null);
+  navigator.mediaSession.setActionHandler('nexttrack', null);
+};
+claimSession();
+
+// A song starts on the Songs card (SongsPlayer): the voice steps aside,
+// one sound at a time — and the song pauses when the voice starts or
+// resumes (`narr:voice`).
+document.addEventListener('media:solo', () => {
+  if (running) pause();
+});
 
 const scrollToStep = (story: Story, index: number) => {
   const top =

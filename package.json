@@ -12,7 +12,8 @@
     "likes": "node scripts/sync-likes.mjs",
     "backup": "node scripts/backup-media.mjs",
     "narration": "node scripts/narration-status.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "songs": "node scripts/sync-songs.mjs"
   },
   "dependencies": {
     "astro": "^7.4.1",

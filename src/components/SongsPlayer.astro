@@ -1,0 +1,2087 @@
+---
+import T from './T.astro';
+import AppTile from './AppTile.astro';
+import { SONGS, songSrc, coverSrc, thumbSrc } from '../lib/likes';
+import { sceneAttr, sceneOf } from '../lib/scene';
+import { BANDS, EQ_MAX_DB, EQ_MIN_DB, LEVELS, PRESETS, RATE_LAST_STOP, rateToStop } from '../lib/shaper';
+import type { UIKey } from '../i18n/ui';
+
+/**
+ * THE SONGS CARD'S SCREEN (ThingsILike) — Juan's library in a small
+ * player that is Sound Shaper on the web: a "Powered by Sound Shaper"
+ * easter egg. It is drawn the way the app's player is (sound-shaper:
+ * PlayerConsole.ios, PlayerScrubber.ios, the glass footer): the cover
+ * filling its column, the plain transport over its middle, the title bold
+ * over a muted artist and Apple's media scrubber over its foot, and the
+ * Shape card in the bar — with the song and its shape as its summary.
+ * The Shape sheet is the app's iOS Form, row for row (lib/shaper has its
+ * numbers): Presets, Equalizer, Playback Speed, Preserve Pitch, Echo,
+ * Next Room, every one heard live. A read-only preview — no clips,
+ * nothing saved, no account. The mark links to Sound Shaper's own
+ * section of the landing.
+ *
+ * The list is his top, ranked, then the rest of his library from A to Z
+ * under a title of its own. On a desk it stands beside the
+ * artwork; on a phone it is a sheet of its own, opened from the bar.
+ *
+ * Nothing loads until it is wanted: the list's covers when the card is in
+ * front, a song (and its full cover) when it is played. The player pauses
+ * when its card turns away, and it and the narrator never talk over each
+ * other (director.ts).
+ */
+// Each song lights the page with its own cover's colours (lib/scene):
+// the card's light follows the song playing.
+const songs = await Promise.all(
+  SONGS.map(async s => {
+    const cover = coverSrc(s);
+    return {
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      seconds: s.seconds,
+      src: songSrc(s),
+      cover,
+      thumb: thumbSrc(s),
+      scene: cover ? sceneAttr(await sceneOf(cover)) : undefined,
+    };
+  }),
+);
+const top = SONGS.filter(s => s.top).length;
+const time = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s) % 60).padStart(2, '0')}`;
+const first = songs[0];
+// The words the script writes itself (a summary, a picker's options), in
+// every language: it reads the one html[data-lang] names.
+const WORDS: UIKey[] = [
+  ...PRESETS.map(p => `eq.presets.${p.id}` as UIKey),
+  'shape.custom',
+  'shape.none',
+  'shape.pitchOff',
+  'shape.echo',
+  'shape.nextRoom',
+  ...LEVELS.map(l => `shape.levels.${l}` as UIKey),
+  'songs.play',
+  'songs.pause',
+];
+const row = (s: (typeof songs)[number], i: number) => ({ s, i });
+const groups = [
+  { head: 'songs.top' as UIKey, rows: songs.slice(0, top).map(row), ranked: true },
+  {
+    head: 'songs.more' as UIKey,
+    rows: songs.slice(top).map((s, n) => row(s, top + n)),
+    ranked: false,
+  },
+].filter(g => g.rows.length);
+---
+
+<div class="songs" data-songs data-no-tilt data-items={JSON.stringify(songs)}>
+  <!-- The app's backdrop: the cover, blurred and dimmed, behind it all —
+       what the glass bar and the list lie on. Two layers each, so a new
+       song's cover fades in over the last. -->
+  <div class="backdrop" aria-hidden="true">
+    <img data-layer="backdrop" alt="" decoding="async" draggable="false" />
+    <img data-layer="backdrop" alt="" decoding="async" draggable="false" />
+  </div>
+  <div class="frame">
+    <div class="now">
+      <!-- The cover fills the column; the transport stands over its middle
+           and the words over its foot. -->
+      <div class="art-frame">
+        <div class="art" aria-hidden="true">
+          <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
+          <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
+        </div>
+        <div class="transport">
+          <button type="button" class="glyph skip" data-step="-1">
+            <svg viewBox="0 0 32 20" aria-hidden="true">
+              <path d="M15 3.2v13.6a1 1 0 0 1-1.55.83L3.6 10.83a1 1 0 0 1 0-1.66l9.85-6.8A1 1 0 0 1 15 3.2Zm14 0v13.6a1 1 0 0 1-1.55.83l-9.85-6.8a1 1 0 0 1 0-1.66l9.85-6.8A1 1 0 0 1 29 3.2Z" fill="currentColor"></path>
+            </svg>
+            <span class="sr"><T k="songs.prev" /></span>
+          </button>
+          <button type="button" class="glyph play" data-play>
+            <svg class="g-play" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 4.1v15.8a1.2 1.2 0 0 0 1.8 1.03l13.2-7.9a1.2 1.2 0 0 0 0-2.06L7.8 3.07A1.2 1.2 0 0 0 6 4.1Z" fill="currentColor"></path>
+            </svg>
+            <svg class="g-pause" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="3.5" width="5" height="17" rx="1.4" fill="currentColor"></rect>
+              <rect x="14" y="3.5" width="5" height="17" rx="1.4" fill="currentColor"></rect>
+            </svg>
+            <span class="sr" data-play-name><T k="songs.play" /></span>
+          </button>
+          <button type="button" class="glyph skip" data-step="1">
+            <svg viewBox="0 0 32 20" aria-hidden="true">
+              <path d="M3 3.2v13.6a1 1 0 0 0 1.55.83l9.85-6.8a1 1 0 0 0 0-1.66L4.55 2.37A1 1 0 0 0 3 3.2Zm14 0v13.6a1 1 0 0 0 1.55.83l9.85-6.8a1 1 0 0 0 0-1.66l-9.85-6.8A1 1 0 0 0 17 3.2Z" fill="currentColor"></path>
+            </svg>
+            <span class="sr"><T k="songs.next" /></span>
+          </button>
+        </div>
+      </div>
+      <div class="console">
+        <div class="info">
+          <span class="now-title" data-now-title>{first.title}</span>
+          <span class="now-artist" data-now-artist>{first.artist}</span>
+        </div>
+        <div class="scrub">
+          <input
+            type="range"
+            class="seek"
+            data-seek
+            min="0"
+            max="1000"
+            step="1"
+            value="0"
+            aria-labelledby="songs-seek-name"
+            aria-valuetext={`0:00 / ${time(first.seconds)}`}
+          />
+          <span class="sr" id="songs-seek-name"><T k="songs.seek" /></span>
+          <span class="time" data-now-at>0:00</span>
+          <span class="time end" data-now-total>{time(first.seconds)}</span>
+        </div>
+      </div>
+    </div>
+
+    <a class="powered in-frame" href="/sound-shaper">
+      <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
+      <span class="powered-words"><T k="songs.powered" /></span>
+    </a>
+
+    <!-- The app's glass footer: Shape, and on a phone the list beside it. -->
+    <div class="dock">
+      <button type="button" class="dock-cell" data-open="shape" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+          <circle cx="15.5" cy="6" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+          <circle cx="8" cy="12" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+          <circle cx="13" cy="18" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+        </svg>
+        <span class="dock-copy">
+          <span class="dock-label"><T k="shape.title" /></span>
+          <span class="dock-summary" data-shape-summary></span>
+        </span>
+      </button>
+      <span class="dock-divider" aria-hidden="true"></span>
+      <button type="button" class="dock-cell list-cell" data-open="songs" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 6h12M9 12h12M9 18h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+          <circle cx="4" cy="6" r="1.3" fill="currentColor"></circle>
+          <circle cx="4" cy="12" r="1.3" fill="currentColor"></circle>
+          <circle cx="4" cy="18" r="1.3" fill="currentColor"></circle>
+        </svg>
+        <span class="dock-copy">
+          <span class="dock-label"><T k="songs.library" /></span>
+          <span class="dock-summary">{songs.length}</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- The list: beside the artwork on a desk, a sheet on a phone. -->
+    <div class="side" data-side aria-labelledby="songs-list-name">
+      <div class="bar list-bar">
+        <span class="grabber" aria-hidden="true"></span>
+        <h4 class="bar-title" id="songs-list-name" tabindex="-1"><T k="songs.library" /></h4>
+        <button type="button" class="close" data-close>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <span class="sr"><T k="shape.done" /></span>
+        </button>
+      </div>
+      <div class="list" data-list data-scroll-edge>
+        {/* On a desk the mark heads the list and scrolls with it. */}
+        <a class="powered in-list" href="/sound-shaper">
+          <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
+          <span class="powered-words"><T k="songs.powered" /></span>
+        </a>
+        {
+          groups.map(g => (
+            <section class="group-list" aria-labelledby={`songs-${g.head}`}>
+              <h5 class="group-head" id={`songs-${g.head}`}>
+                <T k={g.head} />
+              </h5>
+              <ol class:list={['rows', !g.ranked && 'is-plain']}>
+                {g.rows.map(({ s, i }) => (
+                  <li>
+                    <button type="button" class="row" data-song={i} aria-current={i === 0 ? 'true' : undefined}>
+                      {g.ranked && <span class="rank">{i + 1}</span>}
+                      <span class="thumb" aria-hidden="true">
+                        {s.thumb && <img data-src={s.thumb} alt="" width="48" height="48" decoding="async" draggable="false" />}
+                        <span class="bars">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                      </span>
+                      <span class="row-words">
+                        <span class="row-title">{s.title}</span>
+                        <span class="row-artist">{s.artist}</span>
+                      </span>
+                      <span class="row-time" aria-hidden="true">
+                        {time(s.seconds)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <audio data-audio preload="none"></audio>
+  <div hidden data-words>
+    {
+      WORDS.map(k => (
+        <span data-k={k}>
+          <T k={k} />
+        </span>
+      ))
+    }
+  </div>
+
+  <!-- THE SHAPE SHEET — the app's iOS Form, section for section. It rises
+       over the player and leaves it playing. -->
+  <div class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="shape-title">
+    <div class="bar">
+      <span class="grabber" aria-hidden="true"></span>
+      <h4 class="bar-title" id="shape-title" tabindex="-1"><T k="shape.title" /></h4>
+      <button type="button" class="close" data-close>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+        </svg>
+        <span class="sr"><T k="shape.done" /></span>
+      </button>
+    </div>
+    <div class="form" data-scroll-edge>
+      <div class="section">
+        <label class="cell picker">
+          <span class="cell-name"><T k="shape.presets" /></span>
+          <span class="picker-value">
+            <select data-preset>
+              {PRESETS.map(p => <option value={p.id}>{p.id}</option>)}
+              <option value="custom" hidden disabled>custom</option>
+            </select>
+            <svg viewBox="0 0 12 18" aria-hidden="true">
+              <path d="M2.5 6.5 6 3l3.5 3.5M2.5 11.5 6 15l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+        </label>
+      </div>
+
+      <section class="section" aria-labelledby="songs-eq">
+        <h5 class="section-head" id="songs-eq"><T k="eq.title" /></h5>
+        <div class="card">
+          {
+            BANDS.map((b, i) => (
+              <div class="cell band">
+                <span class="band-hz" aria-hidden="true">
+                  {b.label}
+                </span>
+                <input
+                  type="range"
+                  class="slider"
+                  data-band={i}
+                  min={EQ_MIN_DB}
+                  max={EQ_MAX_DB}
+                  step="1"
+                  value="0"
+                  aria-label={`${b.hz} Hz`}
+                  aria-valuetext="0 dB"
+                />
+                <span class="band-db" data-band-db={i} aria-hidden="true">
+                  0
+                </span>
+              </div>
+            ))
+          }
+        </div>
+        <p class="section-foot"><T k="eq.hint" /></p>
+      </section>
+
+      <section class="section" aria-labelledby="songs-speed">
+        <h5 class="section-head split" id="songs-speed">
+          <span><T k="shape.speed" /></span>
+          <span class="head-value" data-rate-label aria-hidden="true">1×</span>
+        </h5>
+        <div class="card">
+          <div class="cell">
+            <input
+              type="range"
+              class="slider"
+              data-rate
+              min="0"
+              max={RATE_LAST_STOP}
+              step="1"
+              value={rateToStop(1)}
+              aria-labelledby="songs-speed"
+              aria-valuetext="1×"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="card">
+          <div class="cell">
+            <span class="cell-name" id="songs-pitch"><T k="shape.keepPitch" /></span>
+            <button
+              type="button"
+              class="switch"
+              role="switch"
+              aria-checked="true"
+              data-pitch
+              aria-labelledby="songs-pitch"
+              aria-describedby="songs-pitch-foot"
+            >
+              <span class="knob"></span>
+            </button>
+          </div>
+        </div>
+        <p class="section-foot" id="songs-pitch-foot"><T k="shape.keepPitchDescription" /></p>
+      </section>
+
+      {
+        (['echo', 'nextRoom'] as const).map(fx => (
+          <section class="section">
+            <div class="card">
+              <label class="cell picker">
+                <span class="cell-name">
+                  <T k={`shape.${fx}` as UIKey} />
+                </span>
+                <span class="picker-value">
+                  <select data-level={fx} aria-describedby={`songs-${fx}-foot`}>
+                    {LEVELS.map(l => (
+                      <option value={l}>{l}</option>
+                    ))}
+                  </select>
+                  <svg viewBox="0 0 12 18" aria-hidden="true">
+                    <path
+                      d="M2.5 6.5 6 3l3.5 3.5M2.5 11.5 6 15l3.5-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </label>
+            </div>
+            <p class="section-foot" id={`songs-${fx}-foot`}>
+              <T k={`shape.${fx}Description` as UIKey} />
+            </p>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  /* iOS's dark materials, said in the site's neutrals: the player's ground,
+     the glass over the artwork, the grouped sheet and its cards. */
+  .songs,
+  .sheet {
+    --player-bg: #101010;
+    --glass-ink: #2a2a2a;
+    --sheet-bg: rgb(26 26 26 / 0.97);
+    --cell-bg: rgb(255 255 255 / 0.075);
+    --separator: rgb(255 255 255 / 0.1);
+    --muted: rgb(235 235 245 / 0.6);
+    --faint: rgb(235 235 245 / 0.3);
+    --track: rgb(120 120 128 / 0.36);
+    --switch-on: #30d158;
+  }
+
+  .songs {
+    position: absolute;
+    inset: 0;
+    background: var(--player-bg);
+    color: var(--ink);
+    container-type: size;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* ---------- the backdrop: the app's, the cover blurred behind it all ---------- */
+
+  .backdrop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .backdrop img {
+    position: absolute;
+    inset: -10%;
+    width: 120%;
+    height: 120%;
+    object-fit: cover;
+    filter: blur(48px) saturate(0.9) brightness(0.45);
+    opacity: 0;
+    transition: opacity var(--dur-settle) var(--ease);
+  }
+
+  /* A tint, not a colour: the list's ground barely changes with a song. */
+  .backdrop img.is-on {
+    opacity: 0.22;
+  }
+
+  /* ---------- the frame: the artwork, the list beside it ---------- */
+
+  .frame {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'now side';
+    height: 100%;
+  }
+
+  .now {
+    grid-area: now;
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  /* THE COVER FILLS THE COLUMN (Juan, 2026-10-28), the transport over its
+     middle and the words over its foot. */
+  .art-frame {
+    position: absolute;
+    inset: 0;
+  }
+
+  .art {
+    position: absolute;
+    inset: 0;
+  }
+
+  .art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* A new song's cover fades in over the last one. */
+  .art img {
+    display: block;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity var(--dur-settle) var(--ease);
+  }
+
+  .art img.is-on {
+    opacity: 1;
+  }
+
+
+  /* The words and the time over the cover's foot, on a long, soft scrim
+     tall enough to read on any cover. */
+  .console {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 6rem 1.25rem 1rem;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0.08) 15%,
+      rgb(0 0 0 / 0.24) 30%,
+      rgb(0 0 0 / 0.44) 45%,
+      rgb(0 0 0 / 0.62) 60%,
+      rgb(0 0 0 / 0.74) 75%,
+      rgb(0 0 0 / 0.82) 100%
+    );
+  }
+
+  /* The scrim lets clicks through to the transport; its words and scrubber
+     take their own. */
+  .console {
+    pointer-events: none;
+  }
+
+  .console > * {
+    pointer-events: auto;
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .now-title,
+  .row-title {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .now-title {
+    font-size: 1.1875rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .now-artist {
+    font-size: 0.9375rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* APPLE'S MEDIA SCRUBBER: a capsule with no thumb that thickens while it
+     is held; the time played on the left, the song's length on the right. */
+  .scrub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 0.125rem;
+  }
+
+  .seek {
+    --p: 0%;
+    --h: 0.4375rem;
+    grid-column: 1 / -1;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1.25rem;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .seek:hover,
+  .seek:active,
+  .seek:focus-visible {
+    --h: 0.75rem;
+  }
+
+  .seek::-webkit-slider-runnable-track {
+    height: var(--h);
+    border-radius: 999px;
+    background: linear-gradient(to right, rgb(255 255 255 / 0.85) var(--p), rgb(255 255 255 / 0.25) var(--p));
+    transition: height var(--dur-micro) var(--ease);
+  }
+
+  .seek::-moz-range-track {
+    height: var(--h);
+    border-radius: 999px;
+    background: linear-gradient(to right, rgb(255 255 255 / 0.85) var(--p), rgb(255 255 255 / 0.25) var(--p));
+  }
+
+  .seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 0;
+    height: var(--h);
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .seek::-moz-range-thumb {
+    width: 0;
+    height: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .seek:focus-visible {
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  .time {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .time.end {
+    text-align: right;
+  }
+
+  /* THE TRANSPORT — Apple Music's: plain filled glyphs, play the largest,
+     nothing round behind them. */
+  .transport {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    /* A soft dark scrim over the whole cover, as a video player's: it
+       comes and goes with the controls, so they stand apart from any
+       art without a heavy plate behind them. */
+    background: rgb(0 0 0 / 0.24);
+    /* In slow and settling, out a little quicker. A plain ease-out rather
+       than the site's --ease, whose steep start read as a pop here. */
+    transition: opacity calc(var(--beat) * 2 / 3) ease-out;
+  }
+
+  /* WHILE A SONG PLAYS THE TRANSPORT HIDES, as a video player's does: it
+     comes back on a pointer move over the cover, a tap or keyboard focus,
+     and goes again after a short rest (the script). Paused, it stays. */
+  .songs[data-idle] .transport {
+    opacity: 0;
+    pointer-events: none;
+    transition-duration: calc(var(--beat) * 0.375);
+  }
+
+  .songs[data-idle] .transport:has(:focus-visible) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .glyph {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 3.25rem;
+    height: 3.25rem;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 50%;
+    /* Each on a quiet dark disc — the reduced glass's hint, no more. */
+    background: rgb(20 20 20 / 0.38);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 0.28);
+    color: #fff;
+    cursor: pointer;
+    /* SOUND SHAPER'S OWN SQUASH (GlyphButton: ICON_PRESS_SCALE 0.86,
+       ICON_PRESS_OPACITY 0.55, PRESS_SPRING damping 22, mass 0.4,
+       stiffness 360) — these three buttons only, so they press like the
+       app's. The spring is drawn as `linear()`: near-critical (ζ 0.92),
+       settled in ~0.2 s. */
+    transition:
+      scale 320ms var(--squash-spring),
+      opacity 320ms var(--squash-spring),
+      transform calc(var(--beat) * 2 / 3) ease-out;
+  }
+
+  .glyph.play {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+
+  /* The reveal settles in from a hair smaller (0.96 → 1) with the fade;
+     `transform`, so it composes with the press's `scale`. */
+  .songs[data-idle] .glyph {
+    transform: scale(0.96);
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375);
+  }
+
+  .songs[data-idle] .transport:has(:focus-visible) .glyph {
+    transform: none;
+  }
+
+  .transport {
+    --squash-spring: linear(
+      0, 0.063, 0.198, 0.352, 0.499, 0.626, 0.728, 0.808, 0.868, 0.911, 0.942, 0.963, 0.978,
+      0.987, 0.993, 0.997, 0.999, 1, 1, 1.001, 1.001, 1.001, 1.001, 1, 1
+    );
+  }
+
+  .glyph:active {
+    scale: 0.86;
+    opacity: 0.55;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glyph:active {
+      scale: 1;
+    }
+
+    .songs[data-idle] .glyph {
+      transform: none;
+    }
+  }
+
+  .glyph svg {
+    display: block;
+  }
+
+  .skip svg {
+    width: 1.625rem;
+    height: 1rem;
+  }
+
+  .play svg {
+    width: 1.875rem;
+    height: 1.875rem;
+  }
+
+
+  .play .g-pause,
+  .songs[data-playing] .play .g-play {
+    display: none;
+  }
+
+  .songs[data-playing] .play .g-pause {
+    display: block;
+  }
+
+  /* ---------- Powered by Sound Shaper ---------- */
+
+  .powered {
+    grid-area: powered;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0.875rem 1rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    line-height: 1.35;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-decoration: none;
+    transition: color var(--dur-micro) var(--ease);
+  }
+
+  .powered:hover {
+    color: var(--ink-2);
+  }
+
+  /* On a desk the mark heads the list and scrolls away with it; on a
+     phone it stands under the bar. */
+  .powered.in-list {
+    padding: 0.875rem 0.5rem 0.25rem;
+  }
+
+  .powered.in-frame,
+  .songs[data-narrow] .powered.in-list {
+    display: none;
+  }
+
+  .songs[data-narrow] .powered.in-frame {
+    display: flex;
+  }
+
+  /* The app's own tile (AppTile, as the landing's lockups draw it): its
+     SVG carries its shadow's margin, so it keeps its drawn size. */
+  .tile {
+    display: flex;
+    flex: none;
+  }
+
+  .tile :global(svg) {
+    max-width: none;
+  }
+
+  /* ---------- the dock: the app's glass footer ---------- */
+
+  /* A HINT OF GLASS, no more: a dark, mostly solid bar the list slides
+     under, with a faint blur and a thin lit edge. */
+  .dock {
+    grid-area: side;
+    align-self: end;
+    z-index: 2;
+    display: flex;
+    align-items: stretch;
+    margin: 0 0.75rem 0.75rem;
+    min-height: 3.75rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 1.25rem;
+    background: rgb(30 30 30 / 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+    overflow: hidden;
+  }
+
+  .dock-cell {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.5rem 0.875rem;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-micro) var(--ease);
+  }
+
+  @media (hover: hover) {
+    .dock-cell:hover {
+      background: rgb(255 255 255 / 0.06);
+    }
+  }
+
+
+  .dock-cell:focus-visible {
+    outline-offset: -3px;
+    border-radius: 1.25rem;
+  }
+
+  .dock-icon {
+    flex: none;
+    width: 1.625rem;
+    height: 1.625rem;
+    --glass-ink: #3a3a3a;
+  }
+
+  .dock-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .dock-label {
+    font-size: 1.0625rem;
+    line-height: 1.25;
+  }
+
+  .dock-summary {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dock-divider {
+    align-self: stretch;
+    width: 1px;
+    margin: 0.75rem 0;
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  /* On a desk the list is always there: only Shape sits in the bar. */
+  .dock-divider,
+  .list-cell {
+    display: none;
+  }
+
+  /* ---------- the list ---------- */
+
+  .side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    container-type: inline-size;
+  }
+
+  .songs:not([data-narrow]) .list-bar {
+    display: none;
+  }
+
+  .list {
+    flex: 1;
+    min-height: 0;
+    padding: 0 0.5rem 5.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+  }
+
+  .group-list + .group-list {
+    margin-top: 1.25rem;
+  }
+
+  .group-head {
+    margin: 0.5rem 0 0.25rem;
+    padding: 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* A row lights gently under the pointer, with the site's own hover
+     timing (DeckControls, the header's pills). THE ROWS TOUCH, and the
+     air between their highlights is drawn inside each one (`::before`,
+     inset): with real gaps the pointer crossed dead strips between rows,
+     the highlight went out and came back on every crossing, and a list
+     scrolled under a still pointer blinked row after row (Juan,
+     2026-10-28). */
+  .row {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 1.125rem 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.625rem;
+    width: 100%;
+    min-height: 3.75rem;
+    margin: 0;
+    padding: 0.5rem;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .row::before {
+    content: '';
+    position: absolute;
+    inset: 0.125rem 0;
+    z-index: -1;
+    border-radius: 0.625rem;
+    background: rgb(255 255 255 / 0);
+    transition: background-color var(--dur-micro) var(--ease);
+  }
+
+  .is-plain .row {
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  }
+
+  @media (hover: hover) {
+    .row:hover::before {
+      background: rgb(255 255 255 / 0.045);
+    }
+  }
+
+  .row[aria-current='true']::before,
+  .row[aria-current='true']:hover::before {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .row:focus-visible {
+    outline-offset: -2px;
+    border-radius: 0.625rem;
+  }
+
+  .rank {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .thumb {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .row-words {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .row-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .row-artist {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-time {
+    font-size: 0.8125rem;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @container (max-width: 17rem) {
+    .row-time {
+      display: none;
+    }
+
+    .row,
+    .is-plain .row {
+      grid-template-columns: auto 2.25rem minmax(0, 1fr) 0.875rem;
+    }
+
+    .is-plain .row {
+      grid-template-columns: 2.25rem minmax(0, 1fr) 0.875rem;
+    }
+
+    .thumb {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+
+  /* THE APP'S PLAYING MARK (sound-shaper NowPlayingBars): three hairline
+     bars breathing in a soft dark disc on the cover — slow and shallow,
+     staggered so they never march together, in time with the speed
+     (`--tempo`); paused, they settle level. */
+  .thumb {
+    position: relative;
+  }
+
+  .bars {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 1.625rem;
+    height: 1.625rem;
+    margin: -0.8125rem 0 0 -0.8125rem;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .row[aria-current='true'] .bars {
+    display: flex;
+  }
+
+  .bars i {
+    width: 2px;
+    height: 11px;
+    border-radius: 1px;
+    background: rgb(255 255 255 / 0.95);
+    transform: scaleY(0.55);
+    transition: transform 260ms ease-out;
+  }
+
+  .songs[data-playing] .bars i {
+    animation: breathe calc(560ms / var(--tempo, 1)) cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
+  }
+
+  .songs[data-playing] .bars i:nth-child(2) {
+    animation-duration: calc(700ms / var(--tempo, 1));
+    animation-delay: calc(160ms / var(--tempo, 1));
+  }
+
+  .songs[data-playing] .bars i:nth-child(3) {
+    animation-duration: calc(620ms / var(--tempo, 1));
+    animation-delay: calc(320ms / var(--tempo, 1));
+  }
+
+  @keyframes breathe {
+    from {
+      transform: scaleY(0.42);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  /* ---------- sheets: Apple's, over the player ---------- */
+
+  .sheet,
+  .songs[data-narrow] .side {
+    position: absolute;
+    inset: 0.625rem 0 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.25rem 1.25rem 0 0;
+    background: var(--sheet-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 -0.5rem 2.5rem rgb(0 0 0 / 0.5);
+    /* The scroll stays inside the sheet's rounded edge. */
+    overflow: hidden;
+    transform: translateY(103%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .sheet.is-open,
+  .songs[data-narrow][data-sheet='songs'] .side {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--dur-turn) var(--ease);
+  }
+
+  /* ON A DESK THE SHAPE SHEET GROWS OUT OF THE CARD (Juan, 2026-10-28):
+     lifted to the page (the script), it stands over the card's middle,
+     taller than it above and below, within the window — so the whole
+     form fits with no scrolling. It opens the way the site's modals do:
+     a fade and a slight scale, on --dur-turn. */
+  .sheet.is-floating {
+    position: fixed;
+    inset: auto;
+    z-index: 20;
+    border-radius: 1.25rem;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 2rem 4rem rgb(0 0 0 / 0.55),
+      0 0.5rem 1.25rem rgb(0 0 0 / 0.4);
+    transform: none;
+    opacity: 0;
+    scale: 0.96;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .sheet.is-floating.is-open {
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease);
+  }
+
+  .sheet.is-floating .grabber {
+    display: none;
+  }
+
+  /* A phone's sheet keeps finger-sized rows and thumbs. */
+  .songs[data-narrow] .cell {
+    min-height: 2.75rem;
+  }
+
+  .songs[data-narrow] .slider::-webkit-slider-thumb {
+    width: 1.625rem;
+    height: 1.625rem;
+    margin-top: -0.6875rem;
+  }
+
+  /* The player under a sheet steps back, as iOS's does. */
+  .now,
+  .dock,
+  .powered,
+  .side {
+    transition: opacity var(--dur-turn) var(--ease);
+  }
+
+  .songs[data-sheet] .frame > :not(.side),
+  .songs[data-sheet='shape']:not([data-narrow]) .side {
+    opacity: 0.55;
+  }
+
+  /* iOS's SCROLL-EDGE header: at rest the bar has no ground; once what is
+     under it scrolls, it takes a ground and a hairline foot. It stands in
+     the sheet's flow, so the scrolling part — and its scrollbar — start
+     under it and end at the sheet's foot, inside its rounded edge. */
+  .bar {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    display: grid;
+    grid-template-columns: 1.875rem 1fr 1.875rem;
+    align-items: center;
+    padding: 0.875rem 0.75rem 0.5rem;
+    transition:
+      background-color var(--dur-quick) linear,
+      box-shadow var(--dur-quick) linear;
+  }
+
+  [data-edge] > .bar {
+    background: rgb(36 36 36 / 0.96);
+    box-shadow: 0 1px 0 var(--separator);
+  }
+
+  .grabber {
+    position: absolute;
+    top: 0.375rem;
+    left: 50%;
+    width: 2.25rem;
+    height: 0.3125rem;
+    margin-left: -1.125rem;
+    border-radius: 0.25rem;
+    background: rgb(255 255 255 / 0.3);
+  }
+
+  .bar-title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .bar-title:focus {
+    outline: none;
+  }
+
+  /* iOS's close: a round button with an xmark. */
+  .close {
+    grid-column: 3;
+    display: grid;
+    place-items: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.1);
+    cursor: pointer;
+    transition: background-color var(--dur-micro) var(--ease);
+  }
+
+  .close svg {
+    width: 0.9375rem;
+    height: 0.9375rem;
+  }
+
+
+  @media (hover: hover) {
+    .close:hover {
+      background: rgb(255 255 255 / 0.16);
+    }
+  }
+
+  /* ---------- the Shape sheet's form: grouped, inset ---------- */
+
+  .form {
+    flex: 1;
+    min-height: 0;
+    padding: 0.25rem 0.875rem 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+  }
+
+  .section {
+    max-width: 30rem;
+    margin: 1.125rem auto 0;
+  }
+
+  .section:first-child {
+    margin-top: 0.5rem;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 0.3125rem;
+    padding: 0 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .head-value {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card,
+  .section > .picker {
+    border-radius: 0.625rem;
+    background: var(--cell-bg);
+    overflow: hidden;
+  }
+
+  .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.625rem;
+    min-height: 2.375rem;
+    padding: 0.25rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  .cell + .cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0.875rem;
+    right: 0;
+    height: 1px;
+    background: var(--separator);
+  }
+
+  .section-foot {
+    margin: 0.3125rem 0 0;
+    padding: 0 0.875rem;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--muted);
+  }
+
+  /* A MENU PICKER ROW — the app's Presets, Echo and Next Room on iOS: the
+     name, then the value with its up-down chevrons. The select is the
+     browser's own, so the menu that opens is the platform's. */
+  .picker {
+    cursor: pointer;
+  }
+
+  .picker-value {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+    color: var(--muted);
+  }
+
+  .picker select {
+    -webkit-appearance: none;
+    appearance: none;
+    max-width: 12rem;
+    margin: 0;
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9375rem;
+    text-align: right;
+    text-align-last: right;
+    cursor: pointer;
+  }
+
+  .picker select option {
+    background: #1e1e1e;
+    color: var(--ink);
+  }
+
+  .picker svg {
+    flex: none;
+    width: 0.625rem;
+    height: 0.9375rem;
+  }
+
+  .picker:has(select:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+    border-radius: 0.625rem;
+  }
+
+  .picker select:focus-visible {
+    outline: none;
+  }
+
+  .band {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr 1.75rem;
+    gap: 0.625rem;
+  }
+
+  .band-hz,
+  .band-db {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .band-db {
+    text-align: right;
+  }
+
+  /* iOS's slider: a thin track, the played part filled, a big white
+     thumb with its soft shadow — monochrome, as the app tints it. */
+  .slider {
+    --p: 50%;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1.75rem;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .slider::-webkit-slider-runnable-track {
+    height: 0.25rem;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--ink) var(--p), var(--track) var(--p));
+  }
+
+  .slider::-moz-range-track {
+    height: 0.25rem;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--ink) var(--p), var(--track) var(--p));
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin-top: -0.5625rem;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+      0 0.1875rem 0.5rem rgb(0 0 0 / 0.25),
+      0 0.1875rem 0.0625rem rgb(0 0 0 / 0.1),
+      0 0 0 0.03rem rgb(0 0 0 / 0.04);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 1.375rem;
+    height: 1.375rem;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.1875rem 0.5rem rgb(0 0 0 / 0.25);
+  }
+
+  .slider:focus-visible {
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  /* iOS's switch, systemGreen when on — the app's own — at the sheet's
+     smaller scale. */
+  .switch {
+    position: relative;
+    flex: none;
+    width: 2.625rem;
+    height: 1.625rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(120 120 128 / 0.32);
+    cursor: pointer;
+    transition: background-color var(--dur-quick) var(--ease);
+  }
+
+  .switch[aria-checked='true'] {
+    background: var(--switch-on);
+  }
+
+  .knob {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+      0 0.1875rem 0.5rem rgb(0 0 0 / 0.15),
+      0 0.1875rem 0.0625rem rgb(0 0 0 / 0.06);
+    transition: translate var(--dur-quick) var(--ease);
+  }
+
+  .switch[aria-checked='true'] .knob {
+    translate: 1rem 0;
+  }
+
+  /* ---------- a phone's upright screen ---------- */
+  /* The cover on top, its words under it, then the bar and the mark;
+     the list is a sheet the bar opens. */
+
+  .songs[data-narrow] .frame {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'now'
+      'dock'
+      'powered';
+  }
+
+  .songs[data-narrow] .dock {
+    grid-area: dock;
+  }
+
+  .songs[data-narrow] .powered.in-frame {
+    grid-area: powered;
+  }
+
+  .songs[data-narrow] .console {
+    padding: 4.5rem 1rem 0.75rem;
+  }
+
+
+
+  .songs[data-narrow] .transport {
+    gap: 1.25rem;
+  }
+
+  .songs[data-narrow] .dock {
+    min-height: 3.5rem;
+    margin: 0.25rem 0.625rem 0;
+  }
+
+  .songs[data-narrow] .dock-divider,
+  .songs[data-narrow] .list-cell {
+    display: flex;
+  }
+
+  .songs[data-narrow] .dock-cell {
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .songs[data-narrow] .dock-icon {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  .songs[data-narrow] .dock-label {
+    font-size: 0.9375rem;
+  }
+
+  .songs[data-narrow] .dock-summary {
+    font-size: 0.75rem;
+  }
+
+  .songs[data-narrow] .powered {
+    justify-content: center;
+    padding: 0.625rem 1rem 0.75rem;
+  }
+
+  .songs[data-narrow] .list-bar {
+    display: grid;
+  }
+
+  .songs[data-narrow] .list {
+    padding: 0 0.5rem 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet,
+    .sheet.is-open,
+    .sheet.is-floating,
+    .sheet.is-floating.is-open,
+    .songs[data-narrow] .side,
+    .songs[data-narrow][data-sheet='songs'] .side,
+    .seek::-webkit-slider-runnable-track {
+      transition: none;
+    }
+
+    .songs[data-playing] .bars i {
+      animation: none;
+    }
+
+  }
+
+  /* A phone's screen stands upright for the player — 3:4 at any height,
+     the cover taking what its words and the bar leave — and the card's name
+     rides the cover's head, clear of the console under it. */
+  @media (max-width: 48rem) {
+    :global(.screen.is-own:has(> [data-songs])) {
+      aspect-ratio: 3 / 4 !important;
+    }
+
+    :global(.screen.is-own:has(> [data-songs]) > .screen-caption) {
+      top: 0;
+      bottom: auto;
+      padding: 0.75rem 0.875rem 2.5rem;
+      background: linear-gradient(to top, rgb(0 0 0 / 0), rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0.6));
+    }
+  }
+</style>
+
+<script>
+  import { createShaper, presetOf, PRESETS, stopToRate, type Level } from '../lib/shaper';
+
+  type Item = {
+    id: string;
+    title: string;
+    artist: string;
+    seconds: number;
+    src: string;
+    cover?: string;
+    scene?: string;
+    thumb?: string;
+  };
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-songs]')) {
+    const items: Item[] = JSON.parse(root.dataset.items!);
+    const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
+    const shaper = createShaper(audio);
+    // The Shape sheet may be lifted out to the page (see `place`): what is
+    // looked up is looked for in the player, then in the sheet.
+    const sheet = root.querySelector<HTMLElement>('[data-sheet]')!;
+    const $ = <E extends Element = HTMLElement>(s: string) => (root.querySelector<E>(s) ?? sheet.querySelector<E>(s))!;
+    const rows = [...root.querySelectorAll<HTMLButtonElement>('[data-song]')];
+    const seek = $<HTMLInputElement>('[data-seek]');
+    const play = $<HTMLButtonElement>('[data-play]');
+    const side = $('[data-side]');
+    const openers = [...root.querySelectorAll<HTMLButtonElement>('[data-open]')];
+    const bandInputs = [...root.querySelectorAll<HTMLInputElement>('[data-band]')];
+    const rateInput = $<HTMLInputElement>('[data-rate]');
+    const pitch = $<HTMLButtonElement>('[data-pitch]');
+    const presetSelect = $<HTMLSelectElement>('[data-preset]');
+    const levelSelects = [...root.querySelectorAll<HTMLSelectElement>('[data-level]')];
+    const card = root.closest<HTMLElement>('.deck-card');
+    let at = 0;
+    let loaded = -1;
+    let seeking = false;
+
+    // ----- the words, in the language showing -----
+    const lang = () => document.documentElement.dataset.lang || 'en';
+    const word = (k: string) =>
+      root.querySelector(`[data-k="${k}"] [lang="${lang()}"]`)?.textContent ??
+      root.querySelector(`[data-k="${k}"] [lang="en"]`)?.textContent ??
+      '';
+
+    const clock = (s: number) => {
+      const t = Math.max(0, Math.floor(s || 0));
+      return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    };
+    const fill = (input: HTMLInputElement) => {
+      const p = (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min));
+      input.style.setProperty('--p', `${(p * 100).toFixed(2)}%`);
+    };
+    const rateText = (rate: number) => `${new Intl.NumberFormat(lang()).format(rate)}×`;
+
+    // ----- narrow: a phone's upright screen -----
+    new ResizeObserver(([e]) => {
+      root.toggleAttribute('data-narrow', e.contentRect.width < 576);
+    }).observe(root);
+
+    // ----- the covers load with the card -----
+    const wake = () => {
+      for (const img of root.querySelectorAll<HTMLImageElement>('.row img[data-src]')) {
+        img.src = img.dataset.src!;
+        img.removeAttribute('data-src');
+      }
+      paintCover();
+    };
+    let awake = false;
+
+    // THE COVER CROSS-FADES: the new one loads into the layer not showing
+    // and fades in over the last, on the player and in the backdrop alike.
+    const layers = (name: string) => [...root.querySelectorAll<HTMLImageElement>(`[data-layer="${name}"]`)];
+    const art = layers('art');
+    const back = layers('backdrop');
+    let painted: string | undefined;
+    const paintCover = () => {
+      const src = items[at].cover;
+      if (!awake || src === painted) return;
+      painted = src;
+      for (const pair of [art, back]) {
+        const next = pair.find(l => !l.classList.contains('is-on')) ?? pair[0];
+        const others = pair.filter(l => l !== next);
+        if (!src) {
+          pair.forEach(l => l.classList.remove('is-on'));
+          continue;
+        }
+        next.src = src;
+        next
+          .decode()
+          .catch(() => {})
+          .then(() => {
+            if (painted !== src) return;
+            next.classList.add('is-on');
+            others.forEach(l => l.classList.remove('is-on'));
+          });
+      }
+    };
+    // Only the cover moves: the words and the time change in place, and
+    // the page's light turns to its colours (Base.astro reads the card's
+    // `data-scene`).
+
+    // ----- now playing -----
+    const progress = (now: number, total: number) => {
+      if (!seeking) seek.value = String(total ? Math.round((now / total) * 1000) : 0);
+      fill(seek);
+      $('[data-now-at]').textContent = clock(now);
+      $('[data-now-total]').textContent = clock(total);
+      seek.setAttribute('aria-valuetext', `${clock(now)} / ${clock(total)}`);
+    };
+    const length = () => (Number.isFinite(audio.duration) ? audio.duration : items[at].seconds);
+
+    const show = (i: number) => {
+      at = i;
+      const s = items[i];
+      $('[data-now-title]').textContent = s.title;
+      $('[data-now-artist]').textContent = s.artist;
+      paintCover();
+      if (card && s.scene) card.dataset.scene = s.scene;
+      rows.forEach((r, n) => (n === i ? r.setAttribute('aria-current', 'true') : r.removeAttribute('aria-current')));
+      progress(0, s.seconds);
+    };
+
+    const session = () => {
+      if (!('mediaSession' in navigator)) return;
+      const s = items[at];
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: s.title,
+        artist: s.artist,
+        album: 'Sound Shaper',
+        artwork: s.cover ? [{ src: s.cover, sizes: '720x720', type: 'image/webp' }] : [],
+      });
+      navigator.mediaSession.setActionHandler('play', () => start());
+      navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+      navigator.mediaSession.setActionHandler('previoustrack', () => go(at - 1));
+      navigator.mediaSession.setActionHandler('nexttrack', () => go(at + 1));
+    };
+
+    const load = () => {
+      if (loaded === at) return;
+      audio.src = items[at].src;
+      loaded = at;
+    };
+
+    const start = () => {
+      shaper.wake();
+      load();
+      shaper.reapplyRate();
+      // The narrator steps aside (director.ts): one voice at a time.
+      document.dispatchEvent(new CustomEvent('media:solo', { detail: root }));
+      audio.play().catch(() => {});
+      session();
+    };
+
+    const go = (i: number, autoplay = true) => {
+      const n = (i + items.length) % items.length;
+      const was = !audio.paused || autoplay;
+      show(n);
+      if (loaded !== n) {
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+        loaded = -1;
+      }
+      if (was) start();
+    };
+
+    play.addEventListener('click', () => (audio.paused ? start() : audio.pause()));
+    root.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(b =>
+      b.addEventListener('click', () => {
+        // Back restarts a song past its first seconds, the way players do.
+        if (b.dataset.step === '-1' && audio.currentTime > 3) {
+          audio.currentTime = 0;
+          return;
+        }
+        go(at + Number(b.dataset.step), !audio.paused);
+      }),
+    );
+    rows.forEach((r, i) =>
+      r.addEventListener('click', () => {
+        if (i === at && loaded === i) {
+          if (audio.paused) start();
+          else audio.pause();
+        } else go(i);
+        // On a phone the list is a sheet: a song chosen, it goes.
+        if (root.hasAttribute('data-narrow') && root.dataset.sheet === 'songs') setSheet(null);
+      }),
+    );
+
+    // The play button's name follows what it does next.
+    const paint = () => {
+      const on = !audio.paused;
+      root.toggleAttribute('data-playing', on);
+      $('[data-play-name]').textContent = word(on ? 'songs.pause' : 'songs.play');
+    };
+    audio.addEventListener('play', paint);
+    audio.addEventListener('pause', paint);
+
+    // THE TRANSPORT RESTS WHILE A SONG PLAYS, as a video player's does:
+    // shown on a pointer move over the cover, a tap or focus, gone again
+    // after a short rest; always there while paused or focused.
+    const now = $('.now');
+    const transport = $('.transport');
+    const REST_MS = 2500;
+    let rest = 0;
+    const reveal = () => {
+      root.removeAttribute('data-idle');
+      clearTimeout(rest);
+      if (!audio.paused)
+        rest = window.setTimeout(() => {
+          if (!audio.paused && !transport.querySelector(':focus-visible')) root.setAttribute('data-idle', '');
+        }, REST_MS);
+    };
+    now.addEventListener('pointermove', e => {
+      if (e.pointerType === 'mouse') reveal();
+    });
+    now.addEventListener('pointerdown', reveal);
+    now.addEventListener('pointerleave', e => {
+      if (e.pointerType === 'mouse' && !audio.paused && !transport.querySelector(':focus-visible'))
+        root.setAttribute('data-idle', '');
+    });
+    transport.addEventListener('focusin', reveal);
+    transport.addEventListener('focusout', reveal);
+    audio.addEventListener('play', reveal);
+    audio.addEventListener('pause', reveal);
+    audio.addEventListener('ended', () => go(at + 1));
+    audio.addEventListener('timeupdate', () => progress(audio.currentTime, length()));
+    audio.addEventListener('loadedmetadata', () => {
+      shaper.reapplyRate();
+      progress(audio.currentTime, length());
+    });
+
+    seek.addEventListener('input', () => {
+      seeking = true;
+      const total = length();
+      const to = (Number(seek.value) / 1000) * total;
+      fill(seek);
+      $('[data-now-at]').textContent = clock(to);
+    });
+    seek.addEventListener('change', () => {
+      seeking = false;
+      const to = (Number(seek.value) / 1000) * length();
+      if (loaded !== at) {
+        // Seeking a song not yet loaded loads it there, still paused.
+        shaper.wake();
+        load();
+        audio.addEventListener('loadedmetadata', () => (audio.currentTime = to), { once: true });
+      } else audio.currentTime = to;
+    });
+
+    // ----- the sheets -----
+    let opener: HTMLButtonElement | null = null;
+    type Sheet = 'shape' | 'songs' | null;
+    const sync = (name: Sheet) => {
+      openers.forEach(o => o.setAttribute('aria-expanded', String(o.dataset.open === name)));
+      const narrow = root.hasAttribute('data-narrow');
+      // What a sheet covers is out of reach while it is up.
+      for (const el of root.querySelectorAll<HTMLElement>('.now, .dock, .powered')) el.inert = !!name;
+      side.inert = name === 'shape' || (narrow && name !== 'songs');
+      sheet.inert = name !== 'shape';
+      if (narrow) {
+        side.setAttribute('role', 'dialog');
+        side.setAttribute('aria-modal', 'true');
+      } else {
+        side.removeAttribute('role');
+        side.removeAttribute('aria-modal');
+      }
+    };
+    // ON A DESK THE SHAPE SHEET IS LIFTED TO THE PAGE: the card's frame
+    // clips and turns (a transformed ancestor captures anything fixed), so
+    // the sheet goes to <body> and stands over the card's middle, taller
+    // than the card, kept inside the window. A phone keeps it in the card.
+    const screen = root.closest<HTMLElement>('.screen') ?? root;
+    const place = () => {
+      const r = screen.getBoundingClientRect();
+      const m = 16;
+      const w = Math.min(r.width, 26 * 16);
+      // As tall as the form, and never shorter than a little past the card.
+      sheet.style.height = 'auto';
+      sheet.style.width = `${w}px`;
+      const h = Math.min(innerHeight - 2 * m, Math.max(sheet.scrollHeight, r.height * 1.15));
+      const top = Math.min(Math.max(r.top + r.height / 2 - h / 2, m), innerHeight - m - h);
+      Object.assign(sheet.style, {
+        top: `${top}px`,
+        left: `${r.left + r.width / 2 - w / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      });
+    };
+    let placing = 0;
+    const replace = () => {
+      if (!placing) placing = requestAnimationFrame(() => ((placing = 0), place()));
+    };
+    const showShape = (on: boolean) => {
+      const floating = on && !root.hasAttribute('data-narrow');
+      if (on) {
+        if (floating) {
+          document.body.append(sheet);
+          sheet.classList.add('is-floating');
+          place();
+          addEventListener('scroll', replace, { passive: true });
+          addEventListener('resize', replace, { passive: true });
+        } else {
+          root.append(sheet);
+          sheet.classList.remove('is-floating');
+          sheet.removeAttribute('style');
+        }
+        // The next frame, so it opens from its resting state.
+        requestAnimationFrame(() => sheet.classList.add('is-open'));
+      } else {
+        sheet.classList.remove('is-open');
+        removeEventListener('scroll', replace);
+        removeEventListener('resize', replace);
+      }
+    };
+    // A click outside the lifted sheet closes it, as a tap outside does.
+    document.addEventListener('pointerdown', e => {
+      if (root.dataset.sheet !== 'shape' || !sheet.classList.contains('is-floating')) return;
+      const t = e.target as Node;
+      if (!sheet.contains(t) && !openers.some(o => o.contains(t))) setSheet(null);
+    });
+    sheet.addEventListener('keydown', e => {
+      if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input, select')) e.stopPropagation();
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setSheet(null);
+    });
+
+    const setSheet = (name: Sheet) => {
+      if (name) root.dataset.sheet = name;
+      else delete root.dataset.sheet;
+      showShape(name === 'shape');
+      sync(name);
+      if (name) {
+        opener = openers.find(o => o.dataset.open === name) ?? null;
+        $(name === 'shape' ? '#shape-title' : '#songs-list-name').focus({ preventScroll: true });
+      } else opener?.focus({ preventScroll: true });
+    };
+    openers.forEach(o => o.addEventListener('click', () => setSheet(o.dataset.open as 'shape' | 'songs')));
+    root.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => setSheet(null)));
+    root.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || !root.dataset.sheet) return;
+      e.stopPropagation();
+      setSheet(null);
+    });
+    // A phone turned sideways can widen it: the list's part is resettled.
+    new ResizeObserver(() => sync((root.dataset.sheet as Sheet) ?? null)).observe(root);
+
+    // ----- the Shape sheet -----
+    const summary = () => {
+      const { gains, rate, keepPitch, echo, nextRoom } = shaper.shape;
+      const preset = presetOf(gains);
+      $('[data-shape-summary]').textContent =
+        [
+          preset === 'flat' ? null : word(preset ? `eq.presets.${preset}` : 'shape.custom'),
+          rate === 1 ? null : rateText(rate),
+          rate === 1 || keepPitch ? null : word('shape.pitchOff'),
+          echo === 'off' ? null : word('shape.echo'),
+          nextRoom === 'off' ? null : word('shape.nextRoom'),
+        ]
+          .filter(Boolean)
+          .join(' · ') || word('shape.none');
+    };
+
+    const showGains = () => {
+      const gains = shaper.shape.gains;
+      bandInputs.forEach((input, i) => {
+        input.value = String(gains[i]);
+        fill(input);
+        const db = gains[i] > 0 ? `+${gains[i]}` : `${gains[i]}`;
+        $(`[data-band-db="${i}"]`).textContent = db;
+        input.setAttribute('aria-valuetext', `${db} dB`);
+      });
+      const preset = presetOf(gains);
+      // A hand-shaped curve is a value too: Custom is listed only then.
+      const custom = presetSelect.querySelector<HTMLOptionElement>('[value="custom"]')!;
+      custom.hidden = preset !== null;
+      presetSelect.value = preset ?? 'custom';
+      summary();
+    };
+    presetSelect.addEventListener('change', () => {
+      const p = PRESETS.find(x => x.id === presetSelect.value);
+      if (!p) return;
+      shaper.set({ gains: [...p.gains] });
+      showGains();
+    });
+    bandInputs.forEach((input, i) =>
+      input.addEventListener('input', () => {
+        const gains = shaper.shape.gains.slice();
+        gains[i] = Math.round(Number(input.value));
+        shaper.set({ gains });
+        showGains();
+      }),
+    );
+
+    const showRate = () => {
+      const label = rateText(shaper.shape.rate);
+      $('[data-rate-label]').textContent = label;
+      rateInput.setAttribute('aria-valuetext', label);
+      fill(rateInput);
+      summary();
+    };
+    rateInput.addEventListener('input', () => {
+      shaper.set({ rate: stopToRate(Number(rateInput.value)) });
+      // The playing mark keeps time with the speed, as the app's does.
+      root.style.setProperty('--tempo', String(shaper.shape.rate));
+      showRate();
+    });
+    pitch.addEventListener('click', () => {
+      const on = pitch.getAttribute('aria-checked') !== 'true';
+      pitch.setAttribute('aria-checked', String(on));
+      shaper.set({ keepPitch: on });
+      summary();
+    });
+    levelSelects.forEach(select =>
+      select.addEventListener('change', () => {
+        shaper.set({ [select.dataset.level as 'echo' | 'nextRoom']: select.value as Level });
+        summary();
+      }),
+    );
+
+    // The pickers' options and every written word follow the language.
+    const words = () => {
+      for (const o of presetSelect.options)
+        o.textContent = word(o.value === 'custom' ? 'shape.custom' : `eq.presets.${o.value}`);
+      for (const select of levelSelects) for (const o of select.options) o.textContent = word(`shape.levels.${o.value}`);
+      showRate();
+      paint();
+    };
+    new MutationObserver(words).observe(document.documentElement, { attributeFilter: ['data-lang'] });
+
+    // ----- living inside a deck -----
+    // The deck turns on arrow keys and sideways swipes: a slider, a picker
+    // or a sheet keeps its own.
+    root.addEventListener('keydown', e => {
+      if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input, select')) e.stopPropagation();
+    });
+    root.addEventListener(
+      'touchstart',
+      e => {
+        if ((e.target as HTMLElement).closest('input, select, .sheet, .side')) e.stopPropagation();
+      },
+      { passive: true },
+    );
+
+    // In front, the covers load; turned away, the song pauses and any
+    // sheet closes.
+    const follow = () => {
+      if (!card || card.classList.contains('is-current')) {
+        awake = true;
+        wake();
+      } else {
+        audio.pause();
+        if (root.dataset.sheet) setSheet(null);
+      }
+    };
+    if (card) new MutationObserver(follow).observe(card, { attributeFilter: ['class'] });
+    // The narrator starts or resumes: the song makes way.
+    document.addEventListener('narr:voice', () => audio.pause());
+
+    // iOS's scroll-edge header: glass once its sheet's content scrolls.
+    for (const el of root.querySelectorAll<HTMLElement>('[data-scroll-edge]')) {
+      const host = el.closest<HTMLElement>('.sheet, .side')!;
+      el.addEventListener('scroll', () => host.toggleAttribute('data-edge', el.scrollTop > 2), { passive: true });
+    }
+
+    show(0);
+    follow();
+    words();
+    showGains();
+  }
+</script>

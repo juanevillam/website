@@ -16,3 +16,7 @@ export const eventShown = (id: string) =>
 
 /** Whether More of Me (pages/things-i-like) is on the site. */
 export const likesShown = preview || !UNRELEASED.likes;
+
+/** Whether More of Me's Songs card (lib/likes) is on the site: held back
+ *  till Juan records its take, its music with it (`media`). */
+export const songsShown = preview || !UNRELEASED.songs;

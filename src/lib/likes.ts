@@ -1,4 +1,6 @@
 import type { DeckItem } from './deck-items';
+import { songsShown } from './release';
+import ENCODED from '../data/songs.json';
 
 /**
  * THINGS I LIKE — what Juan loves outside of work, so a visitor knows him
@@ -159,6 +161,34 @@ export const PAINTINGS = CANVASES;
 const thumbOf = (src: string) => src.replace(/\.webp$/, '-thumb.webp');
 
 /**
+ * JUAN'S SONGS — his whole Sound Shaper library: first his top, ranked
+ * by him in /dev/ranker (`likes-order.json` → `songs`), then the rest
+ * from A to Z, shown apart as not part of it (Juan, 2026-10-28). Made
+ * into the site's music by `npm run songs` (scripts/sync-songs.mjs),
+ * which writes `songs.json` in that order. Played on the card with Sound
+ * Shaper's own Shape controls (SongsPlayer). A title and an artist are
+ * proper names, the same in every language.
+ */
+export type Song = {
+  id: string;
+  title: string;
+  artist: string;
+  /** Its length, for the list before it has loaded. */
+  seconds: number;
+  cover: boolean;
+  /** One of his ranked top, in its place; the rest are not ranked. */
+  top: boolean;
+};
+
+export const SONGS = ENCODED as Song[];
+
+export const songSrc = (s: Song) => `/media/likes/songs/${s.id}.m4a`;
+export const thumbSrc = (s: Song) =>
+  s.cover ? `/media/likes/songs/${s.id}-thumb.webp` : undefined;
+export const coverSrc = (s: Song) =>
+  s.cover ? `/media/likes/songs/${s.id}.webp` : undefined;
+
+/**
  * THE GALLERY'S CARDS — a panel deck like More Work and Events
  * (PanelDeck), on a page of its own (pages/things-i-like). Cosmos and the
  * paintings are ONE frame each that turns through its pictures, in a new
@@ -203,4 +233,24 @@ export const LIKES: DeckItem[] = [
     shuffle: true,
     links: [],
   },
+  // A screen of its own: the player (SongsPlayer, the `songs` slot in
+  // ThingsILike). Not on the site till Juan records it (lib/release), and
+  // never with no songs made.
+  ...(songsShown && SONGS.length
+    ? [
+        {
+          id: 'songs',
+          slug: 'songs',
+          name: { k: 'likes.songs.name' },
+          meta: [[{ k: 'likes.songs.meta' }], ['Sound Shaper']],
+          // The app's name takes you to it: someone who lands here first
+          // can reach Sound Shaper's own section of the landing.
+          body: { k: 'likes.songs.body', links: { shaper: '/sound-shaper' } },
+          clip: 'likes.songs.body',
+          image: { slot: 'songs' },
+          scene: SONGS.map(coverSrc).find(Boolean),
+          links: [],
+        } satisfies DeckItem,
+      ]
+    : []),
 ];
