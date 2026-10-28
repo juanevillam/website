@@ -274,8 +274,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.cosmos.body',
     where: 'Más de mí · Cosmos',
-    draft:
-      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'El espacio siempre me ha fascinado.',
       'Me identifico con el nihilismo optimista: al ver lo vasto que es el espacio, mucho de lo que te preocupa deja de tener sentido.',
@@ -289,26 +287,12 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.paintings.body',
     where: 'Más de mí · Pinturas',
-    draft:
-      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Después de que empecé a ver el espacio, busqué pinturas que también hicieran match conmigo; tuve una época en la que quise coleccionarlas.',
       'Terminé con el mismo contraste del espacio: cielos inmensos, tormentas y luz, ciudades e imperios cayendo, y la gente diminuta en medio.',
       'La mayoría son de John Martin y Thomas Cole, pintores del siglo XIX que pintaban el fin del mundo como si lo hubieran visto.',
       'También el Sermón del Monte de Carl Bloch, Las hilanderas de Velázquez y algunas recientes de las que todavía no sé el pintor.',
       'No tienen ranking, porque me gustan todas: salen en un orden distinto cada vez.',
-    ],
-  },
-  {
-    key: 'likes.games.body',
-    where: 'Más de mí · Videojuegos',
-    draft:
-      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
-    ideas: [
-      'Ghost of Yōtei y Elden Ring están en mi top, y a los dos les saqué el platino.',
-      'Al terminar Ghost of Yōtei le tomé captura a los outfits con los que lo acabé, en el orden que más me gustaban: siempre los mismos charms, el outfit como yo quisiera.',
-      'Elden Ring es muy cinematográfico. Mi hermano ya lo había jugado, así que desde el principio tenía mapeadas las fotos que quería tomar al platinarlo.',
-      'Me tomó 78 horas, y con esa armadura me hice todos los finales.',
     ],
   },
 

@@ -11,7 +11,8 @@ import UNRELEASED from '../data/unreleased.json';
 const preview = import.meta.env.DEV;
 
 /** Whether an event card (lib/events, by its id) is on the site. */
-export const eventShown = (id: string) => preview || !(UNRELEASED.events as string[]).includes(id);
+export const eventShown = (id: string) =>
+  preview || !(UNRELEASED.events as string[]).includes(id);
 
 /** Whether More of Me (pages/things-i-like) is on the site. */
 export const likesShown = preview || !UNRELEASED.likes;

@@ -1,16 +1,14 @@
 import type { DeckItem } from './deck-items';
-import RANKED from '../data/likes-order.json';
 
 /**
  * THINGS I LIKE — what Juan loves outside of work, so a visitor knows him
- * a little more: the space photos he ranked, the paintings he collected,
- * and memories of the games he loved. A gallery on a page of its own
- * (pages/things-i-like), reached from the footer, so the landing never
- * loads a picture of it.
+ * a little more: the space photos he loves and the paintings he
+ * collected. A gallery on a page of its own (pages/things-i-like),
+ * reached from the footer, so the landing never loads a picture of it.
  *
  * The pictures are made from Juan's own folders by `npm run likes`
- * (scripts/sync-likes.mjs): WebP, 2000 px on the long side. A new game
- * screenshot or a new space photo is a file in his folder, then the script.
+ * (scripts/sync-likes.mjs): WebP, 2000 px on the long side. A new space
+ * photo or painting is a file in his folder, then the script.
  */
 
 /** One of the space photos, by its file (public/media/likes/cosmos) and
@@ -91,8 +89,18 @@ const SPACE: SpacePhoto[] = [
 export type Painting = { id: string; name: string; by?: string; year?: string };
 
 const CANVASES: Painting[] = [
-  { id: 'belshazzars-feast', name: "Belshazzar's Feast", by: 'John Martin', year: '1820' },
-  { id: 'destruction', name: 'The Course of Empire: Destruction', by: 'Thomas Cole', year: '1836' },
+  {
+    id: 'belshazzars-feast',
+    name: "Belshazzar's Feast",
+    by: 'John Martin',
+    year: '1820',
+  },
+  {
+    id: 'destruction',
+    name: 'The Course of Empire: Destruction',
+    by: 'Thomas Cole',
+    year: '1836',
+  },
   {
     id: 'joshua-sun',
     name: 'Joshua Commanding the Sun to Stand Still',
@@ -102,48 +110,45 @@ const CANVASES: Painting[] = [
   { id: 'morning-solace', name: 'Morning Solace' },
   { id: 'peace-be-still', name: 'Peace, Be Still' },
   { id: 'peace-is-coming', name: 'Peace Is Coming' },
-  { id: 'ruins-of-an-ancient-city', name: 'Ruins of an Ancient City', by: 'John Martin', year: '1810' },
-  { id: 'sermon-on-the-mount', name: 'The Sermon on the Mount', by: 'Carl Bloch', year: '1877' },
-  { id: 'the-fall-of-babylon', name: 'The Fall of Babylon', by: 'John Martin', year: '1819' },
+  {
+    id: 'ruins-of-an-ancient-city',
+    name: 'Ruins of an Ancient City',
+    by: 'John Martin',
+    year: '1810',
+  },
+  {
+    id: 'sermon-on-the-mount',
+    name: 'The Sermon on the Mount',
+    by: 'Carl Bloch',
+    year: '1877',
+  },
+  {
+    id: 'the-fall-of-babylon',
+    name: 'The Fall of Babylon',
+    by: 'John Martin',
+    year: '1819',
+  },
   {
     id: 'the-great-day-of-his-wrath',
     name: 'The Great Day of His Wrath',
     by: 'John Martin',
     year: '1853',
   },
-  { id: 'the-seventh-plague', name: 'The Seventh Plague of Egypt', by: 'John Martin', year: '1823' },
-  { id: 'the-spinners', name: 'The Spinners', by: 'Diego Velázquez', year: '1657' },
+  {
+    id: 'the-seventh-plague',
+    name: 'The Seventh Plague of Egypt',
+    by: 'John Martin',
+    year: '1823',
+  },
+  {
+    id: 'the-spinners',
+    name: 'The Spinners',
+    by: 'Diego Velázquez',
+    year: '1657',
+  },
 ];
 
 const paintingSrc = (p: Painting) => `/media/likes/paintings/${p.id}.webp`;
-
-/**
- * WHAT JUAN RANKS — the games' screenshots, which he puts in order himself
- * in a tournament of pairs (`/dev/ranker`, dev only): of two pictures,
- * which he likes more — Ghost of Yōtei's loadouts in the order he liked
- * them. The ranker writes the result to `src/data/likes-order.json`
- * (scripts/likes-ranker.mjs), and the site shows each set in that order —
- * a picture not ranked yet goes last, in the order of its files. Cosmos
- * and the paintings are NOT ranked (Juan, 2026-10-27: he loves them all,
- * and choosing was too hard): they show in a new random order each visit.
- */
-export type RankSet = {
-  id: keyof typeof RANKED;
-  name: string;
-  items: { id: string; name: string; src: string }[];
-};
-
-const shotIds = (count: number) =>
-  Array.from({ length: count }, (_, i) => String(i + 1));
-
-const ranked = <T extends { id: string }>(set: keyof typeof RANKED, items: T[]) => {
-  const order: string[] = RANKED[set];
-  const at = (item: T) => {
-    const i = order.indexOf(item.id);
-    return i < 0 ? order.length + items.indexOf(item) : i;
-  };
-  return [...items].sort((a, b) => at(a) - at(b));
-};
 
 export const cosmosSrc = (p: SpacePhoto) => `/media/likes/cosmos/${p.id}.webp`;
 
@@ -151,38 +156,7 @@ export const COSMOS = SPACE;
 
 export const PAINTINGS = CANVASES;
 
-const shotSrc = (game: string, id: string) => `/media/likes/${game}/${id}.webp`;
-const shots = (game: 'ghost-of-yotei' | 'elden-ring', count: number) =>
-  ranked(game, shotIds(count).map(id => ({ id }))).map(s => shotSrc(game, s.id));
-
-export const RANK_SETS: RankSet[] = [
-  ...(
-    [
-      ['ghost-of-yotei', 'Ghost of Yōtei', 5],
-      ['elden-ring', 'Elden Ring', 4],
-    ] as const
-  ).map(([id, name, count]) => ({
-    id,
-    name,
-    items: shotIds(count).map(n => ({ id: n, name: `${name} ${n}`, src: shotSrc(id, n) })),
-  })),
-];
-
 const thumbOf = (src: string) => src.replace(/\.webp$/, '-thumb.webp');
-
-/** A game's screenshots, thumbnail and full picture, in Juan's order. */
-export type Game = { name: string; pictures: { thumb: string; src: string }[] };
-
-/** The two games of the Video Games card, each one collage (GamesCollage). */
-export const GAMES: Game[] = (
-  [
-    ['ghost-of-yotei', 'Ghost of Yōtei', 5],
-    ['elden-ring', 'Elden Ring', 4],
-  ] as const
-).map(([id, name, count]) => ({
-  name,
-  pictures: shots(id, count).map(src => ({ src, thumb: thumbOf(src) })),
-}));
 
 /**
  * THE GALLERY'S CARDS — a panel deck like More Work and Events
@@ -190,8 +164,7 @@ export const GAMES: Game[] = (
  * paintings are ONE frame each that turns through its pictures, in a new
  * random order every visit — THUMBNAILS (~80 KB, 1000 px), only the one
  * showing and the next loaded — with arrows to go through them by hand;
- * a click opens the full picture (PhotoViewer). The games are a collage
- * a game (GamesCollage): every screenshot of one game at once.
+ * a click opens the full picture (PhotoViewer).
  */
 export const LIKES: DeckItem[] = [
   {
@@ -203,7 +176,10 @@ export const LIKES: DeckItem[] = [
     // their galleries, where every one of them is.
     body: {
       k: 'likes.cosmos.body',
-      links: { webb: 'https://esawebb.org/images/', hubble: 'https://esahubble.org/images/' },
+      links: {
+        webb: 'https://esawebb.org/images/',
+        hubble: 'https://esahubble.org/images/',
+      },
     },
     clip: 'likes.cosmos.body',
     image: COSMOS.map(p => thumbOf(cosmosSrc(p))),
@@ -220,29 +196,11 @@ export const LIKES: DeckItem[] = [
     body: 'likes.paintings.body',
     clip: 'likes.paintings.body',
     image: PAINTINGS.map(p => thumbOf(paintingSrc(p))),
-    captions: PAINTINGS.map(p => (p.by ? `${p.name} · ${p.by}, ${p.year}` : p.name)),
+    captions: PAINTINGS.map(p =>
+      p.by ? `${p.name} · ${p.by}, ${p.year}` : p.name,
+    ),
     wide: true,
     shuffle: true,
-    links: [],
-  },
-  {
-    // Assassin's Creed Unity is the third favorite, and stays out: there
-    // is no picture of it, and the gallery shows only what Juan has media
-    // of (Juan, 2026-10-27).
-    id: 'video-games',
-    slug: 'video-games',
-    name: { k: 'likes.games.name' },
-    meta: [['Ghost of Yōtei'], ['Elden Ring']],
-    body: {
-      k: 'likes.games.body',
-      links: {
-        yotei: 'https://www.playstation.com/en-us/games/ghost-of-yotei/',
-        elden: 'https://www.playstation.com/en-us/games/elden-ring/',
-      },
-    },
-    clip: 'likes.games.body',
-    image: { slot: 'games' },
-    scene: GAMES[0].pictures[0].thumb,
     links: [],
   },
 ];

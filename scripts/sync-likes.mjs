@@ -1,11 +1,10 @@
 // Makes the pictures of "Things I Like" (lib/likes) from Juan's own folders:
-// the space photos he ranked (Webb's and Hubble's, TIFFs of up to 520 MB and
-// 10,000 px a side), the paintings he collected, and his screenshots of the
-// games he loves most (4K
-// JPEGs). The masters never enter the repo — a Cloudflare build never sees
-// them — so the copies are committed, and this script is how they are
-// refreshed: npm run likes (LIKES_DIR points elsewhere; iCloud Drive's Life
-// folder by default, where each set is a folder of its own).
+// the space photos he loves (Webb's and Hubble's, TIFFs of up to 520 MB and
+// 10,000 px a side) and the paintings he collected. The masters never
+// enter the repo — a Cloudflare build never sees them — so the copies are
+// committed, and this script is how they are refreshed: npm run likes
+// (LIKES_DIR points elsewhere; iCloud Drive's Life folder by default,
+// where each set is a folder of its own).
 //
 // Every picture ships twice, as WebP: a THUMBNAIL (`{id}-thumb.webp`,
 // 1000 px on its long side) for the gallery's grid, lazy, and the full
@@ -18,7 +17,8 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 const from =
-  process.env.LIKES_DIR ?? join(homedir(), 'Library/Mobile Documents/com~apple~CloudDocs/Life');
+  process.env.LIKES_DIR ??
+  join(homedir(), 'Library/Mobile Documents/com~apple~CloudDocs/Life');
 const pub = new URL('../public/media/likes/', import.meta.url).pathname;
 
 sharp.cache(false);
@@ -34,9 +34,6 @@ const SETS = [
     dir: 'paintings',
     name: f => f.replace(/^paintings-/, '').replace(/\.(jpe?g|png|webp)$/i, ''),
   },
-  // A screenshot is named by its order: the console names them by time.
-  { dir: 'ghost-of-yotei', name: (f, i) => String(i + 1) },
-  { dir: 'elden-ring', name: (f, i) => String(i + 1) },
 ];
 
 for (const set of SETS) {

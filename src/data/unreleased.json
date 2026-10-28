@@ -1,13 +1,5 @@
 {
   "events": [],
-  "likes": true,
-  "media": [
-    "media/likes",
-    "media/narration/es/likes.cosmos.body.m4a",
-    "media/narration/es/likes.cosmos.body.vtt",
-    "media/narration/es/likes.paintings.body.m4a",
-    "media/narration/es/likes.paintings.body.vtt",
-    "media/narration/es/likes.games.body.m4a",
-    "media/narration/es/likes.games.body.vtt"
-  ]
+  "likes": false,
+  "media": []
 }

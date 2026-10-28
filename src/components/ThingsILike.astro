@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import PanelDeck from './PanelDeck.astro';
 import PhotoViewer from './PhotoViewer.astro';
-import GamesCollage from './GamesCollage.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
 import SiteFooter from './SiteFooter.astro';
 import { LIKES } from '../lib/likes';
@@ -14,7 +13,7 @@ import type { DeckItem } from '../lib/deck-items';
  * (pages/things-i-like), reached from the footer: the landing loads none
  * of its pictures. It is built the way the landing's sections are (Juan,
  * 2026-10-27) — the section's eyebrow, then one panel deck, a card per
- * set (Cosmos, paintings, video games), each its words beside its frame —
+ * set (Cosmos, paintings), each its words beside its frame —
  * and closes on the same footer.
  */
 type Props = {
@@ -39,9 +38,7 @@ const plain = (c: DeckItem) => {
   })()}
   path={card ? `/things-i-like/${card.slug}` : '/things-i-like'}
 >
-  <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id}>
-    <GamesCollage slot="games" />
-  </PanelDeck>
+  <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id} />
   <SiteFooter panel />
   <NarrationPlayer />
   <PhotoViewer />
