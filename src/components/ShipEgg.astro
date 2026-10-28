@@ -4,7 +4,7 @@ import { PROJECTS } from '../lib/work';
 import { workPath } from '../lib/links';
 
 /**
- * Space Explorer's ship (lib/eggs, lib/ship), in two places:
+ * Space Explorer's ship (lib/eggs, lib/ship), in three places:
  *
  * - `hero`: the hunt, over the whole hero, behind the name.
  * - `foot`: the destroyer, over the whole foot, behind its words.
@@ -15,8 +15,9 @@ import { workPath } from '../lib/links';
  *
  * In the hero and the foot, a link to the game's card rides on the ship.
  * Out of the flow everywhere, so nothing moves when it comes or goes, and
- * never cut off: each canvas reaches the screen's edges (or hides behind
- * the page's own content) wherever a ship can leave.
+ * never cut off: each scene is framed in its box but drawn on a canvas
+ * that covers the whole screen, behind the page's content, so a ship, a
+ * shot, a trail or a blast goes on until it leaves the screen.
  */
 type Props = { place: 'hero' | 'card' | 'foot' };
 const { place } = Astro.props;
@@ -55,19 +56,19 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     inset: 0;
   }
 
-  /* In the foot and on the card, the scene plays behind the words and
-     the cabinet; the foot's link stays over them, where it can be
-     clicked. */
-  .is-foot .egg-band,
-  .is-card .egg-band {
-    position: relative;
-    z-index: -1;
-  }
-
+  /* The canvas covers the whole screen, behind everything on the page
+     (above only the page's own background): what the ships fire flies on
+     until it leaves the screen, never cut at the scene's edge, and the
+     words and the cabinet stay over it. The link stays above, where it
+     can be clicked. */
   .egg-band {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     display: block;
     width: 100%;
     height: 100%;
+    pointer-events: none;
     transition: opacity var(--dur-quick) var(--ease);
   }
 
@@ -138,17 +139,23 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     }
 
     // The card: from the panel's top (the screen's, when it holds it) down
-    // to the cabinet's middle, edge to edge of the screen — behind the
-    // cabinet and the words, so a ship leaving goes off the screen or
-    // behind them, never against an edge. In the cabinet's own positioned
-    // ancestor, measured each time it plays.
+    // to the cabinet's middle, edge to edge of the screen — the box the
+    // scene is framed in (its canvas covers the whole screen). Measured
+    // each time it plays, in the card's first positioned ancestor that
+    // does not hold a fixed canvas to itself (the card's perspective
+    // would), so the canvas reaches the screen.
     const section = document.getElementById('more-work');
     const card = section?.querySelector<HTMLElement>('.card[data-card="space-explorer"]');
     const cabinet = card?.querySelector<HTMLElement>('.screen');
     if (!section || !card || !cabinet) continue;
     const front = () => card.classList.contains('is-current');
+    const traps = (e: HTMLElement) => {
+      const c = getComputedStyle(e);
+      return c.perspective !== 'none' || c.transform !== 'none' || c.filter !== 'none' || c.contain !== 'none' || c.willChange !== 'auto';
+    };
     const stand = () => {
-      const holder = cabinet.offsetParent as HTMLElement | null;
+      let holder = card.parentElement;
+      while (holder && (getComputedStyle(holder).position === 'static' || traps(holder))) holder = holder.parentElement;
       if (!holder) return false;
       if (egg.parentElement !== holder) holder.prepend(egg);
       const c = cabinet.getBoundingClientRect();
