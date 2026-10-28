@@ -6,7 +6,7 @@ import { likesShown } from '../lib/release';
 import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
-import RobotEgg from './RobotEgg.astro';
+import ShipEgg from './ShipEgg.astro';
 
 /**
  * The page's foot: each app's legal and help pages, and where to find
@@ -162,8 +162,9 @@ const SOCIAL = [
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
-    {/* Tridi's robot walks through the empty row, now and then. */}
-    {panel && <RobotEgg place="foot" />}
+    {/* Space Explorer's ship jumps away through the empty row, now and
+        then. */}
+    {panel && <ShipEgg place="foot" />}
   </div>
 </footer>
 

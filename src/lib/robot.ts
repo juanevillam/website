@@ -3,7 +3,7 @@ import { fit, holdable, release, run } from './eggs';
 
 /**
  * TRIDI'S ROBOT (RobotEgg): on top of Platanus Hack 26 Caracas's photo
- * frame, where Tridi is told, and across the foot of the page. Tridi
+ * frame, where Tridi is told. Tridi
  * turns a video of a person into movement for a robot; this is that, one
  * walk long, from Tridi's own data (`npm run tridi` → data/tridi-walk.json):
  * the person's tracking points as MediaPipe found them in the video walk

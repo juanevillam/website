@@ -6,16 +6,17 @@ import { workPath } from '../lib/links';
 /**
  * Space Explorer's ship (lib/eggs, lib/ship), in two places:
  *
- * - `hero`: a dogfight over the whole hero, behind the name — a link to
- *   the game's card, riding on the ship.
+ * - `hero`: the hunt, over the whole hero, behind the name.
+ * - `foot`: the jump, across the foot's empty middle row (SiteFooter).
  * - `card`: a chase in the dark strip over the game's own card in More
  *   Work, while that card is in front. No link: it plays by the card it
  *   would lead to, and must never take a tap meant for Play Game. The
  *   script stands it there.
  *
- * Out of the flow in both, so nothing moves when it comes or goes.
+ * In the hero and the foot, a link to the game's card rides on the ship.
+ * Out of the flow everywhere, so nothing moves when it comes or goes.
  */
-type Props = { place: 'hero' | 'card' };
+type Props = { place: 'hero' | 'card' | 'foot' };
 const { place } = Astro.props;
 const game = PROJECTS.find(p => p.id === 'space-explorer');
 ---
@@ -24,7 +25,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
   game && (
     <div class:list={['egg-ship', `is-${place}`]} data-ship={place}>
       <canvas class="egg-band" data-ship-band hidden aria-hidden="true" />
-      {place === 'hero' && (
+      {place !== 'card' && (
         <a class="egg-hit" href={workPath(game)} data-ship-link hidden>
           <span class="sr-only">
             <T k="egg.ship" />
@@ -45,6 +46,16 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
      paints over it): shots fly on until they leave the screen. */
   .is-hero {
     inset: 0;
+  }
+
+  /* The foot grid's empty middle row, edge to edge of the screen. */
+  .is-foot {
+    grid-row: 2 / 3;
+    grid-column: 1 / -1;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - 50vw);
+    width: 100vw;
   }
 
   .egg-band {
@@ -103,17 +114,19 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
   for (const egg of document.querySelectorAll<HTMLElement>('[data-ship]')) {
     const band = egg.querySelector<HTMLCanvasElement>('[data-ship-band]')!;
 
-    if (egg.dataset.ship === 'hero') {
+    if (egg.dataset.ship !== 'card') {
       const link = egg.querySelector<HTMLAnchorElement>('[data-ship-link]')!;
-      const hero = egg.closest<HTMLElement>('section');
-      if (!hero) continue;
+      const hero = egg.dataset.ship === 'hero';
+      const panel = egg.closest<HTMLElement>(hero ? 'section' : 'footer');
+      if (!panel) continue;
       toCard(link, 'more-work', 'space-explorer');
-      // Soon after the name settles, so a visit finds it; then now and
-      // then while the name stays on screen.
-      nowAndThen(hero, [2500, 4000], [25000, 40000], async () => {
+      // Soon after the panel settles, so a visit finds it; then now and
+      // then while it stays on screen.
+      nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
         const ship = await import('../lib/ship');
-        if (reduceMotion.matches) await ship.stand(band, link, ship.heroFight, 3);
-        else await ship.play(band, link, ship.heroFight);
+        const scene = hero ? ship.heroFight : ship.farewell;
+        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 5 : 2.2);
+        else await ship.play(band, link, scene);
       });
       continue;
     }

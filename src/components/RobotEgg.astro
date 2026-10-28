@@ -1,22 +1,14 @@
 ---
 import T from './T.astro';
 import { EVENTS } from '../lib/events';
-import { eventPath } from '../lib/links';
 
 /**
- * Tridi's robot (lib/eggs, lib/robot), in two places:
- *
- * - `card`: walking on top of Platanus Hack 26 Caracas's photo frame,
- *   where the card tells Tridi, while that card is in front — a link to
- *   Tridi itself (the card is already where you are). The script stands
- *   it over the frame; it is out of the flow there.
- * - `foot`: across the foot's empty middle row (SiteFooter) — a link to
- *   that card. Out of the flow, in the grid's empty row.
- *
- * Only while that card is on the site; nothing moves when it comes or goes.
+ * Tridi's robot (lib/eggs, lib/robot), walking on top of Platanus Hack 26
+ * Caracas's photo frame, where the card tells Tridi, while that card is in
+ * front — a link to Tridi itself (the card is already where you are).
+ * Only there (Juan, 2026-10-28). The script stands it over the frame; it
+ * is out of the flow, so nothing moves when it comes or goes.
  */
-type Props = { place: 'card' | 'foot' };
-const { place } = Astro.props;
 const hack = EVENTS.find(e => e.id === 'platanus');
 // The card's own link to Tridi, the one its copy carries.
 const body = hack?.body;
@@ -24,47 +16,25 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
 ---
 
 {
-  hack && (
-    <div class:list={['egg-robot', `is-${place}`]} data-robot={place}>
+  tridi && (
+    <div class="egg-robot" data-robot>
       <canvas class="egg-band" data-robot-band hidden aria-hidden="true" />
-      {place === 'card' && tridi ? (
-        <a class="egg-hit" href={tridi} target="_blank" rel="noopener noreferrer" data-robot-link hidden>
-          <span class="sr-only">
-            <T k="egg.robot.tridi" />
-          </span>
-        </a>
-      ) : (
-        <a class="egg-hit" href={eventPath(hack)} data-robot-link hidden>
-          <span class="sr-only">
-            <T k="egg.robot" />
-          </span>
-        </a>
-      )}
+      <a class="egg-hit" href={tridi} target="_blank" rel="noopener noreferrer" data-robot-link hidden>
+        <span class="sr-only">
+          <T k="egg.robot.tridi" />
+        </span>
+      </a>
     </div>
   )
 }
 
 <style>
-  .egg-robot {
-    position: absolute;
-    pointer-events: none;
-  }
-
-  /* The grid's empty middle row, edge to edge of the screen, standing on
-     its foot. */
-  .is-foot {
-    grid-row: 2 / 3;
-    grid-column: 1 / -1;
-    bottom: 0;
-    left: calc(50% - 50vw);
-    width: 100vw;
-    height: 7.5rem;
-  }
-
   /* Over the photo frame, standing on its top edge (the script sets
      where and how wide). */
-  .is-card {
+  .egg-robot {
+    position: absolute;
     height: 7rem;
+    pointer-events: none;
   }
 
   .egg-band {
@@ -117,35 +87,19 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
 </style>
 
 <script>
-  import { nowAndThen, reduceMotion, toCard } from '../lib/eggs';
+  import { nowAndThen, reduceMotion } from '../lib/eggs';
 
-  const show = async (band: HTMLCanvasElement, link: HTMLAnchorElement, opts?: import('../lib/robot').WalkOptions) => {
-    const robot = await import('../lib/robot');
-    if (reduceMotion.matches) await robot.stand(band, link);
-    else await robot.walk(band, link, opts);
-  };
-
-  for (const egg of document.querySelectorAll<HTMLElement>('[data-robot]')) {
+  const egg = document.querySelector<HTMLElement>('[data-robot]');
+  const section = document.getElementById('events');
+  const card = section?.querySelector<HTMLElement>('.card[data-card="platanus"]');
+  const frame = card?.querySelector<HTMLElement>('.screen');
+  if (egg && section && card && frame) {
     const band = egg.querySelector<HTMLCanvasElement>('[data-robot-band]')!;
     const link = egg.querySelector<HTMLAnchorElement>('[data-robot-link]')!;
-
-    if (egg.dataset.robot === 'foot') {
-      const foot = egg.closest<HTMLElement>('footer');
-      if (!foot) continue;
-      toCard(link, 'events', 'platanus');
-      // The foot is passed through, not read: it comes almost at once.
-      nowAndThen(foot, [1500, 2500], [20000, 30000], () => show(band, link));
-      continue;
-    }
-
-    // The card: it stands on the photo frame's top edge, in the frame's
-    // own positioned ancestor, measured each time it walks (a turn, a
-    // resize, the phone's layout).
-    const section = document.getElementById('events');
-    const card = section?.querySelector<HTMLElement>('.card[data-card="platanus"]');
-    const frame = card?.querySelector<HTMLElement>('.screen');
-    if (!section || !card || !frame) continue;
     const front = () => card.classList.contains('is-current');
+    // It stands on the frame's top edge, in the frame's own positioned
+    // ancestor, measured each time it walks (a turn, a resize, the
+    // phone's layout).
     const stand = () => {
       const holder = frame.offsetParent as HTMLElement | null;
       if (!holder) return false;
@@ -164,9 +118,16 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
       [20000, 30000],
       async () => {
         if (!stand()) return;
+        const robot = await import('../lib/robot');
+        if (reduceMotion.matches) await robot.stand(band, link);
         // On a phone it keeps clear of the eyebrow at the left and the
         // header's pill at the right.
-        await show(band, link, phone.matches ? { from: 0.16, to: 0.86, handover: 0.26, alive: front } : { from: 0.04, to: 0.86, alive: front });
+        else
+          await robot.walk(
+            band,
+            link,
+            phone.matches ? { from: 0.16, to: 0.86, handover: 0.26, alive: front } : { from: 0.04, to: 0.86, alive: front },
+          );
       },
       front,
     );
