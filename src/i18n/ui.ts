@@ -32,6 +32,9 @@ const en = {
   visit: 'visit',
   listen: 'Listen',
   pause: 'Pause',
+  'soon.narration':
+    "My narration in English is coming soon. For now you'll hear me in Spanish and read along in English.",
+  'soon.close': 'Dismiss',
   // The hero's greeting over the wordmark — the one word that shows at a
   // glance which language the page is in (as the GitHub profile's
   // "Hi · Hola · 你好").
@@ -197,6 +200,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: 'visitar',
     listen: 'Escuchar',
     pause: 'Pausar',
+    'soon.narration':
+      'Muy pronto, mi narración en otros idiomas. Por ahora me escuchas en español.',
+    'soon.close': 'Cerrar',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
     'hero.caption':
@@ -345,6 +351,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: '访问',
     listen: '收听',
     pause: '暂停',
+    'soon.narration':
+      '我的中文旁白即将推出。目前你会听到我的西班牙语原声，并可以跟着中文文字阅读。',
+    'soon.close': '关闭',
     'hero.hi': '你好',
     'store.soon': '即将推出',
     'hero.caption':

@@ -1,0 +1,160 @@
+---
+import T from './T.astro';
+
+/**
+ * NARRATION, COMING SOON — Juan's voice is Spanish only for now; the
+ * site's English and Chinese are read along on the Spanish clock
+ * (lib/narration). He wants to record both (Juan, 2026-10-28), and wants
+ * visitors to know it's on its way: a small notice under the header,
+ * shown when the page is in English or Chinese and has a narrator.
+ *
+ * Dismissed once per language, and remembered (localStorage), so a
+ * reload never brings it back; switching to the other language shows it
+ * again for that one. Without storage it stays dismissed for the visit.
+ */
+---
+
+<aside class="soon" data-soon hidden aria-live="polite">
+  <svg class="soon-mic" viewBox="0 0 16 16" aria-hidden="true">
+    <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
+    <path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" />
+  </svg>
+  <p class="soon-text"><T k="soon.narration" /></p>
+  <button type="button" class="soon-close" data-soon-close>
+    <span class="sr-only"><T k="soon.close" /></span>
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+  </button>
+</aside>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-soon]');
+  const root = document.documentElement;
+  // Only where there is something to hear.
+  if (box && document.querySelector('[data-narrator]')) {
+    const key = (lang: string) => `narration-soon:${lang}`;
+    const gone = new Set<string>();
+    const dismissed = (lang: string) => {
+      if (gone.has(lang)) return true;
+      try {
+        return localStorage.getItem(key(lang)) === '1';
+      } catch {
+        return false;
+      }
+    };
+    const update = () => {
+      const lang = root.dataset.lang ?? 'en';
+      const show = lang !== 'es' && !dismissed(lang);
+      if (show) {
+        box.hidden = false;
+        requestAnimationFrame(() => box.classList.add('is-in'));
+      } else if (!box.hidden) {
+        box.classList.remove('is-in');
+        // Out of the way once it has faded, unless it came back meanwhile.
+        setTimeout(() => {
+          if (!box.classList.contains('is-in')) box.hidden = true;
+        }, 600);
+      }
+    };
+    box.querySelector('[data-soon-close]')!.addEventListener('click', () => {
+      const lang = root.dataset.lang ?? 'en';
+      gone.add(lang);
+      try {
+        localStorage.setItem(key(lang), '1');
+      } catch {}
+      update();
+    });
+    // The language picker (SiteHeader) changes html[data-lang] in place.
+    new MutationObserver(update).observe(root, { attributes: true, attributeFilter: ['data-lang'] });
+    // A beat after the page lands, so it never competes with the hero.
+    setTimeout(update, 1200);
+  }
+</script>
+
+<style>
+  .soon {
+    position: fixed;
+    top: calc(var(--header-h) + 0.75rem);
+    left: 50%;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: max-content;
+    max-width: min(30rem, calc(100vw - 2 * clamp(1.25rem, 4vw, 2.5rem)));
+    box-sizing: border-box;
+    padding: 0.625rem 0.5rem 0.625rem 1rem;
+    border: 1px solid var(--hairline);
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+    color: var(--ink-2);
+    opacity: 0;
+    translate: -50% -0.5rem;
+    transition:
+      opacity var(--dur-settle) var(--ease),
+      translate var(--dur-settle) var(--ease);
+  }
+  .soon[hidden] {
+    display: none;
+  }
+  .soon.is-in {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  .soon-mic {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+  .soon-text {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+  .soon-close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: color var(--dur-quick) var(--ease);
+  }
+  .soon-close:hover,
+  .soon-close:focus-visible {
+    color: var(--ink);
+  }
+  .soon-close svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .soon {
+      transition: opacity var(--dur-quick) linear;
+      translate: -50% 0;
+    }
+  }
+</style>

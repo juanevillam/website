@@ -1,6 +1,7 @@
 ---
 import { ui } from '../i18n/ui';
 import SiteHeader from '../components/SiteHeader.astro';
+import NarrationSoon from '../components/NarrationSoon.astro';
 import '../styles/global.css';
 
 type Props = {
@@ -76,6 +77,7 @@ const url = new URL(path, Astro.site);
     <!-- The light the current screen lends the page (lib/scene). -->
     <div class="scene" aria-hidden="true"></div>
     <SiteHeader />
+    <NarrationSoon />
     <main>
       <slot />
     </main>
