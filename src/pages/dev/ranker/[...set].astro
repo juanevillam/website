@@ -1,27 +1,30 @@
 ---
-import { RANK_SETS } from '../../../lib/likes';
 import SAVED from '../../../data/likes-order.json';
 import '../../../styles/global.css';
 
 /**
- * DEV ONLY — /dev/ranker. Juan puts each set of his likes (lib/likes) in
- * order the way it is easiest to decide: two pictures side by side, and
- * he picks the one he likes more. A tournament of pairs — a binary
- * insertion sort, each comparison one duel — finds the whole order in
- * about n·log2(n) duels (~110 for the 31 space photos), never asking the
- * same pair twice.
+ * DEV ONLY — /dev/ranker. Juan ranks his favorite SONGS, the ones of the
+ * More of Me songs card. His library (the songs he loaded into Sound
+ * Shaper, iCloud Drive's Life/music) is mostly songs to test the app
+ * with; only a handful are his own top. So it goes in two steps:
  *
- * Every answer is kept in the browser (localStorage), so a set can be
- * left halfway and picked up later, and the last answer undone. At the
- * end, Save writes the order into src/data/likes-order.json through the
- * dev server (scripts/likes-ranker.mjs), and the site shows it.
+ * 1. PICK — every song of the folder, each one playable: he marks the
+ *    ones that are his top (about 7 or 8).
+ * 2. DUELS — two of those side by side, each playable, and he picks the
+ *    one he likes more. A binary insertion sort, each comparison one
+ *    duel, finds the whole order in about n·log2(n) duels, never asking
+ *    the same pair twice.
+ *
+ * The songs are played straight from the folder by the dev server
+ * (scripts/likes-ranker.mjs); nothing is copied. Every answer is kept in
+ * the browser (localStorage), so it can be left halfway and the last
+ * answer undone. Save writes the order, first to last, into
+ * src/data/likes-order.json under `songs`.
  *
  * In a production build this route has no paths, so it does not exist.
  */
 export const getStaticPaths = () =>
   import.meta.env.PROD ? [] : [{ params: { set: undefined } }];
-
-const data = { sets: RANK_SETS, saved: SAVED };
 ---
 
 <!doctype html>
@@ -30,41 +33,47 @@ const data = { sets: RANK_SETS, saved: SAVED };
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Ranker</title>
+    <title>Ranker · Canciones</title>
   </head>
   <body>
     <header class="top">
-      <p class="label">Ranker</p>
-      <nav class="sets" role="tablist">
-        {
-          RANK_SETS.map(s => (
-            <button type="button" role="tab" data-set={s.id}>
-              <span class="set-name">{s.name}</span>
-              <span class="set-state" data-state={s.id} />
-            </button>
-          ))
-        }
+      <p class="label">Ranker · Canciones</p>
+      <nav class="steps">
+        <button type="button" data-step="pick">1 · Tu top</button>
+        <button type="button" data-step="duel">2 · Duelos</button>
       </nav>
       <p class="progress" data-progress></p>
     </header>
 
     <main>
-      <!-- THE DUEL: two pictures, the one liked more is clicked. -->
+      <!-- 1. PICK: the whole library, the top ones marked. -->
+      <section class="pick-step" data-pick hidden>
+        <div class="head">
+          <div>
+            <h1>¿Cuáles son tu top?</h1>
+            <p class="hint">Dale play para escucharla y marca las de tu top personal.</p>
+          </div>
+          <button type="button" class="save" data-to-duel>Rankear <span data-count>0</span></button>
+        </div>
+        <ul class="songs" data-songs></ul>
+      </section>
+
+      <!-- 2. THE DUEL: two songs, the one liked more is clicked. -->
       <section class="duel" data-duel hidden>
         <p class="ask">¿Cuál te gusta más?</p>
         <div class="pair">
           {
             [0, 1].map(side => (
-              <button type="button" class="pick" data-side={side}>
-                <span class="frame">
-                  <img class="fill" alt="" aria-hidden="true" />
-                  <img class="whole" alt="" />
-                </span>
-                <span class="pick-foot">
-                  <kbd>{side === 0 ? '←' : '→'}</kbd>
-                  <span class="pick-name" />
-                </span>
-              </button>
+              <div class="side" data-side={side}>
+                <button type="button" class="play big" data-play aria-label="Escuchar">
+                  <span class="glyph" />
+                </button>
+                <p class="title" data-title />
+                <p class="artist" data-artist />
+                <button type="button" class="choose" data-choose>
+                  <kbd>{side === 0 ? '←' : '→'}</kbd> Esta
+                </button>
+              </div>
             ))
           }
         </div>
@@ -72,128 +81,218 @@ const data = { sets: RANK_SETS, saved: SAVED };
           <span class="meter"><span class="meter-fill" data-meter></span></span>
         </div>
         <div class="tools">
-          <button type="button" class="tool" data-undo>
-            <kbd>Z</kbd> Deshacer
-          </button>
+          <button type="button" class="tool" data-undo><kbd>Z</kbd> Deshacer</button>
           <button type="button" class="tool" data-restart>Empezar de nuevo</button>
         </div>
       </section>
 
-      <!-- THE RESULT: the whole set, first to last, ready to save. -->
+      <!-- THE RESULT: the top, first to last, ready to save. -->
       <section class="result" data-result hidden>
-        <div class="result-head">
+        <div class="head">
           <div>
             <p class="label">Tu orden</p>
-            <h1 class="result-title" data-result-title></h1>
+            <h1>Canciones</h1>
           </div>
-          <div class="result-actions">
+          <div class="actions">
             <span class="save-state" data-save-state></span>
             <button type="button" class="tool" data-undo-last>Deshacer último</button>
             <button type="button" class="tool" data-restart-result>Empezar de nuevo</button>
             <button type="button" class="save" data-save>Guardar en el sitio</button>
           </div>
         </div>
-        <ol class="grid" data-grid></ol>
+        <ol class="songs ranked" data-ranked></ol>
       </section>
+
+      <p class="state" data-state>Cargando canciones…</p>
     </main>
 
-    <script is:inline type="application/json" id="ranker" set:html={JSON.stringify(data)} />
+    <audio data-audio preload="none"></audio>
+
+    <script is:inline type="application/json" id="saved" set:html={JSON.stringify(SAVED)} />
 
     <script>
-      type Item = { id: string; name: string; src: string };
-      type Set = { id: string; name: string; items: Item[] };
+      type Song = { id: string; file: string; title: string; artist: string };
       /** One duel's answer: the pair, then the winner. */
       type Answer = [string, string, string];
 
-      const { sets, saved } = JSON.parse(document.getElementById('ranker')!.textContent!) as {
-        sets: Set[];
-        saved: Record<string, string[]>;
-      };
-
+      const saved = JSON.parse(document.getElementById('saved')!.textContent!) as Record<string, string[]>;
       const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+      const pickStep = $('[data-pick]');
       const duel = $('[data-duel]');
       const result = $('[data-result]');
       const progress = $('[data-progress]');
-      const meter = $('[data-meter]');
-      const picks = [...document.querySelectorAll<HTMLButtonElement>('.pick')];
+      const audio = $<HTMLAudioElement>('[data-audio]');
+      const sides = [...document.querySelectorAll<HTMLElement>('.side')];
 
       const store = {
-        get: (set: string): Answer[] => {
+        get: <T,>(key: string, empty: T): T => {
           try {
-            return JSON.parse(localStorage.getItem(`ranker:${set}`) ?? '[]');
+            return JSON.parse(localStorage.getItem(`ranker:songs:${key}`) ?? 'null') ?? empty;
           } catch {
-            return [];
+            return empty;
           }
         },
-        put: (set: string, answers: Answer[]) => {
+        put: (key: string, value: unknown) => {
           try {
-            localStorage.setItem(`ranker:${set}`, JSON.stringify(answers));
+            localStorage.setItem(`ranker:songs:${key}`, JSON.stringify(value));
           } catch {}
         },
       };
 
+      let library: Song[] = [];
+      // The top starts as what was saved, so a re-rank begins from it.
+      let top: string[] = store.get('top', saved.songs ?? []);
+      let answers: Answer[] = store.get('answers', []);
+      let order: Song[] = [];
+      let run = 0;
+      let pending: ((winner: string) => void) | null = null;
+
+      // ---------- playing ----------
+      let playing: string | null = null;
+      const src = (s: Song) => `/__songs/file/${encodeURIComponent(s.file)}`;
+      const mark = () => {
+        for (const b of document.querySelectorAll<HTMLElement>('[data-play]'))
+          b.toggleAttribute('data-on', !!playing && b.dataset.id === playing && !audio.paused);
+      };
+      const toggle = (s: Song) => {
+        if (playing === s.id && !audio.paused) audio.pause();
+        else {
+          if (playing !== s.id) {
+            audio.src = src(s);
+            playing = s.id;
+            // The middle of a song says more than its intro.
+            audio.addEventListener(
+              'loadedmetadata',
+              () => {
+                if (audio.duration > 60) audio.currentTime = audio.duration * 0.35;
+              },
+              { once: true }
+            );
+          }
+          audio.play();
+        }
+      };
+      audio.addEventListener('play', mark);
+      audio.addEventListener('pause', mark);
+      audio.addEventListener('ended', mark);
+      const stop = () => {
+        audio.pause();
+        playing = null;
+        mark();
+      };
+
+      const playButton = (s: Song) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'play';
+        b.dataset.play = '';
+        b.dataset.id = s.id;
+        b.setAttribute('aria-label', `Escuchar ${s.title}`);
+        b.innerHTML = '<span class="glyph"></span>';
+        b.addEventListener('click', () => toggle(s));
+        return b;
+      };
+
+      // ---------- 1. pick ----------
+      const showPick = () => {
+        run++;
+        pending = null;
+        stop();
+        pickStep.hidden = false;
+        duel.hidden = true;
+        result.hidden = true;
+        progress.textContent = `${library.length} canciones`;
+        tabs('pick');
+        renderPick();
+      };
+      const renderPick = () => {
+        $('[data-count]').textContent = String(top.length);
+        $<HTMLButtonElement>('[data-to-duel]').disabled = top.length < 2;
+        $('[data-songs]').replaceChildren(
+          ...library.map(s => {
+            const li = document.createElement('li');
+            const on = top.includes(s.id);
+            li.className = 'song' + (on ? ' is-top' : '');
+            li.append(playButton(s));
+            const text = document.createElement('div');
+            text.innerHTML = '<p class="title"></p><p class="artist"></p>';
+            text.querySelector('.title')!.textContent = s.title;
+            text.querySelector('.artist')!.textContent = s.artist;
+            li.append(text);
+            const box = document.createElement('button');
+            box.type = 'button';
+            box.className = 'star';
+            box.setAttribute('aria-pressed', String(on));
+            box.textContent = on ? '★ En mi top' : '☆ Top';
+            box.addEventListener('click', () => {
+              top = on ? top.filter(id => id !== s.id) : [...top, s.id];
+              store.put('top', top);
+              // A new top is a new tournament: old duels may be of songs
+              // no longer in it, and the insertion order changes.
+              answers = answers.filter(([a, b]) => top.includes(a) && top.includes(b));
+              store.put('answers', answers);
+              renderPick();
+            });
+            li.append(box);
+            return li;
+          })
+        );
+        mark();
+      };
+
+      // ---------- 2. duels ----------
       const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
-      // Which side each picture stands on: fixed per pair (so a replay
-      // asks the same way) but mixed across pairs, so neither side wins
-      // by habit.
       const flip = (key: string) => {
         let h = 0;
         for (const c of key) h = (h * 31 + c.charCodeAt(0)) | 0;
         return (h & 1) === 1;
       };
-
-      // The most duels a binary insertion of n can take.
       const most = (n: number) => {
         let total = 0;
         for (let k = 1; k < n; k++) total += Math.ceil(Math.log2(k + 1));
         return total;
       };
+      const items = () => top.map(id => library.find(s => s.id === id)).filter(Boolean) as Song[];
 
-      let set: Set;
-      let answers: Answer[] = [];
-      let run = 0;
-      let pending: ((winner: string) => void) | null = null;
-      let order: Item[] = [];
-
-      const preload = (src: string) => {
-        const img = new Image();
-        img.src = src;
-      };
-
-      // One duel: answered already (a replay), or put on screen.
-      const better = (a: Item, b: Item, gen: number): Promise<boolean> => {
+      const better = (a: Song, b: Song, gen: number): Promise<boolean> => {
         const key = pairKey(a.id, b.id);
         const known = answers.find(([x, y]) => pairKey(x, y) === key);
         if (known) return Promise.resolve(known[2] === a.id);
         return new Promise(resolve => {
           if (gen !== run) return;
-          const [left, right] = flip(key) ? [b, a] : [a, b];
-          [left, right].forEach((item, i) => {
-            const pick = picks[i];
-            pick.dataset.id = item.id;
-            for (const img of pick.querySelectorAll('img')) img.src = item.src;
-            pick.querySelector('.whole')!.setAttribute('alt', item.name);
-            pick.querySelector('.pick-name')!.textContent = item.name;
-            pick.classList.remove('is-chosen', 'is-lost');
+          stop();
+          const pair = flip(key) ? [b, a] : [a, b];
+          pair.forEach((s, i) => {
+            const side = sides[i];
+            side.dataset.id = s.id;
+            side.querySelector('[data-title]')!.textContent = s.title;
+            side.querySelector('[data-artist]')!.textContent = s.artist;
+            const play = side.querySelector<HTMLElement>('[data-play]')!;
+            play.dataset.id = s.id;
+            play.onclick = () => toggle(s);
+            side.classList.remove('is-chosen', 'is-lost');
           });
+          pickStep.hidden = true;
           duel.hidden = false;
           result.hidden = true;
-          show();
+          const total = most(items().length);
+          progress.textContent = `Duelo ${answers.length + 1} · como mucho ${total}`;
+          $('[data-meter]').style.width = `${Math.min(100, (answers.length / total) * 100)}%`;
           pending = winner => {
             answers.push([a.id, b.id, winner]);
-            store.put(set.id, answers);
+            store.put('answers', answers);
             resolve(winner === a.id);
           };
         });
       };
 
-      // Binary insertion: each picture finds its place among the ones
-      // already in order, halving the range with every duel.
       const sort = async () => {
         const gen = ++run;
         pending = null;
-        const sorted: Item[] = [set.items[0]];
-        for (const x of set.items.slice(1)) {
+        tabs('duel');
+        const all = items();
+        const sorted: Song[] = [all[0]];
+        for (const x of all.slice(1)) {
           let lo = 0;
           let hi = sorted.length;
           while (lo < hi) {
@@ -210,61 +309,53 @@ const data = { sets: RANK_SETS, saved: SAVED };
         finish();
       };
 
-      const show = () => {
-        const total = most(set.items.length);
-        const done = answers.length;
-        progress.textContent = `Duelo ${done + 1} · como mucho ${total}`;
-        meter.style.width = `${Math.min(100, (done / total) * 100)}%`;
-        markStates();
-      };
-
       const finish = () => {
+        stop();
+        pickStep.hidden = true;
         duel.hidden = true;
         result.hidden = false;
         progress.textContent = `${answers.length} duelos · listo`;
-        $('[data-result-title]').textContent = set.name;
-        const same = (saved[set.id] ?? []).join() === order.map(i => i.id).join();
+        const same = (saved.songs ?? []).join() === order.map(s => s.id).join();
         $('[data-save-state]').textContent = same ? 'Guardado en el sitio' : 'Sin guardar';
-        $('[data-save]').toggleAttribute('disabled', same);
-        const grid = $('[data-grid]');
-        grid.replaceChildren(
-          ...order.map((item, i) => {
+        $<HTMLButtonElement>('[data-save]').disabled = same;
+        $('[data-ranked]').replaceChildren(
+          ...order.map((s, i) => {
             const li = document.createElement('li');
-            li.innerHTML = `<span class="frame"><img class="whole" loading="lazy" alt=""></span>
-              <span class="rank"><b>#${i + 1}</b> <span></span></span>`;
-            li.querySelector('img')!.src = item.src;
-            li.querySelector('.rank span')!.textContent = item.name;
+            li.className = 'song';
+            const n = document.createElement('b');
+            n.className = 'rank';
+            n.textContent = `#${i + 1}`;
+            li.append(n, playButton(s));
+            const text = document.createElement('div');
+            text.innerHTML = '<p class="title"></p><p class="artist"></p>';
+            text.querySelector('.title')!.textContent = s.title;
+            text.querySelector('.artist')!.textContent = s.artist;
+            li.append(text);
             return li;
           })
         );
-        markStates();
       };
 
       const answer = (side: number) => {
         if (!pending || duel.hidden) return;
-        const chosen = picks[side];
-        chosen.classList.add('is-chosen');
-        picks[1 - side].classList.add('is-lost');
+        sides[side].classList.add('is-chosen');
+        sides[1 - side].classList.add('is-lost');
         const resolve = pending;
         pending = null;
-        // A beat to see the choice land, then the next duel.
-        setTimeout(() => resolve(chosen.dataset.id!), 160);
+        setTimeout(() => resolve(sides[side].dataset.id!), 160);
       };
-
       const undo = () => {
         if (!answers.length) return;
         answers.pop();
-        store.put(set.id, answers);
+        store.put('answers', answers);
         sort();
       };
-
       const restart = () => {
-        if (answers.length && !confirm(`¿Borrar los ${answers.length} duelos de ${set.name}?`)) return;
+        if (answers.length && !confirm(`¿Borrar los ${answers.length} duelos?`)) return;
         answers = [];
-        store.put(set.id, answers);
+        store.put('answers', answers);
         sort();
       };
-
       const save = async () => {
         const button = $<HTMLButtonElement>('[data-save]');
         button.disabled = true;
@@ -273,56 +364,48 @@ const data = { sets: RANK_SETS, saved: SAVED };
           const res = await fetch('/__likes/save', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ set: set.id, order: order.map(i => i.id) }),
+            body: JSON.stringify({ set: 'songs', order: order.map(s => s.id) }),
           });
           const out = await res.json();
           if (!res.ok) throw new Error(out.error);
-          saved[set.id] = order.map(i => i.id);
+          saved.songs = order.map(s => s.id);
           $('[data-save-state]').textContent = 'Guardado en el sitio';
-          markStates();
         } catch (e) {
           button.disabled = false;
           $('[data-save-state]').textContent = `No se guardó: ${(e as Error).message}`;
         }
       };
 
-      // Each tab says where its set stands: saved, ranked, halfway, new.
-      const markStates = () => {
-        for (const s of sets) {
-          const el = document.querySelector<HTMLElement>(`[data-state="${s.id}"]`)!;
-          const n = s.id === set?.id ? answers.length : store.get(s.id).length;
-          const isSaved = (saved[s.id] ?? []).length === s.items.length;
-          el.textContent = isSaved ? 'guardado' : n ? `${n} duelos` : `${s.items.length} fotos`;
-          el.toggleAttribute('data-saved', isSaved);
-        }
+      const tabs = (step: string) => {
+        for (const t of document.querySelectorAll<HTMLElement>('[data-step]'))
+          t.setAttribute('aria-selected', String(t.dataset.step === step));
       };
 
-      const pick = (id: string) => {
-        set = sets.find(s => s.id === id) ?? sets[0];
-        for (const tab of document.querySelectorAll<HTMLElement>('[data-set]'))
-          tab.setAttribute('aria-selected', String(tab.dataset.set === set.id));
-        answers = store.get(set.id);
-        history.replaceState(null, '', `#${set.id}`);
-        // Warm the set: a duel's next picture is then already here.
-        set.items.forEach(i => preload(i.src));
-        sort();
-      };
-
-      for (const tab of document.querySelectorAll<HTMLElement>('[data-set]'))
-        tab.addEventListener('click', () => pick(tab.dataset.set!));
-      picks.forEach((p, i) => p.addEventListener('click', () => answer(i)));
+      $('[data-to-duel]').addEventListener('click', sort);
+      $<HTMLElement>('[data-step="pick"]').addEventListener('click', showPick);
+      $<HTMLElement>('[data-step="duel"]').addEventListener('click', () => top.length > 1 && sort());
+      sides.forEach((s, i) => s.querySelector('[data-choose]')!.addEventListener('click', () => answer(i)));
       $('[data-undo]').addEventListener('click', undo);
       $('[data-undo-last]').addEventListener('click', undo);
       $('[data-restart]').addEventListener('click', restart);
       $('[data-restart-result]').addEventListener('click', restart);
       $('[data-save]').addEventListener('click', save);
       addEventListener('keydown', e => {
+        if (duel.hidden) return;
         if (e.key === 'ArrowLeft') answer(0);
         else if (e.key === 'ArrowRight') answer(1);
         else if (e.key === 'z' || e.key === 'Backspace') undo();
       });
 
-      pick(location.hash.slice(1));
+      fetch('/__songs/list')
+        .then(r => r.json())
+        .then((list: Song[]) => {
+          library = list;
+          top = top.filter(id => list.some(s => s.id === id));
+          $('[data-state]').remove();
+          showPick();
+        })
+        .catch(e => ($('[data-state]').textContent = `No se pudieron cargar: ${e.message}`));
     </script>
 
     <style is:global>
@@ -338,8 +421,11 @@ const data = { sets: RANK_SETS, saved: SAVED };
       .label,
       kbd,
       .progress,
-      .set-state,
-      .save-state {
+      .save-state,
+      .hint,
+      .state,
+      .artist,
+      .rank {
         font-family: var(--font-mono);
         font-size: 0.75rem;
         letter-spacing: 0.02em;
@@ -360,6 +446,12 @@ const data = { sets: RANK_SETS, saved: SAVED };
         font: inherit;
         color: inherit;
       }
+      p {
+        margin: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
 
       .top {
         display: flex;
@@ -368,14 +460,11 @@ const data = { sets: RANK_SETS, saved: SAVED };
         padding: 1rem 1.5rem;
         border-bottom: 1px solid var(--hairline);
       }
-      .sets {
+      .steps {
         display: flex;
         gap: 0.5rem;
       }
-      .sets button {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
+      .steps button {
         padding: 0.45rem 0.85rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
@@ -383,202 +472,222 @@ const data = { sets: RANK_SETS, saved: SAVED };
         color: var(--ink-2);
         cursor: pointer;
       }
-      .sets button[aria-selected='true'] {
+      .steps button[aria-selected='true'] {
         border-color: var(--ink-3);
         background: var(--surface);
         color: var(--ink);
       }
-      .set-state[data-saved] {
-        color: #7fd18b;
-      }
       .progress {
-        margin: 0 0 0 auto;
+        margin-left: auto;
       }
 
       main {
         flex: 1;
+        width: 100%;
+        max-width: 56rem;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+        box-sizing: border-box;
+      }
+      .head {
         display: flex;
-        flex-direction: column;
-        padding: 1.5rem;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      h1 {
+        margin: 0.25rem 0 0.5rem;
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: var(--track-heading);
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
-      /* ---------- the duel ---------- */
-      .duel {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .duel[hidden],
-      .result[hidden] {
-        display: none;
-      }
-      .ask {
+      .songs {
         margin: 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid var(--hairline);
+      }
+      .song {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--hairline);
+      }
+      .ranked .song {
+        grid-template-columns: 2.5rem auto 1fr;
+      }
+      .song.is-top .title {
+        font-weight: 700;
+      }
+      .title {
+        font-size: 0.9375rem;
+        line-height: 1.35;
+      }
+      .artist {
+        margin-top: 0.15rem;
+      }
+      .rank {
+        color: var(--ink-2);
+        font-size: 0.875rem;
+      }
+
+      .play {
+        display: grid;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--surface);
+        cursor: pointer;
+      }
+      .play .glyph {
+        width: 0;
+        height: 0;
+        margin-left: 0.15rem;
+        border-left: 0.6rem solid var(--ink);
+        border-top: 0.38rem solid transparent;
+        border-bottom: 0.38rem solid transparent;
+      }
+      .play[data-on] .glyph {
+        width: 0.6rem;
+        height: 0.7rem;
+        margin: 0;
+        border: 0;
+        border-left: 0.2rem solid var(--ink);
+        border-right: 0.2rem solid var(--ink);
+        box-sizing: border-box;
+      }
+      .play.big {
+        width: 4rem;
+        height: 4rem;
+      }
+      .star {
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: none;
+        color: var(--ink-2);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .star[aria-pressed='true'] {
+        border-color: var(--ink-3);
+        background: var(--surface);
+        color: var(--ink);
+      }
+
+      .ask {
+        margin-bottom: 1.5rem;
         text-align: center;
         font-size: 1.25rem;
         font-weight: 800;
         letter-spacing: var(--track-heading);
       }
       .pair {
-        flex: 1;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
-        min-height: 0;
       }
-      .pick {
+      .side {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
-        padding: 0;
-        border: 0;
-        background: none;
-        cursor: pointer;
-        text-align: left;
-      }
-      .frame {
-        position: relative;
-        display: block;
-        overflow: hidden;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 2rem 1.25rem 1.5rem;
         border: 1px solid var(--hairline);
         border-radius: var(--media-radius-flat);
         background: var(--surface);
+        text-align: center;
+        transition: opacity var(--dur-settle) linear;
       }
-      .pick .frame {
-        flex: 1;
-        min-height: 60vh;
-        transition:
-          transform var(--dur-quick) var(--ease),
-          border-color var(--dur-quick) var(--ease),
-          opacity var(--dur-quick) var(--ease);
+      .side .title {
+        margin-top: 0.75rem;
+        font-size: 1.125rem;
+        font-weight: 700;
       }
-      .pick:hover .frame,
-      .pick:focus-visible .frame {
-        border-color: var(--ink-3);
-        transform: scale(1.01);
+      .side.is-chosen {
+        border-color: var(--ink-2);
       }
-      .pick.is-chosen .frame {
-        border-color: var(--ink);
-        transform: scale(1.02);
+      .side.is-lost {
+        opacity: 0.4;
       }
-      .pick.is-lost .frame {
-        opacity: 0.35;
+      .choose {
+        margin-top: 1rem;
+        padding: 0.6rem 1.25rem;
+        border: 0;
+        border-radius: 999px;
+        background: var(--ink);
+        color: var(--ground);
+        font-weight: 700;
+        cursor: pointer;
       }
-      .frame img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        max-width: none;
-      }
-      .frame .fill {
-        object-fit: cover;
-        transform: scale(1.2);
-        filter: blur(28px) brightness(0.55);
-      }
-      .frame .whole {
-        object-fit: contain;
-      }
-      .pick-foot {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        font-weight: 600;
+      .choose kbd {
+        border-color: currentColor;
+        color: inherit;
       }
       .bar {
-        display: flex;
-        justify-content: center;
+        margin-top: 1.5rem;
       }
       .meter {
-        width: min(24rem, 100%);
-        height: 3px;
-        overflow: hidden;
+        display: block;
+        height: 0.25rem;
         border-radius: 999px;
         background: var(--hairline);
+        overflow: hidden;
       }
       .meter-fill {
         display: block;
-        width: 0;
         height: 100%;
-        background: var(--ink);
-        transition: width var(--dur-quick) var(--ease);
+        background: var(--ink-2);
       }
-      .tools,
-      .result-actions {
+      .tools {
         display: flex;
-        align-items: center;
         justify-content: center;
-        gap: 0.75rem;
-      }
-      .tool,
-      .save {
-        display: inline-flex;
-        align-items: center;
         gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .tool {
         padding: 0.5rem 0.9rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
         background: none;
         color: var(--ink-2);
-        font-size: 0.875rem;
         cursor: pointer;
       }
-      .tool:hover {
-        color: var(--ink);
-        border-color: var(--ink-3);
-      }
       .save {
-        border-color: var(--ink);
+        padding: 0.6rem 1.1rem;
+        border: 0;
+        border-radius: 999px;
         background: var(--ink);
         color: var(--ground);
         font-weight: 700;
+        cursor: pointer;
       }
       .save:disabled {
         opacity: 0.4;
         cursor: default;
       }
-
-      /* ---------- the result ---------- */
-      .result-head {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1.5rem;
-      }
-      .result-title {
-        margin: 0.25rem 0 0;
-        font-size: 2rem;
-        font-weight: 800;
-        letter-spacing: var(--track-heading);
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-        gap: 1rem;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-      .grid li {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .grid .frame {
-        aspect-ratio: 3 / 2;
-      }
-      .grid li:first-child .frame {
-        border-color: var(--ink-3);
-      }
-      .rank {
-        font-size: 0.875rem;
-        color: var(--ink-2);
-      }
-      .rank b {
-        color: var(--ink);
+      @media (max-width: 640px) {
+        .pair {
+          grid-template-columns: 1fr;
+        }
+        .head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions {
+          flex-wrap: wrap;
+        }
       }
     </style>
   </body>
