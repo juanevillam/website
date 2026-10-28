@@ -492,12 +492,13 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   const ROLL: [number, number] = [7.7, 8.9];
   const FINISH = [9.3, 9.7]; // Overdrive, four bolts a volley
 
-  // The ace's line: in at the left edge, a slow arc over the top of the
-  // screen, farther as it goes; the kill a little right of centre, over
-  // the name.
+  // The ace's line: in at the left edge, one steady, gentle arc over the
+  // top of the screen, farther as it goes — no weaving, so it banks only
+  // as much as the arc turns; its one evasive move is the barrel roll
+  // from the missiles. The kill a little right of centre, over the name.
   const aceAt: Path = t => [
-    W * (-0.62 + 0.072 * t) + W * 0.03 * Math.sin(0.9 * t),
-    -H * (0.25 + 0.05 * Math.sin(0.7 * t + 0.6)),
+    W * (-0.62 + 0.072 * t),
+    -H * (0.24 + 0.015 * Math.sin(0.35 * t)),
     140 + 48 * t - 1.6 * t * t,
   ];
   // The chase gap, closed by the dash over most of a second.
@@ -508,7 +509,9 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   // kill it keeps its speed and curves toward the camera, out at the
   // right.
   const shipAt: Path = t => {
-    const chase = (u: number) => add(aceAt(u - lag(u)), [-W * 0.03, H * 0.07, -70]);
+    // Below the ace by a share of the screen's width, not its height: on
+    // a tall phone it stays in line to fire on it.
+    const chase = (u: number) => add(aceAt(u - lag(u)), [-W * 0.03, Math.min(H * 0.07, W * 0.045), -70]);
     if (!exit || t <= killedAt) return chase(t);
     const u = t - killedAt;
     return add(add(exit.P, exit.V, u), [W * 0.16, -H * 0.04, -260], u * u * 0.5);
