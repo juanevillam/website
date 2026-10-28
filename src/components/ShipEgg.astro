@@ -7,14 +7,16 @@ import { workPath } from '../lib/links';
  * Space Explorer's ship (lib/eggs, lib/ship), in two places:
  *
  * - `hero`: the hunt, over the whole hero, behind the name.
- * - `foot`: the jump, across the foot's empty middle row (SiteFooter).
- * - `card`: a chase in the dark strip over the game's own card in More
- *   Work, while that card is in front. No link: it plays by the card it
- *   would lead to, and must never take a tap meant for Play Game. The
- *   script stands it there.
+ * - `foot`: the destroyer, over the whole foot, behind its words.
+ * - `card`: the Kulbit, over the game's own card in More Work, while that
+ *   card is in front, behind the cabinet and the words. No link: it
+ *   plays by the card it would lead to, and must never take a tap meant
+ *   for Play Game. The script stands it there.
  *
  * In the hero and the foot, a link to the game's card rides on the ship.
- * Out of the flow everywhere, so nothing moves when it comes or goes.
+ * Out of the flow everywhere, so nothing moves when it comes or goes, and
+ * never cut off: each canvas reaches the screen's edges (or hides behind
+ * the page's own content) wherever a ship can leave.
  */
 type Props = { place: 'hero' | 'card' | 'foot' };
 const { place } = Astro.props;
@@ -48,14 +50,18 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     inset: 0;
   }
 
-  /* The foot grid's empty middle row, edge to edge of the screen. */
+  /* The whole foot (SiteFooter stacks it). */
   .is-foot {
-    grid-row: 2 / 3;
-    grid-column: 1 / -1;
-    top: 0;
-    bottom: 0;
-    left: calc(50% - 50vw);
-    width: 100vw;
+    inset: 0;
+  }
+
+  /* In the foot and on the card, the scene plays behind the words and
+     the cabinet; the foot's link stays over them, where it can be
+     clicked. */
+  .is-foot .egg-band,
+  .is-card .egg-band {
+    position: relative;
+    z-index: -1;
   }
 
   .egg-band {
@@ -124,38 +130,34 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       // then while it stays on screen.
       nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
         const ship = await import('../lib/ship');
-        const scene = hero ? ship.heroFight : ship.farewell;
-        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 5 : 2.2);
+        const scene = hero ? ship.heroFight : ship.destroyer;
+        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 5 : 1.5);
         else await ship.play(band, link, scene);
       });
       continue;
     }
 
-    // The card: the strip over the cabinet — the panel's empty dark,
-    // from the cabinet's left (the screen's edge on a phone) out to the
-    // screen's right edge — in the cabinet's own positioned ancestor,
-    // measured each time it plays.
+    // The card: from the panel's top (the screen's, when it holds it) down
+    // to the cabinet's middle, edge to edge of the screen — behind the
+    // cabinet and the words, so a ship leaving goes off the screen or
+    // behind them, never against an edge. In the cabinet's own positioned
+    // ancestor, measured each time it plays.
     const section = document.getElementById('more-work');
     const card = section?.querySelector<HTMLElement>('.card[data-card="space-explorer"]');
     const cabinet = card?.querySelector<HTMLElement>('.screen');
     if (!section || !card || !cabinet) continue;
     const front = () => card.classList.contains('is-current');
-    const phone = matchMedia('(max-width: 48rem)');
     const stand = () => {
       const holder = cabinet.offsetParent as HTMLElement | null;
       if (!holder) return false;
-      if (egg.parentElement !== holder) holder.append(egg);
+      if (egg.parentElement !== holder) holder.prepend(egg);
       const c = cabinet.getBoundingClientRect();
       const h = holder.getBoundingClientRect();
-      const s = section.getBoundingClientRect();
-      const from = phone.matches ? 0 : c.left - 96;
-      const to = document.documentElement.clientWidth;
-      // From just under the panel's top to a little into the cabinet.
-      const top = Math.max(s.top + 8, c.top - (phone.matches ? 110 : 190));
-      egg.style.left = `${(from - h.left - holder.clientLeft).toFixed(1)}px`;
-      egg.style.width = `${(to - from).toFixed(1)}px`;
+      const top = section.getBoundingClientRect().top;
+      egg.style.left = `${(-h.left - holder.clientLeft).toFixed(1)}px`;
+      egg.style.width = `${document.documentElement.clientWidth}px`;
       egg.style.top = `${(top - h.top - holder.clientTop).toFixed(1)}px`;
-      egg.style.height = `${(c.top + 16 - top).toFixed(1)}px`;
+      egg.style.height = `${(c.top + c.height / 2 - top).toFixed(1)}px`;
       return true;
     };
     nowAndThen(
@@ -165,7 +167,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       async () => {
         if (!stand()) return;
         const ship = await import('../lib/ship');
-        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 1.4);
+        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.1);
         else await ship.play(band, null, ship.chase, front);
       },
       front,

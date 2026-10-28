@@ -28,9 +28,12 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   star, drawn with the game's own models, colours and arsenal
   (`lib/ship`), in three different slow, cinematic scenes, each a link to
   its card: the hunt behind the hero's name (the rust ace downed over the
-  name), the escape over the game's card in More Work (two aces chase it,
-  overshoot, a missile pair takes them; no link there, so it never takes
-  Play Game's tap) and the jump across the foot (gates, a roll, a warp).
+  name), the Kulbit over the game's card in More Work (two aces chase it,
+  it backflips in place, they overshoot underneath and it downs them; no
+  link there, so it never takes Play Game's tap) and the game's destroyer
+  in the foot (its bridge broken, the ship climbing away). The scenes
+  play behind the page's words, on canvases that reach the screen's
+  edges, so a ship leaving is never cut off.
   Tridi's robot (`lib/robot`, Tridi's own data) only on the Platanus
   card's photo frame, where the tracking points become the G1 (a link to
   Tridi). Never while the voice plays or anything is open; with reduced

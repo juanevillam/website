@@ -2,10 +2,10 @@ import { fit, holdable, release, run } from './eggs';
 
 /**
  * SPACE EXPLORER'S SHIP, in three short scripted scenes (ShipEgg), each
- * its own: THE HUNT behind the hero's name, THE ESCAPE over the game's
- * card in More Work, and THE JUMP across the foot. Slow on purpose —
- * deliberate shots, a few well-timed bolts and missiles, eased rolls and
- * turns, each with a build-up, a climax and a graceful exit.
+ * its own: THE HUNT behind the hero's name, THE KULBIT over the game's
+ * card in More Work, and THE DESTROYER across the foot. Deliberate:
+ * a few well-timed bolts and missiles, eased rolls and turns, each with
+ * a build-up, a climax and a graceful exit.
  *
  * Everything drawn is the game's own (../games/platanus-hack-26-
  * venezuela-arcade/game.js): the ship's and the missile's wireframe
@@ -41,6 +41,13 @@ const MISSILE = mdl(
   '020304052:3;4<5=:6;7<8=961718191',
 );
 
+// The game's destroyer: a wedge of nearly a thousand units with its
+// command tower aft. Local x right, y down, z toward the bow.
+const DESTROYER = mdl(
+  [0, 0, 560, -300, 0, -400, 300, 0, -400, 0, -80, -400, 0, 70, -400, -280, 24, -400, 280, 24, -400, 0, -45, 80, -80, -70, -250, 80, -70, -250, 80, -70, -400, -80, -70, -400, -60, -150, -290, 60, -150, -290, 60, -150, -400, -60, -150, -400, -130, -165, -340, 130, -165, -340, -150, -40, -400, 150, -40, -400, -36, -30, 420, 36, -30, 420, -56, -56, -250, 56, -56, -250, -60, 38, 60, 60, 38, 60, -60, 44, -120, 60, 44, -120, -110, -180, -340, 110, -180, -340, -150, -6, 180, 150, -6, 180, -95, -142, -338, 95, -142, -338, -70, -110, -272, 70, -110, -272, 70, -110, -400, -70, -110, -400],
+  '010207730413231526546405060B0C899::;;8<==>>??<8<9=:>;?@A<@=ADFEGDEHIIKKJJH<L=M0NN10OO2PQRSSTTUUR',
+);
+
 // The game's palette.
 const INK = '#f5f5f5';
 const INK_HI = '#eef2f7';
@@ -70,7 +77,7 @@ type Path = (t: number) => V3;
 
 /** THE STAGE: the camera, the game's drawing and its effects, on one
  *  canvas. A script moves the ships; this draws them and runs the fire. */
-const stage = (band: HTMLCanvasElement, cyShare: number) => {
+const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
   const { ctx, width: W, height: H } = fit(band);
   // World units are px at the page's depth. The camera stands above and
   // looks down ~17°, the game's own chase camera (CAM_UP 32 over
@@ -81,6 +88,9 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
   const cx = W / 2;
   const cy = H * cyShare;
   const sc = Math.min(2, Math.max(1.15, (W / 1440) * 2));
+  // What flies between the ships flies at the page's size: on a phone
+  // it crosses the same share of the screen in the same time.
+  const pace = Math.min(1, W / 1100);
   const project = ([x, y, z]: V3): Pt => {
     const yc = y * cp - z * sp;
     const zc = Math.max(-EYE * 0.7, y * sp + z * cp);
@@ -88,7 +98,7 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
     return [cx + x * k, cy + yc * k, k];
   };
   // The game's fog: far things fade into the dark.
-  const fog = (P: V3) => Math.max(0, Math.min(1, 1 - (P[2] - 1400) / 600));
+  const fog = (P: V3) => Math.max(0, Math.min(1, 1 - (P[2] - fogFrom) / 600));
   const off = ([x, y]: Pt, m = 60) => x < -m || x > W + m || y < -m || y > H + m;
 
   /** A ship's basis from its path: nose along the way it goes, banked
@@ -171,10 +181,10 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
 
   // ----- what flies between them -----
   type Bolt = { p: V3; v: V3; hits: Target | null; gone: boolean };
-  type Ember = { p: V3; v: V3; gone: boolean };
-  type Missile = { p: V3; v: V3; trail: V3[]; spin: number; aim: Target; gone: boolean };
+  type Ember = { p: V3; v: V3; size: number; gone: boolean };
+  type Missile = { p: V3; v: V3; trail: V3[]; spin: number; aim: Target; life: number; gone: boolean };
   type Spark = { p: V3; v: V3; life: number; max: number; color: string };
-  type Boom = { p: V3; t: number; big: boolean };
+  type Boom = { p: V3; t: number; big: boolean; size?: number };
   type Shard = { a: V3; b: V3; v: V3; t: number };
   /** Something that can be hit: where it is now, and what a hit does. */
   type Target = { pos: () => V3; r: number; hit: (big: boolean) => void };
@@ -203,16 +213,21 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
       muzzle = 0.06;
       for (const o of quad ? [-20, -7, 7, 20] : [-9, 9]) {
         const from = at(P, B, s, [o, 0, 24]);
-        bolts.push({ p: from, v: mul(norm(sub(aim, from)), 1150), hits, gone: false });
+        bolts.push({ p: from, v: mul(norm(sub(aim, from)), 1150 * pace), hits, gone: false });
       }
     },
     /** An ace's ember, at `aim`. */
-    ember(from: V3, aim: V3) {
-      embers.push({ p: from, v: mul(norm(sub(aim, from)), 460), gone: false });
+    ember(from: V3, aim: V3, size = 1) {
+      embers.push({ p: from, v: mul(norm(sub(aim, from)), (size > 1 ? 620 : 460) * pace), size, gone: false });
     },
     /** A missile off a wing, homing on `aim`. */
     missile(P: V3, B: Basis, s: number, side: number, aim: Target, spread = 170) {
-      missiles.push({ p: at(P, B, s, [side * 14, 0, 0]), v: add(mul(B.F, 300), B.R, side * spread), trail: [], spin: 0, aim, gone: false });
+      missiles.push({ p: at(P, B, s, [side * 14, 0, 0]), v: mul(add(mul(B.F, 300), B.R, side * spread), pace), trail: [], spin: 0, aim, life: 0, gone: false });
+    },
+    /** A big blast at `P`, `size` times the game's (the destroyer's). */
+    blast(P: V3, size: number) {
+      booms.push({ p: P, t: 0, big: true, size });
+      spray(P, 18, 260 * (sc / 1.6) * size, RUST_HI);
     },
     /** A hit that does not kill: a spark and a small rust ring. */
     spark(P: V3) {
@@ -256,7 +271,8 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
       if (m.gone) continue;
       m.spin += dt * 5;
       const want = norm(sub(m.aim.pos(), m.p));
-      const speed = Math.min(820, len(m.v) + 500 * dt);
+      m.life += dt;
+      const speed = Math.min(820 * pace, len(m.v) + 500 * pace * dt);
       m.v = mul(norm(add(norm(m.v), want, Math.min(1, dt * 4.5))), speed);
       m.p = add(m.p, m.v, dt);
       m.trail.push(m.p);
@@ -265,6 +281,11 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
         m.gone = true;
         m.aim.hit(true);
       } else if (off(project(m.p), 200)) m.gone = true;
+      else if (m.life > 2.2) {
+        // Spent: it bursts where it is, as the game's do.
+        m.gone = true;
+        fx.spark(m.p);
+      }
     }
     for (const s of sparks) {
       s.p = add(s.p, s.v, dt);
@@ -293,7 +314,7 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
     for (const e of embers) {
       if (e.gone) continue;
       const p = project(e.p);
-      const r = Math.max(2, 4.5 * p[2] * (sc / 1.6));
+      const r = Math.max(2, 4.5 * e.size * p[2] * (sc / 1.6));
       const a = fog(e.p);
       seg(e.p, add(e.p, e.v, -0.06), r * 0.9, RUST, 0.45 * a);
       dot(p, r * 1.8, RUST, 0.4 * a);
@@ -303,7 +324,7 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
     for (const b of booms) {
       if (b.t > 0.5) continue;
       const p = project(b.p);
-      const r = (4 + b.t * (b.big ? 260 : 110)) * p[2] * (sc / 1.6);
+      const r = (4 + b.t * (b.big ? 260 : 110)) * p[2] * (sc / 1.6) * (b.size ?? 1);
       if (b.big) dot(p, r * 0.8, AMB, 0.35 * (1 - b.t / 0.5));
       ring(p, r, b.big ? 3 : 1.5, b.big ? INK_HI : RUST, 1 - b.t / 0.5);
     }
@@ -380,55 +401,19 @@ const stage = (band: HTMLCanvasElement, cyShare: number) => {
     if (shieldHit > 0) ring(p, r * (1 + (1 - shieldHit / 0.3) * 0.55), 2.5, INK_HI, 0.9 * (shieldHit / 0.3) * a);
   };
 
-  /** A gate, as the game draws one: two rings that breathe, in the
-   *  player's ink, standing across the way through (`F`) and turned
-   *  toward the eye, as the game turns a gate toward you so it can
-   *  always be crossed. `lit` (0–1) is the flare as the ship passes. */
-  const paintGate = (C: V3, F: V3, r: number, t: number, alpha: number, lit: number) => {
-    if (alpha <= 0) return;
-    const n = norm(add(F, [0, -sp, -cp], 1.6));
-    const R = norm(cross(n, [0, -1, 0]));
-    const B = { F: n, R, U: cross(n, R) };
-    ctx.strokeStyle = INK_HI;
-    for (const rr of [r, r * 0.83]) {
-      ctx.beginPath();
-      for (let i = 0; i <= 40; i++) {
-        const a = (i / 40) * Math.PI * 2;
-        const p = project(add(add(C, B.R, Math.cos(a) * rr), B.U, Math.sin(a) * rr));
-        if (i) ctx.lineTo(p[0], p[1]);
-        else ctx.moveTo(p[0], p[1]);
-      }
-      const k = project(C)[2];
-      ctx.lineWidth = (3 + 3 * lit) * k;
-      ctx.globalAlpha = alpha * (0.55 + 0.35 * Math.sin(t * 8) * (1 - lit) + 0.4 * lit);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-  };
+  /** Any of the game's models, stroked its way. */
+  const paintModel = (M: Model, P: V3, B: Basis, scale: number, color: string, alpha: number) =>
+    stroke(placed(M, P, B, scale), M[1], color, alpha, project(P)[2]);
 
-  /** The jump: streaks of light pouring past the ship as it goes. */
-  const paintWarp = (P: V3, B: Basis, amount: number, seed: number) => {
-    if (amount <= 0) return;
-    for (let i = 0; i < 18; i++) {
-      const a = (i / 18) * Math.PI * 2 + seed;
-      const d = (40 + ((i * 37) % 60)) * sc;
-      const from = add(add(add(P, B.R, Math.cos(a) * d), B.U, Math.sin(a) * d * 0.6), B.F, -((i * 53) % 90) * sc);
-      seg(from, add(from, B.F, -amount * (80 + ((i * 29) % 70)) * sc), 1.2, INK_HI, 0.5 * Math.min(1, amount));
-    }
-  };
-
-  return { ctx, W, H, sc, project, fog, off, orient, fx, update, busy, paintFire, paintShip, paintShield, paintGate, paintWarp, ring, dot, clear: () => ctx.clearRect(0, 0, W, H) };
+  return { ctx, W, H, sc, project, fog, off, orient, at, fx, update, busy, paintFire, paintShip, paintShield, paintModel, ring, dot, clear: () => ctx.clearRect(0, 0, W, H) };
 };
 
 /** A battle: `frame(dt)` advances and paints it and says false once it
  *  is over; `at()` is where the ship is on screen. */
 export type Battle = { frame: (dt: number) => boolean; at: () => Pt };
 
-/** A gentle swell: 0 → 1 → 0 over [a, b], eased at both ends. */
-const swell = (t: number, a: number, b: number) => Math.sin(Math.PI * ease(within(t, a, b)));
-
 /**
- * THE HERO: THE HUNT, ~12 s, left to right across the top of the
+ * THE HERO: THE HUNT, ~8 s, left to right across the top of the
  * screen, behind the name.
  *
  * Build-up: the ace glides in from the left edge; a beat later the ship
@@ -498,6 +483,8 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   const once = (at: number, dt: number) => t >= at && t - dt < at;
 
   const frame = (dt: number) => {
+    // Written slow, played a third faster: the same beats, tighter.
+    dt *= 1.5;
     t += dt;
     const P = shipAt(t);
     const pb = s.orient(shipAt, t);
@@ -525,35 +512,31 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
 };
 
 /**
- * MORE WORK: THE ESCAPE, ~11 s, in the strip over the game's own card,
- * right to left.
+ * MORE WORK: THE KULBIT, ~5.5 s, over the game's own card, right to left.
  *
  * Build-up: the ship sweeps in with two aces on its tail; their embers
- * come, a few at a time, and it rolls out of each. A dash buys it room,
- * a long weave keeps it there. Climax: it brakes hard, the aces
- * overshoot, and with them in front a missile pair takes both. Exit: it
- * eases back to speed and away off the left edge.
+ * slip past it. Climax: the post-stall Kulbit — the nose pitches up past
+ * vertical, the ship all but stops and somersaults backward in place,
+ * and the aces, too fast to follow, shoot through underneath it. It
+ * comes out of the flip on their tails: one volley each, and both go.
+ * Exit: it eases back to speed and away off the left edge.
  */
 export const chase = (band: HTMLCanvasElement): Battle => {
-  const s = stage(band, 0.72);
+  // A phone's band is short: the line a little lower there, the ships a
+  // size smaller and the loop tighter.
+  const phone = band.clientWidth < 600;
+  const s = stage(band, phone ? 0.36 : 0.42);
   const { W, H } = s;
-  // A phone's strip is short: the ships a size smaller there.
-  const sc = s.sc * (W < 600 ? 0.7 : 1);
+  const sc = s.sc * (phone ? 0.75 : 1);
   const ACE = 1.1 * sc;
-  const ROLLS: [number, number][] = [[1.6, 2.6], [4.6, 5.5]];
-  const EMBERS = [1.3, 1.5, 4.3, 4.5];
-  const DASH = 3.2;
-  const BRAKE: [number, number] = [6.0, 7.8];
-  const SALVO = 8.2;
+  const EMBERS = [0.7, 1.05];
+  const KULBIT: [number, number] = [1.6, 2.9];
+  const VOLLEYS = [3.15, 3.55];
 
-  // The ship's speed (share of the strip's width a second): a calm
-  // cruise, a swell on the dash, nearly nothing on the brake, then away.
+  // The ship's speed (share of the width a second): a cruise, almost
+  // nothing through the flip, then away harder.
   const speed = (t: number) =>
-    0.1 +
-    0.07 * swell(t, DASH, DASH + 1.0) -
-    0.085 * Math.min(ease(within(t, BRAKE[0], BRAKE[0] + 0.6)), 1 - ease(within(t, BRAKE[1], BRAKE[1] + 1.2))) +
-    0.03 * ease(within(t, BRAKE[1] + 1.5, BRAKE[1] + 3));
-  // Its distance along, integrated in small steps from the start.
+    0.24 - 0.22 * Math.min(ease(within(t, KULBIT[0] - 0.25, KULBIT[0] + 0.2)), 1 - ease(within(t, KULBIT[1] - 0.2, KULBIT[1] + 0.5))) + 0.08 * ease(within(t, KULBIT[1], KULBIT[1] + 1.2));
   const xs: number[] = [0];
   const STEP = 1 / 120;
   const along = (t: number) => {
@@ -561,24 +544,34 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     while (xs.length <= i + 1) xs.push(xs[xs.length - 1] + speed(xs.length * STEP) * STEP);
     return xs[i] + (xs[i + 1] - xs[i]) * (t / STEP - i);
   };
-  // Right to left, a long weave in height and depth.
-  const shipAt: Path = t => [
-    W * (0.6 - along(t)),
-    -H * (0.12 + 0.13 * Math.sin(1.05 * t)),
-    140 + 60 * Math.sin(0.6 * t + 0.4),
-  ];
-  // Each roll the way the weave turns, eased all through.
-  const shipRoll = (t: number) => ROLLS.reduce((r, [a, b], i) => r + (i % 2 ? -1 : 1) * Math.PI * 2 * ease(within(t, a, b)), 0);
-  // The aces: steady, a touch faster than the cruise — they close in,
-  // lose ground on the dash, and sail past on the brake. One higher and
-  // farther, one lower and nearer; each follows the weave a beat late.
+  // The flip: the nose up and over, all the way round, eased in and out.
+  const pitch = (t: number) => Math.PI * 2 * ease(within(t, ...KULBIT));
+  const LOOP = phone ? 26 : 34; // the somersault's radius, in model units
+  // Right to left, a gentle weave; through the flip, a tight loop.
+  const cruise: Path = t => [W * (0.66 - along(t)), -H * 0.04 * Math.sin(1.4 * t), 160 + 30 * Math.sin(0.8 * t)];
+  const shipAt: Path = t => {
+    const c = cruise(t);
+    const th = pitch(t);
+    // F0 is -x (it flies left), U0 is up: the loop rises and comes back.
+    return [c[0] - Math.sin(th) * LOOP * sc * 0.6, c[1] - (1 - Math.cos(th)) * LOOP * sc, c[2]];
+  };
+  const shipBasis = (t: number): Basis => {
+    const th = pitch(t);
+    if (th <= 0 || th >= Math.PI * 2) return s.orient(cruise, t);
+    // Through the flip the basis turns about the wings: nose up, over,
+    // and down again.
+    const F0: V3 = [-1, 0, 0];
+    const U0: V3 = [0, -1, 0];
+    const F = add(mul(F0, Math.cos(th)), U0, Math.sin(th));
+    const U = add(mul(U0, Math.cos(th)), F0, -Math.sin(th));
+    return { F, U, R: cross(F, U) };
+  };
+  // The aces: faster than the cruise, so they close in; through the
+  // flip they shoot by underneath, and carry on ahead. One a little
+  // higher and farther, one lower and nearer.
   const aceAt = (i: number): Path => t => {
-    const w = shipAt(Math.max(0, t - 0.6 - i * 0.4));
-    // Past the ship on the brake, they keep pulling away, easing up to
-    // speed: a clear overshoot.
-    const past = Math.max(0, t - BRAKE[0]);
-    const ahead = W * 0.07 * past * ease(past / 1.5);
-    return [W * (0.6 + 0.13 + i * 0.08) - W * 0.108 * t - ahead, w[1] + (i ? H * 0.1 : -H * 0.08), w[2] + (i ? -40 : 50)];
+    const c = cruise(Math.max(0, t - 0.3));
+    return [W * (0.66 + 0.16 + i * 0.09) - W * 0.3 * t, c[1] + H * (i ? 0.16 : 0.1), c[2] + (i ? -30 : 40)];
   };
   let t = 0;
   const aces = [0, 1].map(i => {
@@ -596,83 +589,152 @@ export const chase = (band: HTMLCanvasElement): Battle => {
   const frame = (dt: number) => {
     t += dt;
     const P = shipAt(t);
-    const pb = s.orient(shipAt, t, shipRoll(t));
-    // They fire at where the ship is going to be — and it rolls out of
-    // the way.
+    const pb = shipBasis(t);
     EMBERS.forEach((at, j) => {
       const a = aces[j % 2];
-      if (a.alive && once(at, dt))
-        s.fx.ember(add(a.path(t), s.orient(a.path, t).F, 22 * ACE), add(shipAt(t + 0.6), [0, (j % 2 ? 1 : -1) * H * 0.2, 0]));
+      if (once(at, dt)) s.fx.ember(add(a.path(t), s.orient(a.path, t).F, 22 * ACE), add(shipAt(t + 0.4), [0, (j % 2 ? 1 : -1) * H * 0.12, 0]));
     });
-    if (once(SALVO, dt)) {
-      s.fx.missile(P, pb, sc, -1, aces[0].target, 60);
-      s.fx.missile(P, pb, sc, 1, aces[1].target, 60);
-    }
-    if (t >= SALVO + 1.8) aces.forEach(kill);
+    VOLLEYS.forEach((at, i) => {
+      if (once(at, dt) && aces[i].alive) s.fx.fire(P, pb, sc, aces[i].path(t + 0.15), false, aces[i].target);
+    });
+    aces.forEach((a, i) => t >= VOLLEYS[i] + 0.6 && kill(a));
     s.update(dt, null);
     s.clear();
     for (const a of aces) if (a.alive) s.paintShip(a.path(t), s.orient(a.path, t), ACE, RUST, { engine: false });
     s.paintFire();
-    s.paintShip(P, pb, sc, INK, { dash: t >= DASH && t < DASH + 0.8 });
-    const gone = aces.every(a => !a.alive) && s.off(s.project(P), 150);
-    return t < 20 && (!gone || s.busy());
+    s.paintShip(P, pb, sc, INK);
+    const gone = aces.every(a => !a.alive) && s.off(s.project(P), 120);
+    return t < 12 && (!gone || s.busy());
   };
   return { frame, at: () => s.project(shipAt(t)) };
 };
 
 /**
- * THE FOOT: THE JUMP, ~8 s, a goodbye with no enemy in it — the game's
- * other half, flying. The ship cruises in from the left, threads two of
- * the game's gates (each flares as it passes), rolls once, slow, for the
- * fun of it, then turns into the distance, the light pours past it, and
- * it jumps away in a flash.
+ * THE FOOT: THE DESTROYER, ~5.5 s. The game's destroyer — its wedge of a
+ * hull, three engines burning at the stern, position lights, the two blue
+ * shield domes over the bridge — materialises in the distance as it does
+ * in the game. The ship comes in from below left, straight at it; the
+ * bow cannon charges and fires, and a roll takes the ship out of the
+ * way. A missile pair breaks the domes, one Overdrive volley hits the
+ * exposed bridge, and the destroyer goes down in a chain of blasts as the
+ * ship climbs away past it, off the top of the screen.
  */
-export const farewell = (band: HTMLCanvasElement): Battle => {
-  const s = stage(band, 0.6);
+export const destroyer = (band: HTMLCanvasElement): Battle => {
+  const s = stage(band, 0.6, 2600);
   const { W, H, sc } = s;
-  const GATES = [2.0, 3.8];
-  const ROLL: [number, number] = [4.5, 5.9];
-  const JUMP = 6.3;
+  const SD = 1.6 * (sc / 2) * 0.62; // the game's SD_SCALE, at this page's size
+  const CHARGE: [number, number] = [0.9, 1.6];
+  const ROLL: [number, number] = [1.45, 2.15];
+  const SALVO = 2.05;
+  const VOLLEY = 2.85;
 
-  // In from the left, level and calm; from the jump on, away into the
-  // depth with a long, eased acceleration.
+  // The destroyer: far off, drifting slowly to the right, bow toward the
+  // ship's side, a little turned toward us.
+  const sdAt: Path = t => [W * (0.1 + 0.012 * t), H * 0.42, 1000];
+  // Tipped toward the eye, so its wedge reads from above, as the game
+  // shows it from its chase camera.
+  const sdB = (() => {
+    const F = norm([1, 0, -0.45]);
+    const U = norm([0, -1, -0.9]);
+    const R = norm(cross(F, U));
+    return { F: cross(U, R), U, R };
+  })();
+  /** A point on its hull (the game's local units). */
+  const onHull = (t: number, p: V3) => s.at(sdAt(t), sdB, SD, p);
+  const BRIDGE: V3 = [0, -150, -345];
+  const DOMES: V3[] = [[110, -185, -340], [-110, -185, -340]];
+  const NOSE: V3 = [0, 10, 560];
+
+  // The ship: a curve in from the near bottom left, toward the bridge,
+  // then up and away past it, off the top.
+  const P0: V3 = [-W * 0.72, H * 0.5, -120];
+  const P1: V3 = [-W * 0.3, H * 0.42, 380];
+  const P2: V3 = [W * 0.08, H * 0.1, 720];
+  const P3: V3 = [W * 0.6, -H * 1.1, 700];
   const shipAt: Path = t => {
-    const u = Math.max(0, t - JUMP);
-    return [
-      W * (-0.55 + 0.1 * t) - W * 0.05 * u * u,
-      -H * (0.02 + 0.06 * Math.sin(0.8 * t)) - H * 0.1 * u * u,
-      -40 + 75 * t + 900 * u * u * u,
-    ];
+    const u = Math.max(0, Math.min(1.25, (t - 0.25) / 4.4));
+    const v = 1 - u;
+    return add(add(add(mul(P0, v * v * v), P1, 3 * v * v * u), P2, 3 * v * u * u), P3, u * u * u);
   };
   const roll = (t: number) => Math.PI * 2 * ease(within(t, ...ROLL));
-  const gates = GATES.map(at => ({ at, C: shipAt(at), F: s.orient(shipAt, at).F }));
-  const GATE_R = 62 * sc;
 
   let t = 0;
-  let flash = -1;
+  let domes = 2;
+  let sunkAt = -1;
+  const blasts: [number, V3, number][] = [];
+  const dome = { pos: () => onHull(t, DOMES[0]), r: 70 * SD, hit: () => breakDome() };
+  const breakDome = () => {
+    if (domes <= 0) return;
+    domes = 0;
+    for (const d of DOMES) s.fx.blast(onHull(t, d), 0.6);
+  };
+  const bridge = {
+    pos: () => onHull(t, BRIDGE),
+    r: 90 * SD,
+    hit: () => {
+      if (sunkAt >= 0) return;
+      sunkAt = t;
+      // A chain along the hull: the bridge, amidships, the bow, the stern.
+      [[0, BRIDGE, 1.4], [0.25, [0, -45, 80] as V3, 1], [0.5, NOSE, 0.9], [0.7, [-130, 18, -400] as V3, 1.1], [0.85, [130, 18, -400] as V3, 1]].forEach(
+        ([d, p, z]) => blasts.push([sunkAt + (d as number), p as V3, z as number]),
+      );
+    },
+  };
+  const once = (at: number, dt: number) => t >= at && t - dt < at;
+
   const frame = (dt: number) => {
     t += dt;
     const P = shipAt(t);
     const pb = s.orient(shipAt, t, roll(t));
-    const seen = s.fog(P);
-    if (flash < 0 && seen <= 0.35) flash = t;
+    if (once(CHARGE[1], dt)) s.fx.ember(onHull(t, NOSE), shipAt(t + 0.55), 3.2);
+    if (once(SALVO, dt)) for (const side of [-1, 1]) s.fx.missile(P, pb, sc, side, dome, 90);
+    if (once(VOLLEY, dt)) s.fx.fire(P, pb, sc, bridge.pos(), true, bridge);
+    if (domes > 0 && t > SALVO + 1.1) breakDome();
+    if (sunkAt < 0 && t > VOLLEY + 0.6) bridge.hit();
+    for (const b of blasts) if (once(b[0], dt)) s.fx.blast(onHull(t, b[1]), b[2]);
+
     s.update(dt, null);
     s.clear();
-    // Gates come up out of the dark ahead of it and stay a moment after.
-    for (const g of gates) {
-      const a = ease(within(t, g.at - 1.8, g.at - 0.9)) * (1 - ease(within(t, g.at + 0.6, g.at + 1.6)));
-      s.paintGate(g.C, g.F, GATE_R, t, a, swell(t, g.at - 0.15, g.at + 0.5));
+    // It materialises over a second, and after the bridge goes it fades
+    // away slowly, sinking, as the game's destroyer falls.
+    const sink = sunkAt < 0 ? 0 : ease((t - sunkAt) / 1.6);
+    const seen = ease(t / 1.1) * (1 - sink);
+    if (seen > 0) {
+      const at = add(sdAt(t), [0, sink * H * 0.12, 0]);
+      const hull = (p: V3) => s.at(at, sdB, SD, p);
+      s.paintModel(DESTROYER, at, sdB, SD, RUST, seen * 0.95);
+      // Three engines burning at the stern.
+      for (const ox of [-130, 0, 130]) {
+        const e = s.project(hull([ox, 18, -406]));
+        const r = 16 * SD * e[2];
+        s.dot(e, r * 1.6, AMB, 0.25 * seen);
+        s.dot(e, r * 0.7, CRM, 0.85 * seen);
+      }
+      // Position lights, breathing rather than blinking.
+      ([[0, -6, 560], [-300, -4, -400], [300, -4, -400], [-130, -168, -340], [130, -168, -340], [0, -48, 80]] as V3[]).forEach((l, i) =>
+        s.dot(s.project(hull(l)), Math.max(1.5, 3 * SD * 2), i < 3 ? RUST_HI : BLU, seen * (0.5 + 0.4 * Math.sin(t * 2.4 + i))),
+      );
+      // The shield domes over the bridge, while they stand.
+      if (domes > 0)
+        for (const d of DOMES) {
+          const p = s.project(hull(d));
+          const r = 36 * SD * p[2];
+          s.dot(p, r, BLD, (0.12 + 0.08 * Math.sin(t * 4)) * seen);
+          s.ring(p, r, 1.5, BLD, 0.9 * seen);
+        }
+      // The bow cannon charging: the warning.
+      if (t > CHARGE[0] && t < CHARGE[1]) {
+        const c = (t - CHARGE[0]) / (CHARGE[1] - CHARGE[0]);
+        const p = s.project(hull(NOSE));
+        const k = SD * p[2];
+        s.dot(p, (10 + 40 * c) * k, RUST_HI, (0.3 + 0.5 * c) * seen);
+        s.ring(p, (60 - 40 * c) * k, 2, CRM, c * seen);
+      }
     }
-    s.paintWarp(P, pb, ease(within(t, JUMP - 0.3, JUMP + 0.8)) * 1.6, t * 0.3);
-    s.paintShip(P, pb, sc, INK, { dash: t > JUMP + 0.2 && seen > 0.4 });
-    // The jump's flash, where it went.
-    if (flash >= 0) {
-      const p = s.project(P);
-      const u = t - flash;
-      s.ring(p, (6 + u * 160) * p[2] * (sc / 1.6) * 3, 2, INK_HI, 1 - u / 0.7);
-      s.dot(p, 6 * (1 - u / 0.4) * (sc / 1.6) * 3, INK_HI, 1 - u / 0.4);
-    }
-    return flash < 0 || t < flash + 0.8;
+    s.paintFire();
+    s.paintShip(P, pb, sc, INK, { dash: t > VOLLEY + 0.2 && t < VOLLEY + 0.8 });
+    const gone = sunkAt >= 0 && s.off(s.project(P), 120);
+    return t < 12 && (!gone || s.busy() || seen > 0);
   };
   return { frame, at: () => s.project(shipAt(t)) };
 };

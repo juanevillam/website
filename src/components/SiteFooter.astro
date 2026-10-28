@@ -162,10 +162,10 @@ const SOCIAL = [
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
-    {/* Space Explorer's ship jumps away through the empty row, now and
-        then. */}
-    {panel && <ShipEgg place="foot" />}
   </div>
+  {/* Space Explorer's ship takes on the destroyer, now and then, behind
+      the foot's words. */}
+  {panel && <ShipEgg place="foot" />}
 </footer>
 
 <script>
@@ -230,6 +230,9 @@ const SOCIAL = [
   .site-footer.is-snap {
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    /* The ship's scene stands behind the words (ShipEgg). */
+    position: relative;
+    isolation: isolate;
   }
 
   .inner {
@@ -241,7 +244,6 @@ const SOCIAL = [
      foot. The first row starts a 2rem eyebrow box plus a 1.5rem step
      down — exactly where every section's title line is. */
   .site-footer .inner {
-    position: relative;
     flex: 1;
     width: 100%;
     display: grid;
