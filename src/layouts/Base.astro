@@ -209,7 +209,9 @@ const url = new URL(path, Astro.site);
         // A deck turning or an app switching moves the light at once, not
         // on the next tick — so it leaves with the phone, both ways.
         const turned = new MutationObserver(ask);
-        for (const el of lit) turned.observe(el, { attributes: true, attributeFilter: ['class'] });
+        // A card's own light can change too (the Songs card, per song).
+        for (const el of lit)
+          turned.observe(el, { attributes: true, attributeFilter: ['class', 'data-scene'] });
         for (const el of document.querySelectorAll('[data-apps-deck]'))
           turned.observe(el, { attributes: true, attributeFilter: ['hidden'] });
         setInterval(light, 200);
