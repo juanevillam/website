@@ -187,7 +187,7 @@ const en = {
   'likes.songs.name': 'Songs',
   'likes.songs.meta': 'My Ranking',
   'likes.songs.body':
-    'These are the songs I play the most, ranked by me, two at a time, until the order felt right. Every one of them is in my own [Sound Shaper](shaper) library. Press play and shape them here, the way I do in the app.',
+    "Here are some of my favorite songs. If you notice, they share an electronic, cybernetic, futuristic style, like Tron: lots of techno. The fewer lyrics a song has, the better: more than songs, they're music, and to me they're works of art, which is why they're my top. A game: from my taste, try to guess my favorite part of each one, the sections I keep as clips in my Sound Shaper. The rest of the songs are of every kind, so you can play with the different filters. You can do all of this in the [Sound Shaper](shaper) app; this is just a preview of what you can do.",
   'songs.top': 'My Top',
   'songs.more': 'More Songs',
   'songs.moreNote': 'The rest of my library, not ranked, from A to Z.',
@@ -381,7 +381,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': 'Canciones',
     'likes.songs.meta': 'Mi ranking',
     'likes.songs.body':
-      'Estas son las canciones que más escucho, rankeadas por mí, de dos en dos, hasta que el orden se sintió bien. Todas están en mi propia biblioteca de [Sound Shaper](shaper). Dale play y moldéalas aquí, como lo hago yo en la app.',
+      'Aquí les comparto algunas de mis canciones favoritas. Si se fijan, tienen un estilo electrónico, cibernético, futurista, como de Tron: mucho techno. Mientras menos letra tenga una canción, mejor: más que canciones, son música, y para mí son obras de arte, por eso son mi top. Un juego: traten de adivinar, por mis gustos, cuáles son mis partes favoritas de cada una, las secciones que tengo como clips en mi Sound Shaper. Las demás canciones son de todo tipo, para que puedan jugar con los distintos filtros. Todo esto lo pueden hacer en la app de [Sound Shaper](shaper); esto es solo un preview de lo que pueden hacer.',
     'songs.top': 'Mi top',
     'songs.more': 'Más canciones',
     'songs.moreNote': 'El resto de mi biblioteca, sin ranking, de la A a la Z.',
@@ -570,7 +570,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': '歌曲',
     'likes.songs.meta': '我的排行',
     'likes.songs.body':
-      '这些是我听得最多的歌，由我两首两首地比较排出来，直到顺序感觉对了。每一首都在我自己的 [Sound Shaper](shaper) 曲库里。点播放，在这里塑造它们，就像我在 App 里那样。',
+      '这里分享一些我最喜欢的歌。仔细听会发现，它们都有一种电子、赛博、未来感的风格，像 Tron 那样：很多 techno。一首歌的歌词越少越好：与其说是歌，不如说是音乐，对我来说它们是艺术品，所以它们是我的最爱。来玩个游戏：根据我的品味，猜猜每首歌里我最喜欢哪一段，也就是我在 Sound Shaper 里存成片段的部分。其余的歌各种类型都有，你可以用不同的滤镜来玩。这一切都可以在 [Sound Shaper](shaper) App 里做到；这里只是你能做的事情的一个预览。',
     'songs.top': '我的最爱',
     'songs.more': '更多歌曲',
     'songs.moreNote': '我曲库里的其余歌曲，未排名，按字母顺序。',

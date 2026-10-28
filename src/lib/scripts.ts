@@ -299,12 +299,14 @@ export const SCRIPTS_ES: ScriptClip[] = [
     key: 'likes.songs.body',
     where: 'Más de mí · Canciones',
     draft:
-      'Por grabar: la tarjeta está hecha y escondida hasta que la grabes. El párrafo de ahora es de relleno; se reescribe desde tu toma en los tres idiomas.',
+      'Por grabar: la tarjeta está hecha y escondida hasta que la grabes. El párrafo de ahora sale de estas ideas; se re-ordena desde tu toma en los tres idiomas.',
     ideas: [
-      'Estas son las canciones que más escucho: el top de mi biblioteca de Sound Shaper.',
-      'Las rankeé yo mismo, en duelos de dos, hasta que el orden se sintió bien.',
-      'Este reproductor es Sound Shaper en la web: los mismos presets, el ecualizador, la velocidad con conservar el tono, eco y habitación contigua.',
-      'Dale play y moldéalas como yo lo hago en la app.',
+      'Aquí les comparto algunas de mis canciones favoritas.',
+      'Si se fijan, tienen un estilo electrónico, cibernético, futurista, como de Tron: mucho techno.',
+      'Mientras menos letra tenga una canción, mejor: más que canciones, son música, y para mí son obras de arte. Por eso son mi top.',
+      'Un juego: traten de adivinar, por mis gustos, cuáles son mis partes favoritas de cada una, las secciones que tengo como clips en mi Sound Shaper.',
+      'Las demás canciones son de todo tipo, para que puedan jugar con los distintos filtros.',
+      'Todo esto lo pueden hacer en la app de Sound Shaper; esto es solo un preview de lo que puedes hacer.',
     ],
   },
 
