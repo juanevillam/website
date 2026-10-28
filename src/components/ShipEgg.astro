@@ -8,7 +8,7 @@ import { workPath } from '../lib/links';
  *
  * - `hero`: the hunt, over the whole hero, behind the name.
  * - `foot`: the destroyer, over the whole foot, behind its words.
- * - `card`: the Kulbit, over the game's own card in More Work, while that
+ * - `card`: the loop, over the game's own card in More Work, while that
  *   card is in front, behind the cabinet and the words. No link: it
  *   plays by the card it would lead to, and must never take a tap meant
  *   for Play Game. The script stands it there.
@@ -131,7 +131,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
         const ship = await import('../lib/ship');
         const scene = hero ? ship.heroFight : ship.destroyer;
-        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 5 : 1.5);
+        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 1.9 : 3.2);
         else await ship.play(band, link, scene);
       });
       continue;
@@ -167,7 +167,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       async () => {
         if (!stand()) return;
         const ship = await import('../lib/ship');
-        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.1);
+        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 3.1);
         else await ship.play(band, null, ship.chase, front);
       },
       front,

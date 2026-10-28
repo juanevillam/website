@@ -25,15 +25,16 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   `npm run tridi` (refresh the Tridi robot's walk from `../../tridi/`, or
   `TRIDI_DIR`).
 - Easter eggs (`lib/eggs`, 2026-10-28). Space Explorer's ship is the
-  star, drawn with the game's own models, colours and arsenal
-  (`lib/ship`), in three different slow, cinematic scenes, each a link to
-  its card: the hunt behind the hero's name (the rust ace downed over the
-  name), the Kulbit over the game's card in More Work (two aces chase it,
-  it backflips in place, they overshoot underneath and it downs them; no
-  link there, so it never takes Play Game's tap) and the game's destroyer
-  in the foot (its bridge broken, the ship climbing away). The scenes
-  play behind the page's words, on canvases that reach the screen's
-  edges, so a ship leaving is never cut off.
+  star (`lib/ship`): three scenes that PLAY the game — a small copy of
+  its own simulation, with its numbers and rules (cruise, eased yaw and
+  pitch on a locked horizon, dash, barrel roll, loop, the cannon's
+  cadence and auto-aim cone, missiles, the aces' AI and embers, the
+  destroyer's turrets, cannon, domes and bridge) — where a scene adds only
+  the stick and a camera: the hunt behind the hero's name, the loop over
+  the game's card in More Work (no link there, so it never takes Play
+  Game's tap) and the destroyer in the foot. Each links to the game's
+  card. They play behind the page's words, on canvases that reach the
+  screen's edges, so a ship leaving is never cut off.
   Tridi's robot (`lib/robot`, Tridi's own data) only on the Platanus
   card's photo frame, where the tracking points become the G1 (a link to
   Tridi). Never while the voice plays or anything is open; with reduced
