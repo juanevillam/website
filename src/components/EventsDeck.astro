@@ -1,5 +1,6 @@
 ---
 import PanelDeck from './PanelDeck.astro';
+import RobotEgg from './RobotEgg.astro';
 
 /**
  * Events — where Juan has been (lib/events holds the list and says how
@@ -15,3 +16,7 @@ const { focus } = Astro.props;
 ---
 
 <PanelDeck id="events" title="events.title" items={EVENTS} focus={focus} share="events" />
+
+{/* Tridi's robot walks on the Platanus card's photos now and then; its
+    script stands it there. */}
+<RobotEgg />

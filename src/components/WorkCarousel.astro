@@ -1,6 +1,7 @@
 ---
 import PanelDeck from './PanelDeck.astro';
 import ArcadeCabinet from './ArcadeCabinet.astro';
+import ShipEgg from './ShipEgg.astro';
 import { PROJECTS } from '../lib/work';
 
 /**
@@ -17,3 +18,7 @@ const { focus } = Astro.props;
 <PanelDeck id="more-work" title="work.title" items={PROJECTS} focus={focus} share="work">
   <ArcadeCabinet slot="arcade" />
 </PanelDeck>
+
+{/* Space Explorer's chase over the game's card, now and then; its
+    script stands it there. */}
+<ShipEgg place="card" />

@@ -1,0 +1,176 @@
+---
+import T from './T.astro';
+import { PROJECTS } from '../lib/work';
+import { workPath } from '../lib/links';
+
+/**
+ * Space Explorer's ship (lib/eggs, lib/ship), in two places:
+ *
+ * - `hero`: the hunt, over the whole hero, behind the name.
+ * - `foot`: the destroyer, over the whole foot, behind its words.
+ * - `card`: the Kulbit, over the game's own card in More Work, while that
+ *   card is in front, behind the cabinet and the words. No link: it
+ *   plays by the card it would lead to, and must never take a tap meant
+ *   for Play Game. The script stands it there.
+ *
+ * In the hero and the foot, a link to the game's card rides on the ship.
+ * Out of the flow everywhere, so nothing moves when it comes or goes, and
+ * never cut off: each canvas reaches the screen's edges (or hides behind
+ * the page's own content) wherever a ship can leave.
+ */
+type Props = { place: 'hero' | 'card' | 'foot' };
+const { place } = Astro.props;
+const game = PROJECTS.find(p => p.id === 'space-explorer');
+---
+
+{
+  game && (
+    <div class:list={['egg-ship', `is-${place}`]} data-ship={place}>
+      <canvas class="egg-band" data-ship-band hidden aria-hidden="true" />
+      {place !== 'card' && (
+        <a class="egg-hit" href={workPath(game)} data-ship-link hidden>
+          <span class="sr-only">
+            <T k="egg.ship" />
+          </span>
+        </a>
+      )}
+    </div>
+  )
+}
+
+<style>
+  .egg-ship {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* The whole hero, behind the name (first in the section, so the name
+     paints over it): shots fly on until they leave the screen. */
+  .is-hero {
+    inset: 0;
+  }
+
+  /* The whole foot (SiteFooter stacks it). */
+  .is-foot {
+    inset: 0;
+  }
+
+  /* In the foot and on the card, the scene plays behind the words and
+     the cabinet; the foot's link stays over them, where it can be
+     clicked. */
+  .is-foot .egg-band,
+  .is-card .egg-band {
+    position: relative;
+    z-index: -1;
+  }
+
+  .egg-band {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .egg-band[hidden] {
+    display: none;
+  }
+
+  /* With reduced motion it does not fly: it fades in, stands, fades. */
+  @media (prefers-reduced-motion: reduce) {
+    .egg-band {
+      opacity: 0;
+      transition: opacity var(--dur-settle) var(--ease);
+    }
+
+    .egg-band.is-still {
+      opacity: 1;
+    }
+  }
+
+  .egg-hit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 56px;
+    border-radius: 999px;
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  .egg-hit:focus-visible {
+    outline: 1px solid var(--ink-3);
+    outline-offset: 2px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { nowAndThen, reduceMotion, toCard } from '../lib/eggs';
+
+  for (const egg of document.querySelectorAll<HTMLElement>('[data-ship]')) {
+    const band = egg.querySelector<HTMLCanvasElement>('[data-ship-band]')!;
+
+    if (egg.dataset.ship !== 'card') {
+      const link = egg.querySelector<HTMLAnchorElement>('[data-ship-link]')!;
+      const hero = egg.dataset.ship === 'hero';
+      const panel = egg.closest<HTMLElement>(hero ? 'section' : 'footer');
+      if (!panel) continue;
+      toCard(link, 'more-work', 'space-explorer');
+      // Soon after the panel settles, so a visit finds it; then now and
+      // then while it stays on screen.
+      nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
+        const ship = await import('../lib/ship');
+        const scene = hero ? ship.heroFight : ship.destroyer;
+        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 5 : 1.5);
+        else await ship.play(band, link, scene);
+      });
+      continue;
+    }
+
+    // The card: from the panel's top (the screen's, when it holds it) down
+    // to the cabinet's middle, edge to edge of the screen — behind the
+    // cabinet and the words, so a ship leaving goes off the screen or
+    // behind them, never against an edge. In the cabinet's own positioned
+    // ancestor, measured each time it plays.
+    const section = document.getElementById('more-work');
+    const card = section?.querySelector<HTMLElement>('.card[data-card="space-explorer"]');
+    const cabinet = card?.querySelector<HTMLElement>('.screen');
+    if (!section || !card || !cabinet) continue;
+    const front = () => card.classList.contains('is-current');
+    const stand = () => {
+      const holder = cabinet.offsetParent as HTMLElement | null;
+      if (!holder) return false;
+      if (egg.parentElement !== holder) holder.prepend(egg);
+      const c = cabinet.getBoundingClientRect();
+      const h = holder.getBoundingClientRect();
+      const top = section.getBoundingClientRect().top;
+      egg.style.left = `${(-h.left - holder.clientLeft).toFixed(1)}px`;
+      egg.style.width = `${document.documentElement.clientWidth}px`;
+      egg.style.top = `${(top - h.top - holder.clientTop).toFixed(1)}px`;
+      egg.style.height = `${(c.top + c.height / 2 - top).toFixed(1)}px`;
+      return true;
+    };
+    nowAndThen(
+      section,
+      [1200, 2000],
+      [25000, 40000],
+      async () => {
+        if (!stand()) return;
+        const ship = await import('../lib/ship');
+        if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.1);
+        else await ship.play(band, null, ship.chase, front);
+      },
+      front,
+    );
+  }
+</script>

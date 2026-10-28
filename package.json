@@ -9,6 +9,7 @@
     "preview": "astro preview",
     "typecheck": "astro check",
     "arcade": "node scripts/sync-arcade.mjs",
+    "tridi": "node scripts/sync-tridi.mjs",
     "likes": "node scripts/sync-likes.mjs",
     "backup": "node scripts/backup-media.mjs",
     "narration": "node scripts/narration-status.mjs",

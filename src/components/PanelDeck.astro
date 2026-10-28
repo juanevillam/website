@@ -250,6 +250,7 @@ for (const p of items)
             class="card deck-card"
             aria-roledescription="slide"
             aria-label={`${i + 1} / ${items.length}`}
+            data-card={p.id}
             data-scene={scenes[i]}
           >
             <div class="words">
@@ -1212,6 +1213,13 @@ for (const p of items)
             document.dispatchEvent(new CustomEvent('narr:select', { detail: para }));
         }
       },
+    });
+
+    // An easter egg's link (lib/eggs) asks for one card of this deck.
+    document.addEventListener('deck:show', e => {
+      const { deck: which, card } = (e as CustomEvent<{ deck: string; card: string }>).detail;
+      const i = cards.findIndex(c => c.dataset.card === card);
+      if (which === section?.id && i >= 0 && i !== deck.current) deck.go(i);
     });
 
     // The voice moved on by itself (a clip ended): the deck follows it.

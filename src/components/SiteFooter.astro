@@ -6,6 +6,7 @@ import { likesShown } from '../lib/release';
 import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
+import ShipEgg from './ShipEgg.astro';
 
 /**
  * The page's foot: each app's legal and help pages, and where to find
@@ -162,6 +163,9 @@ const SOCIAL = [
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
   </div>
+  {/* Space Explorer's ship takes on the destroyer, now and then, behind
+      the foot's words. */}
+  {panel && <ShipEgg place="foot" />}
 </footer>
 
 <script>
@@ -226,6 +230,9 @@ const SOCIAL = [
   .site-footer.is-snap {
     scroll-snap-align: start;
     scroll-snap-stop: always;
+    /* The ship's scene stands behind the words (ShipEgg). */
+    position: relative;
+    isolation: isolate;
   }
 
   .inner {

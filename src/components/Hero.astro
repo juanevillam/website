@@ -2,6 +2,7 @@
 import T from './T.astro';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
+import ShipEgg from './ShipEgg.astro';
 
 /**
  * The hero is the wordmark alone — a line of text under it was tried
@@ -14,6 +15,9 @@ const clip = clipFor('hero');
 ---
 
 <section class="hero" id="top" data-scene={NAME_SCENE} data-scene-kind="name">
+  <!-- Space Explorer's dogfight, now and then, BEHIND the name: first in
+       the section, so the name paints over it. -->
+  <ShipEgg place="hero" />
   <!-- The wrapper is what the cinema controller rides out on scroll — the
        revealed children carry transitions of their own, so the scroll-
        coupled transform lives one level up where nothing animates it. -->
@@ -60,6 +64,7 @@ const clip = clipFor('hero');
 
 <style>
   .hero {
+    position: relative;
     min-height: 100svh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
