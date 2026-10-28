@@ -33,6 +33,7 @@ import { SONGS } from '../lib/narration';
         poster={song.poster}
         width={song.width}
         height={song.height}
+        style={`--demo-ratio: ${song.height / song.width}`}
         playsinline
         preload="none"
         disablepictureinpicture
@@ -141,9 +142,19 @@ import { SONGS } from '../lib/narration';
     scale: 1;
   }
 
+  /* ON A PHONE THE DEMO TAKES THE WHOLE SCREEN (Juan, 2026-10-28): there
+     are no words beside it to leave room for, so the phone grows until it
+     meets either the screen's sides or the room under the close. */
   @media (max-width: 48rem) {
+    .demo-stage {
+      padding: calc(var(--float-gap) * 2 + var(--float-h)) 1rem 1rem;
+    }
+
     .demo-screen {
-      height: min(112vw, calc(100svh - var(--stage-top) - 16rem));
+      height: min(
+        calc((100vw - 2rem) * var(--demo-ratio)),
+        calc(100svh - var(--float-gap) * 2 - var(--float-h) - 1rem)
+      );
     }
   }
 
