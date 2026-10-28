@@ -1,0 +1,1243 @@
+---
+import T from './T.astro';
+import AppTile from './AppTile.astro';
+import { SONGS, songSrc, coverSrc } from '../lib/likes';
+import { BANDS, EQ_MAX_DB, EQ_MIN_DB, LEVELS, PRESETS, RATE_LAST_STOP, rateToStop } from '../lib/shaper';
+import type { UIKey } from '../i18n/ui';
+
+/**
+ * THE SONGS CARD'S SCREEN (ThingsILike) — Juan's top songs, ranked, in a
+ * small player that is Sound Shaper on the web: a "Powered by Sound
+ * Shaper" easter egg. Its Shape sheet is the app's own (lib/shaper):
+ * presets, the five-band equalizer, playback speed with Preserve Pitch,
+ * Echo and Next Room, every one heard live. A read-only preview — no
+ * clips, nothing saved, no account, no network but the song itself.
+ *
+ * Nothing loads until it is wanted: the covers when the card is in front,
+ * a song when play is pressed. The player pauses when its card turns
+ * away, and it and the narrator never talk over each other.
+ */
+const songs = SONGS.map(s => ({ ...s, src: songSrc(s), cover: coverSrc(s) }));
+const time = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s) % 60).padStart(2, '0')}`;
+const levelKey = (l: string) => `shape.levels.${l}` as UIKey;
+const first = songs[0];
+---
+
+<div class="songs" data-songs data-items={JSON.stringify(songs)}>
+  <div class="frame">
+  <div class="now">
+    <div class="art" aria-hidden="true">
+      {first.cover && <img data-now-art data-src={first.cover} alt="" width="240" height="240" decoding="async" draggable="false" />}
+    </div>
+    <div class="info">
+      <span class="now-title" data-now-title>{first.title}</span>
+      <span class="now-artist" data-now-artist>{first.artist}</span>
+    </div>
+    <div class="scrub">
+      <input type="range" class="slider seek" data-seek min="0" max="1000" step="1" value="0" aria-valuetext={`0:00 / ${time(first.seconds)}`} />
+      <span class="sr" data-seek-name><T k="songs.seek" /></span>
+      <span class="time" data-now-at>0:00</span>
+      <span class="time end" data-now-left>-{time(first.seconds)}</span>
+    </div>
+    <div class="transport">
+      <button type="button" class="glyph shape-open" data-shape-open aria-haspopup="dialog" aria-expanded="false">
+        <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+          <path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+          <circle cx="13" cy="5" r="2" fill="var(--player-bg)" stroke="currentColor" stroke-width="1.6"></circle>
+          <circle cx="7" cy="10" r="2" fill="var(--player-bg)" stroke="currentColor" stroke-width="1.6"></circle>
+          <circle cx="11" cy="15" r="2" fill="var(--player-bg)" stroke="currentColor" stroke-width="1.6"></circle>
+        </svg>
+        <span class="sr"><T k="shape.title" /></span>
+      </button>
+      <button type="button" class="glyph" data-step="-1">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path d="M11.5 12 20 6.5v11zM3 12l8.5-5.5v11z" fill="currentColor"></path>
+        </svg>
+        <span class="sr"><T k="songs.prev" /></span>
+      </button>
+      <button type="button" class="glyph play" data-play aria-pressed="false">
+        <svg class="g-play" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path d="M7 4.5v15L19.5 12z" fill="currentColor"></path>
+        </svg>
+        <svg class="g-pause" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+          <path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"></path>
+        </svg>
+        <span class="sr"><T k="songs.play" /></span>
+      </button>
+      <button type="button" class="glyph" data-step="1">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path d="M12.5 12 4 6.5v11zM21 12l-8.5-5.5v11z" fill="currentColor"></path>
+        </svg>
+        <span class="sr"><T k="songs.next" /></span>
+      </button>
+      <span class="glyph-space" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <div class="side">
+    <p class="powered">
+      <span class="tile" aria-hidden="true"><AppTile app="shaper" size={18} /></span>
+      <T k="songs.powered" />
+    </p>
+    <h4 class="sr" id="songs-list-name"><T k="songs.list" /></h4>
+    <ol class="list" aria-labelledby="songs-list-name">
+      {
+        songs.map((s, i) => (
+          <li>
+            <button type="button" class="row" data-song={i} aria-current={i === 0 ? 'true' : undefined}>
+              <span class="rank">{i + 1}</span>
+              <span class="thumb" aria-hidden="true">
+                {s.cover && <img data-src={s.cover} alt="" width="40" height="40" decoding="async" draggable="false" />}
+              </span>
+              <span class="row-words">
+                <span class="row-title">{s.title}</span>
+                <span class="row-artist">{s.artist}</span>
+              </span>
+              <span class="row-time" aria-hidden="true">{time(s.seconds)}</span>
+              <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+  </div>
+
+  <audio data-audio preload="none"></audio>
+  <template data-pause-name><T k="songs.pause" /></template>
+
+  <!-- THE SHAPE SHEET — the app's, section for section (its iOS Form):
+       Presets, Equalizer, Playback Speed, Preserve Pitch, Echo, Next Room.
+       It rises over the player and leaves it playing. -->
+  <div class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="shape-title" inert>
+    <div class="sheet-bar">
+      <span class="grabber" aria-hidden="true"></span>
+      <h4 class="sheet-title" id="shape-title" tabindex="-1"><T k="shape.title" /></h4>
+      <button type="button" class="done" data-shape-close><T k="shape.done" /></button>
+    </div>
+    <div class="sheet-body">
+      <fieldset class="group">
+        <legend class="head">
+          <span><T k="shape.presets" /></span>
+          <span class="value custom-tag" data-custom hidden><T k="shape.custom" /></span>
+        </legend>
+        <div class="chips" data-presets>
+          {
+            PRESETS.map(p => (
+              <label class="chip">
+                <input type="radio" name="songs-preset" value={p.id} checked={p.id === 'flat'} />
+                <span><T k={`eq.presets.${p.id}` as UIKey} /></span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <section class="group" aria-labelledby="songs-eq">
+        <h5 class="head" id="songs-eq"><T k="eq.title" /></h5>
+        <div class="card">
+          {
+            BANDS.map((b, i) => (
+              <div class="band">
+                <span class="band-hz" aria-hidden="true">{b.label}</span>
+                <input
+                  type="range"
+                  class="slider"
+                  data-band={i}
+                  min={EQ_MIN_DB}
+                  max={EQ_MAX_DB}
+                  step="1"
+                  value="0"
+                  aria-label={`${b.hz} Hz`}
+                  aria-valuetext="0 dB"
+                />
+                <span class="band-db" data-band-db={i} aria-hidden="true">0</span>
+              </div>
+            ))
+          }
+        </div>
+        <p class="foot"><T k="eq.hint" /></p>
+      </section>
+
+      <section class="group" aria-labelledby="songs-speed">
+        <h5 class="head" id="songs-speed">
+          <span><T k="shape.speed" /></span>
+          <span class="value" data-rate-label aria-hidden="true">1×</span>
+        </h5>
+        <div class="card">
+          <input
+            type="range"
+            class="slider"
+            data-rate
+            min="0"
+            max={RATE_LAST_STOP}
+            step="1"
+            value={rateToStop(1)}
+            aria-labelledby="songs-speed"
+            aria-valuetext="1×"
+          />
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="card toggle-row">
+          <span class="toggle-name" id="songs-pitch"><T k="shape.keepPitch" /></span>
+          <button type="button" class="switch" role="switch" aria-checked="true" data-pitch aria-labelledby="songs-pitch" aria-describedby="songs-pitch-foot">
+            <span class="knob"></span>
+          </button>
+        </div>
+        <p class="foot" id="songs-pitch-foot"><T k="shape.keepPitchDescription" /></p>
+      </section>
+
+      {
+        (['echo', 'nextRoom'] as const).map(fx => (
+          <fieldset class="group">
+            <legend class="head"><T k={`shape.${fx}` as UIKey} /></legend>
+            <div class="segments" data-level={fx}>
+              {LEVELS.map(l => (
+                <label class="segment">
+                  <input type="radio" name={`songs-${fx}`} value={l} checked={l === 'off'} />
+                  <span><T k={levelKey(l)} /></span>
+                </label>
+              ))}
+            </div>
+            <p class="foot"><T k={`shape.${fx}Description` as UIKey} /></p>
+          </fieldset>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  /* The player's own ground: the site's near-black, a step up from the
+     page, the way the app's sheets sit a step over its screens. */
+  .songs {
+    --player-bg: #121212;
+    --sheet-bg: rgb(28 28 28 / 0.86);
+    --fill: rgb(255 255 255 / 0.06);
+    --row-h: 3rem;
+    position: absolute;
+    inset: 0;
+    background: var(--player-bg);
+    color: var(--ink);
+    container-type: size;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Its two halves, laid out under the container (a container cannot
+     query itself). */
+  .frame {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+    height: 100%;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* ---------- now playing ---------- */
+
+  .now {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 1.25rem 1.25rem 1rem 1.5rem;
+  }
+
+  .art {
+    width: min(100%, 44cqh);
+    aspect-ratio: 1;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.5);
+  }
+
+  .art img,
+  .thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .now-title,
+  .row-title {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .now-title {
+    font-size: 1.0625rem;
+  }
+
+  .now-artist,
+  .row-artist {
+    color: var(--ink-2);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .scrub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 0.25rem;
+  }
+
+  .scrub .seek {
+    grid-column: 1 / -1;
+  }
+
+  .time {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .time.end {
+    text-align: right;
+  }
+
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-inline: -0.5rem;
+  }
+
+  .glyph,
+  .glyph-space {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+  }
+
+  .glyph {
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background-color var(--dur-micro) linear, scale var(--dur-micro) var(--ease);
+  }
+
+  .glyph:active {
+    scale: 0.92;
+  }
+
+  @media (hover: hover) {
+    .glyph:hover {
+      background: var(--fill);
+    }
+  }
+
+  .glyph.play {
+    width: 3.25rem;
+    height: 3.25rem;
+    background: var(--ink);
+    color: var(--ground);
+  }
+
+  @media (hover: hover) {
+    .glyph.play:hover {
+      background: #fff;
+    }
+  }
+
+  .play .g-pause,
+  .songs[data-playing] .play .g-play {
+    display: none;
+  }
+
+  .songs[data-playing] .play .g-pause {
+    display: block;
+  }
+
+  .shape-open[aria-expanded='true'] {
+    background: var(--fill);
+  }
+
+  /* ---------- the list ---------- */
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .powered {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.875rem 1rem 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .tile {
+    display: flex;
+    flex: none;
+  }
+
+  .list {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0 0.5rem 0.75rem;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1.25rem 2.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    min-height: var(--row-h);
+    padding: 0.25rem 0.5rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-micro) linear;
+  }
+
+  @media (hover: hover) {
+    .row:hover {
+      background: var(--fill);
+    }
+  }
+
+  .row[aria-current='true'] {
+    background: rgb(255 255 255 / 0.09);
+  }
+
+  .rank {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    text-align: center;
+  }
+
+  .thumb {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.3125rem;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .row-words {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .row-title {
+    font-size: 0.875rem;
+  }
+
+  .row-artist {
+    font-size: 0.75rem;
+  }
+
+  .row-time {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The song playing: its length makes way for three moving bars. */
+  .bars {
+    display: none;
+    grid-column: 4;
+    grid-row: 1;
+    align-items: flex-end;
+    gap: 2px;
+    height: 0.75rem;
+  }
+
+  .bars i {
+    width: 2px;
+    height: 100%;
+    border-radius: 1px;
+    background: var(--ink);
+    transform-origin: bottom;
+    animation: bar 0.9s ease-in-out infinite alternate;
+  }
+
+  .bars i:nth-child(2) {
+    animation-delay: -0.3s;
+  }
+
+  .bars i:nth-child(3) {
+    animation-delay: -0.6s;
+  }
+
+  .row[aria-current='true'] .row-time {
+    visibility: hidden;
+  }
+
+  .songs[data-playing] .row[aria-current='true'] .bars {
+    display: flex;
+  }
+
+  .songs:not([data-playing]) .row[aria-current='true'] .bars,
+  .songs:not([data-playing]) .bars i {
+    animation-play-state: paused;
+  }
+
+  @keyframes bar {
+    from {
+      transform: scaleY(0.25);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  /* ---------- sliders: monochrome, stepped, no ticks (the app's) ---------- */
+
+  .slider {
+    --p: 50%;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1.75rem;
+    margin: 0;
+    background: none;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .slider::-webkit-slider-runnable-track {
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background: linear-gradient(to right, var(--ink) var(--p), rgb(255 255 255 / 0.2) var(--p));
+  }
+
+  .slider::-moz-range-track {
+    height: 0.25rem;
+    border-radius: 0.125rem;
+    background: linear-gradient(to right, var(--ink) var(--p), rgb(255 255 255 / 0.2) var(--p));
+  }
+
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: -0.4375rem;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 0.45);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 0.45);
+  }
+
+  .seek {
+    height: 1rem;
+  }
+
+  .seek::-webkit-slider-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-top: -0.25rem;
+  }
+
+  .seek::-moz-range-thumb {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .slider:focus-visible {
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+
+  /* ---------- the Shape sheet ---------- */
+
+  .sheet {
+    position: absolute;
+    inset: 0.75rem 0 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.875rem 0.875rem 0 0;
+    background: var(--sheet-bg);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: 0 -0.5rem 2rem rgb(0 0 0 / 0.45);
+    transform: translateY(102%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .songs[data-shaping] .sheet {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--dur-turn) var(--ease);
+  }
+
+  .sheet-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0.875rem 0.75rem 0.5rem;
+  }
+
+  .grabber {
+    position: absolute;
+    top: 0.375rem;
+    left: 50%;
+    width: 2.25rem;
+    height: 0.3125rem;
+    margin-left: -1.125rem;
+    border-radius: 0.25rem;
+    background: rgb(255 255 255 / 0.25);
+  }
+
+  .sheet-title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+
+  .sheet-title:focus {
+    outline: none;
+  }
+
+  .done {
+    grid-column: 3;
+    justify-self: end;
+    min-height: 2.25rem;
+    padding: 0 0.875rem;
+    border: 0;
+    border-radius: 1.125rem;
+    background: var(--ink);
+    color: var(--ground);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.25rem 1rem 1.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+  }
+
+  .sheet-body > * {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+
+  .group {
+    margin-top: 1.25rem;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .group:first-child {
+    margin-top: 0.25rem;
+  }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 0 0.375rem;
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+  }
+
+  .value {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .custom-tag[hidden] {
+    display: none;
+  }
+
+  .card {
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.625rem;
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .foot {
+    margin: 0.375rem 0 0;
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--ink-3);
+  }
+
+  .band {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr 2.25rem;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+  }
+
+  .band + .band {
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+  }
+
+  .band-hz,
+  .band-db {
+    font-size: 0.75rem;
+    color: var(--ink-2);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .band-db {
+    text-align: right;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .switch {
+    position: relative;
+    flex: none;
+    width: 3.1875rem;
+    height: 1.9375rem;
+    padding: 0;
+    border: 0;
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 0.2);
+    cursor: pointer;
+    transition: background-color var(--dur-quick) var(--ease);
+  }
+
+  .switch[aria-checked='true'] {
+    background: var(--ink);
+  }
+
+  .knob {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1.6875rem;
+    height: 1.6875rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.1875rem 0.5rem rgb(0 0 0 / 0.3);
+    transition:
+      translate var(--dur-quick) var(--ease),
+      background-color var(--dur-quick) linear;
+  }
+
+  .switch[aria-checked='true'] .knob {
+    translate: 1.25rem 0;
+    background: var(--ground);
+  }
+
+  /* Presets: one row of chips that scrolls, edge to edge (the app's). */
+  .chips {
+    display: flex;
+    gap: 0.5rem;
+    margin-inline: -1rem;
+    padding: 0.125rem 1rem 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip,
+  .segment {
+    position: relative;
+    flex: none;
+    cursor: pointer;
+  }
+
+  .chip input,
+  .segment input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .chip span {
+    display: grid;
+    place-items: center;
+    min-height: 2rem;
+    padding: 0 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 1rem;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    transition:
+      background-color var(--dur-micro) linear,
+      color var(--dur-micro) linear;
+  }
+
+  .chip input:checked + span {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--ground);
+    font-weight: 600;
+  }
+
+  /* Echo and Next Room: Apple's segmented control. */
+  .segments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0.125rem;
+    border-radius: 0.5625rem;
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .segment span {
+    display: grid;
+    place-items: center;
+    min-height: 2rem;
+    padding: 0 0.25rem;
+    border-radius: 0.4375rem;
+    font-size: 0.8125rem;
+    text-align: center;
+    transition: background-color var(--dur-micro) linear;
+  }
+
+  .segment input:checked + span {
+    background: rgb(255 255 255 / 0.22);
+    font-weight: 600;
+    box-shadow: 0 0.1875rem 0.5rem rgb(0 0 0 / 0.25);
+  }
+
+  .chip:has(input:focus-visible) span,
+  .segment:has(input:focus-visible) span {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* ---------- narrow: a phone's upright screen ---------- */
+
+  @container (max-width: 30rem) {
+    .frame {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .now {
+      display: grid;
+      grid-template-columns: 4.5rem minmax(0, 1fr);
+      grid-template-areas:
+        'art info'
+        'scrub scrub'
+        'transport transport';
+      align-items: center;
+      gap: 0.625rem 0.875rem;
+      padding: 1rem 1rem 0.5rem;
+    }
+
+    .art {
+      grid-area: art;
+      width: 4.5rem;
+    }
+
+    .info {
+      grid-area: info;
+    }
+
+    .scrub {
+      grid-area: scrub;
+    }
+
+    .transport {
+      grid-area: transport;
+    }
+
+    .side {
+      border-left: 0;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .powered {
+      padding: 0.625rem 1rem 0.375rem;
+    }
+
+    /* The card's name and facts lie over the screen's foot on a phone
+       (PanelDeck's caption): the list scrolls its last row clear of it. */
+    .list {
+      padding-bottom: 4.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet,
+    .songs[data-shaping] .sheet {
+      transition: none;
+    }
+
+    .bars i {
+      animation: none;
+      transform: scaleY(0.6);
+    }
+  }
+
+  /* A phone's screen stands upright for the player, like the photos'. */
+  @media (max-width: 48rem) {
+    :global(.screen.is-own:has(> [data-songs])) {
+      aspect-ratio: 4 / 5;
+    }
+  }
+
+  @media (max-width: 48rem) and (max-height: 50rem) {
+    :global(.screen.is-own:has(> [data-songs])) {
+      aspect-ratio: 1;
+    }
+  }
+</style>
+
+<script>
+  import { createShaper, presetOf, PRESETS, stopToRate, type Level } from '../lib/shaper';
+
+  type Item = { id: string; title: string; artist: string; seconds: number; src: string; cover?: string };
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-songs]')) {
+    const items: Item[] = JSON.parse(root.dataset.items!);
+    const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
+    const shaper = createShaper(audio);
+    const $ = <E extends Element = HTMLElement>(s: string) => root.querySelector<E>(s)!;
+    const rows = [...root.querySelectorAll<HTMLButtonElement>('[data-song]')];
+    const seek = $<HTMLInputElement>('[data-seek]');
+    const play = $<HTMLButtonElement>('[data-play]');
+    const sheet = $('[data-sheet]');
+    const opener = $<HTMLButtonElement>('[data-shape-open]');
+    const bandInputs = [...root.querySelectorAll<HTMLInputElement>('[data-band]')];
+    const rateInput = $<HTMLInputElement>('[data-rate]');
+    const pitch = $<HTMLButtonElement>('[data-pitch]');
+    const card = root.closest<HTMLElement>('.deck-card');
+    let at = 0;
+    let loaded = -1;
+    let seeking = false;
+
+    const lang = () => document.documentElement.dataset.lang || 'en';
+    const clock = (s: number) => {
+      const t = Math.max(0, Math.floor(s || 0));
+      return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    };
+    const fill = (input: HTMLInputElement) => {
+      const p = (Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min));
+      input.style.setProperty('--p', `${(p * 100).toFixed(2)}%`);
+    };
+    // ----- the covers load with the card -----
+    const wake = () => {
+      for (const img of root.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+        img.src = img.dataset.src!;
+        img.removeAttribute('data-src');
+      }
+    };
+
+    // ----- now playing -----
+    const show = (i: number) => {
+      at = i;
+      const s = items[i];
+      $('[data-now-title]').textContent = s.title;
+      $('[data-now-artist]').textContent = s.artist;
+      const art = root.querySelector<HTMLImageElement>('[data-now-art]');
+      if (art && s.cover) {
+        if (art.dataset.src) art.dataset.src = s.cover;
+        else art.src = s.cover;
+      }
+      rows.forEach((r, n) => (n === i ? r.setAttribute('aria-current', 'true') : r.removeAttribute('aria-current')));
+      progress(0, s.seconds);
+    };
+
+    const progress = (now: number, total: number) => {
+      if (!seeking) seek.value = String(total ? Math.round((now / total) * 1000) : 0);
+      fill(seek);
+      $('[data-now-at]').textContent = clock(now);
+      $('[data-now-left]').textContent = `-${clock(total - now)}`;
+      seek.setAttribute('aria-valuetext', `${clock(now)} / ${clock(total)}`);
+    };
+    const length = () => (Number.isFinite(audio.duration) ? audio.duration : items[at].seconds);
+
+    const session = () => {
+      if (!('mediaSession' in navigator)) return;
+      const s = items[at];
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: s.title,
+        artist: s.artist,
+        album: 'Sound Shaper',
+        artwork: s.cover ? [{ src: s.cover, sizes: '480x480', type: 'image/webp' }] : [],
+      });
+      navigator.mediaSession.setActionHandler('play', () => start());
+      navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+      navigator.mediaSession.setActionHandler('previoustrack', () => go(at - 1));
+      navigator.mediaSession.setActionHandler('nexttrack', () => go(at + 1));
+    };
+
+    const start = () => {
+      shaper.wake();
+      if (loaded !== at) {
+        audio.src = items[at].src;
+        loaded = at;
+      }
+      shaper.reapplyRate();
+      // The narrator steps aside (director.ts): one voice at a time.
+      document.dispatchEvent(new CustomEvent('media:solo', { detail: root }));
+      audio.play().catch(() => {});
+      session();
+    };
+
+    const go = (i: number, autoplay = true) => {
+      const n = (i + items.length) % items.length;
+      const was = !audio.paused || autoplay;
+      show(n);
+      if (loaded !== n) {
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+        loaded = -1;
+      }
+      if (was) start();
+    };
+
+    play.addEventListener('click', () => (audio.paused ? start() : audio.pause()));
+    root.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(b =>
+      b.addEventListener('click', () => {
+        // Back restarts a song past its first seconds, the way players do.
+        if (b.dataset.step === '-1' && audio.currentTime > 3) {
+          audio.currentTime = 0;
+          return;
+        }
+        go(at + Number(b.dataset.step), !audio.paused);
+      }),
+    );
+    rows.forEach((r, i) =>
+      r.addEventListener('click', () => {
+        if (i === at && loaded === i) {
+          if (audio.paused) start();
+          else audio.pause();
+        } else go(i);
+      }),
+    );
+
+    // The play button's name follows what it does next.
+    const paint = () => {
+      const on = !audio.paused;
+      root.toggleAttribute('data-playing', on);
+      play.setAttribute('aria-pressed', String(on));
+      play.querySelector('.sr')!.innerHTML = on
+        ? play.dataset.pauseName ?? ''
+        : play.dataset.playName ?? '';
+    };
+    play.dataset.playName = play.querySelector('.sr')!.innerHTML;
+    play.dataset.pauseName = root.querySelector('template[data-pause-name]')?.innerHTML ?? play.dataset.playName;
+    audio.addEventListener('play', paint);
+    audio.addEventListener('pause', paint);
+    audio.addEventListener('ended', () => go(at + 1));
+    audio.addEventListener('timeupdate', () => progress(audio.currentTime, length()));
+    audio.addEventListener('loadedmetadata', () => {
+      shaper.reapplyRate();
+      progress(audio.currentTime, length());
+    });
+
+    seek.addEventListener('input', () => {
+      seeking = true;
+      const total = length();
+      const to = (Number(seek.value) / 1000) * total;
+      fill(seek);
+      $('[data-now-at]').textContent = clock(to);
+      $('[data-now-left]').textContent = `-${clock(total - to)}`;
+    });
+    seek.addEventListener('change', () => {
+      seeking = false;
+      const to = (Number(seek.value) / 1000) * length();
+      if (loaded !== at) {
+        // Seeking a song not yet loaded loads it there, still paused.
+        shaper.wake();
+        audio.src = items[at].src;
+        loaded = at;
+        audio.addEventListener('loadedmetadata', () => (audio.currentTime = to), { once: true });
+      } else audio.currentTime = to;
+    });
+
+    // ----- the Shape sheet -----
+    const setShaping = (on: boolean) => {
+      root.toggleAttribute('data-shaping', on);
+      sheet.inert = !on;
+      opener.setAttribute('aria-expanded', String(on));
+      for (const el of root.querySelectorAll<HTMLElement>('.frame')) el.inert = on;
+      if (on) $('#shape-title').focus({ preventScroll: true });
+      else opener.focus({ preventScroll: true });
+    };
+    opener.addEventListener('click', () => setShaping(true));
+    $('[data-shape-close]').addEventListener('click', () => setShaping(false));
+    sheet.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setShaping(false);
+    });
+
+    const customTag = $('[data-custom]');
+    const presetRadios = [...root.querySelectorAll<HTMLInputElement>('[data-presets] input')];
+    const showGains = () => {
+      const gains = shaper.shape.gains;
+      bandInputs.forEach((input, i) => {
+        input.value = String(gains[i]);
+        fill(input);
+        const db = gains[i] > 0 ? `+${gains[i]}` : `${gains[i]}`;
+        root.querySelector(`[data-band-db="${i}"]`)!.textContent = db;
+        input.setAttribute('aria-valuetext', `${db} dB`);
+      });
+      const preset = presetOf(gains);
+      presetRadios.forEach(r => (r.checked = r.value === preset));
+      customTag.hidden = preset !== null;
+    };
+    presetRadios.forEach(r =>
+      r.addEventListener('change', () => {
+        const p = PRESETS.find(x => x.id === r.value)!;
+        shaper.set({ gains: [...p.gains] });
+        showGains();
+      }),
+    );
+    bandInputs.forEach((input, i) =>
+      input.addEventListener('input', () => {
+        const gains = shaper.shape.gains.slice();
+        gains[i] = Math.round(Number(input.value));
+        shaper.set({ gains });
+        showGains();
+      }),
+    );
+
+    const showRate = () => {
+      const label = `${new Intl.NumberFormat(lang()).format(shaper.shape.rate)}×`;
+      $('[data-rate-label]').textContent = label;
+      rateInput.setAttribute('aria-valuetext', label);
+      fill(rateInput);
+    };
+    rateInput.addEventListener('input', () => {
+      shaper.set({ rate: stopToRate(Number(rateInput.value)) });
+      showRate();
+    });
+    pitch.addEventListener('click', () => {
+      const on = pitch.getAttribute('aria-checked') !== 'true';
+      pitch.setAttribute('aria-checked', String(on));
+      shaper.set({ keepPitch: on });
+    });
+    for (const group of root.querySelectorAll<HTMLElement>('[data-level]')) {
+      const fx = group.dataset.level as 'echo' | 'nextRoom';
+      group.addEventListener('change', e => {
+        shaper.set({ [fx]: (e.target as HTMLInputElement).value as Level });
+      });
+    }
+    new MutationObserver(showRate).observe(document.documentElement, { attributeFilter: ['data-lang'] });
+
+    // ----- living inside a deck -----
+    // The deck turns on arrow keys and sideways swipes: a slider, a radio
+    // or the sheet keeps its own.
+    root.addEventListener('keydown', e => {
+      if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input')) e.stopPropagation();
+    });
+    root.addEventListener(
+      'touchstart',
+      e => {
+        if ((e.target as HTMLElement).closest('input, .sheet, .chips')) e.stopPropagation();
+      },
+      { passive: true },
+    );
+
+    // In front, the covers load; turned away, the song pauses and the
+    // sheet closes.
+    const follow = () => {
+      if (!card || card.classList.contains('is-current')) wake();
+      else {
+        audio.pause();
+        if (root.hasAttribute('data-shaping')) setShaping(false);
+      }
+    };
+    if (card) new MutationObserver(follow).observe(card, { attributeFilter: ['class'] });
+    follow();
+    // The narrator starts or resumes: the song makes way.
+    document.addEventListener('narr:voice', () => audio.pause());
+
+    show(0);
+    showGains();
+    showRate();
+    fill(rateInput);
+  }
+</script>

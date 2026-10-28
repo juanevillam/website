@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PanelDeck from './PanelDeck.astro';
 import PhotoViewer from './PhotoViewer.astro';
+import SongsPlayer from './SongsPlayer.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
 import SiteFooter from './SiteFooter.astro';
 import { LIKES } from '../lib/likes';
@@ -13,7 +14,8 @@ import type { DeckItem } from '../lib/deck-items';
  * (pages/things-i-like), reached from the footer: the landing loads none
  * of its pictures. It is built the way the landing's sections are (Juan,
  * 2026-10-27) — the section's eyebrow, then one panel deck, a card per
- * set (Cosmos, paintings), each its words beside its frame —
+ * set (Cosmos, paintings, and Songs, whose screen is a player of its
+ * own: SongsPlayer), each its words beside its frame —
  * and closes on the same footer.
  */
 type Props = {
@@ -38,7 +40,9 @@ const plain = (c: DeckItem) => {
   })()}
   path={card ? `/things-i-like/${card.slug}` : '/things-i-like'}
 >
-  <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id} />
+  <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id}>
+    {LIKES.some(c => c.id === 'songs') && <SongsPlayer slot="songs" />}
+  </PanelDeck>
   <SiteFooter panel />
   <NarrationPlayer />
   <PhotoViewer />

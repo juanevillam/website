@@ -295,6 +295,18 @@ export const SCRIPTS_ES: ScriptClip[] = [
       'No tienen ranking, porque me gustan todas: salen en un orden distinto cada vez.',
     ],
   },
+  {
+    key: 'likes.songs.body',
+    where: 'Más de mí · Canciones',
+    draft:
+      'Por grabar: la tarjeta está hecha y escondida hasta que la grabes. El párrafo de ahora es de relleno; se reescribe desde tu toma en los tres idiomas.',
+    ideas: [
+      'Estas son las canciones que más escucho: el top de mi biblioteca de Sound Shaper.',
+      'Las rankeé yo mismo, en duelos de dos, hasta que el orden se sintió bien.',
+      'Este reproductor es Sound Shaper en la web: los mismos presets, el ecualizador, la velocidad con conservar el tono, eco y habitación contigua.',
+      'Dale play y moldéalas como yo lo hago en la app.',
+    ],
+  },
 
   // Footer
   {

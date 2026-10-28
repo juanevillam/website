@@ -1,4 +1,7 @@
 import type { DeckItem } from './deck-items';
+import { songsShown } from './release';
+import ORDER from '../data/likes-order.json';
+import ENCODED from '../data/songs.json';
 
 /**
  * THINGS I LIKE — what Juan loves outside of work, so a visitor knows him
@@ -159,6 +162,34 @@ export const PAINTINGS = CANVASES;
 const thumbOf = (src: string) => src.replace(/\.webp$/, '-thumb.webp');
 
 /**
+ * JUAN'S TOP SONGS — his own Sound Shaper library, ranked by him in
+ * /dev/ranker (`likes-order.json` → `songs`) and made into the site's
+ * music by `npm run songs` (scripts/sync-songs.mjs), which writes
+ * `songs.json`: only the ranked ones ship. Played on the card with Sound
+ * Shaper's own Shape controls (SongsPlayer). A title and an artist are
+ * proper names, the same in every language.
+ */
+export type Song = {
+  id: string;
+  title: string;
+  artist: string;
+  /** Its length, for the list before it has loaded. */
+  seconds: number;
+  cover: boolean;
+};
+
+const encoded = ENCODED as Song[];
+const ranked = ORDER.songs as string[];
+/** In the ranked order; the encoded list as it is while there is none. */
+export const SONGS: Song[] = ranked.length
+  ? ranked.flatMap(id => encoded.filter(s => s.id === id))
+  : encoded;
+
+export const songSrc = (s: Song) => `/media/likes/songs/${s.id}.m4a`;
+export const coverSrc = (s: Song) =>
+  s.cover ? `/media/likes/songs/${s.id}.webp` : undefined;
+
+/**
  * THE GALLERY'S CARDS — a panel deck like More Work and Events
  * (PanelDeck), on a page of its own (pages/things-i-like). Cosmos and the
  * paintings are ONE frame each that turns through its pictures, in a new
@@ -203,4 +234,22 @@ export const LIKES: DeckItem[] = [
     shuffle: true,
     links: [],
   },
+  // A screen of its own: the player (SongsPlayer, the `songs` slot in
+  // ThingsILike). Not on the site till Juan records it (lib/release), and
+  // never with no songs made.
+  ...(songsShown && SONGS.length
+    ? [
+        {
+          id: 'songs',
+          slug: 'songs',
+          name: { k: 'likes.songs.name' },
+          meta: [[{ k: 'likes.songs.meta' }], ['Sound Shaper']],
+          body: 'likes.songs.body',
+          clip: 'likes.songs.body',
+          image: { slot: 'songs' },
+          scene: SONGS.map(coverSrc).find(Boolean),
+          links: [],
+        } satisfies DeckItem,
+      ]
+    : []),
 ];

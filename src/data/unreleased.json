@@ -1,5 +1,8 @@
 {
   "events": [],
   "likes": false,
-  "media": []
+  "songs": true,
+  "media": [
+    "media/likes/songs"
+  ]
 }
