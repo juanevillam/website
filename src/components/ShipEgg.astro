@@ -4,10 +4,10 @@ import { PROJECTS } from '../lib/work';
 import { workPath } from '../lib/links';
 
 /**
- * Space Explorer's ship, now and then, across the hero (lib/eggs,
+ * Space Explorer's ship, in a dogfight across the hero (lib/eggs,
  * lib/ship): a link to the game's card. Out of the flow — a canvas over
- * the hero's upper part and the link riding on the ship — so nothing
- * moves when it comes or goes.
+ * the hero's upper half, behind the name, and the link riding on the
+ * ship — so nothing moves when it comes or goes.
  */
 const game = PROJECTS.find(p => p.id === 'space-explorer');
 ---
@@ -26,19 +26,18 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
 }
 
 <style>
-  /* Over the hero's upper part: under the header's line, over the
-     greeting. */
+  /* The hero's upper half, under the header's line, behind the name. */
   .egg-ship {
     position: absolute;
-    inset: 12% 0 auto;
-    height: 22%;
+    inset: 7% 0 auto;
+    height: 44%;
     pointer-events: none;
   }
 
   @media (max-width: 48rem) {
     .egg-ship {
-      inset: 14% 0 auto;
-      height: 18%;
+      inset: 9% 0 auto;
+      height: 36%;
     }
   }
 
@@ -69,8 +68,8 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     position: absolute;
     top: 0;
     left: 0;
-    width: 64px;
-    height: 48px;
+    width: 80px;
+    height: 56px;
     border-radius: 999px;
     pointer-events: auto;
     cursor: pointer;
@@ -100,12 +99,12 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
   const hero = band?.closest<HTMLElement>('section');
   if (band && link && hero) {
     toCard(link, 'more-work', 'space-explorer');
-    // The first after a while on the name, then rarely; half of them
-    // meet a hunter.
-    nowAndThen(hero, [7000, 12000], [40000, 70000], async () => {
+    // Soon after the name settles, so a visit finds it; then now and
+    // then while the name stays on screen.
+    nowAndThen(hero, [2500, 4000], [25000, 40000], async () => {
       const ship = await import('../lib/ship');
       if (reduceMotion.matches) await ship.stand(band, link);
-      else await ship.fly(band, link, Math.random() < 0.5);
+      else await ship.fly(band, link);
     });
   }
 </script>

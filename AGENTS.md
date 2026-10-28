@@ -24,39 +24,15 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   checklist), `npm run arcade` (refresh Space Explorer from `../games/`),
   `npm run tridi` (refresh the Tridi robot's walk from `../../tridi/`, or
   `TRIDI_DIR`).
-- Easter eggs (`lib/eggs`, 2026-10-28): now and then Space Explorer's ship
-  (the game's own wireframe model) flies across the hero, and in the foot
-  Tridi's tracking points walk in and become the G1 robot (real data from
-  Tridi's `caminar` clip). Each links to its card. Only while their panel
-  holds the screen, never while the voice plays or anything is open; with
-  reduced motion they stand still. Their drawing loads on first show.
-- Things I Like (`/things-i-like`, `lib/likes`): a page built like a
-  landing section — eyebrow, one panel deck (Cosmos, paintings, songs;
-  each card its own address `/things-i-like/{slug}`) — reached from
-  the footer's own column. Any photo frame (there and in Events) opens
-  full size in `PhotoViewer` — never on the landing, which loads none of its
-  pictures: `npm run likes` remakes its pictures and thumbnails from
-  Juan's folders in iCloud Drive's `Life/`; `/dev/ranker` (dev only) is
-  where he picks his top songs from his library (`Life/music`, played
-  straight from there) and ranks them in duels of two, and its Save writes
-  `src/data/likes-order.json` (`songs`), the order the site shows. Cosmos
-  and the paintings are not ranked: they show in a new random order each
-  visit. Video Games was taken out (Juan, 2026-10-28).
-- **Not yet released** (`src/data/unreleased.json`, `lib/release`): what is
-  built and kept but not published. `astro dev` shows it all; a production
-  build leaves out its cards and pages and drops its media from `dist`.
-  Releasing one is taking it out of that file.
-- `/dev/todos` (dev only) is Juan's to-do list for the site: the clips to
-  re-record gather by themselves (every script with a `draft` note in
-  `lib/scripts`), and anything else is added and ticked off on the page,
-  saved to `src/data/todos.json`.
-- `npm run backup` mirrors everything that is not code — the site's
-  media, Juan's raw narration takes, the transcripts, every text in each
-  language and the scripts — to iCloud Drive (`Life/juanevillam-website`,
-  `BACKUP_DIR` elsewhere). The site's copies are the masters: Juan keeps
-  no originals of the events (a video's sound is gone once it is made
-  silent). The More of Me originals live in iCloud Drive's `Life/`
-  (cosmos, paintings), which `npm run likes` reads, and `music`, the songs.
+- Easter eggs (`lib/eggs`, 2026-10-28): a few seconds after the hero
+  settles, Space Explorer's ship fights the game's rust ace behind the
+  name (the game's own models, colours and arsenal: cannon, shield, dash,
+  missiles, Overdrive) and links to its card; Tridi's tracking points walk
+  onto the Platanus card's photo frame and become the G1 (real data from
+  Tridi's `caminar` clip, linking to Tridi), and the same walk crosses the
+  foot (linking to that card). Never while the voice plays or anything is
+  open; with reduced motion they stand still. Their drawing loads on first
+  show.
 - One dev server at a time. `.claude/launch.json`: `web` (dev, `--host` for
   the iPhone on the LAN) and `web-prod` (build + preview on :4322).
 - **Verify on a real iPhone** for anything scroll- or motion-coupled: the

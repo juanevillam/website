@@ -23,13 +23,14 @@ export const busy = () =>
   !!document.querySelector('[data-narrator].is-playing, dialog[open]');
 
 /** Calls `show` every so often while `panel` holds the screen and the
- *  page is free: the first after `first` ms (a range), the next ones
- *  `then` ms after the last ended. */
+ *  page is free (and `ready`, when given, says yes): the first after
+ *  `first` ms (a range), the next ones `then` ms after the last ended. */
 export const nowAndThen = (
   panel: HTMLElement,
   first: [number, number],
   then: [number, number],
   show: () => Promise<void>,
+  ready: () => boolean = () => true,
 ) => {
   const wait = ([a, b]: [number, number]) => a + Math.random() * (b - a);
   let held = false;
@@ -41,7 +42,7 @@ export const nowAndThen = (
   };
   const tick = async () => {
     if (!held || showing) return;
-    if (busy()) return arm(4000);
+    if (busy() || !ready()) return arm(1000);
     showing = true;
     try {
       await show();
@@ -61,7 +62,7 @@ export const nowAndThen = (
 };
 
 /** A frame loop: `frame(dt)` until it returns false or the page gets
- *  busy. Resolves true when it ran to its end. */
+ *  busy. Resolves true when it ran to its end (or `frame` ended it). */
 export const run = (frame: (dt: number) => boolean) =>
   new Promise<boolean>(done => {
     let last = performance.now();

@@ -91,6 +91,7 @@ const en = {
   // The easter eggs (lib/eggs): what a screen reader says for each link.
   'egg.ship': 'The ship from Space Explorer. Go to the game.',
   'egg.robot': "Tridi's robot, walking like a person. Go to Platanus Hack 26 Caracas.",
+  'egg.robot.tridi': "Tridi's robot, walking like a person. Open Tridi.",
   'arcade.c.fly': 'Fly',
   'arcade.c.fire': 'Fire',
   'arcade.c.dash': 'Dash',
@@ -247,6 +248,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.close': 'Cerrar',
     'egg.ship': 'La nave de Space Explorer. Ir al juego.',
     'egg.robot': 'El robot de Tridi, caminando como una persona. Ir a Platanus Hack 26 Caracas.',
+    'egg.robot.tridi': 'El robot de Tridi, caminando como una persona. Abrir Tridi.',
     'arcade.c.fly': 'Volar',
     'arcade.c.fire': 'Disparar',
     'arcade.c.dash': 'Impulso',
@@ -397,6 +399,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.close': '关闭',
     'egg.ship': 'Space Explorer 的飞船。前往游戏。',
     'egg.robot': 'Tridi 的机器人，像人一样走路。前往 Platanus Hack 26 Caracas。',
+    'egg.robot.tridi': 'Tridi 的机器人，像人一样走路。打开 Tridi。',
     'arcade.c.fly': '飞行',
     'arcade.c.fire': '射击',
     'arcade.c.dash': '冲刺',

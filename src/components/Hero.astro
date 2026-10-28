@@ -15,6 +15,9 @@ const clip = clipFor('hero');
 ---
 
 <section class="hero" id="top" data-scene={NAME_SCENE} data-scene-kind="name">
+  <!-- Space Explorer's dogfight, now and then, BEHIND the name: first in
+       the section, so the name paints over it. -->
+  <ShipEgg />
   <!-- The wrapper is what the cinema controller rides out on scroll — the
        revealed children carry transitions of their own, so the scroll-
        coupled transform lives one level up where nothing animates it. -->
@@ -57,7 +60,6 @@ const clip = clipFor('hero');
       )
     }
   </div>
-  <ShipEgg />
 </section>
 
 <style>
