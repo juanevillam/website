@@ -298,8 +298,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'likes.songs.body',
     where: 'Más de mí · Canciones',
-    draft:
-      'Por grabar: la tarjeta está hecha y escondida hasta que la grabes. El párrafo de ahora sale de estas ideas; se re-ordena desde tu toma en los tres idiomas.',
     ideas: [
       'Aquí les comparto algunas de mis canciones favoritas.',
       'Si se fijan, tienen un estilo electrónico, cibernético, futurista, como de Tron: mucho techno.',

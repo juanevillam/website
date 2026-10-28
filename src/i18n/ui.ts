@@ -193,7 +193,7 @@ const en = {
   'likes.songs.name': 'Songs',
   'likes.songs.meta': 'My Ranking',
   'likes.songs.body':
-    "Here are some of my favorite songs. If you notice, they share an electronic, cybernetic, futuristic style, like Tron: lots of techno. The fewer lyrics a song has, the better: more than songs, they're music, and to me they're works of art, which is why they're my top. A game: from my taste, try to guess my favorite part of each one, the sections I keep as clips in my Sound Shaper. The rest of the songs are of every kind, so you can play with the different filters. You can do all of this in the [Sound Shaper](shaper) app; this is just a preview of what you can do.",
+    "Here are some of my favorite songs. If you notice, they share an electronic style that I call cybernetic, futuristic: I don't know if it's called techno or what. The fewer lyrics a song has, the more I like it: to me they're more music than songs, and these are my top. It would be cool if you tried to guess my favorite parts, the clips I keep of each song in my personal [Sound Shaper](shaper) library, as a way to get to know me better. The rest are songs of every kind, so you can play with all the different filters Sound Shaper has. This is a preview of everything you can do in the app, which is coming very soon to the App Store and Google Play.",
   'songs.top': 'My Top',
   'songs.more': 'More Songs',
   'songs.library': 'Songs',
@@ -294,7 +294,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.rotate': 'Gira tu teléfono para continuar.',
     'arcade.close': 'Cerrar',
     'egg.ship': 'La nave de Space Explorer. Ir al juego.',
-    'egg.robot.tridi': 'El robot de Tridi, caminando como una persona. Abrir Tridi.',
+    'egg.robot.tridi':
+      'El robot de Tridi, caminando como una persona. Abrir Tridi.',
     'arcade.c.fly': 'Volar',
     'arcade.c.fire': 'Disparar',
     'arcade.c.dash': 'Impulso',
@@ -391,7 +392,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': 'Canciones',
     'likes.songs.meta': 'Mi ranking',
     'likes.songs.body':
-      'Aquí les comparto algunas de mis canciones favoritas. Si se fijan, tienen un estilo electrónico, cibernético, futurista, como de Tron: mucho techno. Mientras menos letra tenga una canción, mejor: más que canciones, son música, y para mí son obras de arte, por eso son mi top. Un juego: traten de adivinar, por mis gustos, cuáles son mis partes favoritas de cada una, las secciones que tengo como clips en mi Sound Shaper. Las demás canciones son de todo tipo, para que puedan jugar con los distintos filtros. Todo esto lo pueden hacer en la app de [Sound Shaper](shaper); esto es solo un preview de lo que pueden hacer.',
+      'Aquí les comparto algunas de mis canciones favoritas. Si se fijan, tienen un estilo electrónico, que yo llamo cibernético, futurista: no sé si se llama techno o qué. Mientras menos letra tenga una canción, más me gusta: para mí son más música que canciones, y esas sí son mi top. Sería chulo que intentaran adivinar mis partes favoritas, los clips que tengo de cada canción en mi librería personal de [Sound Shaper](shaper), como un ejercicio para conocerme más. Las demás son canciones de todo tipo, para que puedan jugar con los distintos filtros que tiene Sound Shaper. Esto es un preview de todo lo que pueden hacer en la app, que muy pronto va a estar en la App Store y en Google Play.',
     'songs.top': 'Mi top',
     'songs.more': 'Más canciones',
     'songs.library': 'Canciones',
@@ -584,7 +585,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'likes.songs.name': '歌曲',
     'likes.songs.meta': '我的排行',
     'likes.songs.body':
-      '这里分享一些我最喜欢的歌。仔细听会发现，它们都有一种电子、赛博、未来感的风格，像 Tron 那样：很多 techno。一首歌的歌词越少越好：与其说是歌，不如说是音乐，对我来说它们是艺术品，所以它们是我的最爱。来玩个游戏：根据我的品味，猜猜每首歌里我最喜欢哪一段，也就是我在 Sound Shaper 里存成片段的部分。其余的歌各种类型都有，你可以用不同的滤镜来玩。这一切都可以在 [Sound Shaper](shaper) App 里做到；这里只是你能做的事情的一个预览。',
+      '这里和大家分享一些我最喜欢的歌。仔细听，它们都有一种电子风格，我称之为赛博、未来感：我也不知道它是不是叫 techno。一首歌的歌词越少，我越喜欢：对我来说它们更像是音乐而不是歌曲，这些才是我的最爱。如果你们能猜猜我最喜欢的部分，也就是我在自己的 [Sound Shaper](shaper) 曲库里为每首歌保存的片段，会很有意思，也算是更了解我的一种方式。其余的是各种类型的歌，方便你们试试 Sound Shaper 的各种滤镜。这里只是这款应用所有功能的预览，它很快就会登陆 App Store 和 Google Play。',
     'songs.top': '我的最爱',
     'songs.more': '更多歌曲',
     'songs.library': '歌曲',
