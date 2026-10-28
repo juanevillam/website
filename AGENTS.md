@@ -24,15 +24,17 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   checklist), `npm run arcade` (refresh Space Explorer from `../games/`),
   `npm run tridi` (refresh the Tridi robot's walk from `../../tridi/`, or
   `TRIDI_DIR`).
-- Easter eggs (`lib/eggs`, 2026-10-28): a few seconds after the hero
-  settles, Space Explorer's ship fights the game's rust ace behind the
-  name (the game's own models, colours and arsenal: cannon, shield, dash,
-  missiles, Overdrive) and links to its card; Tridi's tracking points walk
-  onto the Platanus card's photo frame and become the G1 (real data from
-  Tridi's `caminar` clip, linking to Tridi), and the same walk crosses the
-  foot (linking to that card). Never while the voice plays or anything is
-  open; with reduced motion they stand still. Their drawing loads on first
-  show.
+- Easter eggs (`lib/eggs`, 2026-10-28), drawn with the game's own models,
+  colours and arsenal (`lib/ship`) and Tridi's own data (`lib/robot`):
+  a few seconds after the hero settles, the ship hunts the game's rust ace
+  left to right behind the name and swoops out past the camera (a link to
+  its card); on Space Explorer's card, two aces chase it in the strip over
+  the cabinet until it brakes, they overshoot and a missile salvo takes
+  them (no link: it must never take Play Game's tap); on the Platanus
+  card, Tridi's tracking points walk onto the photo frame and become the
+  G1 (a link to Tridi), and the same walk crosses the foot (a link to that
+  card). Never while the voice plays or anything is open; with reduced
+  motion they stand still. Their drawing loads on first show.
 - One dev server at a time. `.claude/launch.json`: `web` (dev, `--host` for
   the iPhone on the LAN) and `web-prod` (build + preview on :4322).
 - **Verify on a real iPhone** for anything scroll- or motion-coupled: the

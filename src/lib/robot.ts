@@ -260,8 +260,8 @@ const stage = (band: HTMLCanvasElement) => {
 export type WalkOptions = {
   /** Where the person becomes the robot, as a share of the band. */
   handover?: number;
-  /** Where it comes in and where it leaves, as shares of the band (it
-   *  fades in and out there). */
+  /** Where it comes in and where it leaves, as shares of the band: it
+   *  fades in at `from`, and fades out slowly toward `to`. */
   from?: number;
   to?: number;
   /** Still wanted? Checked every frame; false ends the walk. */
@@ -279,7 +279,10 @@ export const walk = async (band: HTMLCanvasElement, link: HTMLAnchorElement, opt
   const from = (opts.from ?? 0) * W;
   const handover = W * (opts.handover ?? (W < 600 ? 0.3 : 0.34));
   const edge = 0.5 * m;
-  const end = (opts.to ?? 1) * W;
+  // It leaves before the band's end, over a long, gentle fade: about two
+  // seconds of its walk.
+  const end = (opts.to ?? 0.9) * W;
+  const away = 2 * ROBOT_PACE * m;
   let x = from > 0 ? from : -edge;
   let t = 0;
   let morph = -1;
@@ -294,10 +297,10 @@ export const walk = async (band: HTMLCanvasElement, link: HTMLAnchorElement, opt
     const k = Math.max(0, morph);
     x += (HUMAN_PACE + (ROBOT_PACE - HUMAN_PACE) * ease(k)) * m * dt;
     // In from the dark where it starts mid-band, out at the band's end.
-    const fade = Math.min(from > 0 ? ease((x - from) / edge) : 1, ease((end - x) / edge));
+    const fade = Math.min(from > 0 ? ease((x - from) / edge) : 1, ease((end - x) / away));
     paint(x, t, k, fade);
     link.style.transform = `translate(${(x - 0.4 * m).toFixed(1)}px, 0)`;
-    return x < end + (end < W ? 0 : edge);
+    return x < end;
   });
 
   if (!ended || cut) {

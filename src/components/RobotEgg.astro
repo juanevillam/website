@@ -166,7 +166,7 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
         if (!stand()) return;
         // On a phone it keeps clear of the eyebrow at the left and the
         // header's pill at the right.
-        await show(band, link, phone.matches ? { from: 0.2, to: 0.8, handover: 0.3, alive: front } : { from: 0.04, alive: front });
+        await show(band, link, phone.matches ? { from: 0.16, to: 0.86, handover: 0.26, alive: front } : { from: 0.04, to: 0.86, alive: front });
       },
       front,
     );
