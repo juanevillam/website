@@ -11,8 +11,8 @@ import type { UIKey } from '../i18n/ui';
  * player that is Sound Shaper on the web: a "Powered by Sound Shaper"
  * easter egg. It is drawn the way the app's player is (sound-shaper:
  * PlayerConsole.ios, PlayerScrubber.ios, the glass footer): the cover
- * whole at its own shape, the plain transport over its middle, the title
- * bold over a muted artist and Apple's media scrubber under it, and the
+ * filling its column, the plain transport over its middle, the title bold
+ * over a muted artist and Apple's media scrubber over its foot, and the
  * Shape card in the bar — with the song and its shape as its summary.
  * The Shape sheet is the app's iOS Form, row for row (lib/shaper has its
  * numbers): Presets, Equalizer, Playback Speed, Preserve Pitch, Echo,
@@ -84,9 +84,9 @@ const groups = [
   </div>
   <div class="frame">
     <div class="now">
-      <!-- THE COVER AT ITS OWN SHAPE: whole, never cropped, over a fill of its
-           own colours; the transport stands over its middle. -->
-      <div class="art-frame" data-art-frame>
+      <!-- The cover fills the column; the transport stands over its middle
+           and the words over its foot. -->
+      <div class="art-frame">
         <div class="art" aria-hidden="true">
           <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
           <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
@@ -439,13 +439,14 @@ const groups = [
     width: 120%;
     height: 120%;
     object-fit: cover;
-    filter: blur(40px) saturate(1.5) brightness(0.5);
+    filter: blur(48px) saturate(0.9) brightness(0.45);
     opacity: 0;
     transition: opacity var(--dur-settle) var(--ease);
   }
 
+  /* A tint, not a colour: the list's ground barely changes with a song. */
   .backdrop img.is-on {
-    opacity: 1;
+    opacity: 0.22;
   }
 
   /* ---------- the frame: the artwork, the list beside it ---------- */
@@ -461,41 +462,18 @@ const groups = [
 
   .now {
     grid-area: now;
-    display: flex;
-    flex-direction: column;
+    position: relative;
     min-width: 0;
     min-height: 0;
-  }
-
-  /* THE COVER AT ITS OWN SHAPE, whole (Juan, 2026-10-28): contained in
-     its frame, the rest of the frame filled with its own colours — the
-     site's frames do the same with a picture that is not their shape.
-     The fill's colours are registered, so they glide to the next song's. */
-  @property --fill-a {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: #1a1a1a;
-  }
-
-  @property --fill-b {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: #101010;
-  }
-
-  .art-frame {
-    position: relative;
-    flex: 1;
-    min-height: 0;
     overflow: hidden;
-    background: linear-gradient(
-      150deg,
-      color-mix(in srgb, var(--fill-a) 45%, #0d0d0d),
-      color-mix(in srgb, var(--fill-b) 30%, #0d0d0d)
-    );
-    transition:
-      --fill-a var(--dur-settle) var(--ease),
-      --fill-b var(--dur-settle) var(--ease);
+    background: var(--surface);
+  }
+
+  /* THE COVER FILLS THE COLUMN (Juan, 2026-10-28), the transport over its
+     middle and the words over its foot. */
+  .art-frame {
+    position: absolute;
+    inset: 0;
   }
 
   .art {
@@ -513,7 +491,7 @@ const groups = [
   /* A new song's cover fades in over the last one. */
   .art img {
     display: block;
-    object-fit: contain;
+    object-fit: cover;
     opacity: 0;
     transition: opacity var(--dur-settle) var(--ease);
   }
@@ -523,12 +501,36 @@ const groups = [
   }
 
 
-  /* The words and the time under the cover, on the player's own ground. */
+  /* The words and the time over the cover's foot, on a long, soft scrim
+     tall enough to read on any cover. */
   .console {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding: 0.875rem 1.25rem 0.875rem;
+    padding: 6rem 1.25rem 1rem;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0.08) 15%,
+      rgb(0 0 0 / 0.24) 30%,
+      rgb(0 0 0 / 0.44) 45%,
+      rgb(0 0 0 / 0.62) 60%,
+      rgb(0 0 0 / 0.74) 75%,
+      rgb(0 0 0 / 0.82) 100%
+    );
+  }
+
+  /* The scrim lets clicks through to the transport; its words and scrubber
+     take their own. */
+  .console {
+    pointer-events: none;
+  }
+
+  .console > * {
+    pointer-events: auto;
   }
 
   .info {
@@ -1461,7 +1463,7 @@ const groups = [
   }
 
   .songs[data-narrow] .console {
-    padding: 0.75rem 1rem 0.25rem;
+    padding: 4.5rem 1rem 0.75rem;
   }
 
 
@@ -1516,7 +1518,6 @@ const groups = [
     .sheet.is-open,
     .sheet.is-floating,
     .sheet.is-floating.is-open,
-    .art-frame,
     .songs[data-narrow] .side,
     .songs[data-narrow][data-sheet='songs'] .side,
     .seek::-webkit-slider-runnable-track {
@@ -1643,16 +1644,9 @@ const groups = [
           });
       }
     };
-    // Only the cover moves: the words and the time change in place. The
-    // cover's frame fills with its colours, and the page's light turns to
-    // them (Base.astro reads the card's `data-scene`).
-    const artFrame = $('[data-art-frame]');
-    const colour = (scene?: string) => {
-      const [a, b = a] = (scene ?? '').split('|')[0].split(' ').filter(Boolean);
-      if (!a) return;
-      artFrame.style.setProperty('--fill-a', a);
-      artFrame.style.setProperty('--fill-b', b);
-    };
+    // Only the cover moves: the words and the time change in place, and
+    // the page's light turns to its colours (Base.astro reads the card's
+    // `data-scene`).
 
     // ----- now playing -----
     const progress = (now: number, total: number) => {
@@ -1670,7 +1664,6 @@ const groups = [
       $('[data-now-title]').textContent = s.title;
       $('[data-now-artist]').textContent = s.artist;
       paintCover();
-      colour(s.scene);
       if (card && s.scene) card.dataset.scene = s.scene;
       rows.forEach((r, n) => (n === i ? r.setAttribute('aria-current', 'true') : r.removeAttribute('aria-current')));
       progress(0, s.seconds);
