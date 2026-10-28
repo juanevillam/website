@@ -714,7 +714,8 @@ const groups = [
     transition:
       scale 320ms var(--squash-spring),
       opacity 320ms var(--squash-spring),
-      transform calc(var(--beat) * 2 / 3) ease-out;
+      transform calc(var(--beat) * 2 / 3) ease-out,
+      background-color var(--dur-micro) var(--ease);
   }
 
   .glyph.play {
@@ -726,27 +727,36 @@ const groups = [
      `transform`, so it composes with the press's `scale`. */
   .songs[data-idle] .glyph {
     transform: scale(0.96);
-    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375);
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375), var(--dur-micro);
   }
 
   .songs[data-idle] .transport:has(:focus-visible) .glyph {
     transform: none;
   }
 
-  .transport {
+  .songs,
+  .songs-full {
     --squash-spring: linear(
       0, 0.063, 0.198, 0.352, 0.499, 0.626, 0.728, 0.808, 0.868, 0.911, 0.942, 0.963, 0.978,
       0.987, 0.993, 0.997, 0.999, 1, 1, 1.001, 1.001, 1.001, 1.001, 1, 1
     );
   }
 
-  .glyph:active {
+  /* A pointer over a button lifts its disc, the Shape bar's hover — the
+     same light step on the same timing. */
+  @media (hover: hover) {
+    .glyph:hover {
+      background: rgb(60 60 60 / 0.5);
+    }
+  }
+
+  .glyph.is-pressed {
     scale: 0.86;
     opacity: 0.55;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .glyph:active {
+    .glyph.is-pressed {
       scale: 1;
     }
 
@@ -1647,6 +1657,57 @@ const groups = [
 
   }
 
+  /* ---------- the app's squash on every control ---------- */
+  /* EVERY CONTROL IN THE PLAYER PRESSES LIKE SOUND SHAPER'S (Juan,
+     2026-10-28): a card-sized one — Shape, Songs, a list's row, a picker
+     row — squashes as the app's SquashPressable does (PRESS_SCALE 0.96,
+     no dim); a round icon one — a sheet's close, the expand button, the
+     full player's close, the switch — as its GlyphButton (0.86, dimmed to
+     0.55). Both on the app's PRESS_SPRING (--squash-spring), held by the
+     script's `is-pressed` from pointerdown to pointerup, so a finger
+     squashes them as a mouse does. */
+  .dock-cell,
+  .row,
+  .picker,
+  .close,
+  .expand,
+  .full-close,
+  .switch {
+    transition-property: scale, opacity, background-color, border-color;
+    transition-duration: 320ms, 320ms, var(--dur-micro), var(--dur-micro);
+    transition-timing-function: var(--squash-spring), var(--squash-spring), var(--ease), var(--ease);
+  }
+
+  .dock-cell.is-pressed,
+  .row.is-pressed,
+  .picker.is-pressed {
+    scale: 0.96;
+  }
+
+  .close.is-pressed,
+  .expand.is-pressed,
+  .full-close.is-pressed,
+  .switch.is-pressed {
+    scale: 0.86;
+    opacity: 0.55;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dock-cell.is-pressed,
+    .row.is-pressed,
+    .picker.is-pressed,
+    .close.is-pressed,
+    .expand.is-pressed,
+    .full-close.is-pressed,
+    .switch.is-pressed {
+      scale: 1;
+    }
+  }
+
+  .songs-full {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* ---------- the card: the cover alone ---------- */
   /* THE CARD SHOWS ONLY THE COVER, with its transport and its words, in
      the deck's own frame (Juan, 2026-10-28); everything else — the list,
@@ -1737,7 +1798,6 @@ const groups = [
     -webkit-backdrop-filter: blur(6px);
     color: #fff;
     cursor: pointer;
-    transition: background-color var(--dur-micro) var(--ease);
   }
 
   .expand svg {
@@ -1818,7 +1878,6 @@ const groups = [
     background: color-mix(in srgb, var(--surface) 82%, transparent);
     color: var(--ink);
     cursor: pointer;
-    transition: border-color var(--dur-micro) var(--ease);
   }
 
   .full-close:hover {
@@ -2296,6 +2355,22 @@ const groups = [
     const full = root.parentElement!.querySelector<HTMLDialogElement>('[data-songs-full]')!;
     const room = full.querySelector<HTMLElement>('[data-full-room]')!;
     const expand = $<HTMLButtonElement>('[data-expand]');
+    // THE PRESS IS A CLASS, held from pointerdown to pointerup: :active
+    // is unreliable under a finger (iOS Safari applies it only with a
+    // touch listener, and late), so a touch squashes exactly as a click.
+    const PRESSABLE = '.glyph, .dock-cell, .row, .picker, .close, .expand, .full-close, .switch';
+    document.addEventListener('pointerdown', e => {
+      const t = (e.target as Element).closest?.(PRESSABLE);
+      if (!t || !t.closest('[data-songs], [data-songs-full]')) return;
+      t.classList.add('is-pressed');
+      const up = () => {
+        t.classList.remove('is-pressed');
+        removeEventListener('pointerup', up);
+        removeEventListener('pointercancel', up);
+      };
+      addEventListener('pointerup', up);
+      addEventListener('pointercancel', up);
+    });
     const keepPlaying = (move: () => void) => {
       const was = !audio.paused;
       move();
