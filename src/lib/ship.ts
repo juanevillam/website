@@ -48,6 +48,10 @@ const DESTROYER = mdl(
   '010207730413231526546405060B0C899::;;8<==>>??<8<9=:>;?@A<@=ADFEGDEHIIKKJJH<L=M0NN10OO2PQRSSTTUUR',
 );
 
+// The cannon's bolts' speed (the game's are faster; on a page they read
+// better a little slower).
+const BOLT = 1150;
+
 // The game's palette.
 const INK = '#f5f5f5';
 const INK_HI = '#eef2f7';
@@ -185,16 +189,17 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
   type Missile = { p: V3; v: V3; trail: V3[]; spin: number; aim: Target; life: number; gone: boolean };
   type Spark = { p: V3; v: V3; life: number; max: number; color: string };
   type Boom = { p: V3; t: number; big: boolean; size?: number };
-  type Shard = { a: V3; b: V3; v: V3; t: number };
-  /** Something that can be hit: where it is now, and what a hit does. */
-  type Target = { pos: () => V3; r: number; hit: (big: boolean) => void };
+  /** Something that can be hit: where it is now, and what a hit does
+   *  (`dir`: the way the shot was going). */
+  type Target = { pos: () => V3; r: number; hit: (big: boolean, dir: V3) => void };
   const bolts: Bolt[] = [];
   const embers: Ember[] = [];
   const missiles: Missile[] = [];
   const sparks: Spark[] = [];
   const booms: Boom[] = [];
-  const shards: Shard[] = [];
   let shieldHit = 0;
+  // The stage's own clock: every script advances it once a frame.
+  let now = 0;
   let muzzle = 0;
 
   const spray = (P: V3, n: number, speed: number, color: string) => {
@@ -207,14 +212,31 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
   };
 
   const fx = {
-    /** The cannon: pairs from beside the nose, four under Overdrive. The
-     *  bolts fly on until they leave the screen or the fog takes them. */
-    fire(P: V3, B: Basis, s: number, aim: V3, quad: boolean, hits: Target | null) {
+    /** The cannon: pairs from beside the nose, four under Overdrive,
+     *  fired along the ship's heading — bent toward `aim` only within the
+     *  game's narrow auto-aim cone, as the game does — in world space, so
+     *  they share the ship's depth and perspective. They fly on until they
+     *  leave the screen or the fog takes them. */
+    fire(P: V3, B: Basis, s: number, aim: V3 | null, quad: boolean, hits: Target | null) {
       muzzle = 0.06;
       for (const o of quad ? [-20, -7, 7, 20] : [-9, 9]) {
         const from = at(P, B, s, [o, 0, 24]);
-        bolts.push({ p: from, v: mul(norm(sub(aim, from)), 1150 * pace), hits, gone: false });
+        let dir = B.F;
+        if (aim) {
+          const want = norm(sub(aim, from));
+          const cos = want[0] * B.F[0] + want[1] * B.F[1] + want[2] * B.F[2];
+          const CONE = Math.cos(0.3);
+          dir = cos >= CONE ? want : norm(add(B.F, norm(sub(want, mul(B.F, cos))), Math.tan(0.3)));
+        }
+        bolts.push({ p: from, v: mul(dir, BOLT * pace), hits, gone: false });
       }
+    },
+    /** Where to aim at something on `path` from `from`, leading it by the
+     *  bolts' flight time. */
+    lead(from: V3, path: (t: number) => V3) {
+      let target = path(now);
+      for (let i = 0; i < 3; i++) target = path(now + len(sub(target, from)) / (BOLT * pace));
+      return target;
     },
     /** An ace's ember, at `aim`. */
     ember(from: V3, aim: V3, size = 1) {
@@ -229,22 +251,16 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
       booms.push({ p: P, t: 0, big: true, size });
       spray(P, 18, 260 * (sc / 1.6) * size, RUST_HI);
     },
-    /** A hit that does not kill: a spark and a small rust ring. */
+    /** A spent missile: a small rust ring and a few sparks. */
     spark(P: V3) {
       booms.push({ p: P, t: 0, big: false });
       spray(P, 6, 160 * (sc / 1.6), RUST_HI);
     },
-    /** The game's kill: the big ring and amber flash, the spray, and the
-     *  ship coming apart along its own edges. */
-    explode(P: V3, B: Basis, s: number) {
-      booms.push({ p: P, t: 0, big: true });
-      spray(P, 26, 240 * (sc / 1.6), INK);
-      for (const [a, b] of SHIP[1]) {
-        const A = at(P, B, s, SHIP[0][a]);
-        const Bp = at(P, B, s, SHIP[0][b]);
-        const out = norm(sub(add(A, Bp), mul(P, 2)));
-        shards.push({ a: A, b: Bp, v: add(mul(out, 60 + Math.random() * 110), [0, -20, 0]), t: 0 });
-      }
+    /** The game's kill (`bm` and `sy`): a rust ring that opens and the
+     *  spray of white streaks. */
+    explode(P: V3) {
+      booms.push({ p: P, t: 0, big: false, size: 1.5 });
+      spray(P, 8, 260 * (sc / 1.6), INK);
     },
   };
 
@@ -256,7 +272,7 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
       b.p = add(b.p, b.v, dt);
       if (b.hits && len(sub(b.p, b.hits.pos())) < b.hits.r) {
         b.gone = true;
-        b.hits.hit(false);
+        b.hits.hit(false, norm(b.v));
       } else if (off(project(b.p), 40) || fog(b.p) <= 0) b.gone = true;
     }
     for (const e of embers) {
@@ -279,7 +295,7 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
       if (m.trail.length > 22) m.trail.shift();
       if (len(sub(m.p, m.aim.pos())) < m.aim.r) {
         m.gone = true;
-        m.aim.hit(true);
+        m.aim.hit(true, norm(m.v));
       } else if (off(project(m.p), 200)) m.gone = true;
       else if (m.life > 2.2) {
         // Spent: it bursts where it is, as the game's do.
@@ -291,12 +307,8 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
       s.p = add(s.p, s.v, dt);
       s.life += dt;
     }
-    for (const s of shards) {
-      s.a = add(s.a, s.v, dt);
-      s.b = add(s.b, s.v, dt);
-      s.t += dt;
-    }
     for (const b of booms) b.t += dt;
+    now += dt;
     shieldHit -= dt;
     muzzle -= dt;
   };
@@ -307,7 +319,6 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
     embers.some(e => !e.gone) ||
     missiles.some(m => !m.gone) ||
     sparks.some(s => s.life < s.max) ||
-    shards.some(s => s.t < 0.9) ||
     booms.some(b => b.t < 0.5);
 
   const paintFire = () => {
@@ -324,24 +335,11 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
     for (const b of booms) {
       if (b.t > 0.5) continue;
       const p = project(b.p);
-      const r = (4 + b.t * (b.big ? 260 : 110)) * p[2] * (sc / 1.6) * (b.size ?? 1);
+      const r = (4 + b.t * (b.big ? 260 : 150)) * p[2] * (sc / 1.6) * (b.size ?? 1);
       if (b.big) dot(p, r * 0.8, AMB, 0.35 * (1 - b.t / 0.5));
       ring(p, r, b.big ? 3 : 1.5, b.big ? INK_HI : RUST, 1 - b.t / 0.5);
     }
     for (const s of sparks) if (s.life < s.max) seg(s.p, add(s.p, s.v, -0.05), 1, s.color, (s.max - s.life) * 1.6);
-    for (const s of shards) {
-      if (s.t > 0.9) continue;
-      const a = project(s.a);
-      const b = project(s.b);
-      ctx.globalAlpha = 1 - s.t / 0.9;
-      ctx.strokeStyle = s.t < 0.08 ? INK_HI : RUST_HI;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(a[0], a[1]);
-      ctx.lineTo(b[0], b[1]);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
     for (const b of bolts) if (!b.gone) seg(b.p, add(b.p, b.v, -0.03), 2, INK_HI, 0.9 * fog(b.p));
     for (const m of missiles) {
       if (m.gone) continue;
@@ -401,11 +399,68 @@ const stage = (band: HTMLCanvasElement, cyShare: number, fogFrom = 1400) => {
     if (shieldHit > 0) ring(p, r * (1 + (1 - shieldHit / 0.3) * 0.55), 2.5, INK_HI, 0.9 * (shieldHit / 0.3) * a);
   };
 
+  /**
+   * An enemy ship on `path`, with the game's answer to a hit — a white
+   * flash for a moment (its `g`) and a small late ring (`XB(e, 0.3)`) —
+   * and a jolt as well: knocked along the shot and rolled by it, settling
+   * back. Hurt, it trails sparks; at the end, the game's death. A missile
+   * hits for two.
+   */
+  const enemy = (path: Path, scale: number, hp: number, roll: (t: number) => number = () => 0) => {
+    let hitAt = -9;
+    let kick: V3 = [0, 0, 0];
+    let side = 1;
+    let smoke = 0;
+    const full = hp;
+    const knock = () => {
+      const u = now - hitAt;
+      return u >= 0 && u < 0.9 ? Math.sin(Math.min(1, u * 10) * Math.PI * 0.5) * Math.exp(-5 * u) : 0;
+    };
+    const e = {
+      alive: true,
+      path,
+      pos: (): V3 => add(path(now), kick, knock()),
+      basis: (): Basis => {
+        const u = now - hitAt;
+        const jolt = u >= 0 && u < 1 ? side * 0.8 * Math.exp(-4 * u) * Math.sin(11 * u) : 0;
+        return orient(path, now, roll(now) + jolt);
+      },
+      hit(dir: V3, heavy: boolean) {
+        if (!e.alive) return;
+        hp -= heavy ? 2 : 1;
+        hitAt = now;
+        kick = mul(dir, (heavy ? 30 : 16) * scale);
+        side = -side;
+        booms.push({ p: e.pos(), t: 0.3, big: false });
+        if (hp <= 0) {
+          e.alive = false;
+          fx.explode(e.pos());
+        }
+      },
+      /** Downed whatever is left (the script's last word). */
+      down() {
+        if (!e.alive) return;
+        e.alive = false;
+        fx.explode(e.pos());
+      },
+      paint() {
+        if (!e.alive) return;
+        if (hp < full && now - smoke > 0.09) {
+          smoke = now;
+          spray(e.pos(), 1, 50 * (sc / 1.6), RUST_HI);
+        }
+        paintShip(e.pos(), e.basis(), scale, now - hitAt < 0.08 ? INK_HI : RUST, { engine: false });
+      },
+      target: { pos: () => e.pos(), r: 26 * scale, hit: (big: boolean, dir: V3) => e.hit(dir, big) } as Target,
+    };
+    return e;
+  };
+
   /** Any of the game's models, stroked its way. */
   const paintModel = (M: Model, P: V3, B: Basis, scale: number, color: string, alpha: number) =>
     stroke(placed(M, P, B, scale), M[1], color, alpha, project(P)[2]);
 
-  return { ctx, W, H, sc, project, fog, off, orient, at, fx, update, busy, paintFire, paintShip, paintShield, paintModel, ring, dot, clear: () => ctx.clearRect(0, 0, W, H) };
+  return { ctx, W, H, sc, project, fog, off, orient, at, fx, enemy, update, busy, paintFire, paintShip, paintShield, paintModel, ring, dot, clear: () => ctx.clearRect(0, 0, W, H) };
 };
 
 /** A battle: `frame(dt)` advances and paints it and says false once it
@@ -445,7 +500,6 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
     -H * (0.25 + 0.05 * Math.sin(0.7 * t + 0.6)),
     140 + 48 * t - 1.6 * t * t,
   ];
-  const aceRoll = (t: number) => Math.PI * 2 * ease(within(t, ...ROLL));
   // The chase gap, closed by the dash over most of a second.
   const lag = (t: number) => 1.5 - 0.65 * ease(within(t, DASH, DASH + 0.9));
   let killedAt = -1;
@@ -461,51 +515,39 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   };
 
   let t = 0;
-  let alive = true;
-  const ace = {
-    pos: () => aceAt(t),
-    r: 26 * ACE,
-    hit: (big: boolean) => {
-      if (!alive) return;
-      s.fx.spark(aceAt(t));
-      if (big) {
-        alive = false;
-        killedAt = t;
-        exit = { P: shipAt(t), V: mul(sub(shipAt(t + 0.02), shipAt(t - 0.02)), 25) };
-        s.fx.explode(aceAt(t), s.orient(aceAt, t, aceRoll(t)), ACE);
-      }
-    },
-  };
-  // The missiles only rock it; the Overdrive bolts bring it down.
-  const rocked = { ...ace, hit: () => ace.hit(false) };
-  let finishing = 0;
-  const finisher = { ...ace, hit: () => ++finishing >= 5 && ace.hit(true) };
+  // Two missiles (two each) and a handful of Overdrive bolts.
+  const ace = s.enemy(aceAt, ACE, 8, t => Math.PI * 2 * ease(within(t, ...ROLL)));
   const once = (at: number, dt: number) => t >= at && t - dt < at;
 
   const frame = (dt: number) => {
     // Written slow, played a third faster: the same beats, tighter.
     dt *= 1.5;
     t += dt;
+    if (!ace.alive && killedAt < 0) {
+      killedAt = t;
+      exit = { P: shipAt(t), V: mul(sub(shipAt(t + 0.02), shipAt(t - 0.02)), 25) };
+    }
     const P = shipAt(t);
     const pb = s.orient(shipAt, t);
-    const E = aceAt(t);
-    const eb = s.orient(aceAt, t, aceRoll(t));
+    const E = ace.pos();
+    const eb = ace.basis();
 
-    // Missing, it shoots where the ace was a moment ago.
-    for (const v of VOLLEYS) if (once(v, dt)) s.fx.fire(P, pb, sc, add(aceAt(t - 0.5), [0, -H * 0.06, 0]), false, null);
-    for (const e of EMBERS) if (alive && once(e, dt)) s.fx.ember(add(E, eb.F, -10 * ACE), P);
-    if (once(SALVO, dt)) for (const side of [-1, 1]) s.fx.missile(P, pb, sc, side, rocked);
-    for (const f of FINISH) if (alive && once(f, dt)) s.fx.fire(P, pb, sc, E, true, finisher);
-    if (alive && t >= FINISH[1] + 0.6) ace.hit(true);
+    // The misses go where the ship points, a beat behind the ace's jinks;
+    // the Overdrive volleys lead it.
+    for (const v of VOLLEYS) if (once(v, dt)) s.fx.fire(P, pb, sc, null, false, null);
+    for (const e of EMBERS) if (ace.alive && once(e, dt)) s.fx.ember(add(E, eb.F, -10 * ACE), P);
+    if (once(SALVO, dt)) for (const side of [-1, 1]) s.fx.missile(P, pb, sc, side, ace.target);
+    for (const f of FINISH) if (ace.alive && once(f, dt)) s.fx.fire(P, pb, sc, s.fx.lead(P, aceAt), true, ace.target);
+    if (t >= FINISH[1] + 0.7) ace.down();
 
     s.update(dt, t >= SHIELD[0] && t < SHIELD[1] ? { P, r: 27 * sc } : null);
     s.clear();
-    if (alive) s.paintShip(E, eb, ACE, RUST, { engine: false });
+    ace.paint();
     s.paintFire();
     s.paintShip(P, pb, sc, INK, { dash: t >= DASH && t < DASH + 0.7 });
     s.paintShield(P, t, SHIELD[0], SHIELD[1], 27 * sc);
 
-    const gone = !alive && s.off(s.project(P), 150);
+    const gone = !ace.alive && s.off(s.project(P), 150);
     return !gone || s.busy();
   };
   return { frame, at: () => s.project(shipAt(t)) };
@@ -574,16 +616,8 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     return [W * (0.66 + 0.16 + i * 0.09) - W * 0.3 * t, c[1] + H * (i ? 0.16 : 0.1), c[2] + (i ? -30 : 40)];
   };
   let t = 0;
-  const aces = [0, 1].map(i => {
-    const path = aceAt(i);
-    const a = { path, alive: true, target: { pos: () => path(t), r: 30 * ACE, hit: () => kill(a) } };
-    return a;
-  });
-  const kill = (a: (typeof aces)[number]) => {
-    if (!a.alive) return;
-    a.alive = false;
-    s.fx.explode(a.path(t), s.orient(a.path, t), ACE);
-  };
+  // A volley each: the first bolt rocks it, the second brings it down.
+  const aces = [0, 1].map(i => s.enemy(aceAt(i), ACE, 2));
   const once = (at: number, dt: number) => t >= at && t - dt < at;
 
   const frame = (dt: number) => {
@@ -592,15 +626,15 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     const pb = shipBasis(t);
     EMBERS.forEach((at, j) => {
       const a = aces[j % 2];
-      if (once(at, dt)) s.fx.ember(add(a.path(t), s.orient(a.path, t).F, 22 * ACE), add(shipAt(t + 0.4), [0, (j % 2 ? 1 : -1) * H * 0.12, 0]));
+      if (once(at, dt)) s.fx.ember(add(a.pos(), a.basis().F, 22 * ACE), add(shipAt(t + 0.4), [0, (j % 2 ? 1 : -1) * H * 0.12, 0]));
     });
     VOLLEYS.forEach((at, i) => {
-      if (once(at, dt) && aces[i].alive) s.fx.fire(P, pb, sc, aces[i].path(t + 0.15), false, aces[i].target);
+      if (once(at, dt) && aces[i].alive) s.fx.fire(P, pb, sc, s.fx.lead(P, aces[i].path), false, aces[i].target);
     });
-    aces.forEach((a, i) => t >= VOLLEYS[i] + 0.6 && kill(a));
+    aces.forEach((a, i) => t >= VOLLEYS[i] + 0.7 && a.down());
     s.update(dt, null);
     s.clear();
-    for (const a of aces) if (a.alive) s.paintShip(a.path(t), s.orient(a.path, t), ACE, RUST, { engine: false });
+    for (const a of aces) a.paint();
     s.paintFire();
     s.paintShip(P, pb, sc, INK);
     const gone = aces.every(a => !a.alive) && s.off(s.project(P), 120);
@@ -623,34 +657,38 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
   const s = stage(band, 0.6, 2600);
   const { W, H, sc } = s;
   const SD = 1.6 * (sc / 2) * 0.62; // the game's SD_SCALE, at this page's size
-  const CHARGE: [number, number] = [0.9, 1.6];
-  const ROLL: [number, number] = [1.45, 2.15];
-  const SALVO = 2.05;
-  const VOLLEY = 2.85;
+  // Each shot while the ship's nose is on its mark: the domes on the
+  // run in, the bridge as it closes.
+  const CHARGE: [number, number] = [0.55, 1.15];
+  const ROLL: [number, number] = [1.0, 1.65];
+  const SALVO = 1.7;
+  const VOLLEY = 2.2;
 
-  // The destroyer: far off, drifting slowly to the right, bow toward the
-  // ship's side, a little turned toward us.
-  const sdAt: Path = t => [W * (0.1 + 0.012 * t), H * 0.42, 1000];
-  // Tipped toward the eye, so its wedge reads from above, as the game
-  // shows it from its chase camera.
+  // The destroyer: level, as every ship is, in the same camera as the
+  // ship — below the eye line, so the camera looks down onto its deck,
+  // its bow angled away to the right, into the depth, its stern and
+  // command tower nearer. It drifts slowly ahead.
   const sdB = (() => {
-    const F = norm([1, 0, -0.45]);
-    const U = norm([0, -1, -0.9]);
-    const R = norm(cross(F, U));
-    return { F: cross(U, R), U, R };
+    const F = norm([0.8, 0, 0.6]);
+    const U: V3 = [0, -1, 0];
+    return { F, U, R: cross(F, U) };
   })();
+  // On a phone the foot's open space is higher, between the profiles and
+  // the apps' pages: the whole scene rises into it.
+  const lift = W < 600 ? -H * 0.45 : 0;
+  const sdAt: Path = t => add([W * 0.06, H * 0.55 + lift, 700], sdB.F, 14 * t);
   /** A point on its hull (the game's local units). */
   const onHull = (t: number, p: V3) => s.at(sdAt(t), sdB, SD, p);
   const BRIDGE: V3 = [0, -150, -345];
   const DOMES: V3[] = [[110, -185, -340], [-110, -185, -340]];
   const NOSE: V3 = [0, 10, 560];
 
-  // The ship: a curve in from the near bottom left, toward the bridge,
-  // then up and away past it, off the top.
-  const P0: V3 = [-W * 0.72, H * 0.5, -120];
-  const P1: V3 = [-W * 0.3, H * 0.42, 380];
-  const P2: V3 = [W * 0.08, H * 0.1, 720];
-  const P3: V3 = [W * 0.6, -H * 1.1, 700];
+  // The ship: a curve in from the near left, low, toward the bridge,
+  // then over it and up and away, off the top.
+  const P0: V3 = [-W * 0.75, H * 0.62 + lift, -60];
+  const P1: V3 = [-W * 0.42, H * 0.5 + lift, 240];
+  const P2: V3 = [-W * 0.05, H * 0.28 + lift, 470];
+  const P3: V3 = [W * 0.45, -H * 1.1, 640];
   const shipAt: Path = t => {
     const u = Math.max(0, Math.min(1.25, (t - 0.25) / 4.4));
     const v = 1 - u;
@@ -673,6 +711,7 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     r: 90 * SD,
     hit: () => {
       if (sunkAt >= 0) return;
+      breakDome();
       sunkAt = t;
       // A chain along the hull: the bridge, amidships, the bow, the stern.
       [[0, BRIDGE, 1.4], [0.25, [0, -45, 80] as V3, 1], [0.5, NOSE, 0.9], [0.7, [-130, 18, -400] as V3, 1.1], [0.85, [130, 18, -400] as V3, 1]].forEach(
@@ -688,8 +727,8 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     const pb = s.orient(shipAt, t, roll(t));
     if (once(CHARGE[1], dt)) s.fx.ember(onHull(t, NOSE), shipAt(t + 0.55), 3.2);
     if (once(SALVO, dt)) for (const side of [-1, 1]) s.fx.missile(P, pb, sc, side, dome, 90);
-    if (once(VOLLEY, dt)) s.fx.fire(P, pb, sc, bridge.pos(), true, bridge);
-    if (domes > 0 && t > SALVO + 1.1) breakDome();
+    if (once(VOLLEY, dt) || once(VOLLEY + 0.2, dt)) s.fx.fire(P, pb, sc, bridge.pos(), true, bridge);
+    if (domes > 0 && t > SALVO + 0.7) breakDome();
     if (sunkAt < 0 && t > VOLLEY + 0.6) bridge.hit();
     for (const b of blasts) if (once(b[0], dt)) s.fx.blast(onHull(t, b[1]), b[2]);
 
