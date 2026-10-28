@@ -73,7 +73,7 @@ const groups = [
 ].filter(g => g.rows.length);
 ---
 
-<div class="songs" data-songs data-items={JSON.stringify(songs)}>
+<div class="songs" data-songs data-no-tilt data-items={JSON.stringify(songs)}>
   <!-- The app's backdrop: the cover, blurred and dimmed, behind it all —
        what the glass bar and the list lie on. Two layers each, so a new
        song's cover fades in over the last. -->
@@ -927,28 +927,42 @@ const groups = [
   .rows {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   /* A row lights gently under the pointer, with the site's own hover
-     timing (DeckControls, the header's pills). */
+     timing (DeckControls, the header's pills). THE ROWS TOUCH, and the
+     air between their highlights is drawn inside each one (`::before`,
+     inset): with real gaps the pointer crossed dead strips between rows,
+     the highlight went out and came back on every crossing, and a list
+     scrolled under a still pointer blinked row after row (Juan,
+     2026-10-28). */
   .row {
+    position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: 1.125rem 2.5rem minmax(0, 1fr) auto;
     align-items: center;
     column-gap: 0.625rem;
     width: 100%;
-    min-height: 3.5rem;
+    min-height: 3.75rem;
     margin: 0;
-    padding: 0.375rem 0.5rem;
+    padding: 0.5rem;
     border: 0;
-    border-radius: 0.625rem;
     background: none;
     text-align: left;
     cursor: pointer;
+  }
+
+  .row::before {
+    content: '';
+    position: absolute;
+    inset: 0.125rem 0;
+    z-index: -1;
+    border-radius: 0.625rem;
+    background: rgb(255 255 255 / 0);
     transition: background-color var(--dur-micro) var(--ease);
   }
 
@@ -957,13 +971,13 @@ const groups = [
   }
 
   @media (hover: hover) {
-    .row:hover {
+    .row:hover::before {
       background: rgb(255 255 255 / 0.045);
     }
   }
 
-  .row[aria-current='true'],
-  .row[aria-current='true']:hover {
+  .row[aria-current='true']::before,
+  .row[aria-current='true']:hover::before {
     background: rgb(255 255 255 / 0.08);
   }
 
