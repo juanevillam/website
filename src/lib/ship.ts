@@ -2,23 +2,23 @@ import { fit, holdable, release, run } from './eggs';
 
 /**
  * SPACE EXPLORER'S SHIP, in three short scenes (ShipEgg) — THE HUNT behind
- * the hero's name, THE LOOP over the game's card in More Work, and THE
+ * the hero's name, THE BREAK over the game's card in More Work, and THE
  * DESTROYER across the foot — that PLAY the game rather than imitate it.
  *
  * Each scene runs a small copy of the game's own simulation
  * (../games/platanus-hack-26-venezuela-arcade/game.js), with its numbers
  * and rules: the player's ship flies at the game's cruise speed, turns
  * with its eased yaw and pitch rates on a locked horizon, banks only as a
- * visual of its turn, and makes the game's own moves (the dash, the
- * barrel roll with its sideways step, the loop); its cannon fires the
+ * visual of its turn, and makes the game's own moves (the dash's
+ * straight kick, the shield's bubble, nitro); its cannon fires the
  * game's bolts at the game's cadence and speed, nudged only within the
  * game's narrow auto-aim cone, and its missiles home at the game's turn
  * rate. The aces run the game's AI — always forward at their speed,
  * steering toward you, breaking away when you are close or have them in
  * your sights — and fire the game's slow, leading embers. Hits, damage,
- * deaths and the destroyer's turrets, bow cannon, domes and bridge are
- * the game's. What a scene adds is only the stick — when to turn, fire,
- * roll or loop — and a camera framing it for the page.
+ * deaths, and the destroyer's entrance, salvo, turrets, domes and bridge
+ * are the game's. What a scene adds is only the stick — when to turn,
+ * fire, dash or raise the shield — and a camera framing it for the page.
  */
 
 type V3 = [number, number, number];
@@ -61,9 +61,6 @@ const DASH_KICK = 260;
 const DASH_GHOSTS = 0.45; // s untouchable, with its ghost copies
 const NITRO_MAX = 760;
 const NITRO_ACCEL = 260;
-const ROLL_RATE = 13; // the barrel roll: a turn on the nose…
-const ROLL_STEP = 45; // …and this far sideways per radian of it
-const LOOP_RATE = 4.5;
 const FIRE_MS = 0.16;
 const FIRE_OD_MS = 0.07; // under Overdrive
 const BOLT_SPEED = 980; // plus the ship's own speed
@@ -75,6 +72,8 @@ const MISSILE_TURN = 3.4;
 const MISSILE_DMG = 4;
 const MISSILE_LIFE = 7;
 const SHIELD_R = 52;
+const SHIELD_S = 2.6; // B4: the shield's bubble eats what reaches you this long…
+const SHIELD_COOL = 4; // …and comes back after this
 const ACE_SPEED = 320;
 const ACE_TURN = 2.3;
 const ACE_BREAK_TURN = 3.6;
@@ -308,8 +307,10 @@ const stage = (band: HTMLCanvasElement) => {
     if (player) player.ht -= dt;
   };
 
-  const settled = () =>
-    bolts.every(b => b.life <= 0 || off(project(b.p), 40)) &&
+  /** Nothing left to see go (the cannon's bolts too, unless `bolts` is
+   *  false: a stream fired into the distance can end with the scene). */
+  const settled = (withBolts = true) =>
+    (!withBolts || bolts.every(b => b.life <= 0 || off(project(b.p), 40))) &&
     missiles.every(m => m.life <= 0) &&
     booms.every(b => b.t > 0.5) &&
     sparks.every(s => s.n <= 0);
@@ -335,7 +336,8 @@ const stage = (band: HTMLCanvasElement) => {
         continue;
       }
       const r = (4 + b.t * (b.r ? b.r * 2.4 : b.h ? 260 : 150)) * p[2];
-      if (b.r) dot2(p, r * 0.8, AMB, 0.35 * (1 - b.t / 0.5));
+      // (the amber heat is a missile's; the destroyer's arrival is a ring)
+      if (b.r && b.r < 500) dot2(p, r * 0.8, AMB, 0.35 * (1 - b.t / 0.5));
       ring(p, r, b.r ? 3 : 1.5, b.h ? INK_HI : RUST, 1 - b.t / 0.5);
     }
     for (const s of sparks) if (s.n > 0) line(s.p, add(s.p, s.v, -0.05), 1, INK, s.n * 1.6);
@@ -355,7 +357,7 @@ const stage = (band: HTMLCanvasElement) => {
 
   return {
     ctx, W, H, px, project, off, aim, placed, stroke, dot: dot2, ring, line, spray, boom, enemyShot, update, settled, paintFire,
-    bolts, missiles,
+    bolts, shots, missiles,
     setTargets: (t: Target[]) => (targets = t),
     clear: () => ctx.clearRect(0, 0, W, H),
   };
@@ -365,47 +367,33 @@ type Stage = ReturnType<typeof stage>;
 // ----- the player's ship: the game's flight model -----
 type Player = {
   P: V3; F: V3; U: V3; R: V3; H: number; yv: number; pv: number; ql: number;
-  roll: number; loop: number; step: V3; du: number; fy: number; jj: number;
+  du: number; fy: number; jj: number;
   su: number; ou: number; ht: number;
 };
 type Stick = { turn?: number; pitch?: number; fire?: boolean; nitro?: boolean };
 
 const newPlayer = (P: V3, F: V3): Player => {
   const B = ortho(F, UP);
-  return { P, ...B, H: CRUISE, yv: 0, pv: 0, ql: 0, roll: 0, loop: 0, step: [0, 0, 0], du: -9, fy: 0, jj: 0, su: -9, ou: -9, ht: 0 };
+  return { P, ...B, H: CRUISE, yv: 0, pv: 0, ql: 0, du: -9, fy: 0, jj: 0, su: -9, ou: -9, ht: 0 };
 };
 
 /** One step of the game's `up` for the player's ship. */
 const fly = (p: Player, dt: number, s: Stick) => {
   p.yv += ((s.turn ?? 0) * YAW_RATE - p.yv) * Math.min(1, STICK_EASE * dt);
   p.pv += ((s.pitch ?? 0) * PITCH_RATE - p.pv) * Math.min(1, STICK_EASE * dt);
-  const mv = p.roll !== 0 || p.loop !== 0;
-  const pa = mv ? 0 : p.pv * dt;
-  const ya = mv ? 0 : p.yv * dt;
+  const pa = p.pv * dt;
+  const ya = p.yv * dt;
   // Pitch over the wing; yaw about the map's vertical, the horizon locked.
   let F = add(mul(p.F, Math.cos(pa)), p.U, Math.sin(pa));
   let U = add(mul(p.U, Math.cos(pa)), p.F, -Math.sin(pa));
   const hz = (f: V3) => sub(UP, mul(f, dot(UP, f)));
   const c = hz(F);
-  if (len(c) > 1e-4 && !mv) {
+  if (len(c) > 1e-4) {
     const sg = dot(U, c) < 0 ? -1 : 1;
     F = rotAxis(F, [0, -sg, 0], -ya);
     U = mul(norm(hz(F)), sg);
   } else F = rotAxis(F, U, -ya);
-  let B = ortho(F, U);
-  // The barrel roll: a whole turn on the nose and a step to that side;
-  // the loop: a whole turn over the wing.
-  if (p.roll) {
-    const th = Math.sign(p.roll) * Math.min(Math.abs(p.roll), ROLL_RATE * dt);
-    p.roll -= th;
-    B = ortho(B.F, add(mul(B.U, Math.cos(th)), B.R, Math.sin(th)));
-    p.P = add(p.P, p.step, th * ROLL_STEP);
-  } else if (p.loop) {
-    const th = Math.min(p.loop, LOOP_RATE * dt);
-    p.loop -= th;
-    B = ortho(add(mul(B.F, Math.cos(th)), B.U, Math.sin(th)), add(mul(B.U, Math.cos(th)), B.F, -Math.sin(th)));
-  }
-  Object.assign(p, B);
+  Object.assign(p, ortho(F, U));
   if (s.nitro) p.H = Math.min(NITRO_MAX, p.H + NITRO_ACCEL * dt);
   else p.H += (CRUISE - p.H) * Math.min(1, SPEED_EASE * dt);
   p.P = add(p.P, p.F, p.H * dt);
@@ -417,17 +405,6 @@ const fly = (p: Player, dt: number, s: Stick) => {
 const dash = (p: Player, now: number) => {
   p.H = Math.max(p.H, CRUISE) + DASH_KICK;
   p.du = now + DASH_GHOSTS;
-};
-/** Double B2: the barrel roll, to `side` (±1). */
-const barrelRoll = (p: Player, now: number, side: number) => {
-  dash(p, now);
-  p.roll = side * Math.PI * 2;
-  p.step = p.R;
-};
-/** Double B2 with up: the loop. */
-const loop = (p: Player, now: number) => {
-  dash(p, now);
-  p.loop = Math.PI * 2;
 };
 
 /** B1: the cannon, held. Leaves the nose along the heading, inherits the
@@ -457,6 +434,14 @@ const cannon = (s: Stage, p: Player, now: number, targets: Target[], weak = fals
   }
 };
 
+/** B4: the shield — a bubble that eats every shot and rocket that
+ *  reaches it for SHIELD_S; not again until it has cooled. */
+const shield = (p: Player, now: number) => {
+  if (now < p.su + SHIELD_COOL) return false;
+  p.su = now + SHIELD_S;
+  return true;
+};
+
 /** B3, released: a missile from under the nose, homing on `aim`. */
 const missile = (s: Stage, p: Player, aim: Target | null) =>
   s.missiles.push({ p: add(add(p.P, p.F, 26), p.U, -6), v: mul(p.F, MISSILE_SPEED), trail: [], life: MISSILE_LIFE, aim, spin: 0 });
@@ -476,7 +461,7 @@ const drawPlayer = (s: Stage, p: Player, now: number) => {
     s.dot(m, m ? Math.max(2, 1.2 * m[2] * 14) : 0, INK_HI, 0.9);
   }
   if (now < p.su && c) {
-    const left = (p.su - now) / 2.6;
+    const left = (p.su - now) / SHIELD_S;
     const r = SHIELD_R * 0.85 * c[2];
     if (!(left < 0.22 && Math.floor(now * 11) % 2 === 0)) {
       s.dot(c, r, BLD, 0.1);
@@ -571,18 +556,24 @@ const inCone = (p: Player, t: Target, cone = AIM_CONE) => t.alive() && dot(norm(
 
 /** How wide the frame must be to hold every ship (with a margin), never
  *  narrower than `base`; eased, so the zoom breathes rather than jumps. */
-const zoom = (base: number) => {
+const zoom = (base: number, margin = 1.3, deep = 0, ease = 1.5) => {
   let v = base;
   return (pts: V3[], across: V3, dt: number) => {
     let lo = Infinity;
     let hi = -Infinity;
+    let near = Infinity;
+    let far = -Infinity;
     for (const q of pts) {
       const x = dot(q, across);
       lo = Math.min(lo, x);
       hi = Math.max(hi, x);
+      near = Math.min(near, q[2]);
+      far = Math.max(far, q[2]);
     }
-    const want = Math.max(base, (hi - lo) * 1.3);
-    v += (want - v) * Math.min(1, 1.5 * dt);
+    // `deep`: how much of the frame's height a unit of depth takes, as a
+    // share of its width (a short strip seen from above)
+    const want = Math.max(base, (hi - lo) * margin, deep ? ((far - near) * margin * 0.5) / deep : 0);
+    v += (want - v) * Math.min(1, ease * dt);
     return v;
   };
 };
@@ -598,7 +589,7 @@ const follow = (pull: number) => {
 
 /**
  * THE HERO: THE HUNT, left to right above the name. The ace comes at you
- * head-on, embers first — a barrel roll steps out of them — and breaks
+ * head-on, embers first — the shield goes up and eats them — and breaks
  * off as you pass; you come round onto it, it breaks again with you in
  * its tail, and the cannon finds it. Then nitro, and away.
  */
@@ -613,24 +604,25 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   // How much of the world the frame takes in, across, at the action.
   const view = zoom(phone ? 760 : 1250);
   let t = 0;
-  let rolled = false;
   let volleys = 0;
   const frame = (dt: number) => {
     t += dt;
     let stick: Stick = {};
     if (ace.alive) {
       stick = steerAt(p, ace.P);
-      // the first ember close: a barrel roll steps out of its line
-      if (!rolled && t > 1.4) {
-        rolled = true;
-        barrelRoll(p, t, -1);
-      }
       // head-on, one volley; then, once it has broken away with you on
       // its tail, the cannon held
       const fy = p.fy;
       if (inCone(p, ace.target) && len(sub(ace.P, p.P)) < 1300 && (t > 3 || volleys < 1)) cannon(s, p, t, [ace.target]);
       if (p.fy !== fy) volleys++;
     } else stick = { nitro: true };
+    // an ember coming: up with the shield, the game's answer to fire you
+    // see coming, and into it — the bubble eats what it touches
+    const ember = s.shots.find(e => e.life > 0 && len(sub(e.p, p.P)) < 420 && dot(sub(e.p, p.P), p.F) > 0);
+    if (ember) {
+      shield(p, t);
+      if (t < p.su) stick = { ...steerAt(p, ember.p), nitro: stick.nitro };
+    }
     fly(p, dt, stick);
     steerAce(s, ace, dt, p);
     s.update(dt, p, t);
@@ -651,86 +643,115 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
 };
 
 /**
- * MORE WORK: THE LOOP, over the game's card. Two aces on your tail fire
- * their slow embers after you; a barrel roll steps out of one, and the
- * loop — the game's double dash with the nose up — turns the chase: as
- * they close they break away, and you come out of it behind them, in
- * their tails, cannon on. Then away, off the left.
+ * MORE WORK: THE BREAK, over the game's card. You cruise right to left;
+ * two aces come in after you from off the right, faster than you, firing
+ * their slow embers. A dash — the game's straight kick forward — buys a
+ * moment; as they close they break away, as the game's aces do, and a
+ * hard turn brings you round onto them, the shield up for the embers on
+ * the way: the cannon on the nearer, a missile for the other. Then nitro,
+ * and away.
  */
 export const chase = (band: HTMLCanvasElement): Battle => {
   const s = stage(band);
   const { W, H } = s;
   const phone = W < 600;
-  const p = newPlayer([700, 0, 0], [-1, 0, 0]);
-  const aces = [newAce(s, [1480, -40, 60], [-ACE_SPEED, 0, 0], 1, 0.3), newAce(s, [1730, 50, -60], [-ACE_SPEED, 0, 0], -1, 0.9)];
+  const BASE = phone ? 640 : 1100;
+  // The aces start past the frame's right edge (and never inside the
+  // distance at which the game's aces break away).
+  const edge = Math.max(BASE / 2 + 120, 880);
+  const p = newPlayer([0, 0, 0], [-1, 0, 0]);
+  const aces = [newAce(s, [edge, -30, 70], [-ACE_SPEED, 0, 0], 1, 0.5), newAce(s, [edge + 240, 40, -70], [-ACE_SPEED, 0, 0], -1, 1.3)];
   s.setTargets(aces.map(a => a.target));
-  const cam = follow(1.1);
-  const view = zoom(phone ? 820 : 1300);
+  const cam = follow(2.5);
+  const view = zoom(BASE, 1.5, (H * (phone ? 0.45 : 1)) / W / 0.5, 2.5);
+  // An ace joins the framing once it is on screen or close: the frame
+  // opens to let it in from the edge.
+  const seen = new Set<Ace>();
   let t = 0;
-  let rolled = false;
-  let looped = false;
+  let dashed = false;
+  let turning = -1;
   let out = -1;
   const frame = (dt: number) => {
     t += dt;
     const live = aces.filter(a => a.alive);
     let stick: Stick = {};
-    if (!looped || p.loop) {
-      // run ahead of them, a gentle weave
-      stick = { turn: 0.15 * Math.sin(t * 1.3) };
-      if (!rolled && t > 1.5) {
-        rolled = true;
-        barrelRoll(p, t, 1);
+    if (turning < 0) {
+      // run ahead of them; the dash, then the turn as they break away
+      if (!dashed && live.some(a => len(sub(a.P, p.P)) < 820)) {
+        dashed = true;
+        dash(p, t);
       }
-      const near = Math.min(...live.map(a => len(sub(a.P, p.P))));
-      if (!looped && t > 2 && near < 720) {
-        looped = true;
-        loop(p, t);
-      }
+      if (live.some(a => a.fl > 0)) turning = t;
     } else if (live.length) {
-      // out of the loop on their tails: the cannon on the nearer, a
-      // missile for the other
-      if (out < 0) out = t;
+      // the hard turn round (full stick, the game's yaw rate); out of it,
+      // a missile for each, and the cannon on the nearer
       const prey = live.reduce((a, b) => (len(sub(a.P, p.P)) < len(sub(b.P, p.P)) ? a : b));
-      stick = steerAt(p, prey.P);
+      const round = !(p.F[0] < 0.2 && t - turning < 1.6);
+      stick = round ? steerAt(p, prey.P) : { turn: -1 };
+      if (round && out < 0) out = t;
+      const aimed = s.missiles.map(m => m.aim);
+      const next = live.find(a => !aimed.includes(a.target));
+      if (out > 0 && next && t - out > 0.35 * s.missiles.length) missile(s, p, next.target);
       if (inCone(p, prey.target) && len(sub(prey.P, p.P)) < 1300) cannon(s, p, t, live.map(a => a.target));
-      if (live.length > 1 && t - out > 0.5 && !s.missiles.length) missile(s, p, live.find(a => a !== prey)!.target);
-    } else stick = { nitro: true };
+    } else {
+      // away along the strip, on nitro
+      stick = { ...steerAt(p, add(p.P, [Math.sign(p.F[0]) * 1000, 0, -p.P[2]])), nitro: true };
+    }
+    // an ember coming: the shield, and into it
+    const ember = s.shots.find(e => e.life > 0 && len(sub(e.p, p.P)) < 420 && dot(sub(e.p, p.P), p.F) > 0);
+    if (ember) {
+      shield(p, t);
+      if (t < p.su) stick = { ...steerAt(p, ember.p), nitro: stick.nitro };
+    }
     fly(p, dt, stick);
     for (const a of aces) steerAce(s, a, dt, p);
     s.update(dt, p, t);
-    // the camera: from the side, a little above, so the loop reads; it
-    // follows the action along the strip
-    const pts = [p.P, ...live.map(a => a.P)];
-    const at = cam(mul(pts.reduce((a, b) => add(a, b)), 1 / pts.length), live.length ? dt : 0);
+    for (const a of live) {
+      const q = s.project(a.P);
+      if ((q && q[0] > 0 && q[0] < W) || len(sub(a.P, p.P)) < 760) seen.add(a);
+    }
+    // the camera: above and in front, looking down, as in the hero; on the
+    // middle of you and the aces it has seen, and it holds once they are
+    // down
+    const pts = [p.P, ...live.filter(a => seen.has(a)).map(a => a.P)];
+    const lo = pts.reduce((a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2])]);
+    const hi = pts.reduce((a, b) => [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])]);
+    const at = cam(mul(add(lo, hi), 0.5), live.length ? dt : 0);
     const D = 2400;
     const VIEW = view(live.length ? pts : [], [1, 0, 0], live.length ? dt : 0);
-    s.aim(add(at, [0, -D * 0.18, -D]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.3 : 0.26));
+    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.48));
     s.clear();
     for (const a of aces) drawAce(s, a);
     s.paintFire();
     drawPlayer(s, p, t);
     const gone = !live.length && s.off(s.project(p.P), 60);
-    return t < 16 && !(gone && s.settled());
+    return t < 18 && !(gone && s.settled());
   };
   return { frame, at: () => s.project(p.P) ?? [-99, -99, 1] };
 };
 
 /**
- * THE FOOT: THE DESTROYER. The game's destroyer holds the foot — its
- * deck turrets fire their bursts, its bow cannon charges at you. You come
- * in along its flank with the shield up to eat a burst, a barrel roll
- * takes you out of the bow cannon's line, a missile pair on each shield
- * dome brings them down, and Overdrive's four bolts find the bared
- * bridge. It goes down in the game's chain of blasts as you climb away.
+ * THE FOOT: THE DESTROYER, as the game brings it in, seen from behind
+ * your ship. The sector goes dark; the destroyer comes out of hyperspace
+ * far ahead of you, at your height, its bow toward you, in a flash, and
+ * looses its salvo — rockets in mirrored pairs that climb slowly, open
+ * out and then curve down at you as the light comes back. The shield eats
+ * them. Then the fight, as you round it: its deck turrets' bursts, a
+ * missile pair on each shield dome, and Overdrive's four bolts on the
+ * bared bridge (its bow cannon first charges 12 s in — past the scene). It goes down in the
+ * game's chain of blasts as you climb away.
  */
 export const destroyer = (band: HTMLCanvasElement): Battle => {
   const s = stage(band);
-  const { W, H } = s;
+  const { ctx, W, H } = s;
   const phone = W < 600;
-  const sdE = 0.9; // its heading: bow away to the right
-  const sdP: V3 = [0, 0, 0];
-  const sdB = yawBasis(sdE);
-  const hull = (o: V3) => add(add(add(sdP, sdB.R, o[0] * SD_SCALE), sdB.U, -o[1] * SD_SCALE), sdB.F, o[2] * SD_SCALE);
+  const rand = rng(11);
+  const RH = () => rand() - 0.5;
+  const p = newPlayer([0, 0, 0], [0, 0, 1]);
+  // Ze: far ahead of you, at your height, the bow toward you.
+  const sd = { P: [0, 0, 2600] as V3, E: Math.PI, t: 0 };
+  let B = yawBasis(sd.E);
+  const hull = (o: V3) => add(add(add(sd.P, B.R, o[0] * SD_SCALE), B.U, -o[1] * SD_SCALE), B.F, o[2] * SD_SCALE);
   type Part = { o: V3; M: number; g: number; burst: number; cd: number; target: Target };
   let down = -1;
   const part = (o: V3, M: number, cd = 9): Part => {
@@ -753,126 +774,249 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     };
     return q;
   };
-  // The game's weak points: deck turrets, the two shield domes, the bridge
-  // (which only takes damage once the domes are down).
-  const turrets = [part([90, -14, 150], 2, 0.6), part([-90, -14, 150], 2, 2.2), part([140, -20, -80], 2, 1.4), part([-140, -20, -80], 2, 3)];
+  // SD_PARTS: six deck turrets, the two shield domes, the bridge (which
+  // only takes damage once the domes are down).
+  const turrets = [[90, -14, 150], [-90, -14, 150], [140, -20, -80], [-140, -20, -80], [190, -25, -300], [-190, -25, -300]].map(o =>
+    part(o as V3, 2, 1 + rand() * 3),
+  );
   const domes = [part([110, -185, -340], 6), part([-110, -185, -340], 6)];
   const bridge = part([0, -150, -345], 14);
   const bridgeHit = bridge.target.hit;
   bridge.target.hit = n => domes.every(d => d.M <= 0) && bridgeHit(n);
   const parts = [...turrets, ...domes, bridge];
-  s.setTargets(parts.map(q => q.target));
 
-  // In from behind its left flank, along it toward the bridge.
-  const p = newPlayer(hull([-420, -120, -950]), sdB.F);
-  const VIEW = phone ? 2000 : 3800;
+  // The salvo's rockets (k = 3): they climb (Qr), go to their point
+  // between the destroyer and you, and from there come at you — slow to
+  // turn; the shield or the cannon takes them.
+  type Rocket = { P: V3; v: V3; Qr: number; fast: boolean; mid: boolean; goal: V3; life: number; Y: V3[]; dead: boolean; target: Target };
+  const rockets: Rocket[] = [];
+  const rocket = (P: V3, v: V3, Qr: number, fast: boolean, goal: V3) => {
+    const r: Rocket = { P, v, Qr, fast, mid: !fast, goal, life: 12, Y: [], dead: false, target: undefined as unknown as Target };
+    r.target = {
+      pos: () => r.P,
+      vel: () => r.v,
+      r: 22,
+      alive: () => !r.dead,
+      hit: () => {
+        if (r.dead) return;
+        r.dead = true;
+        s.boom(r.P);
+        s.spray(r.P, 6);
+      },
+    };
+    rockets.push(r);
+  };
+  const aims = () => [...rockets.map(r => r.target), ...parts.map(q => q.target)];
+
   let t = 0;
-  let charge = -1;
-  let rolled = false;
+  let salvo = 0;
+  let salvoCd = 0;
+  let fight = -1;
   let fired = 0;
   let dying = -1;
+  let flash = -1;
+  let shake = 0;
+  let seen = 0; // Fa: it materializes, and fades as it goes down
+  // The camera: the game's, behind your ship and a little above, with its
+  // basis following the ship's — set further back, so the ship stays a
+  // ship and the destroyer fills the far end. It holds when it is over.
+  const ORBIT = 1300;
+  const BACK = phone ? 760 : 640;
+  const UP_ = phone ? 200 : 180;
+  const focal = W * (phone ? 1.6 : 1.05);
+  const cam = follow(1.2);
+  let eye: V3 = [0, 0, 0];
+  let at: V3 = [0, 0, 0];
   const frame = (dt: number) => {
     t += dt;
-    let stick: Stick = {};
-    const bridgeAt = bridge.target.pos();
-    if (down < 0) {
-      // over the deck toward the tower; once the domes are down, straight
-      // at the bridge
-      const bare = domes.every(d => d.M <= 0);
-      stick = steerAt(p, bare ? bridgeAt : add(bridgeAt, sdB.U, 160));
-      // the shield for the turrets' first bursts
-      if (t > 0.6 && p.su < 0) p.su = t + 2.6;
-      // the bow cannon: charge, and its great slow ball
-      if (charge < 0 && t > 0.9) charge = t;
-      if (charge > 0 && t - charge >= 1.8 && t - dt - charge < 1.8) s.enemyShot(hull([0, 10, 560]), p, 190, true);
-      if (!rolled && charge > 0 && t - charge > 2.3) {
-        rolled = true;
-        barrelRoll(p, t, 1);
+    sd.t += dt;
+    B = yawBasis(sd.E);
+    const live = rockets.filter(r => !r.dead);
+    // ub: the entrance — dark, the flash, the salvo — as the game times it
+    const dark = t < 1.2 ? t / 1.2 : t < 4.4 ? 1 : Math.max(0, 1 - (t - 4.4) / 1.8);
+    if (flash < 0 && t >= 1.2) {
+      flash = t;
+      shake = 12;
+      s.boom(sd.P, 0, { h: true, r: 1100 });
+    }
+    if (flash >= 0) seen = down < 0 ? Math.min(1, (t - flash) / 1.2) : Math.max(0, 1 - (t - down) / 1.6);
+    if (flash >= 0 && t > 1.5 && t < 4.1 && (salvoCd -= dt) <= 0 && live.length < 11) {
+      salvoCd = 0.45;
+      const n = ++salvo;
+      const ang = n * 2.4;
+      const fast = n % 4 === 3;
+      const sp = 160 + rand() * 190;
+      for (const side of [-1, 1]) {
+        const from = hull([side * 110, -175, -330]);
+        const to = hull([side * (110 + Math.abs(Math.cos(ang)) * sp), -175, Math.sin(ang) * sp - 330]);
+        const mk = 0.45 + rand() * 0.3;
+        const goal: V3 = [sd.P[0] + (p.P[0] - sd.P[0]) * mk + RH() * 700, p.P[1] + RH() * 300, sd.P[2] + (p.P[2] - sd.P[2]) * mk + RH() * 700];
+        rocket(from, [to[0] - from[0], -(fast ? 260 : 300 + rand() * 180), to[2] - from[2]], fast ? 0.6 : 2.2 + rand() * 1.2, fast, goal);
       }
-      // two missiles on each dome
-      if (fired < 4 && t > 2.2 && t - 0.18 * fired > 2.2) {
+    }
+    if (fight < 0 && t > 6.4) fight = t;
+
+    // the destroyer: once the entrance is over it turns slowly to keep its
+    // bow on you, closing only while you are far
+    const d = sub(p.P, sd.P);
+    const dist = len(d);
+    if (fight > 0 && down < 0) {
+      sd.E += wrap(Math.atan2(d[0], d[2]) - sd.E) * Math.min(1, 0.11 * dt);
+      const move = dist > 1900 ? 90 : 0;
+      sd.P = add(sd.P, [Math.sin(sd.E) * move * dt, Math.sin(sd.t * 0.4) * 6 * dt, Math.cos(sd.E) * move * dt]);
+    }
+
+    // the rockets
+    for (const r of rockets) {
+      if (r.dead) continue;
+      if (r.Qr > 0) r.Qr -= dt;
+      else {
+        let to = sub(p.P, r.P);
+        if (r.mid) {
+          to = sub(r.goal, r.P);
+          if (len(to) < 180) r.mid = false;
+        }
+        const k = Math.min(1, (r.fast ? 0.55 : 0.9) * dt);
+        r.v = add(r.v, sub(mul(norm(to), r.fast ? 640 : 300), r.v), k);
+      }
+      r.P = add(r.P, r.v, dt);
+      r.Y.push(r.P);
+      if (r.Y.length > 26) r.Y.shift();
+      if ((r.life -= dt) <= 0) r.target.hit(1);
+      // against you: the shield eats it; without it, it hits
+      else if (len(sub(r.P, p.P)) < r.target.r + 16) {
+        r.target.hit(1);
+        if (t < p.su) p.ht = 0.3;
+      }
+    }
+
+    // YOU
+    let stick: Stick = {};
+    if (down < 0) {
+      // round it, standing off: always toward a point a little ahead on
+      // a circle about it; once the domes are down, straight at the bridge
+      const bare = domes.every(q => q.M <= 0);
+      const a0 = Math.atan2(p.P[0] - sd.P[0], p.P[2] - sd.P[2]) - 0.55;
+      stick = steerAt(p, bare ? bridge.target.pos() : add(sd.P, [Math.sin(a0) * ORBIT, -170, Math.cos(a0) * ORBIT]));
+      // what is about to reach you: the shield
+      if ([...live.map(r => r.P), ...s.shots.filter(e => e.life > 0).map(e => e.p)].some(q => len(sub(q, p.P)) < 260)) shield(p, t);
+      // the cannon on a rocket in your sights
+      if (live.some(r => inCone(p, r.target) && len(sub(r.P, p.P)) < 1400)) cannon(s, p, t, live.map(r => r.target));
+      // as the light comes back: two missiles on each dome
+      if (t > 4.4 && fired < 4 && t - 4.4 > 0.18 * fired) {
         missile(s, p, domes[fired >> 1].target);
         fired++;
       }
       // Overdrive, and the cannon on the bridge as soon as it is bare
-      if (domes.every(d => d.M <= 0)) {
+      if (bare) {
         if (p.ou < 0) p.ou = t + 6;
         if (inCone(p, bridge.target, WEAK_CONE)) cannon(s, p, t, [bridge.target], true);
       }
       if (bridge.M <= 0) {
         down = t;
         // kb: nine blasts along the hull, the spray
-        for (let i = 0; i < 9; i++) s.boom(hull([(i % 3 - 1) * 300, -40 + (i % 2) * 60, -400 + i * 110]), -i * 0.12, { h: true, r: 150 });
-        s.spray(sdP, 24);
+        for (let i = 0; i < 9; i++) s.boom(hull([RH() * 400, (rand() - 0.7) * 150, -400 + rand() * 900]), -i * 0.12, { h: true, r: 150 });
+        s.spray(sd.P, 24);
+        shake = 16;
+        // its death is a wave: it takes its own rockets with it
+        for (const r of rockets) r.target.hit(1);
       }
-      // the turrets' bursts: three shots, a fifth of a second apart
       for (const q of turrets) {
-        if (q.M <= 0 || len(sub(p.P, q.target.pos())) > 2600) continue;
+        if (fight < 0 || q.M <= 0 || dist > 2600) continue;
+        // bursts of two, slow and dodgeable — but there are six
         q.cd -= dt;
-        if (q.cd <= 0) {
-          s.enemyShot(add(q.target.pos(), sdB.U, 30), p, SHOT_SPEED);
-          q.burst = (q.burst || 3) - 1;
-          q.cd = q.burst ? 0.2 : 4.6;
-        }
+        if (q.burst > 0 && q.cd <= 0) {
+          q.burst--;
+          q.cd = q.burst ? 0.2 : 4.6 + rand() * 1.8;
+          s.enemyShot(hull([q.o[0], q.o[1] - 30, q.o[2]]), p, SHOT_SPEED);
+        } else if (q.burst === 0 && q.cd <= 0) q.burst = 2;
       }
     } else {
       // climb away: the nose up a moment, then nitro
       if (dying < 0) dying = t;
-      stick = { pitch: t - dying < 0.5 ? 1 : 0, nitro: true };
+      stick = { pitch: t - dying < 0.55 ? 1 : 0, nitro: true };
     }
     for (const q of parts) q.g -= dt;
     fly(p, dt, stick);
+    s.setTargets(aims());
     s.update(dt, p, t);
 
-    // a fixed camera on the destroyer, from behind its left quarter and
-    // above; the ship flies in and out of it
-    const at = hull([0, 0, -100]);
-    const D = 3000;
-    s.aim(add(at, add(mul(sdB.F, -D * 0.55), add(mul(sdB.R, -D * 0.55), [0, -D * 0.5, 0]))), at, (W * D) / VIEW, W / 2, H * (phone ? 0.5 : 0.66));
+    if (down < 0) {
+      // behind your ship on its line to the destroyer, looking past you
+      // at it: it stays in the middle, its bow on you, wherever you fly
+      const to = sub(sd.P, p.P);
+      const lo = norm([to[0], 0, to[2]]);
+      eye = cam(add(add(p.P, lo, -BACK), [0, -UP_, 0]), dt);
+      at = add(mul(sd.P, 0.8), p.P, 0.2);
+    }
+    shake = Math.max(0, shake - 34 * dt);
+    const jx = shake ? RH() * shake * s.px : 0;
+    const jy = shake ? RH() * shake * s.px : 0;
+    s.aim(eye, at, focal, W / 2 + jx, H * (phone ? 0.5 : 0.56) + jy);
     s.clear();
-    // the destroyer: it fades as it goes down
-    const seen = Math.min(1, t / 1.2) * (down < 0 ? 1 : Math.max(0, 1 - (t - down) / 1.6));
+    // the dark: everything but the destroyer and its rockets goes under it
+    if (dark > 0) {
+      ctx.globalAlpha = 0.5 * dark;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
     if (seen > 0) {
-      s.stroke(s.placed(DESTROYER, add(sdP, [0, down < 0 ? 0 : (t - down) * 60, 0]), sdB, SD_SCALE), DESTROYER[1], RUST, seen * 0.95);
+      const sink: V3 = down < 0 ? [0, 0, 0] : [0, (t - down) * 60, 0];
+      s.stroke(s.placed(DESTROYER, add(sd.P, sink), B, SD_SCALE), DESTROYER[1], RUST, seen * 0.95);
+      // its position lights blinking along the hull
+      [[0, -6, 560], [-300, -4, -400], [300, -4, -400], [-130, -168, -340], [130, -168, -340], [0, -48, 80]].forEach(([lx, ly, lz], i) => {
+        if (Math.floor(sd.t * 1.6 + i * 0.7) % 3 === 0) return;
+        const l = s.project(add(hull([lx, ly, lz]), sink));
+        if (l) s.dot(l, Math.max(1.5, 2.6 * l[2]), i < 3 ? RUST_HI : BLU, 0.9 * seen);
+      });
       for (const ox of [-130, 0, 130]) {
-        const e = s.project(hull([ox, 18, -406]));
+        const e = s.project(add(hull([ox, 18, -406]), sink));
         if (!e) continue;
         const r = 34 * SD_SCALE * e[2];
         s.dot(e, r * 1.6, AMB, 0.25 * seen);
         s.dot(e, r * 0.7, CRM, 0.85 * seen);
       }
       for (const q of turrets)
-        if (q.M > 0) s.stroke(s.placed(SENTRY, add(q.target.pos(), sdB.U, 12 * SD_SCALE), sdB, 1.1 * SD_SCALE), SENTRY[1], q.g > 0 ? INK_HI : RUST, seen);
-      for (const d of domes) {
-        if (d.M <= 0) continue;
-        const c = s.project(d.target.pos());
+        if (q.M > 0) s.stroke(s.placed(SENTRY, add(q.target.pos(), B.U, 12 * SD_SCALE), B, 1.1 * SD_SCALE), SENTRY[1], q.g > 0 ? INK_HI : RUST, seen);
+      for (const q of domes) {
+        if (q.M <= 0) continue;
+        const c = s.project(q.target.pos());
         if (!c) continue;
         const r = 36 * SD_SCALE * c[2];
-        s.dot(c, r, BLD, (0.12 + 0.08 * Math.sin(t * 4)) * seen);
-        s.ring(c, r, 1.5, d.g > 0 ? INK_HI : BLD, 0.9 * seen);
+        s.dot(c, r, BLD, (0.12 + 0.08 * Math.sin(sd.t * 4)) * seen);
+        s.ring(c, r, 1.5, q.g > 0 ? INK_HI : BLD, 0.9 * seen);
       }
-      const b = s.project(bridgeAt);
+      const b = s.project(bridge.target.pos());
       if (b && bridge.M > 0) {
-        const pulse = 0.5 + 0.5 * Math.sin(t * (domes.some(d => d.M > 0) ? 2 : 7));
-        if (domes.some(d => d.M > 0)) s.ring(b, 90 * SD_SCALE * b[2], 1.5, BLD, (0.25 + 0.2 * pulse) * seen);
+        const shielded = domes.some(q => q.M > 0);
+        const pulse = 0.5 + 0.5 * Math.sin(sd.t * (shielded ? 2 : 7));
+        if (shielded) s.ring(b, 90 * SD_SCALE * b[2], 1.5, BLD, (0.25 + 0.2 * pulse) * seen);
         else {
           s.dot(b, 30 * SD_SCALE * b[2], bridge.g > 0 ? INK_HI : RUST_HI, (0.45 + 0.45 * pulse) * seen);
           s.ring(b, (50 + pulse * 20) * SD_SCALE * b[2], 2, RUST_HI, 0.6 * pulse * seen);
         }
       }
-      if (charge > 0 && t - charge < 1.8) {
-        const c = (t - charge) / 1.8;
-        const n = s.project(hull([0, 10, 560]));
-        if (n) {
-          s.dot(n, (10 + 40 * c) * SD_SCALE * n[2], RUST_HI, (0.3 + 0.5 * c) * seen);
-          s.ring(n, (60 - 40 * c) * SD_SCALE * n[2], 2, CRM, c * seen);
-        }
-      }
+    }
+    // the rockets: a long rust trail, the missile's model, a hot pulse
+    for (const r of rockets) {
+      if (r.dead) continue;
+      for (let i = 1; i < r.Y.length; i++) s.line(r.Y[i - 1], r.Y[i], 3 * s.px, RUST_HI, (i / r.Y.length) * 0.5);
+      s.stroke(s.placed(MISSILE, r.P, ortho(norm(r.v), UP), 1.6, t * 8), MISSILE[1], RUST_HI, 1);
+      const q = s.project(r.P);
+      if (q) s.dot(q, clamp(16 * q[2], 2, 10 * s.px), RUST_HI, 0.5 + 0.4 * Math.sin(t * 20));
     }
     s.paintFire();
     drawPlayer(s, p, t);
+    // the flash as it comes out of hyperspace
+    if (flash >= 0 && t - flash < 0.7) {
+      ctx.globalAlpha = 0.15 * (1 - (t - flash) / 0.7);
+      ctx.fillStyle = INK_HI;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
     const out = down >= 0 && s.off(s.project(p.P), 60);
-    return t < 16 && !(out && s.settled() && seen <= 0);
+    return t < 20 && !(out && s.settled(false) && seen <= 0);
   };
   return { frame, at: () => s.project(p.P) ?? [-99, -99, 1] };
 };

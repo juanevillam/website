@@ -27,13 +27,16 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 - Easter eggs (`lib/eggs`, 2026-10-28). Space Explorer's ship is the
   star (`lib/ship`): three scenes that PLAY the game — a small copy of
   its own simulation, with its numbers and rules (cruise, eased yaw and
-  pitch on a locked horizon, dash, barrel roll, loop, the cannon's
+  pitch on a locked horizon, the dash, the shield, nitro, the cannon's
   cadence and auto-aim cone, missiles, the aces' AI and embers, the
-  destroyer's turrets, cannon, domes and bridge) — where a scene adds only
-  the stick and a camera: the hunt behind the hero's name, the loop over
-  the game's card in More Work (no link there, so it never takes Play
-  Game's tap) and the destroyer in the foot. Each links to the game's
-  card. They play behind the page's words, on canvases that reach the
+  destroyer's entrance, salvo, turrets, domes and bridge) — where a scene
+  adds only the stick and a camera. No flips (Juan, 2026-10-28): the
+  hunt behind the hero's name (the shield eats the ace's embers), the
+  break over the game's card in More Work (the aces come in from off the
+  edge; a straight dash, a hard turn onto them; no link there, so it
+  never takes Play Game's tap) and the destroyer in the foot, brought in
+  as the game does — dark, a flash, bow on you, its salvo — seen from
+  behind the ship. The hero and the foot link to the game's card. They play behind the page's words, on canvases that reach the
   screen's edges, so a ship leaving is never cut off.
   Tridi's robot (`lib/robot`, Tridi's own data) only on the Platanus
   card's photo frame, where the tracking points become the G1 (a link to
