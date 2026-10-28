@@ -2,7 +2,7 @@ import { fit, holdable, release, run } from './eggs';
 
 /**
  * SPACE EXPLORER'S SHIP, in three short scenes (ShipEgg) — THE HUNT behind
- * the hero's name, THE BREAK over the game's card in More Work, and THE
+ * the hero's name, THE ESCAPE over the game's card in More Work, and THE
  * DESTROYER across the foot — that PLAY the game rather than imitate it.
  *
  * Each scene runs a small copy of the game's own simulation
@@ -556,24 +556,18 @@ const inCone = (p: Player, t: Target, cone = AIM_CONE) => t.alive() && dot(norm(
 
 /** How wide the frame must be to hold every ship (with a margin), never
  *  narrower than `base`; eased, so the zoom breathes rather than jumps. */
-const zoom = (base: number, margin = 1.3, deep = 0, ease = 1.5) => {
+const zoom = (base: number) => {
   let v = base;
   return (pts: V3[], across: V3, dt: number) => {
     let lo = Infinity;
     let hi = -Infinity;
-    let near = Infinity;
-    let far = -Infinity;
     for (const q of pts) {
       const x = dot(q, across);
       lo = Math.min(lo, x);
       hi = Math.max(hi, x);
-      near = Math.min(near, q[2]);
-      far = Math.max(far, q[2]);
     }
-    // `deep`: how much of the frame's height a unit of depth takes, as a
-    // share of its width (a short strip seen from above)
-    const want = Math.max(base, (hi - lo) * margin, deep ? ((far - near) * margin * 0.5) / deep : 0);
-    v += (want - v) * Math.min(1, ease * dt);
+    const want = Math.max(base, (hi - lo) * 1.3);
+    v += (want - v) * Math.min(1, 1.5 * dt);
     return v;
   };
 };
@@ -643,89 +637,61 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
 };
 
 /**
- * MORE WORK: THE BREAK, over the game's card. You cruise right to left;
- * two aces come in after you from off the right, faster than you, firing
- * their slow embers. A dash — the game's straight kick forward — buys a
- * moment; as they close they break away, as the game's aces do, and a
- * hard turn brings you round onto them, the shield up for the embers on
- * the way: the cannon on the nearer, a missile for the other. Then nitro,
- * and away.
+ * MORE WORK: THE ESCAPE, over the game's card, as one tracking shot. You
+ * cruise right to left and the camera rides with you. Two aces come in
+ * from off the right edge — faster than you, as the game's are, so they
+ * close — firing their slow embers after you, which creep up but cannot
+ * catch a ship on the run. When they close to striking distance you dash
+ * (the game's straight kick forward, with its ghosts) and light the
+ * nitro: you burst out of the frame to the left, the camera lets you go,
+ * and the aces stream after you and out. Nothing turns, nothing flips:
+ * every ship flies straight across the strip.
  */
 export const chase = (band: HTMLCanvasElement): Battle => {
   const s = stage(band);
   const { W, H } = s;
   const phone = W < 600;
-  const BASE = phone ? 640 : 1100;
-  // The aces start past the frame's right edge (and never inside the
-  // distance at which the game's aces break away).
-  const edge = Math.max(BASE / 2 + 120, 880);
+  // How much of the world the frame takes in, across; you ride at a third
+  // of it from the left, so the aces have room to come in behind you.
+  const VIEW = phone ? 1000 : 1300;
+  const RIDE = VIEW * (phone ? 0.28 : 0.18); // the frame's middle, this far behind you
   const p = newPlayer([0, 0, 0], [-1, 0, 0]);
-  const aces = [newAce(s, [edge, -30, 70], [-ACE_SPEED, 0, 0], 1, 0.5), newAce(s, [edge + 240, 40, -70], [-ACE_SPEED, 0, 0], -1, 1.3)];
+  // Just past the right edge.
+  const edge = VIEW / 2 + RIDE + 90;
+  const aces = [newAce(s, [edge, -20, 90], [-ACE_SPEED, 0, 0], 1, 1.1), newAce(s, [edge + 220, 30, -90], [-ACE_SPEED, 0, 0], -1, 1.9)];
   s.setTargets(aces.map(a => a.target));
-  const cam = follow(2.5);
-  const view = zoom(BASE, 1.5, (H * (phone ? 0.45 : 1)) / W / 0.5, 2.5);
-  // An ace joins the framing once it is on screen or close: the frame
-  // opens to let it in from the edge.
-  const seen = new Set<Ace>();
   let t = 0;
-  let dashed = false;
-  let turning = -1;
-  let out = -1;
+  let run = -1;
+  let seen = -1; // when the first ace came on screen
+  // The camera dollies at your cruise speed, and eases to a stop once you
+  // are gone, so the aces can cross after you.
+  let camX = RIDE;
+  let camV = -CRUISE;
   const frame = (dt: number) => {
     t += dt;
-    const live = aces.filter(a => a.alive);
-    let stick: Stick = {};
-    if (turning < 0) {
-      // run ahead of them; the dash, then the turn as they break away
-      if (!dashed && live.some(a => len(sub(a.P, p.P)) < 820)) {
-        dashed = true;
-        dash(p, t);
-      }
-      if (live.some(a => a.fl > 0)) turning = t;
-    } else if (live.length) {
-      // the hard turn round (full stick, the game's yaw rate); out of it,
-      // a missile for each, and the cannon on the nearer
-      const prey = live.reduce((a, b) => (len(sub(a.P, p.P)) < len(sub(b.P, p.P)) ? a : b));
-      const round = !(p.F[0] < 0.2 && t - turning < 1.6);
-      stick = round ? steerAt(p, prey.P) : { turn: -1 };
-      if (round && out < 0) out = t;
-      const aimed = s.missiles.map(m => m.aim);
-      const next = live.find(a => !aimed.includes(a.target));
-      if (out > 0 && next && t - out > 0.35 * s.missiles.length) missile(s, p, next.target);
-      if (inCone(p, prey.target) && len(sub(prey.P, p.P)) < 1300) cannon(s, p, t, live.map(a => a.target));
-    } else {
-      // away along the strip, on nitro
-      stick = { ...steerAt(p, add(p.P, [Math.sign(p.F[0]) * 1000, 0, -p.P[2]])), nitro: true };
+    const near = Math.min(...aces.map(a => len(sub(a.P, p.P))));
+    // once you have seen them come, and before they close to where the
+    // game's aces break off: the dash, and the nitro held
+    if (run < 0 && ((seen >= 0 && t - seen > 0.9) || near < 690)) {
+      run = t;
+      dash(p, t);
     }
-    // an ember coming: the shield, and into it
-    const ember = s.shots.find(e => e.life > 0 && len(sub(e.p, p.P)) < 420 && dot(sub(e.p, p.P), p.F) > 0);
-    if (ember) {
-      shield(p, t);
-      if (t < p.su) stick = { ...steerAt(p, ember.p), nitro: stick.nitro };
-    }
-    fly(p, dt, stick);
+    fly(p, dt, { nitro: run >= 0 });
     for (const a of aces) steerAce(s, a, dt, p);
     s.update(dt, p, t);
-    for (const a of live) {
-      const q = s.project(a.P);
-      if ((q && q[0] > 0 && q[0] < W) || len(sub(a.P, p.P)) < 760) seen.add(a);
-    }
-    // the camera: above and in front, looking down, as in the hero; on the
-    // middle of you and the aces it has seen, and it holds once they are
-    // down
-    const pts = [p.P, ...live.filter(a => seen.has(a)).map(a => a.P)];
-    const lo = pts.reduce((a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2])]);
-    const hi = pts.reduce((a, b) => [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])]);
-    const at = cam(mul(add(lo, hi), 0.5), live.length ? dt : 0);
+    const gone = run >= 0 && s.off(s.project(p.P), 40);
+    if (gone) camV += (0 - camV) * Math.min(1, 2.2 * dt);
+    camX += camV * dt;
+    const at: V3 = [camX, 0, 0];
     const D = 2400;
-    const VIEW = view(live.length ? pts : [], [1, 0, 0], live.length ? dt : 0);
-    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.48));
+    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.22));
+    if (seen < 0 && aces.some(a => !s.off(s.project(a.P), -30))) seen = t;
     s.clear();
     for (const a of aces) drawAce(s, a);
     s.paintFire();
     drawPlayer(s, p, t);
-    const gone = !live.length && s.off(s.project(p.P), 60);
-    return t < 18 && !(gone && s.settled());
+    const out = gone && aces.every(a => s.off(s.project(a.P), 60));
+    return t < 14 && !(out && s.settled());
   };
   return { frame, at: () => s.project(p.P) ?? [-99, -99, 1] };
 };
