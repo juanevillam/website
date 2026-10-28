@@ -182,7 +182,7 @@ export type Song = {
 
 export const SONGS = ENCODED as Song[];
 
-export const songSrc = (s: Song) => `/media/likes/songs/${s.id}.m4a`;
+export const songSrc = (s: Song) => `/media/likes/songs/${s.id}.mp4`;
 export const thumbSrc = (s: Song) =>
   s.cover ? `/media/likes/songs/${s.id}-thumb.webp` : undefined;
 export const coverSrc = (s: Song) =>

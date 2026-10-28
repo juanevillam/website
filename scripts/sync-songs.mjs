@@ -7,10 +7,14 @@
 //
 //   npm run songs
 //
-// Every song ships as AAC in an .m4a at 96 kbps (the moov atom first, so
-// it starts and seeks before it has all loaded) — the one format every
-// browser plays, Safari included. Its cover ships twice, as WebP: the
-// player's (720 px, loaded for the song showing) and the list's (96 px).
+// Every song ships as AAC at 96 kbps (the moov atom first, so it starts
+// and seeks before it has all loaded) — the one format every browser
+// plays, Safari included — in an .mp4, not an .m4a: Cloudflare doesn't
+// cache .m4a, and serves what it doesn't cache without byte ranges, so a
+// song couldn't be seeked past what had loaded (it jumped back to the
+// start). An .mp4 is cached and answers ranges. Its cover ships twice, as
+// WebP: the player's (720 px, loaded for the song showing) and the list's
+// (96 px).
 // Nothing of a song loads until it is played; the list's covers load when
 // the card is in front. `src/data/songs.json` is the list the site reads:
 // each song's id, title, artist, length and whether it is in the top.
@@ -87,7 +91,7 @@ let audio = 0;
 let art = 0;
 for (const s of [...top, ...rest]) {
   const src = join(from, s.file);
-  const to = join(out, `${s.id}.m4a`);
+  const to = join(out, `${s.id}.mp4`);
   execFileSync('ffmpeg', [
     '-v',
     'error',
@@ -147,7 +151,7 @@ for (const s of [...top, ...rest]) {
     cover: hasCover,
     top: ranked.includes(s.id),
   });
-  console.log(`${s.id}.m4a`, (statSync(to).size / 1048576).toFixed(1), 'MB');
+  console.log(`${s.id}.mp4`, (statSync(to).size / 1048576).toFixed(1), 'MB');
 }
 
 writeFileSync(list, `${JSON.stringify(songs, null, 2)}\n`);
