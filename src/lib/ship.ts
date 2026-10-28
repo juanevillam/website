@@ -136,7 +136,22 @@ type Target = { pos: () => V3; vel: () => V3; r: number; alive: () => boolean; h
  * embers, missiles, explosions and sparks, and how each is drawn.
  */
 const stage = (band: HTMLCanvasElement) => {
-  const { ctx, width: W, height: H } = fit(band);
+  // The canvas covers the whole screen, so nothing fired is ever cut off
+  // at the scene's edge; the scene itself is drawn in its box (the egg),
+  // measured every frame so it scrolls with the page.
+  const box = band.parentElement!;
+  const { ctx, width: VW, height: VH } = fit(band);
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let r = box.getBoundingClientRect();
+  const W = r.width;
+  const H = r.height;
+  const place = () => {
+    r = box.getBoundingClientRect();
+    ctx.setTransform(dpr, 0, 0, dpr, dpr * r.left, dpr * r.top);
+  };
+  place();
+  /** The whole screen, in the scene's coordinates. */
+  const screen = (): [number, number, number, number] => [-r.left, -r.top, VW, VH];
   const rand = rng(7);
   // The camera: a point, a basis and a focal length, like the game's own
   // (Q), aimed where the scene says.
@@ -159,7 +174,9 @@ const stage = (band: HTMLCanvasElement) => {
     if (cz < NEAR) return null;
     return [cx + (dot(d, C.R) * f) / cz, cy - (dot(d, C.U) * f) / cz, f / cz];
   };
-  const off = (p: Pt | null, m = 80) => !p || p[0] < -m || p[0] > W + m || p[1] < -m || p[1] > H + m;
+  /** Off the screen (not just the scene's box), with a margin. */
+  const off = (p: Pt | null, m = 80) =>
+    !p || p[0] < -r.left - m || p[0] > VW - r.left + m || p[1] < -r.top - m || p[1] > VH - r.top + m;
   // The game's line widths are for its 800-pixel screen.
   const px = clamp(W / 800, 0.6, 1.4);
 
@@ -364,7 +381,11 @@ const stage = (band: HTMLCanvasElement) => {
     ctx, W, H, px, project, off, aim, placed, stroke, dot: dot2, ring, line, spray, boom, enemyShot, update, settled, paintFire,
     bolts, shots, missiles,
     setTargets: (t: Target[]) => (targets = t),
-    clear: () => ctx.clearRect(0, 0, W, H),
+    screen,
+    clear: () => {
+      place();
+      ctx.clearRect(...screen());
+    },
   };
 };
 type Stage = ReturnType<typeof stage>;
@@ -965,7 +986,7 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     if (dark > 0) {
       ctx.globalAlpha = 0.5 * dark;
       ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(...s.screen());
       ctx.globalAlpha = 1;
     }
     if (seen > 0) {
@@ -1019,7 +1040,7 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     if (flash >= 0 && t - flash < 0.7) {
       ctx.globalAlpha = 0.15 * (1 - (t - flash) / 0.7);
       ctx.fillStyle = INK_HI;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(...s.screen());
       ctx.globalAlpha = 1;
     }
     const out = down >= 0 && s.off(s.project(p.P), 60);
