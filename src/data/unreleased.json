@@ -1,14 +1,8 @@
 {
-  "events": ["platanus", "summit"],
+  "events": [],
   "likes": true,
   "media": [
-    "media/events/platanus-hack-caracas",
-    "media/events/startup-venezuela-summit",
     "media/likes",
-    "media/narration/es/events.platanus.body.m4a",
-    "media/narration/es/events.platanus.body.vtt",
-    "media/narration/es/events.summit.body.m4a",
-    "media/narration/es/events.summit.body.vtt",
     "media/narration/es/likes.cosmos.body.m4a",
     "media/narration/es/likes.cosmos.body.vtt",
     "media/narration/es/likes.paintings.body.m4a",

@@ -195,8 +195,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'events.platanus.body',
     where: 'Eventos · Platanus Hack 26 Caracas',
-    draft:
-      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Saliendo del Summit el viernes, directo a Platanus Hack 26 Caracas: este año Platanus hizo su hackathon como gira por Latinoamérica.',
       'Aplicamos cada uno con su perfil de desarrollador: el mismo equipo de AlegrIA, Pastor, César, Ale y yo.',
@@ -213,8 +211,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
   {
     key: 'events.summit.body',
     where: 'Eventos · Startup Venezuela Summit',
-    draft:
-      'Regrabar: más animado y con la voz más alta, para que suene como el resto (la grabé cansado).',
     ideas: [
       'Fui al Startup Venezuela Summit en el Caracas Campus con mis amigos de Tripealo, el jueves y el viernes.',
       'Nunca había ido a un evento así: charlas todo el día, extranjeros hablando inglés, gente de otros países haciendo conexiones y construyendo todo tipo de productos.',
