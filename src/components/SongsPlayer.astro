@@ -637,10 +637,14 @@ const groups = [
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1.75rem;
-    /* A soft dim at the middle only, so white glyphs read on a white cover. */
-    background: radial-gradient(closest-side, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0) 85%);
-    transition: opacity var(--dur-quick) var(--ease);
+    gap: 1.5rem;
+    /* A soft dark scrim over the whole cover, as a video player's: it
+       comes and goes with the controls, so they stand apart from any
+       art without a heavy plate behind them. */
+    background: rgb(0 0 0 / 0.24);
+    /* In slow and settling, out a little quicker. A plain ease-out rather
+       than the site's --ease, whose steep start read as a pop here. */
+    transition: opacity calc(var(--beat) * 2 / 3) ease-out;
   }
 
   /* WHILE A SONG PLAYS THE TRANSPORT HIDES, as a video player's does: it
@@ -649,6 +653,7 @@ const groups = [
   .songs[data-idle] .transport {
     opacity: 0;
     pointer-events: none;
+    transition-duration: calc(var(--beat) * 0.375);
   }
 
   .songs[data-idle] .transport:has(:focus-visible) {
@@ -663,12 +668,15 @@ const groups = [
     width: 3.25rem;
     height: 3.25rem;
     padding: 0;
-    border: 0;
+    border: 1px solid rgb(255 255 255 / 0.08);
     border-radius: 50%;
-    background: none;
+    /* Each on a quiet dark disc — the reduced glass's hint, no more. */
+    background: rgb(20 20 20 / 0.38);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 0.28);
     color: #fff;
     cursor: pointer;
-    filter: drop-shadow(0 0.0625rem 0.375rem rgb(0 0 0 / 0.45));
     /* SOUND SHAPER'S OWN SQUASH (GlyphButton: ICON_PRESS_SCALE 0.86,
        ICON_PRESS_OPACITY 0.55, PRESS_SPRING damping 22, mass 0.4,
        stiffness 360) — these three buttons only, so they press like the
@@ -676,7 +684,24 @@ const groups = [
        settled in ~0.2 s. */
     transition:
       scale 320ms var(--squash-spring),
-      opacity 320ms var(--squash-spring);
+      opacity 320ms var(--squash-spring),
+      transform calc(var(--beat) * 2 / 3) ease-out;
+  }
+
+  .glyph.play {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+
+  /* The reveal settles in from a hair smaller (0.96 → 1) with the fade;
+     `transform`, so it composes with the press's `scale`. */
+  .songs[data-idle] .glyph {
+    transform: scale(0.96);
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375);
+  }
+
+  .songs[data-idle] .transport:has(:focus-visible) .glyph {
+    transform: none;
   }
 
   .transport {
@@ -695,6 +720,10 @@ const groups = [
     .glyph:active {
       scale: 1;
     }
+
+    .songs[data-idle] .glyph {
+      transform: none;
+    }
   }
 
   .glyph svg {
@@ -702,13 +731,13 @@ const groups = [
   }
 
   .skip svg {
-    width: 2.25rem;
-    height: 1.4rem;
+    width: 1.625rem;
+    height: 1rem;
   }
 
   .play svg {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 1.875rem;
+    height: 1.875rem;
   }
 
 
