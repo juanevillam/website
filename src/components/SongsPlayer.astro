@@ -139,38 +139,44 @@ const groups = [
       </div>
     </div>
 
-    <a class="powered in-frame" href="/sound-shaper">
-      <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
-      <span class="powered-words"><T k="songs.powered" /></span>
-    </a>
+    <!-- The foot: on a desk only the Shape bar shows here (in the list's
+         column); on a phone this is ONE glass bar inside the cover — the
+         mark on its left, Shape and Songs compact on its right, as the
+         app's own bar carries its Edit button. -->
+    <div class="foot-bar">
+      <a class="powered in-frame" href="/sound-shaper">
+        <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
+        <span class="powered-words"><T k="songs.powered" /></span>
+      </a>
 
-    <!-- The app's glass footer: Shape, and on a phone the list beside it. -->
-    <div class="dock">
-      <button type="button" class="dock-cell" data-open="shape" aria-haspopup="dialog" aria-expanded="false">
-        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-          <circle cx="15.5" cy="6" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
-          <circle cx="8" cy="12" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
-          <circle cx="13" cy="18" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
-        </svg>
-        <span class="dock-copy">
-          <span class="dock-label"><T k="shape.title" /></span>
-          <span class="dock-summary" data-shape-summary></span>
-        </span>
-      </button>
-      <span class="dock-divider" aria-hidden="true"></span>
-      <button type="button" class="dock-cell list-cell" data-open="songs" aria-haspopup="dialog" aria-expanded="false">
-        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9 6h12M9 12h12M9 18h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-          <circle cx="4" cy="6" r="1.3" fill="currentColor"></circle>
-          <circle cx="4" cy="12" r="1.3" fill="currentColor"></circle>
-          <circle cx="4" cy="18" r="1.3" fill="currentColor"></circle>
-        </svg>
-        <span class="dock-copy">
-          <span class="dock-label"><T k="songs.library" /></span>
-          <span class="dock-summary">{songs.length}</span>
-        </span>
-      </button>
+      <!-- The app's glass footer: Shape, and on a phone the list beside it. -->
+      <div class="dock">
+        <button type="button" class="dock-cell" data-open="shape" aria-haspopup="dialog" aria-expanded="false">
+          <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+            <circle cx="15.5" cy="6" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+            <circle cx="8" cy="12" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+            <circle cx="13" cy="18" r="2.6" fill="var(--glass-ink)" stroke="currentColor" stroke-width="1.7"></circle>
+          </svg>
+          <span class="dock-copy">
+            <span class="dock-label"><T k="shape.title" /></span>
+            <span class="dock-summary" data-shape-summary></span>
+          </span>
+        </button>
+        <span class="dock-divider" aria-hidden="true"></span>
+        <button type="button" class="dock-cell list-cell" data-open="songs" aria-haspopup="dialog" aria-expanded="false">
+          <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6h12M9 12h12M9 18h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+            <circle cx="4" cy="6" r="1.3" fill="currentColor"></circle>
+            <circle cx="4" cy="12" r="1.3" fill="currentColor"></circle>
+            <circle cx="4" cy="18" r="1.3" fill="currentColor"></circle>
+          </svg>
+          <span class="dock-copy">
+            <span class="dock-label"><T k="songs.library" /></span>
+            <span class="dock-summary">{songs.length}</span>
+          </span>
+        </button>
+      </div>
     </div>
 
     <!-- The list: beside the artwork on a desk, a sheet on a phone. -->
@@ -1197,7 +1203,8 @@ const groups = [
     transition: opacity var(--dur-turn) var(--ease);
   }
 
-  .songs[data-sheet] .frame > :not(.side),
+  .songs[data-sheet] .frame > :not(.side, .foot-bar),
+  .songs[data-sheet] .foot-bar > *,
   .songs[data-sheet='shape']:not([data-narrow]) .side {
     opacity: 0.55;
   }
@@ -1509,39 +1516,96 @@ const groups = [
   }
 
   /* ---------- a phone's upright screen ---------- */
-  /* The cover on top, its words under it, then the bar and the mark;
-     the list is a sheet the bar opens. */
+  /* THE COVER FILLS THE WHOLE CARD (Juan, 2026-10-28) — never cut short
+     to make room: the title, the scrubber and one glass bar lie over its
+     foot, on a scrim that starts higher; the list is a sheet the bar
+     opens. */
+
+  .foot-bar {
+    display: contents;
+  }
 
   .songs[data-narrow] .frame {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      'now'
-      'dock'
-      'powered';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'now';
   }
 
-  .songs[data-narrow] .dock {
-    grid-area: dock;
-  }
-
-  .songs[data-narrow] .powered.in-frame {
-    grid-area: powered;
+  .songs[data-narrow] .foot-bar {
+    grid-area: now;
+    align-self: end;
+    z-index: 2;
+    min-width: 0;
+    container: foot / inline-size;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0.5rem 0.5rem;
+    padding: 0.3125rem 0.3125rem 0.3125rem 0.625rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 1.125rem;
+    background: rgb(30 30 30 / 0.55);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 0.5rem 1.25rem rgb(0 0 0 / 0.3);
   }
 
   .songs[data-narrow] .console {
-    padding: 4.5rem 1rem 0.75rem;
+    padding: 7.5rem 1rem 4.75rem;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0.1) 12%,
+      rgb(0 0 0 / 0.3) 26%,
+      rgb(0 0 0 / 0.52) 42%,
+      rgb(0 0 0 / 0.68) 58%,
+      rgb(0 0 0 / 0.78) 75%,
+      rgb(0 0 0 / 0.84) 100%
+    );
   }
 
-
-
+  /* The transport centres over the cover above the words and the bar. */
   .songs[data-narrow] .transport {
+    inset: 0 0 5.5rem;
     gap: 1.25rem;
   }
 
+  /* The mark: on the bar's left, its words in two short lines. */
+  .songs[data-narrow] .powered.in-frame {
+    flex: 1;
+    min-width: 0;
+    gap: 0.5rem;
+    padding: 0;
+    font-size: 0.5625rem;
+    line-height: 1.3;
+  }
+
+  .songs[data-narrow] .powered-words {
+    min-width: 0;
+    max-width: 7rem;
+  }
+
+  /* A narrow phone in a long language (360 px, Spanish): the two buttons
+     keep their words and drop their icons, so the mark keeps its room. */
+  @container foot (max-width: 19rem) {
+    .dock-icon {
+      display: none;
+    }
+  }
+
+  /* Shape and Songs: compact, sized to their words, side by side. */
   .songs[data-narrow] .dock {
-    min-height: 3.5rem;
-    margin: 0.25rem 0.625rem 0;
+    flex: none;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0.875rem;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
   }
 
   .songs[data-narrow] .dock-divider,
@@ -1549,27 +1613,29 @@ const groups = [
     display: flex;
   }
 
+  .songs[data-narrow] .dock-divider {
+    margin: 0.5rem 0;
+  }
+
   .songs[data-narrow] .dock-cell {
-    gap: 0.5rem;
-    padding: 0.375rem 0.75rem;
+    flex: none;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.875rem;
   }
 
   .songs[data-narrow] .dock-icon {
-    width: 1.375rem;
-    height: 1.375rem;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   .songs[data-narrow] .dock-label {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
 
   .songs[data-narrow] .dock-summary {
-    font-size: 0.75rem;
-  }
-
-  .songs[data-narrow] .powered {
-    justify-content: center;
-    padding: 0.625rem 1rem 0.75rem;
+    display: none;
   }
 
   .songs[data-narrow] .list-bar {
