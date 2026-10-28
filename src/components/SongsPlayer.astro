@@ -202,7 +202,7 @@ const groups = [
         {/* On a desk the mark heads the list and scrolls with it. */}
         <a class="powered in-list" href="/sound-shaper">
           <span class="tile" aria-hidden="true"><AppTile app="shaper" size={30} /></span>
-          <span class="powered-words"><span class="powered-with"><T k="songs.with" /></span><span class="powered-name">Sound Shaper</span></span>
+          <span class="powered-words"><T k="songs.powered" /></span>
         </a>
         {
           groups.map(g => (
@@ -1182,6 +1182,41 @@ const groups = [
     transition: transform var(--dur-turn) var(--ease);
   }
 
+  /* ON A DESK THE SHAPE SHEET GROWS OUT OF THE CARD (Juan, 2026-10-28):
+     lifted to the page (the script), it stands over the card's middle,
+     taller than it above and below, within the window — so the whole
+     form fits with no scrolling. It opens the way the site's modals do:
+     a fade and a slight scale, on --dur-turn. */
+  .sheet.is-floating {
+    position: fixed;
+    inset: auto;
+    z-index: 20;
+    border-radius: 1.25rem;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.08),
+      0 2rem 4rem rgb(0 0 0 / 0.55),
+      0 0.5rem 1.25rem rgb(0 0 0 / 0.4);
+    transform: none;
+    opacity: 0;
+    scale: 0.96;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .sheet.is-floating.is-open {
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      scale var(--dur-turn) var(--ease);
+  }
+
+  .sheet.is-floating .grabber {
+    display: none;
+  }
+
   /* A phone's sheet keeps finger-sized rows and thumbs. */
   .songs[data-narrow] .cell {
     min-height: 2.75rem;
@@ -1564,9 +1599,10 @@ const groups = [
     );
   }
 
-  /* The transport centres over the cover above the words and the bar. */
+  /* The transport centres over the cover above the words and the bar; its
+     scrim still covers the whole cover. */
   .songs[data-narrow] .transport {
-    inset: 0 0 5.5rem;
+    padding-bottom: 5.5rem;
     gap: 1.25rem;
   }
 
@@ -1583,17 +1619,10 @@ const groups = [
     min-width: 0;
   }
 
-  /* A phone's bar: the two buttons keep their words and drop their icons,
-     so the mark keeps its room at the right. */
-  @container foot (max-width: 23rem) {
-    .dock-icon {
-      display: none;
-    }
-  }
-
   /* Shape and Songs: compact, sized to their words, side by side. */
   .songs[data-narrow] .dock {
-    flex: none;
+    flex: 1;
+    min-width: 0;
     min-height: 0;
     margin: 0;
     border: 0;
@@ -1614,7 +1643,8 @@ const groups = [
   }
 
   .songs[data-narrow] .dock-cell {
-    flex: none;
+    flex: 1;
+    justify-content: center;
     gap: 0.375rem;
     min-height: 2.75rem;
     padding: 0.25rem 0.5rem;
@@ -1634,6 +1664,39 @@ const groups = [
     display: none;
   }
 
+  /* A narrow phone in a long language (360 px, Spanish): the two buttons
+     draw closer and a size smaller, so both keep their icons and words. */
+  @container foot (max-width: 22rem) {
+    .songs[data-narrow] .dock-cell {
+      gap: 0.25rem;
+      padding: 0.25rem 0.25rem;
+    }
+
+    .songs[data-narrow] .dock-icon {
+      width: 1.0625rem;
+      height: 1.0625rem;
+    }
+
+    .songs[data-narrow] .dock-label {
+      font-size: 0.8125rem;
+    }
+
+    .songs[data-narrow] .powered.in-frame {
+      gap: 0.375rem;
+    }
+
+    .songs[data-narrow] .powered.in-frame::before {
+      margin-right: 0.125rem;
+    }
+  }
+
+  /* The narrowest phones (320 px): the words stay, the icons step out. */
+  @container foot (max-width: 19rem) {
+    .songs[data-narrow] .dock-icon {
+      display: none;
+    }
+  }
+
   .songs[data-narrow] .list-bar {
     display: grid;
   }
@@ -1645,6 +1708,8 @@ const groups = [
   @media (prefers-reduced-motion: reduce) {
     .sheet,
     .sheet.is-open,
+    .sheet.is-floating,
+    .sheet.is-floating.is-open,
     .songs[data-narrow] .side,
     .songs[data-narrow][data-sheet='songs'] .side,
     .seek::-webkit-slider-runnable-track {
@@ -1709,31 +1774,24 @@ const groups = [
   }
 
   /* ---------- the card: the cover alone ---------- */
-  /* THE CARD SHOWS ONLY THE COVER, with its transport and its words, in
-     the deck's own frame (Juan, 2026-10-28); everything else — the list,
-     the bar, Shape — is the full player's (the dialog below). */
-  .songs:not([data-full]) .frame {
+  /* ON A PHONE THE CARD SHOWS ONLY THE COVER, with its transport and its
+     words, in the deck's own frame (Juan, 2026-10-28); everything else —
+     the list, the bar, Shape — is the full player's (the dialog below). A
+     desk keeps the whole player in its card, as before. */
+  .songs[data-narrow]:not([data-full]) .frame {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'now';
   }
 
-  .songs:not([data-full]) .side,
-  .songs:not([data-full]) .foot-bar,
-  .songs:not([data-full]) .sheet {
+  .songs[data-narrow]:not([data-full]) .side,
+  .songs[data-narrow]:not([data-full]) .foot-bar,
+  .songs[data-narrow]:not([data-full]) .sheet {
     display: none;
   }
 
-  .songs:not([data-full]) .now {
+  .songs[data-narrow]:not([data-full]) .now {
     cursor: pointer;
-  }
-
-  .songs:not([data-full]) .console {
-    padding: 4rem 1.25rem 1rem;
-  }
-
-  .songs:not([data-full]) .transport {
-    inset: 0 0 4.5rem;
   }
 
   /* On a phone's 3:2 card the words keep to the title, the artist and the
@@ -1757,7 +1815,7 @@ const groups = [
   }
 
   .songs[data-narrow]:not([data-full]) .transport {
-    inset: 3rem 0 4.5rem;
+    padding: 3rem 0 4.5rem;
     gap: 1rem;
   }
 
@@ -1811,14 +1869,15 @@ const groups = [
     }
   }
 
-  .songs[data-full] .expand {
+  .songs[data-full] .expand,
+  .songs:not([data-narrow]) .expand {
     display: none;
   }
 
   /* A phone's card: the corner across from the card's name (PanelDeck's
      caption at the cover's head). */
   .songs[data-narrow]:not([data-full]) .expand {
-    top: -2.25rem;
+    top: 0.75rem;
     width: 2rem;
     height: 2rem;
   }
@@ -1900,7 +1959,7 @@ const groups = [
   }
 
   /* ---------- the mark: two short lines ---------- */
-  .powered-words {
+  .in-frame .powered-words {
     display: flex;
     flex-direction: column;
     gap: 0.0625rem;
@@ -2206,12 +2265,65 @@ const groups = [
         side.removeAttribute('aria-modal');
       }
     };
-    // The Shape sheet rises inside the player (only the full player shows
-    // its bar).
-    const showShape = (on: boolean) => {
-      if (on) requestAnimationFrame(() => sheet.classList.add('is-open'));
-      else sheet.classList.remove('is-open');
+    // ON A DESK THE SHAPE SHEET IS LIFTED TO THE PAGE: the card's frame
+    // clips and turns (a transformed ancestor captures anything fixed), so
+    // the sheet goes to <body> and stands over the card's middle, taller
+    // than the card, kept inside the window. A phone keeps it in the card.
+    const screen = root.closest<HTMLElement>('.screen') ?? root;
+    const place = () => {
+      const r = screen.getBoundingClientRect();
+      const m = 16;
+      const w = Math.min(r.width, 26 * 16);
+      // As tall as the form, and never shorter than a little past the card.
+      sheet.style.height = 'auto';
+      sheet.style.width = `${w}px`;
+      const h = Math.min(innerHeight - 2 * m, Math.max(sheet.scrollHeight, r.height * 1.15));
+      const top = Math.min(Math.max(r.top + r.height / 2 - h / 2, m), innerHeight - m - h);
+      Object.assign(sheet.style, {
+        top: `${top}px`,
+        left: `${r.left + r.width / 2 - w / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      });
     };
+    let placing = 0;
+    const replace = () => {
+      if (!placing) placing = requestAnimationFrame(() => ((placing = 0), place()));
+    };
+    const showShape = (on: boolean) => {
+      const floating = on && !root.hasAttribute('data-narrow');
+      if (on) {
+        if (floating) {
+          document.body.append(sheet);
+          sheet.classList.add('is-floating');
+          place();
+          addEventListener('scroll', replace, { passive: true });
+          addEventListener('resize', replace, { passive: true });
+        } else {
+          root.append(sheet);
+          sheet.classList.remove('is-floating');
+          sheet.removeAttribute('style');
+        }
+        // The next frame, so it opens from its resting state.
+        requestAnimationFrame(() => sheet.classList.add('is-open'));
+      } else {
+        sheet.classList.remove('is-open');
+        removeEventListener('scroll', replace);
+        removeEventListener('resize', replace);
+      }
+    };
+    // A click outside the lifted sheet closes it, as a tap outside does.
+    document.addEventListener('pointerdown', e => {
+      if (root.dataset.sheet !== 'shape' || !sheet.classList.contains('is-floating')) return;
+      const t = e.target as Node;
+      if (!sheet.contains(t) && !openers.some(o => o.contains(t))) setSheet(null);
+    });
+    sheet.addEventListener('keydown', e => {
+      if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input, select')) e.stopPropagation();
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setSheet(null);
+    });
 
     const setSheet = (name: Sheet) => {
       if (name) root.dataset.sheet = name;
@@ -2407,7 +2519,7 @@ const groups = [
     let wasIdle = false;
     now.addEventListener('pointerdown', () => (wasIdle = root.hasAttribute('data-idle')), { capture: true });
     now.addEventListener('click', e => {
-      if (root.hasAttribute('data-full') || wasIdle) return;
+      if (!root.hasAttribute('data-narrow') || root.hasAttribute('data-full') || wasIdle) return;
       if ((e.target as HTMLElement).closest('button, input, a, select')) return;
       openFull();
     });
