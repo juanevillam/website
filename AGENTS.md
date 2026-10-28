@@ -32,12 +32,14 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   destroyer's entrance, salvo, turrets, domes and bridge) — where a scene
   adds only the stick and a camera. No flips (Juan, 2026-10-28): the
   hunt behind the hero's name (the shield eats the ace's embers), the
-  break over the game's card in More Work (the aces come in from off the
-  edge; a straight dash, a hard turn onto them; no link there, so it
+  escape over the game's card in More Work (one tracking shot: the aces
+  come in from off the right edge, closing; a dash and nitro take the
+  ship out to the left and they stream after it; no link there, so it
   never takes Play Game's tap) and the destroyer in the foot, brought in
   as the game does — dark, a flash, bow on you, its salvo — seen from
-  behind the ship. The hero and the foot link to the game's card. They play behind the page's words, on canvases that reach the
-  screen's edges, so a ship leaving is never cut off.
+  behind the ship. The hero and the foot link to the game's card. They
+  play behind the page's words, on canvases that reach the screen's
+  edges, so a ship leaving is never cut off.
   Tridi's robot (`lib/robot`, Tridi's own data) only on the Platanus
   card's photo frame, where the tracking points become the G1 (a link to
   Tridi). Never while the voice plays or anything is open; with reduced
