@@ -2,6 +2,7 @@
 import T from './T.astro';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
+import ShipEgg from './ShipEgg.astro';
 
 /**
  * The hero is the wordmark alone — a line of text under it was tried
@@ -56,10 +57,12 @@ const clip = clipFor('hero');
       )
     }
   </div>
+  <ShipEgg />
 </section>
 
 <style>
   .hero {
+    position: relative;
     min-height: 100svh;
     scroll-snap-align: start;
     scroll-snap-stop: always;

@@ -6,6 +6,7 @@ import { likesShown } from '../lib/release';
 import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
+import RobotEgg from './RobotEgg.astro';
 
 /**
  * The page's foot: each app's legal and help pages, and where to find
@@ -161,6 +162,8 @@ const SOCIAL = [
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
+    {/* Tridi's robot walks through the empty row, now and then. */}
+    {panel && <RobotEgg />}
   </div>
 </footer>
 
@@ -237,6 +240,7 @@ const SOCIAL = [
      foot. The first row starts a 2rem eyebrow box plus a 1.5rem step
      down — exactly where every section's title line is. */
   .site-footer .inner {
+    position: relative;
     flex: 1;
     width: 100%;
     display: grid;

@@ -1,0 +1,111 @@
+---
+import T from './T.astro';
+import { PROJECTS } from '../lib/work';
+import { workPath } from '../lib/links';
+
+/**
+ * Space Explorer's ship, now and then, across the hero (lib/eggs,
+ * lib/ship): a link to the game's card. Out of the flow — a canvas over
+ * the hero's upper part and the link riding on the ship — so nothing
+ * moves when it comes or goes.
+ */
+const game = PROJECTS.find(p => p.id === 'space-explorer');
+---
+
+{
+  game && (
+    <div class="egg-ship">
+      <canvas class="egg-band" data-ship-band hidden aria-hidden="true" />
+      <a class="egg-hit" href={workPath(game)} data-ship-link hidden>
+        <span class="sr-only">
+          <T k="egg.ship" />
+        </span>
+      </a>
+    </div>
+  )
+}
+
+<style>
+  /* Over the hero's upper part: under the header's line, over the
+     greeting. */
+  .egg-ship {
+    position: absolute;
+    inset: 12% 0 auto;
+    height: 22%;
+    pointer-events: none;
+  }
+
+  @media (max-width: 48rem) {
+    .egg-ship {
+      inset: 14% 0 auto;
+      height: 18%;
+    }
+  }
+
+  .egg-band {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .egg-band[hidden] {
+    display: none;
+  }
+
+  /* With reduced motion it does not fly: it fades in, stands, fades. */
+  @media (prefers-reduced-motion: reduce) {
+    .egg-band {
+      opacity: 0;
+      transition: opacity var(--dur-settle) var(--ease);
+    }
+
+    .egg-band.is-still {
+      opacity: 1;
+    }
+  }
+
+  .egg-hit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 64px;
+    height: 48px;
+    border-radius: 999px;
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  .egg-hit:focus-visible {
+    outline: 1px solid var(--ink-3);
+    outline-offset: 2px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { nowAndThen, reduceMotion, toCard } from '../lib/eggs';
+
+  const band = document.querySelector<HTMLCanvasElement>('[data-ship-band]');
+  const link = document.querySelector<HTMLAnchorElement>('[data-ship-link]');
+  const hero = band?.closest<HTMLElement>('section');
+  if (band && link && hero) {
+    toCard(link, 'more-work', 'space-explorer');
+    // The first after a while on the name, then rarely; half of them
+    // meet a hunter.
+    nowAndThen(hero, [7000, 12000], [40000, 70000], async () => {
+      const ship = await import('../lib/ship');
+      if (reduceMotion.matches) await ship.stand(band, link);
+      else await ship.fly(band, link, Math.random() < 0.5);
+    });
+  }
+</script>

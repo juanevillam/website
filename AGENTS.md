@@ -21,7 +21,15 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   if `ssh-add -l` is empty — never `--no-gpg-sign`). Don't push unless asked.
 - `npm run dev` (dev server + the teleprompter's recorder), `npm run build`,
   `npm run typecheck` (`astro check`), `npm run narration` (the recording
-  checklist), `npm run arcade` (refresh Space Explorer from `../games/`).
+  checklist), `npm run arcade` (refresh Space Explorer from `../games/`),
+  `npm run tridi` (refresh the Tridi robot's walk from `../../tridi/`, or
+  `TRIDI_DIR`).
+- Easter eggs (`lib/eggs`, 2026-10-28): now and then Space Explorer's ship
+  (the game's own wireframe model) flies across the hero, and in the foot
+  Tridi's tracking points walk in and become the G1 robot (real data from
+  Tridi's `caminar` clip). Each links to its card. Only while their panel
+  holds the screen, never while the voice plays or anything is open; with
+  reduced motion they stand still. Their drawing loads on first show.
 - Things I Like (`/things-i-like`, `lib/likes`): a page built like a
   landing section — eyebrow, one panel deck (Cosmos, paintings, songs;
   each card its own address `/things-i-like/{slug}`) — reached from
