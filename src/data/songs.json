@@ -1,1 +1,250 @@
-[]
+[
+  {
+    "id": "closed",
+    "title": "Closed",
+    "artist": "plenka",
+    "seconds": 170,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "nightmare",
+    "title": "Nightmare",
+    "artist": "plenka",
+    "seconds": 183,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "if-you-care",
+    "title": "If You Care",
+    "artist": "akiaura, LONOWN, DJ Pointless",
+    "seconds": 175,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "snobbery",
+    "title": "snobbery",
+    "artist": "LONOWN",
+    "seconds": 196,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "worry",
+    "title": "worry",
+    "artist": "LONOWN, riserayss",
+    "seconds": 181,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "addiction",
+    "title": "addiction",
+    "artist": "LONOWN, Asenssia",
+    "seconds": 209,
+    "cover": true,
+    "top": true
+  },
+  {
+    "id": "agachate",
+    "title": "Agachate",
+    "artist": "Danny Romero",
+    "seconds": 188,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "closer",
+    "title": "Closer",
+    "artist": "The Chainsmokers, Halsey",
+    "seconds": 246,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "dakiti",
+    "title": "DÁKITI",
+    "artist": "Bad Bunny, Jhayco",
+    "seconds": 205,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "el-efecto",
+    "title": "El Efecto",
+    "artist": "Rauw Alejandro, Chencho Corleone",
+    "seconds": 217,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "el-makinon",
+    "title": "EL MAKINON",
+    "artist": "KAROL G, Mariah Angeliq",
+    "seconds": 209,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "el-prieto-gang-bby-wow-mamame-el-guevo-v2-mejorada-tiktok",
+    "title": "El Prieto Gang - Bby wow Mamame El Guevo (V2 Mejorada TikTok)",
+    "artist": "Lakonne",
+    "seconds": 226,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "ella-quiere-cualto-tu-no-tiene-cualto",
+    "title": "Ella Quiere Cualto (Tu No Tiene Cualto)",
+    "artist": "Joswa in da House",
+    "seconds": 202,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "encantadora",
+    "title": "Encantadora",
+    "artist": "Yandel",
+    "seconds": 240,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "girl",
+    "title": "Girl",
+    "artist": "Myke Towers",
+    "seconds": 186,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "hdmi",
+    "title": "HDMI",
+    "artist": "BONES",
+    "seconds": 139,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "imitadora",
+    "title": "Imitadora",
+    "artist": "Romeo Santos",
+    "seconds": 235,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "immortals",
+    "title": "Immortals",
+    "artist": "Fall Out Boy",
+    "seconds": 189,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "j-comprends-pas",
+    "title": "J’comprends pas",
+    "artist": "PNL",
+    "seconds": 283,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "just-dance",
+    "title": "Just Dance",
+    "artist": "Lady Gaga, Colby O'Donis",
+    "seconds": 242,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "legacy",
+    "title": "LEGACY",
+    "artist": "PIXY",
+    "seconds": 134,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "phantom",
+    "title": "Phantom",
+    "artist": "EsDeeKid, Rico Ace",
+    "seconds": 110,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "poker-face",
+    "title": "Poker Face",
+    "artist": "Lady Gaga",
+    "seconds": 237,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "poster-boy",
+    "title": "poster boy",
+    "artist": "2hollis",
+    "seconds": 121,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "sanya-tekk",
+    "title": "SANYA TEKK",
+    "artist": "H2HELL, dj nyx",
+    "seconds": 112,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "solo",
+    "title": "Solo",
+    "artist": "Amenazzy, Lary Over",
+    "seconds": 232,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "suave",
+    "title": "Suave",
+    "artist": "El Alfa, Chael Produciendo",
+    "seconds": 212,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "team",
+    "title": "Team",
+    "artist": "Lorde",
+    "seconds": 193,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "tuyo-narcos-theme",
+    "title": "Tuyo (Narcos Theme)",
+    "artist": "Rodrigo Amarante",
+    "seconds": 89,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "virtual-diva",
+    "title": "Virtual Diva",
+    "artist": "Don Omar",
+    "seconds": 239,
+    "cover": true,
+    "top": false
+  },
+  {
+    "id": "vision",
+    "title": "VISION",
+    "artist": "UdieNnx, HXVSAGE, Duduzinho",
+    "seconds": 110,
+    "cover": true,
+    "top": false
+  }
+]
