@@ -1,6 +1,5 @@
 import type { DeckItem } from './deck-items';
 import { songsShown } from './release';
-import ORDER from '../data/likes-order.json';
 import ENCODED from '../data/songs.json';
 
 /**
@@ -162,10 +161,11 @@ export const PAINTINGS = CANVASES;
 const thumbOf = (src: string) => src.replace(/\.webp$/, '-thumb.webp');
 
 /**
- * JUAN'S TOP SONGS — his own Sound Shaper library, ranked by him in
- * /dev/ranker (`likes-order.json` → `songs`) and made into the site's
- * music by `npm run songs` (scripts/sync-songs.mjs), which writes
- * `songs.json`: only the ranked ones ship. Played on the card with Sound
+ * JUAN'S SONGS — his whole Sound Shaper library: first his top, ranked
+ * by him in /dev/ranker (`likes-order.json` → `songs`), then the rest
+ * from A to Z, shown apart as not part of it (Juan, 2026-10-28). Made
+ * into the site's music by `npm run songs` (scripts/sync-songs.mjs),
+ * which writes `songs.json` in that order. Played on the card with Sound
  * Shaper's own Shape controls (SongsPlayer). A title and an artist are
  * proper names, the same in every language.
  */
@@ -176,16 +176,15 @@ export type Song = {
   /** Its length, for the list before it has loaded. */
   seconds: number;
   cover: boolean;
+  /** One of his ranked top, in its place; the rest are not ranked. */
+  top: boolean;
 };
 
-const encoded = ENCODED as Song[];
-const ranked = ORDER.songs as string[];
-/** In the ranked order; the encoded list as it is while there is none. */
-export const SONGS: Song[] = ranked.length
-  ? ranked.flatMap(id => encoded.filter(s => s.id === id))
-  : encoded;
+export const SONGS = ENCODED as Song[];
 
 export const songSrc = (s: Song) => `/media/likes/songs/${s.id}.m4a`;
+export const thumbSrc = (s: Song) =>
+  s.cover ? `/media/likes/songs/${s.id}-thumb.webp` : undefined;
 export const coverSrc = (s: Song) =>
   s.cover ? `/media/likes/songs/${s.id}.webp` : undefined;
 
