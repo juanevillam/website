@@ -1107,7 +1107,9 @@ for (const p of items)
 
   // Every panel deck on the page (More Work, Events) — one script for all.
   for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
-    const cards = [...carousel.querySelectorAll<HTMLElement>('.card')];
+    // The deck's own cards only: a card's screen may hold a `.card` of its
+    // own (the Songs player's Shape form), which is not one to turn to.
+    const cards = [...carousel.querySelectorAll<HTMLElement>('.deck-card')];
 
     // ONE FRAME ON A PHONE (Juan, 2026-10-13): two upright columns across
     // a phone's width stood each photo about 195 x 260 — too small for
