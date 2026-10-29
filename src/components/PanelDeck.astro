@@ -1287,13 +1287,29 @@ for (const p of items)
         img.removeAttribute('data-src');
       }
     };
+    // The next picture fades in once it can be seen — the one in front
+    // stays until then (at most 1.2 s) — so a picture still loading never
+    // fades in empty and then pops in (Juan, 2026-10-29).
     const step = (f: Frame, by: number) => {
       const n = f.layers.length;
-      f.layers[f.i].classList.remove('is-on');
       f.i = (f.i + by + n) % n;
-      wake(f.layers[f.i]);
+      const next = f.layers[f.i];
+      wake(next);
       wake(f.layers[(f.i + 1) % n]);
-      f.layers[f.i].classList.add('is-on');
+      let done = false;
+      const on = () => {
+        if (done || f.layers[f.i] !== next) return;
+        done = true;
+        for (const layer of f.layers) layer.classList.toggle('is-on', layer === next);
+      };
+      const waiting = [...next.querySelectorAll('img')].filter(
+        img => img.src && !(img.complete && img.naturalWidth),
+      );
+      if (!waiting.length) return on();
+      let left = waiting.length;
+      for (const img of waiting)
+        img.addEventListener('load', () => --left || on(), { once: true });
+      setTimeout(on, 1200);
     };
     const turn = (f: Frame, by = 1) => {
       step(f, by);

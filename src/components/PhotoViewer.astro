@@ -108,10 +108,18 @@ import T from './T.astro';
     } else {
       clear(back);
       back.img.alt = item.name ?? '';
+      back.img.classList.remove('is-loaded');
+      back.img.onload = null;
       back.img.src = item.src;
     }
+    // ONCE A TURN (Juan, 2026-10-29: now and then a picture changed with
+    // no fade). A slow picture turned on the timer and then AGAIN when it
+    // loaded, and that second turn swapped which layer was in front, so
+    // the next picture was written straight onto the one being looked at.
+    let revealed = false;
     const reveal = () => {
-      if (mine !== turn) return;
+      if (mine !== turn || revealed) return;
+      revealed = true;
       const was = layers[front];
       was.el.classList.remove('is-on');
       back.el.classList.add('is-on');
@@ -120,10 +128,17 @@ import T from './T.astro';
         if (mine === turn) clear(was);
       }, 700);
     };
-    if (item.video || (back.img.complete && back.img.naturalWidth)) reveal();
-    else {
-      back.img.onload = reveal;
-      // A slow picture still turns: its blur stands in while it loads.
+    if (item.video || (back.img.complete && back.img.naturalWidth)) {
+      back.img.classList.add('is-loaded');
+      reveal();
+    } else {
+      // A slow picture still turns: its blur stands in while it loads,
+      // and the picture fades in over it when it arrives.
+      back.img.onload = () => {
+        if (mine !== turn) return;
+        back.img.classList.add('is-loaded');
+        reveal();
+      };
       setTimeout(reveal, 1200);
     }
     name.textContent = item.name ?? '';
@@ -262,6 +277,15 @@ import T from './T.astro';
 
   .full {
     object-fit: contain;
+  }
+
+  /* A picture that arrives after its turn fades in rather than popping. */
+  img.full {
+    transition: opacity var(--dur-settle) linear;
+  }
+
+  img.full:not(.is-loaded) {
+    opacity: 0;
   }
 
   .layer img:not([src]),
