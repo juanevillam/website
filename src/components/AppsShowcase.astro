@@ -659,12 +659,16 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     margin-top: calc(var(--shot-top) - var(--stage-top));
   }
 
+  /* Its corner is the iPhone screen's, 14% of the phone's OWN width
+     (1179:2556, so 6.458% of its height), whatever size it is drawn at —
+     never the page's --media-radius, which assumes one size per layout. */
   .shot {
+    --shot-r: calc(var(--shot-h) * 0.06458);
     height: var(--shot-h);
     width: auto;
     max-width: none;
-    border-radius: var(--media-radius) var(--media-radius)
-      calc(var(--media-radius) * 1.136) calc(var(--media-radius) * 1.136);
+    border-radius: var(--shot-r) var(--shot-r) calc(var(--shot-r) * 1.136)
+      calc(var(--shot-r) * 1.136);
     border: 1px solid var(--hairline);
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),

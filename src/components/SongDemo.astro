@@ -124,11 +124,15 @@ import { SONGS } from '../lib/narration';
      the recording reads as the screenshot coming to life, not a smaller
      copy of it. Keep the two in step. */
   .demo-screen {
-    height: calc(100svh - (var(--stage-top) - 1.5rem) - var(--stage-bottom) - 5rem);
+    --demo-h: calc(100svh - (var(--stage-top) - 1.5rem) - var(--stage-bottom) - 5rem);
+    /* The iPhone screen's corner, 14% of the phone's own width, at
+       whatever size the phone is drawn (AppsShowcase `.shot`). */
+    --demo-r: calc(var(--demo-h) / var(--demo-ratio) * 0.14);
+    height: var(--demo-h);
     width: auto;
     border: 1px solid var(--hairline);
-    border-radius: var(--media-radius) var(--media-radius)
-      calc(var(--media-radius) * 1.136) calc(var(--media-radius) * 1.136);
+    border-radius: var(--demo-r) var(--demo-r) calc(var(--demo-r) * 1.136)
+      calc(var(--demo-r) * 1.136);
     background: var(--surface);
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),
@@ -151,7 +155,7 @@ import { SONGS } from '../lib/narration';
     }
 
     .demo-screen {
-      height: min(
+      --demo-h: min(
         calc((100vw - 2rem) * var(--demo-ratio)),
         calc(100svh - var(--float-gap) * 2 - var(--float-h) - 1rem)
       );
