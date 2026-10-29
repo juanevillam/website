@@ -120,6 +120,15 @@ const groups = [
             </svg>
             <span class="sr"><T k="songs.expand" /></span>
           </button>
+          <!-- ON A DESK THE COVER'S CORNER OPENS IT FULL SCREEN (Juan,
+               2026-10-29) — this button only: the song's own controls never
+               do. It rests with the transport, as a phone's expand does. -->
+          <button type="button" class="full-open" data-full-open aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="sr"><T k="songs.fullScreen" /></span>
+          </button>
         </div>
       </div>
       <div class="console">
@@ -240,15 +249,6 @@ const groups = [
       </div>
     </div>
   </div>
-
-  <!-- ON A DESK THE CARD'S CORNER OPENS IT FULL SCREEN (Juan,
-       2026-10-29) — this button only: the song's own controls never do. -->
-  <button type="button" class="full-open" data-full-open aria-haspopup="dialog">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-    </svg>
-    <span class="sr"><T k="songs.fullScreen" /></span>
-  </button>
 
   <audio data-audio preload="none"></audio>
   <div hidden data-words>
@@ -1439,6 +1439,22 @@ const groups = [
     cursor: pointer;
   }
 
+  /* ONE LINE IN EVERY LANGUAGE (Juan, 2026-10-29: "Ajustes
+     preestablecidos" wrapped in a third of the full player): the value
+     keeps its words whole and only as wide as the option showing; the
+     name gives way, with an ellipsis, if it has to. */
+  .picker .cell-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .picker .picker-value {
+    flex: none;
+  }
+
   .picker-value {
     position: relative;
     display: flex;
@@ -1461,6 +1477,7 @@ const groups = [
     font-size: 0.9375rem;
     text-align: right;
     text-align-last: right;
+    field-sizing: content;
     cursor: pointer;
   }
 
@@ -1935,12 +1952,6 @@ const groups = [
     }
   }
 
-  /* Over the list's corner, above its scroll: it stays, never resting
-     with the transport. A phone has its expand button instead. */
-  .full-open {
-    z-index: 4;
-  }
-
   .songs[data-narrow] .full-open,
   .songs[data-full] .full-open {
     display: none;
@@ -1959,26 +1970,30 @@ const groups = [
     height: 2rem;
   }
 
-  /* It rests with the transport, so it fades as the discs do: by its own
-     `--shown`, keeping its glass through the fade. */
-  .expand {
+  /* Both rest with the transport, so they fade as the discs do: by their
+     own `--shown`, keeping their glass through the fade. */
+  .expand,
+  .full-open {
     opacity: calc(var(--shown) * var(--press));
     transition-property: scale, --press, --shown, background-color, border-color;
     transition-duration: 320ms, 320ms, calc(var(--beat) * 2 / 3), var(--dur-micro), var(--dur-micro);
     transition-timing-function: var(--squash-spring), var(--squash-spring), ease-out, var(--ease), var(--ease);
   }
 
-  .expand.is-pressed {
+  .expand.is-pressed,
+  .full-open.is-pressed {
     opacity: calc(var(--shown) * var(--press));
     --press: 0.55;
   }
 
-  .songs[data-idle] .expand {
+  .songs[data-idle] .expand,
+  .songs[data-idle] .full-open {
     --shown: 0;
     transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375), var(--dur-micro), var(--dur-micro);
   }
 
-  .songs[data-idle] .transport:has(:focus-visible) .expand {
+  .songs[data-idle] .transport:has(:focus-visible) .expand,
+  .songs[data-idle] .transport:has(:focus-visible) .full-open {
     --shown: 1;
   }
 
@@ -1995,6 +2010,8 @@ const groups = [
     border: 0;
     background: rgb(8 8 8 / 0.94);
     color: var(--ink);
+    /* A lifted sheet, closed, waits below the screen's foot. */
+    overflow: hidden;
   }
 
   /* PHOTOVIEWER'S FRAME, TO THE PIXEL (Juan, 2026-10-29): its rows — the
@@ -2064,16 +2081,44 @@ const groups = [
     }
   }
 
+  /* ---------- the full player on a phone: sheets past the frame ---------- */
+  /* ITS SHEETS RISE PAST THE FRAME (Juan, 2026-10-29), as Shape grows out
+     of the card on a desk: confined to the 4:5 frame they were short and
+     scrolled a lot. They keep the frame's width and their own top corners
+     and grabber, and stand from just under the close button to the
+     screen's foot (the script measures `--lift-*`). So the frame no
+     longer clips: the player's own layers round their corners instead. */
+  .full-room:has(> .songs[data-full][data-narrow]) {
+    overflow: visible;
+  }
+
+  .songs[data-full][data-narrow] {
+    overflow: visible;
+    border-radius: calc(var(--media-radius-flat) - 1px);
+  }
+
+  .songs[data-full][data-narrow] .backdrop,
+  .songs[data-full][data-narrow] .now {
+    border-radius: calc(var(--media-radius-flat) - 1px);
+  }
+
+  .songs[data-full][data-narrow] .sheet,
+  .songs[data-full][data-narrow] .side {
+    top: var(--lift-top, 0.625rem);
+    bottom: var(--lift-bottom, 0);
+  }
+
   /* ---------- the full player on a desk: three columns ---------- */
   /* WITH THE ROOM OF A FULL SCREEN, NOTHING IS A SHEET (Juan, 2026-10-29):
-     the cover, the Shape form and the list stand side by side — what the
-     song is, how it sounds, what comes next. The form is the same sheet,
+     the cover, the list and the Shape form stand side by side — what the
+     song is, what comes next, how it sounds — in equal thirds (Juan,
+     2026-10-29), so the form is as wide as the list. The form is the same sheet,
      seated in the frame (the script) and drawn as a column: no grabber,
      no close, no rise; the list takes its title bar back, so both columns
      are named. The dock's only job was opening Shape, so it goes. */
   .songs[data-full]:not([data-narrow]) .frame {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'now shape side';
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: 'now side shape';
   }
 
   .songs[data-full]:not([data-narrow]) .sheet {
@@ -2093,7 +2138,8 @@ const groups = [
     transition: none;
   }
 
-  .songs[data-full]:not([data-narrow]) .side {
+  .songs[data-full]:not([data-narrow]) .side,
+  .songs[data-full]:not([data-narrow]) .sheet {
     border-left: 1px solid var(--separator);
   }
 
@@ -2684,6 +2730,7 @@ const groups = [
       seat();
       sync(null);
       full.showModal();
+      lift();
       document.documentElement.style.overflow = 'hidden';
     };
     full.addEventListener('close', () => {
@@ -2691,6 +2738,7 @@ const groups = [
       root.removeAttribute('data-full');
       seat();
       sync(null);
+      lift();
       keepPlaying(() => full.before(root));
       document.documentElement.style.overflow = '';
       fullOpener.focus({ preventScroll: true });
@@ -2706,6 +2754,23 @@ const groups = [
     full.addEventListener('click', e => {
       if (e.target === full || e.target === room) full.close();
     });
+    // A phone's sheets stand from just under the close button (its 1rem
+    // and 2.5rem, and 1rem of air) to the screen's foot: offsets from the
+    // player's own box, which is where they are placed.
+    const lift = () => {
+      if (!root.hasAttribute('data-full') || !root.hasAttribute('data-narrow')) {
+        root.style.removeProperty('--lift-top');
+        root.style.removeProperty('--lift-bottom');
+        return;
+      }
+      const r = root.getBoundingClientRect();
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      root.style.setProperty('--lift-top', `${4.5 * rem - r.top}px`);
+      root.style.setProperty('--lift-bottom', `${r.bottom - full.clientHeight}px`);
+    };
+    const lifting = new ResizeObserver(lift);
+    lifting.observe(full);
+    lifting.observe(root);
     expand.addEventListener('click', () => openFull(expand));
     fullOpen.addEventListener('click', () => openFull(fullOpen));
     // A tap on the cover opens it too — but a first tap on a resting
