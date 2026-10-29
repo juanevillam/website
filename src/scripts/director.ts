@@ -11,6 +11,7 @@
 import { createDeck, watchSlots, type Deck } from '../lib/deck';
 import { type ReadMark, readTokens } from '../lib/readAlong';
 import { dur } from '../lib/motion';
+import { playingSound } from '../lib/listening';
 
 // ---------- the controller ----------
 // The walk from the opener to the deck is a pure function of the scroll
@@ -236,12 +237,16 @@ const HIGH_HZ = 5000;
 
 let peak = 0.35;
 
-/** One level per band, centre first; zeros when nothing is speaking. */
-const voiceBands = (half: number) => {
+/** One level per band, centre first, from whichever analyser is heard —
+ *  the voice's (and the demo's, routed into it), or another sound the
+ *  page plays (lib/listening). */
+const voiceBands = (half: number, from = analyser) => {
   const out = new Array(half).fill(0);
-  if (!analyser || !freq || !ctx) return out;
-  analyser.getByteFrequencyData(freq);
-  const binHz = ctx.sampleRate / analyser.fftSize;
+  if (!from) return out;
+  if (!freq || freq.length !== from.frequencyBinCount)
+    freq = new Uint8Array(from.frequencyBinCount);
+  from.getByteFrequencyData(freq);
+  const binHz = from.context.sampleRate / from.fftSize;
   for (let k = 0; k < half; k++) {
     const lo = LOW_HZ * (HIGH_HZ / LOW_HZ) ** (k / half);
     const hi = LOW_HZ * (HIGH_HZ / LOW_HZ) ** ((k + 1) / half);
@@ -269,9 +274,15 @@ const voiceBands = (half: number) => {
   return out.map(v => Math.min(1, v / peak) ** 1.6);
 };
 
+/** Another sound the page plays (a song in the Songs card), when the
+ *  voice and the demo are quiet. */
+const otherSound = () =>
+  (running && !voice.paused) || demoPlaying() ? undefined : playingSound();
+
 const listen = () => {
-  const talking = (running && !voice.paused) || demoPlaying();
-  const bands = talking ? voiceBands(BANDS) : null;
+  const other = otherSound();
+  const talking = (running && !voice.paused) || demoPlaying() || !!other;
+  const bands = talking ? voiceBands(BANDS, other?.analyser ?? analyser) : null;
   loudness = bands ? bands.reduce((a, b) => a + b, 0) / bands.length : 0;
   spectrum = bands ?? [];
 };
@@ -286,6 +297,24 @@ const listen = () => {
 // lays them flat; they travel only while there is voice to carry them.
 
 const field = document.querySelector<HTMLCanvasElement>('.nar-field');
+const fieldHome = field?.parentElement ?? null;
+
+/** OVER WHATEVER IS OPEN (Juan, 2026-10-29): a picture in the viewer, the
+ *  full player or a shared address's modal stands over the page, so the
+ *  field — drawn behind the page — went unseen while the sound played on.
+ *  It moves into the open one, behind its content, and back when it
+ *  closes. A modal <dialog> is in the top layer, where nothing from the
+ *  page can reach; inside it the field's z-index -1 lays it over the
+ *  dialog's own ground and under its content. */
+const hostField = () => {
+  if (!field || !fieldHome) return;
+  const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
+  const host =
+    dialogs[dialogs.length - 1] ??
+    document.querySelector<HTMLElement>('[data-focused]') ??
+    fieldHome;
+  if (field.parentElement !== host) host.prepend(field);
+};
 /** Mean band level this frame, 0–1 (set by listen). */
 let loudness = 0;
 /** The bars' bands this frame, centre first (set by listen). */
@@ -333,7 +362,8 @@ const drawField = (now: number) => {
   if (!field || !narrator || narrator.hidden || reduceMotion) return;
   const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
   lastFrame = now;
-  const talking = (running && !voice.paused) || demoPlaying();
+  const talking = (running && !voice.paused) || demoPlaying() || !!otherSound();
+  hostField();
 
   // Quick enough to follow the voice, eased enough not to twitch.
   if (heard.length !== spectrum.length && spectrum.length)
@@ -344,7 +374,7 @@ const drawField = (now: number) => {
     heard[i] += d * (d > 0 ? 0.3 : 0.12);
   }
   tone += (brightness - tone) * 0.08;
-  presence += (((session && running) || demo ? 1 : 0) - presence) * 0.04;
+  presence += (((session && running) || demo || otherSound() ? 1 : 0) - presence) * 0.04;
   // They travel only on voice — a pause holds them where they are.
   travel += dt * 0.0024 * (0.1 + loudness);
 

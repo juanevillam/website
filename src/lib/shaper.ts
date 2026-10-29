@@ -12,6 +12,7 @@
  *
  * Read-only: nothing is saved, and nothing leaves the page.
  */
+import { addSound } from './listening';
 
 // ---------- the numbers (shapeDsp.ts, store/shaper.ts, lib/player.ts) ----------
 
@@ -320,6 +321,15 @@ export const createShaper = (audio: HTMLAudioElement) => {
     const wallTrim = ctx.createGain();
     const echoTrim = ctx.createGain();
     node.connect(wallTrim).connect(echoTrim).connect(ctx.destination);
+    // The waves along the screen's foot draw the song as it is heard,
+    // shaped (lib/listening). Read the way the voice's analyser is.
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.minDecibels = -85;
+    analyser.maxDecibels = -25;
+    analyser.smoothingTimeConstant = 0.72;
+    echoTrim.connect(analyser);
+    addSound({ analyser, playing: () => !audio.paused });
     g = {
       ctx,
       trim,
