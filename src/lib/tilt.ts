@@ -15,6 +15,11 @@
  *
  * Pointer devices only — a touch screen has no hover to follow — and never
  * with reduced motion.
+ *
+ * A picture can be a control surface (the Songs card's player, 2026-10-29):
+ * WHILE A BUTTON IS HELD THE LEAN HOLDS, so a scrubber or a slider being
+ * dragged never moves under the pointer dragging it, and a press lands
+ * where it started. A pointer over an open dialog leans nothing behind it.
  */
 export const followPointer = (
   root: HTMLElement,
@@ -59,6 +64,8 @@ export const followPointer = (
   };
 
   root.addEventListener('pointermove', e => {
+    if (e.buttons) return;
+    if ((e.target as Element | null)?.closest?.('dialog')) return;
     const next = target() ?? null;
     // The deck turned under the pointer: the old picture straightens at
     // once, the new one starts from level.
@@ -76,7 +83,13 @@ export const followPointer = (
     run();
   });
 
-  root.addEventListener('pointerleave', () => {
+  // A press stops the lean where it is, mid-ease included.
+  root.addEventListener('pointerdown', () => {
+    goal = { ...now };
+  });
+
+  root.addEventListener('pointerleave', e => {
+    if (e.buttons) return;
     goal = { tx: 0, ty: 0 };
     run();
   });

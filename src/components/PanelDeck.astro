@@ -1437,12 +1437,8 @@ for (const p of items)
 
     // The card's screen leans toward the pointer anywhere over the panel.
     if (section)
-      // A screen that is a control surface of its own (the Songs player,
-      // `data-no-tilt`) holds still: leaning it moved its rows under a
-      // still pointer and its hover flickered.
-      followPointer(section, () => {
-        const screen = cards[deck.current]?.querySelector<HTMLElement>('.screen');
-        return screen?.querySelector('[data-no-tilt]') ? null : screen;
-      });
+      followPointer(section, () =>
+        cards[deck.current]?.querySelector<HTMLElement>('.screen')
+      );
   }
 </script>
