@@ -44,7 +44,8 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   edges, so a ship leaving is never cut off.
   Tridi's robot (`lib/robot`, Tridi's own data) only on the Platanus
   card's photo frame, where the tracking points become the G1 (a link to
-  Tridi). None starts while the voice plays or anything is open, but
+  Tridi). Each plays ONCE a visit (Juan, 2026-10-29); a reload brings it
+  back. None starts while the voice plays or anything is open, but
   one already passing plays on when the voice starts or stops (Juan,
   2026-10-28): only something covering the page ends it. With reduced
   motion they stand still. Their drawing loads on first show.

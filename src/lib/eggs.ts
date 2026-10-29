@@ -1,5 +1,5 @@
 /**
- * EASTER EGGS — Juan's own work passing through the page, now and then:
+ * EASTER EGGS — Juan's own work passing through the page, once a visit:
  * Space Explorer's ship flies across the hero (ShipEgg, lib/ship), and
  * Tridi's robot walks across the foot (RobotEgg, lib/robot). Each is a
  * link to its card. They are rare and quiet on purpose: only on a panel
@@ -29,39 +29,42 @@ export const covered = () =>
 export const busy = () =>
   covered() || !!document.querySelector('[data-narrator].is-playing');
 
-/** Calls `show` every so often while `panel` holds the screen and the
- *  page is free (and `ready`, when given, says yes): the first after
- *  `first` ms (a range), the next ones `then` ms after the last ended. */
+/** Calls `show` ONCE A VISIT (Juan, 2026-10-29): `first` ms (a range)
+ *  after `panel` comes to hold the screen while the page is free (and
+ *  `ready`, when given, says yes). It played again every time the panel
+ *  came back and every half minute while it stayed, which read as
+ *  repetitive; a reload brings it back. `then` is kept for callers. */
 export const nowAndThen = (
   panel: HTMLElement,
   first: [number, number],
-  then: [number, number],
+  _then: [number, number],
   show: () => Promise<void>,
   ready: () => boolean = () => true,
 ) => {
   const wait = ([a, b]: [number, number]) => a + Math.random() * (b - a);
   let held = false;
   let showing = false;
+  let shown = false;
   let timer = 0;
   const arm = (ms: number) => {
     clearTimeout(timer);
     timer = window.setTimeout(tick, ms);
   };
   const tick = async () => {
-    if (!held || showing) return;
+    if (!held || showing || shown) return;
     if (busy() || !ready()) return arm(1000);
     showing = true;
+    shown = true;
     try {
       await show();
     } finally {
       showing = false;
     }
-    if (held) arm(wait(then));
   };
   new IntersectionObserver(
     ([entry]) => {
       held = entry.intersectionRatio >= 0.6;
-      if (held && !showing) arm(wait(first));
+      if (held && !showing && !shown) arm(wait(first));
       else clearTimeout(timer);
     },
     { threshold: [0, 0.6] },

@@ -127,8 +127,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       const panel = egg.closest<HTMLElement>(hero ? 'section' : 'footer');
       if (!panel) continue;
       toCard(link, 'more-work', 'space-explorer');
-      // Soon after the panel settles, so a visit finds it; then now and
-      // then while it stays on screen.
+      // Soon after the panel settles, so a visit finds it — once a visit.
       nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
         const ship = await import('../lib/ship');
         const scene = hero ? ship.heroFight : ship.destroyer;
