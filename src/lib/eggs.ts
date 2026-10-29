@@ -3,8 +3,10 @@
  * Space Explorer's ship flies across the hero (ShipEgg, lib/ship), and
  * Tridi's robot walks across the foot (RobotEgg, lib/robot). Each is a
  * link to its card. They are rare and quiet on purpose: only on a panel
- * that holds the screen, never while the voice reads or anything is open
- * over the page, and with reduced motion they stand still.
+ * that holds the screen, never starting while the voice reads or anything
+ * is open over the page, and with reduced motion they stand still. One
+ * already passing plays on when the voice starts or stops (Juan,
+ * 2026-10-28): it goes only when something covers it.
  *
  * This file is what every visit loads (a few hundred bytes): the clock
  * that decides when. The drawing is fetched the first time one shows.
@@ -13,14 +15,19 @@ const root = document.documentElement;
 
 export const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
-/** Something else has the page: the voice, a modal, a demo, the game, a
- *  picture in the viewer — or the tab is not on screen. */
-export const busy = () =>
+/** Something is over the page: a modal, a demo, the game, a picture in
+ *  the viewer — or the tab is not on screen. An egg passing stops. */
+export const covered = () =>
   document.hidden ||
   root.classList.contains('is-focus') ||
   root.classList.contains('is-demo') ||
   !!root.dataset.arcade ||
-  !!document.querySelector('[data-narrator].is-playing, dialog[open]');
+  !!document.querySelector('dialog[open]');
+
+/** Something else has the page — covered, or the voice reading: no egg
+ *  starts. */
+export const busy = () =>
+  covered() || !!document.querySelector('[data-narrator].is-playing');
 
 /** Calls `show` every so often while `panel` holds the screen and the
  *  page is free (and `ready`, when given, says yes): the first after
@@ -61,15 +68,15 @@ export const nowAndThen = (
   ).observe(panel);
 };
 
-/** A frame loop: `frame(dt)` until it returns false or the page gets
- *  busy. Resolves true when it ran to its end (or `frame` ended it). */
+/** A frame loop: `frame(dt)` until it returns false or something covers
+ *  the page. Resolves true when it ran to its end (or `frame` ended it). */
 export const run = (frame: (dt: number) => boolean) =>
   new Promise<boolean>(done => {
     let last = performance.now();
     const step = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (busy()) return done(false);
+      if (covered()) return done(false);
       if (!frame(dt)) return done(true);
       requestAnimationFrame(step);
     };
