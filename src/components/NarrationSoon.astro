@@ -43,7 +43,12 @@ import T from './T.astro';
     };
     const update = () => {
       const lang = root.dataset.lang ?? 'en';
-      const show = lang !== 'es' && !dismissed(lang);
+      // Gone for good once every clip on the page has his voice in that
+      // language too (lib/narration).
+      const voiced = [...document.querySelectorAll('[data-clip]')].every(p =>
+        p.hasAttribute(`data-clip-${lang}`),
+      );
+      const show = lang !== 'es' && !voiced && !dismissed(lang);
       if (show) {
         box.hidden = false;
         requestAnimationFrame(() => box.classList.add('is-in'));

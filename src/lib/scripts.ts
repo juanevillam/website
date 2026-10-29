@@ -10,13 +10,18 @@
  * actually said: the dev server's recorder transcribes the take (whisper,
  * scripts/narration-recorder.mjs) and times every phrase from it.
  *
- * SPANISH ONLY (Juan, 2026-10-17): the page has one voice, subtitled in
- * English and Chinese (lib/narration), so nothing else is recorded. The
- * ideas follow what Juan actually said in the takes, so a re-recording
- * needs little change.
+ * SPANISH FROM IDEAS; ENGLISH READ (Juan, 2026-10-29). Spanish was the
+ * only voice from 2026-10-17; now Juan records English too. English is
+ * not said from ideas: it is the page's own English paragraph (i18n/ui),
+ * which is the Spanish take translated, read as written so the words on
+ * the page are the words heard. It is split into a few BLOCKS of whole
+ * sentences rather than one line per idea, so a take is a handful of
+ * marks, not one per sentence.
  */
-export type ScriptLang = 'es';
-export const SCRIPT_LANGS: ScriptLang[] = ['es'];
+import { ui } from '../i18n/ui';
+
+export type ScriptLang = 'es' | 'en';
+export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en'];
 
 export type ScriptClip = {
   key: string;
@@ -322,5 +327,36 @@ export const SCRIPTS_ES: ScriptClip[] = [
   },
 ];
 
-/** Every clip's script in one language — Spanish is the only one. */
-export const scriptsFor = (_lang: ScriptLang): ScriptClip[] => SCRIPTS_ES;
+/** A clip's paragraph key in i18n/ui: the hero and the footer have no
+ *  paragraph on screen, only their captions. */
+const textKey = (key: string) =>
+  (key === 'hero' || key === 'footer' ? `${key}.caption` : key) as keyof typeof ui.en;
+
+/** About this many characters a block — three or four sentences, some 25
+ *  seconds read aloud. A sentence is never split. */
+const BLOCK = 360;
+
+const blocks = (text: string) => {
+  const sentences = text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9"'“‘(])/);
+  const out: string[] = [];
+  for (const s of sentences) {
+    const last = out.length - 1;
+    if (last >= 0 && out[last].length + s.length < BLOCK) out[last] += ` ${s}`;
+    else out.push(s);
+  }
+  return out;
+};
+
+/** English: the page's own paragraph, read as written, in blocks. */
+export const SCRIPTS_EN: ScriptClip[] = SCRIPTS_ES.map(({ key, where, shot }) => ({
+  key,
+  where,
+  shot,
+  ideas: blocks(ui.en[textKey(key)]),
+}));
+
+/** Every clip's script in one language. */
+export const scriptsFor = (lang: ScriptLang): ScriptClip[] =>
+  lang === 'en' ? SCRIPTS_EN : SCRIPTS_ES;

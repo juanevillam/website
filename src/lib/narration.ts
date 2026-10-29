@@ -27,11 +27,17 @@ import { plainText, type ReadMark, readTokens } from './readAlong';
  */
 // Astro runs with the app as its working directory, in dev and in build.
 const PUBLIC = path.join(process.cwd(), 'public');
-const DIR = 'media/narration/es';
 
-/** The clip recorded for one paragraph, or null when there is none. */
-export const clipFor = (key: string): string | null => {
-  const url = `/${DIR}/${key}.m4a`;
+/**
+ * HIS OWN VOICE IN EACH LANGUAGE, AS IT ARRIVES (Juan, 2026-10-29): he
+ * records English, read from the page's own English (lib/scripts), and
+ * may record Chinese. A paragraph with a clip in the page's language plays
+ * it, read along word by word on its own clock; one without plays the
+ * Spanish, read along on the Spanish clock as before. So a language's
+ * voice can arrive a paragraph at a time.
+ */
+export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
+  const url = `/media/narration/${lang}/${key}.m4a`;
   return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
 };
 
@@ -58,8 +64,10 @@ const DATA = path.join(process.cwd(), 'src/data/narration');
 
 type Spoken = { w: string; t: number };
 
-const spokenWords = (key: string): Spoken[] | undefined => {
-  const file = path.join(DATA, `${key}.words.json`);
+/** Spanish keeps its original name; another language's take is
+ *  `{key}.{lang}.words.json` (scripts/narration-recorder). */
+const spokenWords = (key: string, lang: Locale = 'es'): Spoken[] | undefined => {
+  const file = path.join(DATA, lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`);
   return fs.existsSync(file)
     ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Spoken[])
     : undefined;
@@ -156,6 +164,16 @@ export const readTimings = (
   for (const l of locales) {
     if (l === 'es') continue;
     const tokens = readTokens(text(l));
+    // Its own voice: its words on its own clock, like Spanish.
+    const own = clipFor(key, l) ? spokenWords(key, l) : undefined;
+    if (own?.length) {
+      const times = alignTimes(
+        tokens.map(t => t.text),
+        own,
+      );
+      out[l] = tokens.map((t, i) => [t.at, round(times[i])]);
+      continue;
+    }
     const starts = sentenceStarts(tokens);
     const groups =
       starts.length === spans.length
@@ -186,6 +204,8 @@ export const voiceAttrs = (key: string) => {
   const attrs: Record<string, string | undefined> = {
     'data-clip': clipFor(key) ?? undefined,
   };
+  for (const l of locales)
+    if (l !== 'es') attrs[`data-clip-${l}`] = clipFor(key, l) ?? undefined;
   const timings = readTimings(key);
   for (const l of locales)
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;

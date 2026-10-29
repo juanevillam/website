@@ -154,10 +154,13 @@ let showing: Narr | undefined;
 
 const narrs: Narr[] = [];
 
-// One voice, Spanish (lib/narration): every paragraph's clip rides on it
-// as data-clip.
-
-const clipOf = (p: HTMLElement) => p.dataset.clip;
+// Every paragraph's Spanish clip rides on it as data-clip, and its clip in
+// another language, once recorded, as data-clip-{lang} (lib/narration):
+// the page's language plays its own when there is one.
+const clipOf = (p: HTMLElement) => {
+  const lang = document.documentElement.dataset.lang;
+  return (lang && lang !== 'es' && p.getAttribute(`data-clip-${lang}`)) || p.dataset.clip;
+};
 
 const firstVoiced = (block: Narr | undefined, from = 0) => {
   if (!block) return -1;
@@ -717,6 +720,7 @@ const start = (block: Narr, para: number) => {
   ctx?.resume();
   session = { block, para };
   running = true;
+  relang = false;
   claimSession();
   voice.src = src;
   voice.play().catch(() => stop());
@@ -733,7 +737,25 @@ const pause = () => {
   paint();
 };
 
+// The language changes under a paragraph: when it has its own voice in
+// the new language (or loses it), that paragraph starts over in it —
+// playing on if it was playing, from its start when next resumed.
+let relang = false;
+new MutationObserver(() => {
+  if (!session) return;
+  const p = session.block.paras[session.para];
+  const src = p && clipOf(p);
+  if (!src || voice.src.endsWith(src)) return;
+  if (running) start(session.block, session.para);
+  else relang = true;
+}).observe(document.documentElement, { attributeFilter: ['data-lang'] });
+
 const resume = () => {
+  if (relang && session) {
+    relang = false;
+    start(session.block, session.para);
+    return;
+  }
   running = true;
   claimSession();
   ctx?.resume();

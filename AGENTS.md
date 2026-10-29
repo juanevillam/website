@@ -99,9 +99,14 @@ see the portfolio's `AGENTS.md` → "Release tags".
   `/events/{slug}-{yyyy-mm}` — the whole landing with that one thing open as a
   modal from the first paint, with its own preview card. The link glyph beside
   each name copies it. `/work` and `/events` open the landing at their section.
-- **Narration is ONE VOICE, Spanish** (`lib/narration.ts`): every paragraph has
-  a clip in `public/media/narration/es/`. Recording English and Chinese was
-  dropped on purpose.
+- **Narration is Juan's voice, Spanish first** (`lib/narration.ts`): every
+  paragraph has a clip in `public/media/narration/es/`. Since 2026-10-29 he
+  records English too (Chinese may follow): a paragraph with a clip in
+  `public/media/narration/{lang}/` plays it when the page is in that
+  language, read along word by word on its own clock
+  (`src/data/narration/{key}.{lang}.words.json`); one without plays the
+  Spanish, as before. The "coming soon" notice goes once every clip on the
+  page has the language's voice.
   - Takes are kept **exactly as recorded** — only re-wrapped as AAC. No trim,
     levelling, filters or breath softening, ever. Cuts Juan asks for are made
     without re-encoding (`ffmpeg -c copy`). They PLAY at the speed they were
@@ -136,7 +141,10 @@ see the portfolio's `AGENTS.md` → "Release tags".
     no controls of its own. A speed control and ten-second skips folded out
     of it for a day (2026-10-17) and were removed (Juan): the circle plays
     and pauses, and that is all.
-  - Juan records from IDEAS (`lib/scripts.ts`), not a script; the teleprompter
+  - English is READ, not said from ideas: the teleprompter's English tab
+    shows the page's own English paragraph in blocks of a few sentences,
+    so the words heard are the words on the page.
+  - Juan records Spanish from IDEAS (`lib/scripts.ts`), not a script; the teleprompter
     (`/dev/teleprompter`, dev only) transcribes each take locally with
     whisper.cpp and now writes its `.words.json` too. After a re-record,
     re-tidy that paragraph from the new transcript in all three languages,

@@ -224,7 +224,14 @@ const save = async (req, res, url) => {
   // Every word with when it starts: the read-along's clock (lib/narration).
   // After a re-record, tidy the paragraph on screen from this transcript
   // (same words, repeats and filler out) so its words line up again.
-  const timed = path.join(ROOT, 'src/data/narration', `${key}.words.json`);
+  // Spanish keeps its original name; every other language takes its own
+  // (`{key}.{lang}.words.json`), so an English take never overwrites the
+  // Spanish clock.
+  const timed = path.join(
+    ROOT,
+    'src/data/narration',
+    lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`,
+  );
   fs.mkdirSync(path.dirname(timed), { recursive: true });
   fs.writeFileSync(
     timed,

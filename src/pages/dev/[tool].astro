@@ -289,7 +289,7 @@ const list = scripts.es;
         btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
         btn('next').hidden = mode !== 'rec';
         btn('next').firstChild!.textContent =
-          line + 1 >= c.ideas.length ? 'Terminar y guardar ' : 'Siguiente idea ';
+          line + 1 >= c.ideas.length ? 'Terminar y guardar ' : lang === 'es' ? 'Siguiente idea ' : 'Siguiente bloque ';
         btn('stop').hidden = mode !== 'rec';
         btn('take').hidden = !take || mode === 'rec';
         btn('save').hidden = !take || mode === 'rec';
@@ -305,7 +305,7 @@ const list = scripts.es;
                   ? 'Hay una grabación vieja, de antes del guión.'
                   : 'Sin grabar.',
           count: 'Preparado…',
-          rec: `Grabando (${lang}) · idea ${line + 1} de ${c.ideas.length}`,
+          rec: `Grabando (${lang}) · ${lang === 'es' ? 'idea' : 'bloque'} ${line + 1} de ${c.ideas.length}`,
           done: 'Toma lista. Escúchala o guárdala.',
           play: 'Reproduciendo…',
         };
