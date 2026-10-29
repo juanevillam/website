@@ -676,30 +676,63 @@ const groups = [
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
-    /* A soft dark scrim over the whole cover, as a video player's: it
-       comes and goes with the controls, so they stand apart from any
-       art without a heavy plate behind them. */
+  }
+
+  /* A soft dark scrim over the whole cover, as a video player's: it
+     comes and goes with the controls, so they stand apart from any art
+     without a heavy plate behind them. In slow and settling, out a little
+     quicker. A plain ease-out rather than the site's --ease, whose steep
+     start read as a pop here. */
+  .transport::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     background: rgb(0 0 0 / 0.24);
-    /* In slow and settling, out a little quicker. A plain ease-out rather
-       than the site's --ease, whose steep start read as a pop here. */
     transition: opacity calc(var(--beat) * 2 / 3) ease-out;
+  }
+
+  /* NOTHING ABOVE THE GLASS ANIMATES (2026-10-29): Chrome drops a
+     backdrop-filter while an ANCESTOR runs an animation (opacity, or even
+     a custom property feeding it); a static opacity, or the disc's own
+     animation, keeps it — measured. The transport used to fade as a
+     whole, so the discs' glass was missing for the whole fade and snapped
+     on at its end. Now the scrim above is a layer of its own and each
+     disc fades itself, by `--shown`. */
+  @property --shown {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+  }
+
+  /* A press's dim, on the same terms: a number the disc multiplies in. */
+  @property --press {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
   }
 
   /* WHILE A SONG PLAYS THE TRANSPORT HIDES, as a video player's does: it
      comes back on a pointer move over the cover, a tap or keyboard focus,
      and goes again after a short rest (the script). Paused, it stays. */
   .songs[data-idle] .transport {
-    opacity: 0;
     pointer-events: none;
+  }
+
+  .songs[data-idle] .transport::before {
+    opacity: 0;
     transition-duration: calc(var(--beat) * 0.375);
   }
 
   .songs[data-idle] .transport:has(:focus-visible) {
-    opacity: 1;
     pointer-events: auto;
   }
 
+  .songs[data-idle] .transport:has(:focus-visible)::before {
+    opacity: 1;
+  }
+
   .glyph {
+    position: relative;
     display: grid;
     place-items: center;
     flex: none;
@@ -715,6 +748,7 @@ const groups = [
     box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 0.28);
     color: #fff;
     cursor: pointer;
+    opacity: calc(var(--shown) * var(--press));
     /* SOUND SHAPER'S OWN SQUASH (GlyphButton: ICON_PRESS_SCALE 0.86,
        ICON_PRESS_OPACITY 0.55, PRESS_SPRING damping 22, mass 0.4,
        stiffness 360) — these three buttons only, so they press like the
@@ -722,7 +756,8 @@ const groups = [
        settled in ~0.2 s. */
     transition:
       scale 320ms var(--squash-spring),
-      opacity 320ms var(--squash-spring),
+      --press 320ms var(--squash-spring),
+      --shown calc(var(--beat) * 2 / 3) ease-out,
       transform calc(var(--beat) * 2 / 3) ease-out,
       background-color var(--dur-micro) var(--ease);
   }
@@ -735,11 +770,13 @@ const groups = [
   /* The reveal settles in from a hair smaller (0.96 → 1) with the fade;
      `transform`, so it composes with the press's `scale`. */
   .songs[data-idle] .glyph {
+    --shown: 0;
     transform: scale(0.96);
-    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375), var(--dur-micro);
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375), calc(var(--beat) * 0.375), var(--dur-micro);
   }
 
   .songs[data-idle] .transport:has(:focus-visible) .glyph {
+    --shown: 1;
     transform: none;
   }
 
@@ -761,7 +798,7 @@ const groups = [
 
   .glyph.is-pressed {
     scale: 0.86;
-    opacity: 0.55;
+    --press: 0.55;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1920,6 +1957,29 @@ const groups = [
     top: 0.75rem;
     width: 2rem;
     height: 2rem;
+  }
+
+  /* It rests with the transport, so it fades as the discs do: by its own
+     `--shown`, keeping its glass through the fade. */
+  .expand {
+    opacity: calc(var(--shown) * var(--press));
+    transition-property: scale, --press, --shown, background-color, border-color;
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 2 / 3), var(--dur-micro), var(--dur-micro);
+    transition-timing-function: var(--squash-spring), var(--squash-spring), ease-out, var(--ease), var(--ease);
+  }
+
+  .expand.is-pressed {
+    opacity: calc(var(--shown) * var(--press));
+    --press: 0.55;
+  }
+
+  .songs[data-idle] .expand {
+    --shown: 0;
+    transition-duration: 320ms, 320ms, calc(var(--beat) * 0.375), var(--dur-micro), var(--dur-micro);
+  }
+
+  .songs[data-idle] .transport:has(:focus-visible) .expand {
+    --shown: 1;
   }
 
   /* ---------- the full player ---------- */
