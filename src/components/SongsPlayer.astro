@@ -241,6 +241,15 @@ const groups = [
     </div>
   </div>
 
+  <!-- ON A DESK THE CARD'S CORNER OPENS IT FULL SCREEN (Juan,
+       2026-10-29) — this button only: the song's own controls never do. -->
+  <button type="button" class="full-open" data-full-open aria-haspopup="dialog">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span class="sr"><T k="songs.fullScreen" /></span>
+  </button>
+
   <audio data-audio preload="none"></audio>
   <div hidden data-words>
     {
@@ -1744,6 +1753,7 @@ const groups = [
   .picker,
   .close,
   .expand,
+  .full-open,
   .full-close,
   .switch {
     transition-property: scale, opacity, background-color, border-color;
@@ -1759,6 +1769,7 @@ const groups = [
 
   .close.is-pressed,
   .expand.is-pressed,
+  .full-open.is-pressed,
   .full-close.is-pressed,
   .switch.is-pressed {
     scale: 0.86;
@@ -1771,6 +1782,7 @@ const groups = [
     .picker.is-pressed,
     .close.is-pressed,
     .expand.is-pressed,
+    .full-open.is-pressed,
     .full-close.is-pressed,
     .switch.is-pressed {
       scale: 1;
@@ -1852,8 +1864,10 @@ const groups = [
     height: 1.5rem;
   }
 
-  /* The expand button, the cover's corner — one of its resting controls. */
-  .expand {
+  /* The expand button, the cover's corner — one of its resting controls;
+     a desk's full-screen button, the card's corner, is drawn the same. */
+  .expand,
+  .full-open {
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
@@ -1871,15 +1885,28 @@ const groups = [
     cursor: pointer;
   }
 
-  .expand svg {
+  .expand svg,
+  .full-open svg {
     width: 1rem;
     height: 1rem;
   }
 
   @media (hover: hover) {
-    .expand:hover {
+    .expand:hover,
+    .full-open:hover {
       background: rgb(40 40 40 / 0.6);
     }
+  }
+
+  /* Over the list's corner, above its scroll: it stays, never resting
+     with the transport. A phone has its expand button instead. */
+  .full-open {
+    z-index: 4;
+  }
+
+  .songs[data-narrow] .full-open,
+  .songs[data-full] .full-open {
+    display: none;
   }
 
   .songs[data-full] .expand,
@@ -1910,9 +1937,14 @@ const groups = [
     color: var(--ink);
   }
 
+  /* PHOTOVIEWER'S FRAME, TO THE PIXEL (Juan, 2026-10-29): its rows — the
+     close button's, the room, the caption's two lines (kept empty here,
+     so the frame is the same size) and the foot — and its room's 6rem
+     sides; the frame 3:2, as large as that room allows. A painting and
+     the player open at one size. */
   .songs-full[open] {
     display: grid;
-    grid-template-rows: 4.5rem minmax(0, 1fr) 1.5rem;
+    grid-template-rows: 5.5rem minmax(0, 1fr) calc(1.25rem + 0.9375rem * 2.8) 1.75rem;
     justify-items: center;
   }
 
@@ -1923,8 +1955,8 @@ const groups = [
   .full-room {
     grid-row: 2;
     position: relative;
-    width: min(100% - 3rem, 68rem);
-    height: min(100%, 44rem);
+    width: min(100vw - 12rem, (100dvh - 8.5rem - 0.9375rem * 2.8) * 3 / 2);
+    aspect-ratio: 3 / 2;
     align-self: center;
     overflow: hidden;
     border: 1px solid var(--hairline);
@@ -1970,6 +2002,54 @@ const groups = [
       height: auto;
       aspect-ratio: 4 / 5;
     }
+  }
+
+  /* ---------- the full player on a desk: three columns ---------- */
+  /* WITH THE ROOM OF A FULL SCREEN, NOTHING IS A SHEET (Juan, 2026-10-29):
+     the cover, the Shape form and the list stand side by side — what the
+     song is, how it sounds, what comes next. The form is the same sheet,
+     seated in the frame (the script) and drawn as a column: no grabber,
+     no close, no rise; the list takes its title bar back, so both columns
+     are named. The dock's only job was opening Shape, so it goes. */
+  .songs[data-full]:not([data-narrow]) .frame {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'now shape side';
+  }
+
+  .songs[data-full]:not([data-narrow]) .sheet {
+    grid-area: shape;
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+
+  .songs[data-full]:not([data-narrow]) .side {
+    border-left: 1px solid var(--separator);
+  }
+
+  .songs[data-full]:not([data-narrow]) .list-bar {
+    display: grid;
+  }
+
+  .songs[data-full]:not([data-narrow]) .bar .grabber,
+  .songs[data-full]:not([data-narrow]) .bar .close,
+  .songs[data-full]:not([data-narrow]) .dock {
+    display: none;
+  }
+
+  /* With no dock over its foot, the list needs only a little air there. */
+  .songs[data-full]:not([data-narrow]) .list {
+    padding-bottom: 1rem;
   }
 
   /* ---------- the mark: two short lines ---------- */
@@ -2268,13 +2348,22 @@ const groups = [
     // ----- the sheets -----
     let opener: HTMLButtonElement | null = null;
     type Sheet = 'shape' | 'songs' | null;
+    // The full player on a desk: the Shape sheet is a column of its own.
+    const wide = () => root.hasAttribute('data-full') && !root.hasAttribute('data-narrow');
     const sync = (name: Sheet) => {
       openers.forEach(o => o.setAttribute('aria-expanded', String(o.dataset.open === name)));
       const narrow = root.hasAttribute('data-narrow');
       // What a sheet covers is out of reach while it is up.
       for (const el of root.querySelectorAll<HTMLElement>('.now, .dock, .powered')) el.inert = !!name;
       side.inert = name === 'shape' || (narrow && name !== 'songs');
-      sheet.inert = name !== 'shape';
+      sheet.inert = name !== 'shape' && !wide();
+      if (wide()) {
+        sheet.removeAttribute('role');
+        sheet.removeAttribute('aria-modal');
+      } else {
+        sheet.setAttribute('role', 'dialog');
+        sheet.setAttribute('aria-modal', 'true');
+      }
       if (narrow) {
         side.setAttribute('role', 'dialog');
         side.setAttribute('aria-modal', 'true');
@@ -2338,7 +2427,8 @@ const groups = [
     });
     sheet.addEventListener('keydown', e => {
       if (e.key.startsWith('Arrow') && (e.target as HTMLElement).matches('input, select')) e.stopPropagation();
-      if (e.key !== 'Escape') return;
+      // Seated as a column, Esc is the full player's.
+      if (e.key !== 'Escape' || !root.dataset.sheet) return;
       e.stopPropagation();
       setSheet(null);
     });
@@ -2363,8 +2453,23 @@ const groups = [
       e.stopPropagation();
       setSheet(null);
     });
+    // THE SHAPE COLUMN: in the full player on a desk the sheet is seated in
+    // the frame's grid, beside the cover and the list; anywhere else it is
+    // the player's again (lifted to the page while it floats).
+    const frame = $('.frame');
+    const seat = () => {
+      if (wide()) {
+        if (sheet.parentElement === frame) return;
+        sheet.classList.remove('is-floating', 'is-open');
+        sheet.removeAttribute('style');
+        frame.append(sheet);
+      } else if (sheet.parentElement === frame) root.append(sheet);
+    };
     // A phone turned sideways can widen it: the list's part is resettled.
-    new ResizeObserver(() => sync((root.dataset.sheet as Sheet) ?? null)).observe(root);
+    new ResizeObserver(() => {
+      seat();
+      sync((root.dataset.sheet as Sheet) ?? null);
+    }).observe(root);
 
     // ----- the Shape sheet -----
     const summary = () => {
@@ -2485,10 +2590,12 @@ const groups = [
     const full = root.parentElement!.querySelector<HTMLDialogElement>('[data-songs-full]')!;
     const room = full.querySelector<HTMLElement>('[data-full-room]')!;
     const expand = $<HTMLButtonElement>('[data-expand]');
+    const fullOpen = $<HTMLButtonElement>('[data-full-open]');
+    let fullOpener = expand;
     // THE PRESS IS A CLASS, held from pointerdown to pointerup: :active
     // is unreliable under a finger (iOS Safari applies it only with a
     // touch listener, and late), so a touch squashes exactly as a click.
-    const PRESSABLE = '.glyph, .dock-cell, .row, .picker, .close, .expand, .full-close, .switch';
+    const PRESSABLE = '.glyph, .dock-cell, .row, .picker, .close, .expand, .full-open, .full-close, .switch';
     document.addEventListener('pointerdown', e => {
       const t = (e.target as Element).closest?.(PRESSABLE);
       if (!t || !t.closest('[data-songs], [data-songs-full]')) return;
@@ -2506,19 +2613,27 @@ const groups = [
       move();
       if (was && audio.paused) audio.play().catch(() => {});
     };
-    const openFull = () => {
+    const openFull = (from: HTMLButtonElement) => {
       if (full.open) return;
+      fullOpener = from;
+      // A Shape sheet floating over the page closes: on a desk it is a
+      // column of the full player.
+      if (root.dataset.sheet) setSheet(null);
       keepPlaying(() => room.append(root));
       root.setAttribute('data-full', '');
+      seat();
+      sync(null);
       full.showModal();
       document.documentElement.style.overflow = 'hidden';
     };
     full.addEventListener('close', () => {
       if (root.dataset.sheet) setSheet(null);
       root.removeAttribute('data-full');
+      seat();
+      sync(null);
       keepPlaying(() => full.before(root));
       document.documentElement.style.overflow = '';
-      expand.focus({ preventScroll: true });
+      fullOpener.focus({ preventScroll: true });
     });
     // Esc closes a sheet first, the player only after.
     full.addEventListener('cancel', e => {
@@ -2531,7 +2646,8 @@ const groups = [
     full.addEventListener('click', e => {
       if (e.target === full || e.target === room) full.close();
     });
-    expand.addEventListener('click', openFull);
+    expand.addEventListener('click', () => openFull(expand));
+    fullOpen.addEventListener('click', () => openFull(fullOpen));
     // A tap on the cover opens it too — but a first tap on a resting
     // cover (its controls hidden) only brings them back.
     let wasIdle = false;
@@ -2539,7 +2655,7 @@ const groups = [
     now.addEventListener('click', e => {
       if (!root.hasAttribute('data-narrow') || root.hasAttribute('data-full') || wasIdle) return;
       if ((e.target as HTMLElement).closest('button, input, a, select')) return;
-      openFull();
+      openFull(expand);
     });
 
     // iOS's scroll-edge header: glass once its sheet's content scrolls.
