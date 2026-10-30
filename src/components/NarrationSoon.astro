@@ -78,7 +78,7 @@ import T from './T.astro';
 <style>
   .soon {
     position: fixed;
-    top: calc(var(--header-h) + 0.75rem);
+    top: calc(var(--banner-offset) + var(--header-h) + 0.75rem);
     left: 50%;
     z-index: 30;
     display: flex;
@@ -98,6 +98,7 @@ import T from './T.astro';
     opacity: 0;
     translate: -50% -0.5rem;
     transition:
+      top var(--dur-settle) var(--ease),
       opacity var(--dur-settle) var(--ease),
       translate var(--dur-settle) var(--ease);
   }

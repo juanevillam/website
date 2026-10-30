@@ -41,6 +41,10 @@ const en = {
   'hero.hi': 'Hi',
   // The store tag's status while an app has no listing (StoreBadges).
   'store.soon': 'Coming Soon',
+  // The launch banner over the hero (LaunchBanner), while an app is new.
+  'launch.new': 'New',
+  'launch.shaper': 'Sound Shaper is live on the App Store.',
+  'launch.get': 'Get It',
   'hero.caption':
     "Hi, I'm Juan Villa, a software developer. I build software the way I like to play video games: going for the platinum. Since 2022 I've worked remotely for companies in Mexico, and with clients in Spain and Argentina. I started out studying electronic engineering, then computer science at a technical college, but what taught me the most was building things. On this site you'll see apps made by me, for me, that are in the app stores too; my work; my startup, which right now is Salvalo; and the startup and developer events I've been to. The site is in Spanish, English and Chinese; you can switch it at the top right. The whole page is narrated and subtitles appear as the audio plays, so to read it you listen to it, though you can turn the volume down. And yes, this is my real voice, not AI. Welcome.",
   'footer.caption':
@@ -253,6 +257,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'soon.close': 'Cerrar',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
+    'launch.new': 'Nuevo',
+    'launch.shaper': 'Sound Shaper ya está en la App Store.',
+    'launch.get': 'Descárgala',
     'hero.caption':
       'Hola, soy Juan Villa, desarrollador de software. Hago software como me gusta jugar videojuegos: yendo por el platino. Desde 2022 trabajo remoto para empresas en México y con clientes en España y Argentina. Empecé estudiando Ingeniería Electrónica, luego Técnico en Informática, pero lo que más me enseñó fue construir cosas. En esta página vas a ver aplicaciones hechas por mí, para mí, que también están en las tiendas; mi trabajo; mi startup, que en este momento es Salvalo, y los eventos de emprendimiento y desarrollo a los que he ido. La página está en español, inglés y chino; puedes cambiarla arriba a la derecha. Toda la página está narrada y los subtítulos aparecen mientras suena el audio, así que para leerla tienes que escucharla, aunque puedes bajarle el volumen. Y sí, esta es mi voz real, no es inteligencia artificial. Bienvenido.',
     'footer.caption':
@@ -452,6 +459,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'soon.close': '关闭',
     'hero.hi': '你好',
     'store.soon': '即将推出',
+    'launch.new': '新',
+    'launch.shaper': 'Sound Shaper 现已登陆 App Store。',
+    'launch.get': '立即下载',
     'hero.caption':
       '你好，我是 Juan Villa，一名软件开发者。我做软件，就像我玩电子游戏一样：目标是白金奖杯。从 2022 年起，我远程为墨西哥的公司工作，也有西班牙和阿根廷的客户。我先学了电子工程，后来又学了计算机技术，但教会我最多的，是动手做东西。在这个网站上，你会看到我为自己做的应用，它们也上架了应用商店；还有我的工作、我的创业公司 Salvalo，以及我参加过的创业和开发活动。这个网站有西班牙语、英语和中文，可以在右上角切换。整个页面都有旁白，声音播放时会出现字幕；想读内容就要听，不过你也可以把音量调低。没错，这是我真实的声音，不是人工智能。欢迎。',
     'footer.caption':

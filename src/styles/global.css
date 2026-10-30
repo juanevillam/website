@@ -119,6 +119,10 @@
   /* Exactly where the pills END — counting the gap twice put 40px of
      air over the phone against 24 under it. */
   --header-h: calc(var(--float-gap) + var(--float-h));
+  /* The launch bar across the top (LaunchBanner), and how far it pushes
+     the floating chrome down while it shows — 0 the rest of the time. */
+  --banner-h: 2.75rem;
+  --banner-offset: 0px;
   --space-section: clamp(6rem, 14vh, var(--space-9));
   --measure: 65ch;
   /* The page's width, and the air between a panel's words and its picture.
@@ -251,6 +255,10 @@ html {
      cuts an affordance — the dots are gone too, so the only cue that
      there is more below is the content itself. */
   scrollbar-width: none;
+}
+
+html.has-banner {
+  --banner-offset: var(--banner-h);
 }
 
 html::-webkit-scrollbar {

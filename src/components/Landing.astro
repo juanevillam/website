@@ -9,6 +9,7 @@ import WorkCarousel from './WorkCarousel.astro';
 import EventsDeck from './EventsDeck.astro';
 import PhotoViewer from './PhotoViewer.astro';
 import T from './T.astro';
+import LaunchBanner from './LaunchBanner.astro';
 import { APPS } from '../lib/apps';
 import { ui } from '../i18n/ui';
 import type { FocusPage } from '../lib/links';
@@ -30,6 +31,10 @@ const focus = page?.focus;
   image={page?.image}
   path={page?.path}
 >
+  <!-- Sound Shaper is on the App Store: a bar over the hero, not on a
+       shared address (that one has its own thing open). -->
+  {!focus && <LaunchBanner />}
+
   <Hero />
 
   <!-- Juan's apps, the page's main subject: every one in one panel. -->
