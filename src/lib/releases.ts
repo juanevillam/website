@@ -24,7 +24,7 @@ export type ReleasedApp = 'shaper' | 'topper' | 'booker';
 
 export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
   shaper: {
-    'app-store': null,
+    'app-store': 'https://apps.apple.com/app/id6823850995',
     'google-play': null,
   },
   topper: {
