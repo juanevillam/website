@@ -113,6 +113,14 @@ const focus = page?.focus;
     border-color: var(--ink-3);
   }
 
+  /* A finger's target, past the circle (PhotoViewer `.v-btn`). */
+  .focus-close::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 999px;
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;

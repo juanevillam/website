@@ -65,6 +65,8 @@ import T from './T.astro';
 </dialog>
 
 <script>
+  import { meantToClose } from '../lib/dismiss';
+
   type Item = { src: string; name?: string; video?: boolean };
   const dialog = document.querySelector<HTMLDialogElement>('[data-viewer]')!;
   const layers = [...dialog.querySelectorAll<HTMLElement>('[data-layer]')].map(el => ({
@@ -187,9 +189,11 @@ import T from './T.astro';
   for (const b of dialog.querySelectorAll<HTMLElement>('[data-v-step]'))
     b.addEventListener('click', () => show(at + Number(b.dataset.vStep)));
   dialog.querySelector('[data-v-close]')!.addEventListener('click', shut);
-  // A click on the dark around the picture closes it.
+  // A click on the dark around the picture closes it — a mouse's, clear
+  // of the controls (lib/dismiss).
   dialog.addEventListener('click', e => {
-    if (e.target === dialog || (e.target as HTMLElement).classList.contains('room')) shut();
+    const dark = e.target === dialog || (e.target as HTMLElement).classList.contains('room');
+    if (dark && meantToClose(e, dialog)) shut();
   });
   dialog.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') show(at + 1);
@@ -401,6 +405,14 @@ import T from './T.astro';
     border-color: var(--ink-3);
   }
 
+  /* A finger's target, past the circle: 56px round a 40px button. */
+  .v-btn::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 999px;
+  }
+
   .v-close {
     top: 1rem;
     left: 50%;
@@ -463,7 +475,9 @@ import T from './T.astro';
     .v-prev,
     .v-next {
       top: auto;
-      bottom: 1.25rem;
+      bottom: 1rem;
+      width: 3rem;
+      height: 3rem;
       transform: none;
     }
   }

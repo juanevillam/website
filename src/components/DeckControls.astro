@@ -58,6 +58,7 @@ const { names } = Astro.props;
 
   /* The header's pill recipe, as a circle. */
   .arrow {
+    position: relative;
     display: inline-grid;
     place-items: center;
     width: var(--float-h);
@@ -72,6 +73,26 @@ const { names } = Astro.props;
 
   .arrow:hover {
     border-color: var(--ink-3);
+  }
+
+  /* A finger's target past what is drawn (Juan, 2026-11-03): 56px round
+     an arrow, and each dot as tall as the arrows' — wide to its
+     neighbours, never over them. */
+  .arrow::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 999px;
+  }
+
+  .dot {
+    position: relative;
+  }
+
+  .dot::before {
+    content: '';
+    position: absolute;
+    inset: -1.125rem -0.125rem;
   }
 
   .dots {

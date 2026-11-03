@@ -12,6 +12,7 @@ import { createDeck, watchSlots, type Deck } from '../lib/deck';
 import { type ReadMark, readTokens } from '../lib/readAlong';
 import { dur } from '../lib/motion';
 import { playingSound } from '../lib/listening';
+import { meantToClose } from '../lib/dismiss';
 
 // ---------- the controller ----------
 // The walk from the opener to the deck is a pure function of the scroll
@@ -1075,10 +1076,11 @@ for (const link of document.querySelectorAll<HTMLElement>('[data-song-link]'))
 for (const el of document.querySelectorAll<HTMLElement>('[data-song-demo]')) {
   el.querySelector('video')?.addEventListener('ended', closeDemo);
   el.querySelector('[data-song-demo-close]')?.addEventListener('click', closeDemo);
-  // Around the phone is the page, out of focus: a tap there closes it.
+  // Around the phone is the page, out of focus: a click there closes it
+  // — a mouse's, clear of the controls (lib/dismiss).
   const stage = el.querySelector('[data-song-demo-stage]');
   stage?.addEventListener('click', e => {
-    if (e.target === stage) closeDemo();
+    if (e.target === stage && meantToClose(e as MouseEvent, el)) closeDemo();
   });
 }
 window.addEventListener('keydown', e => {

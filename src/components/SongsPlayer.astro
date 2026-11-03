@@ -2084,6 +2084,14 @@ const groups = [
     border-color: var(--ink-3);
   }
 
+  /* A finger's target, past the circle (PhotoViewer `.v-btn`). */
+  .full-close::before {
+    content: '';
+    position: absolute;
+    inset: -0.5rem;
+    border-radius: 999px;
+  }
+
   @media (max-width: 48rem) {
     /* ON A PHONE IT IS PHOTOVIEWER'S FRAME (Juan, 2026-10-29): the same
        rows above and below, a screen's width less 1rem a side, and — as
@@ -2223,6 +2231,7 @@ const groups = [
 
 <script>
   import { createShaper, presetOf, PRESETS, stopToRate, type Level } from '../lib/shaper';
+  import { meantToClose } from '../lib/dismiss';
 
   type Item = {
     id: string;
@@ -2770,9 +2779,10 @@ const groups = [
       setSheet(null);
     });
     full.querySelector('[data-full-close]')!.addEventListener('click', () => full.close());
-    // A click on the dark around the player closes it.
+    // A click on the dark around the player closes it — a mouse's, clear
+    // of the controls (lib/dismiss).
     full.addEventListener('click', e => {
-      if (e.target === full || e.target === room) full.close();
+      if ((e.target === full || e.target === room) && meantToClose(e, full)) full.close();
     });
     // A phone's sheets stand from just under the close button (its 1rem
     // and 2.5rem, and 1rem of air) to the screen's foot: offsets from the
