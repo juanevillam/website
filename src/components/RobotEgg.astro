@@ -6,7 +6,8 @@ import { EVENTS } from '../lib/events';
  * Tridi's robot (lib/eggs, lib/robot), walking on top of Platanus Hack 26
  * Caracas's photo frame, where the card tells Tridi, while that card is in
  * front — a link to Tridi itself (the card is already where you are).
- * Only there (Juan, 2026-10-28). The script stands it over the frame; it
+ * Only there (Juan, 2026-10-28). The walk, and a few seconds after it
+ * the mirror (lib/robot), on every visit (Juan, 2026-11-03). The script stands it over the frame; it
  * is out of the flow, so nothing moves when it comes or goes.
  */
 const hack = EVENTS.find(e => e.id === 'platanus');
@@ -87,7 +88,7 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
 </style>
 
 <script>
-  import { nowAndThen, reduceMotion } from '../lib/eggs';
+  import { busy, nowAndThen, reduceMotion } from '../lib/eggs';
 
   const egg = document.querySelector<HTMLElement>('[data-robot]');
   const section = document.getElementById('events');
@@ -98,20 +99,28 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
     const link = egg.querySelector<HTMLAnchorElement>('[data-robot-link]')!;
     const front = () => card.classList.contains('is-current');
     // It stands on the frame's top edge, in the frame's own positioned
-    // ancestor, measured each time it walks (a turn, a resize, the
-    // phone's layout).
+    // ancestor, measured each time it plays (a turn, a resize, the
+    // phone's layout) — and never taller than the room between the
+    // section's top and the frame, so a raised hand is never cut off by
+    // the screen's edge (Juan, 2026-11-03: on a phone it was).
     const stand = () => {
       const holder = frame.offsetParent as HTMLElement | null;
       if (!holder) return false;
       if (egg.parentElement !== holder) holder.append(egg);
       const f = frame.getBoundingClientRect();
       const h = holder.getBoundingClientRect();
+      const room = f.top - section.getBoundingClientRect().top - 8;
+      egg.style.height = `${Math.min(7 * 16, room).toFixed(1)}px`;
       egg.style.left = `${(f.left - h.left - holder.clientLeft).toFixed(1)}px`;
       egg.style.width = `${f.width.toFixed(1)}px`;
       egg.style.top = `${(f.top - h.top - holder.clientTop - egg.offsetHeight).toFixed(1)}px`;
       return true;
     };
     const phone = matchMedia('(max-width: 48rem)');
+    const pause = (ms: number) => new Promise(r => setTimeout(r, ms));
+    // THE WALK, THEN THE MIRROR, on the same visit (Juan, 2026-11-03): a
+    // few seconds after the walk has gone, the jumping jacks — while the
+    // card is still in front and the page is free.
     nowAndThen(
       section,
       [1500, 2500],
@@ -119,15 +128,20 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
       async () => {
         if (!stand()) return;
         const robot = await import('../lib/robot');
-        if (reduceMotion.matches) await robot.stand(band, link);
+        if (reduceMotion.matches) return robot.stand(band, link, 'walk');
         // On a phone it keeps clear of the eyebrow at the left and the
         // header's pill at the right.
-        else
-          await robot.walk(
-            band,
-            link,
-            phone.matches ? { from: 0.16, to: 0.86, handover: 0.26, alive: front } : { from: 0.04, to: 0.86, alive: front },
-          );
+        await robot.walk(
+          band,
+          link,
+          phone.matches
+            ? { from: 0.16, to: 0.86, handover: 0.26, alive: front }
+            : { from: 0.04, to: 0.86, alive: front },
+        );
+        await pause(2500);
+        for (let i = 0; i < 20 && busy(); i++) await pause(500);
+        if (!front() || busy() || !stand()) return;
+        await robot.mirror(band, link, { alive: front });
       },
       front,
     );

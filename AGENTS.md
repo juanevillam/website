@@ -22,7 +22,7 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 - `npm run dev` (dev server + the teleprompter's recorder), `npm run build`,
   `npm run typecheck` (`astro check`), `npm run narration` (the recording
   checklist), `npm run arcade` (refresh Space Explorer from `../games/`),
-  `npm run tridi` (refresh the Tridi robot's walk from `../../tridi/`, or
+  `npm run tridi` (refresh the Tridi robot's two motions — the walk and the jumping jacks — from `../../tridi/`, or
   `TRIDI_DIR`).
 - Easter eggs (`lib/eggs`, 2026-10-28). Space Explorer's ship is the
   star (`lib/ship`): three scenes that PLAY the game — a small copy of
@@ -33,8 +33,8 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   adds only the stick and a camera. No flips (Juan, 2026-10-28): the
   hunt behind the hero's name (the shield eats the ace's embers), the
   escape over the game's card in More Work (the ship jinks through the
-  game's dust; two kamikazes — flat out, never breaking off — come in
-  from off the right edge onto its tail with an ace firing behind them;
+  game's dust; two kamikazes — flat out, never breaking off, the first
+  firing as it comes — come in from off the right edge onto its tail;
   as one is about to ram it, a dash and nitro take it out to the left
   and they stream after it; no link there, so it never takes Play
   Game's tap) and the destroyer in the foot, brought in
