@@ -999,6 +999,20 @@ for (const p of items)
       object-position: center;
     }
 
+    /* Pinned to the frame, as an event's layers are: in the flow, iOS
+       Safari stood a capture's video a third of the frame low and cut
+       off its foot (Juan's iPhone 15, 2026-11-03); Chrome never did. */
+    .visit {
+      position: absolute;
+      inset: 0;
+    }
+
+    .screen .visit > img:not(.capture-fill),
+    .screen .visit > .capture {
+      position: absolute;
+      inset: 0;
+    }
+
     .words .body {
       font-size: 1rem;
       line-height: 1.55;
