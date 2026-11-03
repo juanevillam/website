@@ -78,6 +78,17 @@ const ACE_SPEED = 320;
 const ACE_TURN = 2.3;
 const ACE_BREAK_TURN = 3.6;
 const ACE_SCALE = 2.2;
+// …but drawn here at about your ship's size, in every scene (Juan,
+// 2026-11-03): at the game's 2.2x an ace beside you read as nearer than
+// you, and your ship as the one far off.
+const ENEMY_K = 0.5;
+// ONE SIZE ON SCREEN FOR YOUR SHIP, IN EVERY SCENE (Juan, 2026-11-03: in
+// the hero they read far off, in the foot near): its 43 units, nose to
+// tail, drawn this many pixels long where it flies. Each camera sets its
+// focal length from it rather than from how much of the world it frames.
+const SHIP_LEN = 43;
+/** Pixels per world unit at your ship, for a scene `W` wide. */
+const shipScale = (W: number) => (W < 600 ? 34 : 52) / SHIP_LEN;
 const ACE_R = 66; // 22 × HUNTER_SCALE
 const ACE_HP = 4;
 const ACE_FIRE = 2.2; // s between shots
@@ -87,7 +98,9 @@ const ACE_RANGE = 1300;
 const KZ_SPEED = 470;
 const KZ_TURN = 1.5;
 const KZ_R = 48; // 16 × HUNTER_SCALE
-const SHOT_SPEED = 250; // the aces' embers: slow, so you see them come
+// The aces' embers: slow, so you see them come — the game's 250 read as
+// drifting on the page, so a little quicker here (Juan, 2026-11-03).
+const SHOT_SPEED = 380;
 const SHOT_LIFE = 6;
 const SD_SCALE = 1.6;
 
@@ -242,6 +255,22 @@ const stage = (band: HTMLCanvasElement) => {
     ctx.globalAlpha = 1;
   };
 
+  /** A drive's flame: from `tail`, back along `back` (unit), `size` world
+   *  units long, flickering — a hot core in a wider glow, so whatever it
+   *  pushes reads as pushed, from any side (Juan, 2026-11-03). */
+  const plume = (tail: V3, back: V3, size: number, glow: string, now: number, seed: number) => {
+    const p = project(tail);
+    if (!p) return;
+    const flick = 0.75 + 0.25 * Math.sin(now * 47 + seed * 3.1) * Math.sin(now * 23 + seed);
+    const end = add(tail, back, size * flick);
+    const w = clamp(size * 0.32 * p[2], 1.5, 9);
+    ctx.lineCap = 'round';
+    line(tail, end, w * 2.2, glow, 0.22);
+    line(tail, add(tail, back, size * flick * 0.7), w, AMB, 0.75);
+    line(tail, add(tail, back, size * flick * 0.35), w * 0.5, CRM, 0.95);
+    dot2(p, w * 1.3, CRM, 0.9);
+  };
+
   // ----- the game's effects -----
   type Bolt = { p: V3; v: V3; life: number };
   type Shot = { p: V3; v: V3; life: number; big: boolean };
@@ -288,7 +317,8 @@ const stage = (band: HTMLCanvasElement) => {
     }
     for (const s of shots) {
       s.p = add(s.p, s.v, dt);
-      s.life -= dt;
+      // spent, it flies on to the edge rather than vanishing mid-screen
+      if (s.life > 0) s.life = s.life - dt > 0 || !off(project(s.p), 40) ? Math.max(0.001, s.life - dt) : 0;
       if (player && s.life > 0) {
         const d = len(sub(s.p, player.P));
         if (now < player.su && d < SHIELD_R) {
@@ -317,11 +347,12 @@ const stage = (band: HTMLCanvasElement) => {
         }
       }
       m.trail.push(m.p);
-      if (m.trail.length > 14) m.trail.shift();
+      if (m.trail.length > 30) m.trail.shift();
       m.p = add(m.p, m.v, dt);
       m.life -= dt;
     }
     for (const b of booms) b.t += dt;
+    clock = now;
     for (const s of sparks) {
       s.p = add(s.p, s.v, dt);
       s.n -= dt;
@@ -333,10 +364,14 @@ const stage = (band: HTMLCanvasElement) => {
    *  false: a stream fired into the distance can end with the scene). */
   const settled = (withBolts = true) =>
     (!withBolts || bolts.every(b => b.life <= 0 || off(project(b.p), 40))) &&
+    // an ember fired is seen through to the screen's edge, even once its
+    // ship is gone (Juan, 2026-11-03: they vanished with the last ace)
+    shots.every(e => e.life <= 0 || off(project(e.p), 40)) &&
     missiles.every(m => m.life <= 0) &&
     booms.every(b => b.t > 0.5) &&
     sparks.every(s => s.n <= 0);
 
+  let clock = 0;
   const paintFire = () => {
     // embers: rust with a white-hot core and their streak
     for (const s of shots) {
@@ -344,7 +379,9 @@ const stage = (band: HTMLCanvasElement) => {
       const p = project(s.p);
       if (!p) continue;
       const r = clamp((s.big ? 48 : 7) * p[2], s.big ? 6 : 2.5, s.big ? 70 : 14);
-      line(s.p, add(s.p, s.v, -0.35), r * 0.9, RUST, 0.45);
+      // its streak a fixed length: fired on the run, a quick ember's would
+      // reach across the frame
+      line(s.p, add(s.p, norm(s.v), s.big ? -0.35 * len(s.v) : -110), r * 0.9, RUST, 0.45);
       dot2(p, r * 1.8, RUST, 0.4);
       dot2(p, r, RUST_HI, 0.95);
       dot2(p, r * 0.45, CRM, 0.9);
@@ -368,17 +405,18 @@ const stage = (band: HTMLCanvasElement) => {
     // missiles: trail, the model, its flame
     for (const m of missiles) {
       if (m.life <= 0) continue;
-      for (let i = 1; i < m.trail.length; i++) line(m.trail[i - 1], m.trail[i], 1 + i * 0.3, INK_HI, (i / m.trail.length) * 0.45);
+      // the trail bright and the drive's flame at the tail, under the
+      // body: a missile reads by its shape, its thrust and its wake
+      for (let i = 1; i < m.trail.length; i++) line(m.trail[i - 1], m.trail[i], 1 + i * 0.12, INK_HI, (i / m.trail.length) * 0.7);
       const F = norm(m.v);
       const B = ortho(F, UP);
-      const p = project(m.p);
-      stroke(placed(MISSILE, m.p, B, 1.5, m.spin), MISSILE[1], INK_HI, 1);
-      dot2(project(add(m.p, F, -20)), p ? Math.max(2.5, 14 * p[2]) : 0, AMB, 0.9);
+      plume(add(m.p, F, -24), mul(F, -1), 46, AMB, clock, m.spin);
+      stroke(placed(MISSILE, m.p, B, 2, m.spin), MISSILE[1], INK_HI, 1);
     }
   };
 
   return {
-    ctx, W, H, px, project, off, aim, placed, stroke, dot: dot2, ring, line, spray, boom, enemyShot, update, settled, paintFire,
+    ctx, W, H, px, project, off, aim, placed, stroke, dot: dot2, ring, line, plume, spray, boom, enemyShot, update, settled, paintFire,
     bolts, shots, missiles,
     setTargets: (t: Target[]) => (targets = t),
     screen,
@@ -511,11 +549,12 @@ const drawPlayer = (s: Stage, p: Player, now: number) => {
 // ----- an ace: the game's AI for the hunters (k = 1) -----
 type Ace = {
   P: V3; v: V3; E: number; qo: number; M: number; g: number; fl: number; m: number; cd: number;
-  alive: boolean; target: Target; Y: V3[]; tt: number; kz: boolean; t: number;
+  alive: boolean; target: Target; Y: V3[]; tt: number; kz: boolean; t: number; gun: number;
 };
-const newAce = (s: Stage, P: V3, v: V3, side: number, cd: number, kz = false): Ace => {
+/** `gun`: a kamikaze that also fires, every `gun` s (0: it only rams). */
+const newAce = (s: Stage, P: V3, v: V3, side: number, cd: number, kz = false, gun = 0): Ace => {
   const a: Ace = {
-    P, v, E: Math.atan2(v[0], v[2]), qo: 0, M: kz ? 1 : ACE_HP, g: 0, fl: 0, m: side, cd, alive: true, Y: [], tt: 0, kz, t: 0,
+    P, v, E: Math.atan2(v[0], v[2]), qo: 0, M: kz ? 1 : ACE_HP, g: 0, fl: 0, m: side, cd, alive: true, Y: [], tt: 0, kz, t: 0, gun,
     target: undefined as unknown as Target,
   };
   a.target = {
@@ -571,18 +610,19 @@ const steerAce = (s: Stage, a: Ace, dt: number, p: Player) => {
     s.spray(a.P, 6);
     return;
   }
-  if (!a.kz && a.cd <= 0 && dist < ACE_RANGE) {
-    a.cd = ACE_FIRE;
-    s.enemyShot(a.P, p, SHOT_SPEED);
+  if ((!a.kz || a.gun) && a.cd <= 0 && dist < ACE_RANGE) {
+    a.cd = a.gun || ACE_FIRE;
+    // fired on the run, an ember carries its ship's own speed
+    s.enemyShot(a.P, p, SHOT_SPEED + (a.kz ? KZ_SPEED : 0));
   }
 };
-const drawAce = (s: Stage, a: Ace) => {
+const drawAce = (s: Stage, a: Ace, k = ENEMY_K) => {
   if (!a.alive) return;
   for (let i = 1; i < a.Y.length; i++) s.line(a.Y[i - 1], i === a.Y.length - 1 ? a.P : a.Y[i], 2 * s.px, RUST_HI, (i / a.Y.length) * 0.5);
   // the kamikaze pulses in light rust: you see it coming
   const c = a.kz ? s.project(a.P) : null;
-  if (c) s.ring(c, Math.max(8, 60 * c[2]) * (1 + 0.2 * Math.sin(a.t * 14)), 2 * s.px, RUST_HI, 0.6);
-  s.stroke(s.placed(SHIP, a.P, yawBasis(a.E), ACE_SCALE, a.qo), SHIP[1], a.g > 0 ? INK_HI : RUST, 1);
+  if (c) s.ring(c, Math.max(8, 60 * k * c[2]) * (1 + 0.2 * Math.sin(a.t * 14)), 2 * s.px, RUST_HI, 0.6);
+  s.stroke(s.placed(SHIP, a.P, yawBasis(a.E), ACE_SCALE * k, a.qo), SHIP[1], a.g > 0 ? INK_HI : RUST, 1);
 };
 
 /** A scene: `frame(dt)` advances and paints it, false once it is over;
@@ -597,24 +637,6 @@ const steerAt = (p: Player, to: V3): Stick => {
   return { turn: clamp(side * 4, -1, 1), pitch: clamp(up * 4, -1, 1) };
 };
 const inCone = (p: Player, t: Target, cone = AIM_CONE) => t.alive() && dot(norm(sub(t.pos(), p.P)), p.F) > cone;
-
-/** How wide the frame must be to hold every ship (with a margin), never
- *  narrower than `base`; eased, so the zoom breathes rather than jumps. */
-const zoom = (base: number) => {
-  let v = base;
-  return (pts: V3[], across: V3, dt: number) => {
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const q of pts) {
-      const x = dot(q, across);
-      lo = Math.min(lo, x);
-      hi = Math.max(hi, x);
-    }
-    const want = Math.max(base, (hi - lo) * 1.3);
-    v += (want - v) * Math.min(1, 1.5 * dt);
-    return v;
-  };
-};
 
 /** A camera that follows the action: `pull` (1/s) of the way a second. */
 const follow = (pull: number) => {
@@ -636,11 +658,13 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   const { W, H } = s;
   const phone = W < 600;
   const p = newPlayer([-1050, 0, 0], [1, 0, 0]);
-  const ace = newAce(s, [950, -20, 250], [-ACE_SPEED, 0, -60], 1, 0.9);
+  // at your height and your depth: the two meet on one level
+  const ace = newAce(s, [950, 0, 0], [-ACE_SPEED, 0, 0], 1, 0.9);
   s.setTargets([ace.target]);
   const cam = follow(0.9);
-  // How much of the world the frame takes in, across, at the action.
-  const view = zoom(phone ? 760 : 1250);
+  // Your ship at its one size; the frame draws back only to keep the two
+  // of you in it, and never below three quarters of that size.
+  let scale = shipScale(W);
   let t = 0;
   let volleys = 0;
   const frame = (dt: number) => {
@@ -668,8 +692,11 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
     // follows until the kill, then holds while the ship leaves
     const at = ace.alive ? cam(mul(add(p.P, ace.P), 0.5), dt) : cam(p.P, 0);
     const D = 2400;
-    const VIEW = view(ace.alive ? [p.P, ace.P] : [], [1, 0, 0], ace.alive ? dt : 0);
-    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.32 : 0.3));
+    const eye = add(at, [0, -D * 0.42, -D * 0.9]);
+    const span = ace.alive ? Math.abs(ace.P[0] - p.P[0]) * 1.25 : 0;
+    const want = clamp(W / Math.max(span, 1), shipScale(W) * 0.75, shipScale(W));
+    scale += (want - scale) * Math.min(1, 1.5 * dt);
+    s.aim(eye, at, scale * len(sub(at, eye)), W / 2, H * (phone ? 0.32 : 0.3));
     s.clear();
     drawAce(s, ace);
     s.paintFire();
@@ -684,8 +711,8 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
  * MORE WORK: THE ESCAPE, over the game's card. You run right to left,
  * jinking, the game's dust streaking past you. Two kamikazes come in on
  * your tail from off the right edge — the game's hunters that go flat
- * out (470 to your 220), never break off and never fire: they mean to
- * ram you — and an ace behind them fires its slow embers after you. When
+ * out (470 to your 220) and never break off: they mean to ram you — the
+ * first firing its embers at you as it comes. When
  * the nearer is about to touch you, you dash (the game's straight kick
  * forward, with its ghosts) and hold the nitro: it lunges through where
  * you were, and you pull away from them, out of the frame to the left;
@@ -696,18 +723,22 @@ export const chase = (band: HTMLCanvasElement): Battle => {
   const { W, H } = s;
   const phone = W < 600;
   const rand = rng(5);
-  // How much of the world the frame takes in, across; you ride a fifth of
-  // the way in from the left, so the frame holds them closing in.
-  const VIEW = phone ? 950 : 1150;
+  // How much of the world the frame takes in, across (your ship at its
+  // one size); you ride a fifth of the way in from the left, so the frame
+  // holds them closing in.
+  const VIEW = W / shipScale(W);
   const RIDE = VIEW * 0.3; // the frame's middle, this far behind you
   const p = newPlayer([0, 0, 0], [-1, 0, 0]);
-  // Just past the right edge, one a little above your line, one below.
+  // Two, just past the right edge, one a little above your line, one
+  // below, at your depth (Juan, 2026-11-03: nearer the camera they read
+  // as closer than you), flat out together. The FIRST fires on you as it
+  // comes — the one at the back had, slower than the rest, and it read
+  // backwards — and the second only means to ram.
   const edge = VIEW / 2 + RIDE + 70;
   const alt = phone ? 30 : 50;
   const aces = [
-    newAce(s, [edge, -alt, alt], [-KZ_SPEED, 0, 0], 1, 9, true),
-    newAce(s, [edge + 260, alt * 0.6, -alt], [-KZ_SPEED, 0, 0], -1, 9, true),
-    newAce(s, [edge + 120, -alt * 0.3, -2 * alt], [-ACE_SPEED, 0, 0], 1, 0.4),
+    newAce(s, [edge, -alt * 0.5, 0], [-KZ_SPEED, 0, 0], 1, 0.5, true, 1.1),
+    newAce(s, [edge + 230, alt * 0.6, alt * 0.6], [-KZ_SPEED, 0, 0], -1, 9, true),
   ];
   s.setTargets(aces.map(a => a.target));
   // The game's dust: near motes, wrapped round you, that turn your speed
@@ -740,7 +771,8 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     camX += camV * dt;
     const at: V3 = [camX, 0, 0];
     const D = 2400;
-    s.aim(add(at, [0, -D * 0.42, -D * 0.9]), at, (W * D) / VIEW, W / 2, H * (phone ? 0.24 : 0.3));
+    const eye = add(at, [0, -D * 0.42, -D * 0.9]);
+    s.aim(eye, at, shipScale(W) * len(sub(at, eye)), W / 2, H * (phone ? 0.24 : 0.3));
     s.clear();
     // the dust, as the game streaks it
     const trail = 0.016 + (p.H / 470) * 0.065;
@@ -753,7 +785,7 @@ export const chase = (band: HTMLCanvasElement): Battle => {
     s.paintFire();
     drawPlayer(s, p, t);
     const out = gone && aces.every(a => !a.alive || s.off(s.project(a.P), 60));
-    return t < 14 && !(out && s.settled());
+    return t < 22 && !(out && s.settled());
   };
   return { frame, at: () => s.project(p.P) ?? [-99, -99, 1] };
 };
@@ -849,9 +881,17 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
   // basis following the ship's — set further back, so the ship stays a
   // ship and the destroyer fills the far end. It holds when it is over.
   const ORBIT = 1300;
-  const BACK = phone ? 760 : 640;
-  const UP_ = phone ? 200 : 180;
+  // ...and off to one side (Juan, 2026-11-03): straight from behind, your
+  // missiles were only their flames, coming away from you; at three
+  // quarters they cross the frame, trail and all, and read as missiles.
+  // How far back is set by your ship's one size: the lens stays, and the
+  // camera stands where the ship comes out that size.
   const focal = W * (phone ? 1.6 : 1.05);
+  const away = focal / shipScale(W) / Math.hypot(1, 0.6, 0.27);
+  const BACK = away;
+  const SIDE = away * 0.6;
+  const UP_ = away * 0.27;
+  const ENTER = 1.9;
   const cam = follow(1.2);
   let eye: V3 = [0, 0, 0];
   let at: V3 = [0, 0, 0];
@@ -905,7 +945,8 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
           if (len(to) < 180) r.mid = false;
         }
         const k = Math.min(1, (r.fast ? 0.55 : 0.9) * dt);
-        r.v = add(r.v, sub(mul(norm(to), r.fast ? 640 : 300), r.v), k);
+        // a little quicker than the game's 300 (Juan, 2026-11-03)
+        r.v = add(r.v, sub(mul(norm(to), r.fast ? 640 : 380), r.v), k);
       }
       r.P = add(r.P, r.v, dt);
       r.Y.push(r.P);
@@ -974,13 +1015,17 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
       // at it: it stays in the middle, its bow on you, wherever you fly
       const to = sub(sd.P, p.P);
       const lo = norm([to[0], 0, to[2]]);
-      eye = cam(add(add(p.P, lo, -BACK), [0, -UP_, 0]), dt);
+      const side: V3 = [lo[2], 0, -lo[0]];
+      eye = cam(add(add(add(p.P, lo, -BACK), side, SIDE), [0, -UP_, 0]), dt);
       at = add(mul(sd.P, 0.8), p.P, 0.2);
     }
     shake = Math.max(0, shake - 34 * dt);
     const jx = shake ? RH() * shake * s.px : 0;
     const jy = shake ? RH() * shake * s.px : 0;
-    s.aim(eye, at, focal, W / 2 + jx, H * (phone ? 0.5 : 0.56) + jy);
+    // Right of the foot's words on a desk (Juan, 2026-11-03: in the middle
+    // it stood under Sound Shaper's and More of Me's links), and lower on
+    // a phone, under them.
+    s.aim(eye, at, focal, W * (phone ? 0.5 : 0.7) + jx, H * (phone ? 0.62 : 0.6) + jy);
     s.clear();
     // the dark: everything but the destroyer and its rockets goes under it
     if (dark > 0) {
@@ -1030,12 +1075,17 @@ export const destroyer = (band: HTMLCanvasElement): Battle => {
     for (const r of rockets) {
       if (r.dead) continue;
       for (let i = 1; i < r.Y.length; i++) s.line(r.Y[i - 1], r.Y[i], 3 * s.px, RUST_HI, (i / r.Y.length) * 0.5);
-      s.stroke(s.placed(MISSILE, r.P, ortho(norm(r.v), UP), 1.6, t * 8), MISSILE[1], RUST_HI, 1);
-      const q = s.project(r.P);
-      if (q) s.dot(q, clamp(16 * q[2], 2, 10 * s.px), RUST_HI, 0.5 + 0.4 * Math.sin(t * 20));
+      const F = norm(r.v);
+      s.plume(add(r.P, F, -20), mul(F, -1), 40, RUST_HI, t, r.Y.length + r.Qr);
+      s.stroke(s.placed(MISSILE, r.P, ortho(F, UP), 1.6, t * 8), MISSILE[1], RUST_HI, 1);
     }
     s.paintFire();
-    drawPlayer(s, p, t);
+    // YOUR ENTRANCE: you fly in from behind the camera, past it, and ease
+    // into your place ahead of it as the sector goes dark — the camera
+    // was already where it will follow you from (Juan, 2026-11-03: the
+    // whole frame rising into place read as a strange animation).
+    const behind = (BACK + 320) * (1 - Math.min(1, t / ENTER)) ** 3;
+    drawPlayer(s, behind > 0.5 ? { ...p, P: add(p.P, p.F, -behind), H: p.H + behind * 1.2 } : p, t);
     // the flash as it comes out of hyperspace
     if (flash >= 0 && t - flash < 0.7) {
       ctx.globalAlpha = 0.15 * (1 - (t - flash) / 0.7);
