@@ -67,8 +67,14 @@ const ALL_EVENTS: DeckItem[] = [
     clip: 'events.platanus.body',
     // Ordered by what matters most (Juan, 2026-10-27): the videos Juan is
     // in longest, then the photos he is in, dealt across the two frames
-    // (PanelDeck `columns`). Six photos and six videos, as every twelve.
+    // (PanelDeck `columns`). Eighteen since 2026-11-03: the event's own
+    // photographer's pictures and the pitch's stream joined the twelve
+    // (Juan), nothing taken out.
     image: [
+      // The pitch on the event's stream, English captions burned in: a
+      // live moment of it in the frame, the whole pitch (2:53) in the
+      // viewer (PanelDeck `viewerOf`).
+      '/media/events/platanus-hack-caracas/demo-clip.mp4',
       // The team with Sebastián, the mentor, Juan among them.
       '/media/events/platanus-hack-caracas/mentor-session.mp4',
       // The floor: the team talking, the other teams at work.
@@ -80,6 +86,16 @@ const ALL_EVENTS: DeckItem[] = [
       '/media/events/platanus-hack-caracas/space-explorer.mp4',
       // Late at night: Tridi's landing on the laptop, the team resting.
       '/media/events/platanus-hack-caracas/night-lounge.mp4',
+      // The event's photographer: every hacker of the Caracas edition.
+      '/media/events/platanus-hack-caracas/group-photo.jpg',
+      // The team presenting Tridi on stage.
+      '/media/events/platanus-hack-caracas/tridi-presentation.jpg',
+      // The team talking it through, Tridi on the laptop.
+      '/media/events/platanus-hack-caracas/team-talk.jpg',
+      // At the team's desks.
+      '/media/events/platanus-hack-caracas/team-desks.jpg',
+      // In the audience of a talk.
+      '/media/events/platanus-hack-caracas/team-audience.jpg',
       // Pastor's pitch on the event's stream, Juan beside him.
       '/media/events/platanus-hack-caracas/pitch.jpg',
       // With Adirson Martínez, Rial's CTO, and his team.
