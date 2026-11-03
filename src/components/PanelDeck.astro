@@ -196,11 +196,12 @@ const scenes = await Promise.all(
 );
 // THE VIEWER (PhotoViewer): a click on a frame opens its card's pictures
 // whole, at full size — every one, in the card's own order, a thumbnail
-// (`-thumb.webp`) by its full picture, with its caption.
+// (`-thumb.webp`) by its full picture, a frame's short cut of a long
+// video (`-clip.mp4`) by the whole of it, with its caption.
 const viewerOf = (p: DeckItem) =>
   JSON.stringify(
     (p.image as Media[]).map((m, i) => ({
-      src: m.replace(/-thumb\.webp$/, '.webp'),
+      src: m.replace(/-thumb\.webp$/, '.webp').replace(/-clip\.mp4$/, '.mp4'),
       name: p.captions?.[i] ?? plainName(p),
       video: isVideo(m) || undefined,
     }))
@@ -275,7 +276,7 @@ for (const p of items)
                 data-deck-part="text"
                 style="--i: 3"
                 data-cap
-                data-cap-phone="6"
+                data-cap-phone="5"
                 data-narr-para
                 {...voiceAttrs(p.clip)}
               >
@@ -370,6 +371,9 @@ for (const p of items)
                     tabindex="-1"
                     aria-hidden="true"
                   >
+                    {/* A phone's blur behind the whole capture (the CSS);
+                        the poster is the same file, so nothing new loads. */}
+                    <img class="capture-fill" src={still(p.image)} alt="" loading="lazy" decoding="async" draggable="false" />
                     {isVideo(p.image) ? (
                       // The site being scrolled, silent: it plays from its
                       // start while its card is in front (the script below).
@@ -755,21 +759,8 @@ for (const p of items)
   }
 
   /* A phone's event frame is one big picture rather than two small ones
-     side by side (the script folds them): upright 4:5, so a 3:4 photo
-     nearly fills it — square on a short phone, where 4:5 would run the
-     words under the docked controls. (4:5 did that at 844pt while the
-     words ran ten lines; at six they clear it.) */
-  @media (max-width: 48rem) {
-    .screen.is-photos {
-      aspect-ratio: 4 / 5;
-    }
-  }
-
-  @media (max-width: 48rem) and (max-height: 50rem) {
-    .screen.is-photos {
-      aspect-ratio: 1;
-    }
-  }
+     side by side (the script folds them), in the phone's one screen
+     shape (global.css `--screen-ratio-m`, set under phones below). */
 
   .photo-cell {
     position: relative;
@@ -854,10 +845,11 @@ for (const p of items)
     text-overflow: ellipsis;
   }
 
-  /* Sideways pictures keep the page's 3:2 everywhere, phones included:
-     a tall frame would only add blur above and below them. */
-  .screen.is-photos.is-wide {
-    aspect-ratio: 3 / 2;
+  /* A site's capture, on a phone: whole, over a blur of its own still,
+     in the phone's one screen shape (below); a desk fills its 3:2 with
+     it and never shows the blur. */
+  .screen .visit .capture-fill {
+    display: none;
   }
 
   .sr {
@@ -970,6 +962,8 @@ for (const p of items)
     .screen {
       order: -1;
       width: 100%;
+      aspect-ratio: var(--screen-ratio-m);
+      max-height: var(--screen-max-m);
       box-shadow:
         var(--media-glow),
         0 2rem 4rem rgba(0, 0, 0, 0.55),
@@ -980,6 +974,29 @@ for (const p of items)
       transition:
         opacity var(--dur-quick) linear,
         box-shadow var(--dur-ambient) var(--ease);
+    }
+
+    .visit {
+      position: relative;
+      height: 100%;
+    }
+
+    .screen .visit .capture-fill {
+      display: block;
+      position: absolute;
+      inset: 0;
+      object-fit: cover;
+      object-position: center;
+      transform: scale(1.2);
+      filter: blur(28px) brightness(0.55);
+    }
+
+    .screen > img:not(.capture-fill),
+    .screen .visit > img:not(.capture-fill),
+    .screen .capture {
+      position: relative;
+      object-fit: contain;
+      object-position: center;
     }
 
     .words .body {

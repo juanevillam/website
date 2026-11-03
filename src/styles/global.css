@@ -194,6 +194,23 @@
     /* Where every panel's PICTURE starts — under the eyebrow and its
        0.75rem step (PanelDeck), and the stories' phones on the same line. */
     --media-top-m: calc(var(--stage-top) + 2.75rem);
+    /* THE PHONE'S ONE SCREEN SHAPE (Juan, 2026-11-03): every deck's
+       picture — More Work's sites, the game's cover, the events' photos,
+       More of Me's sets and the Songs player — stands in the same upright
+       frame, as a desk stands them all at one 3:2. What does not fill it
+       stands whole over a blur of itself. Upright 4:5 where the phone is
+       tall enough; shorter where it is not, so the tallest card — five
+       lines of words AND a row of links (More Work) — still clears the
+       docked controls: 20rem is that card's words, links and air, and
+       the docked row. Every card takes the same cap, so the frame is one
+       size in every deck on any phone. Never flatter than a desk's 3:2
+       (the screen's width less its 1.25rem gutters), which is what More
+       Work stood at on every phone before. */
+    --screen-ratio-m: 4 / 5;
+    --screen-max-m: max(
+      calc(100svh - var(--media-top-m) - 20rem),
+      calc((100vw - 2.5rem) * 2 / 3)
+    );
   }
 }
 
