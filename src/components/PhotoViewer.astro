@@ -21,8 +21,8 @@ import T from './T.astro';
  * stand theirs (PanelDeck `.layer`).
  *
  * THE SCREENS' OWN SHAPE (Juan, 2026-10-27): the frame is 3:2, the size
- * every screen on the site is (More Work, Events, More of Me) — 4:5 on a
- * phone, as a phone's event frame — as large as the room allows. And a
+ * every screen on the site is (More Work, Events, More of Me) — on a
+ * phone the whole room, which is taller — as large as the room allows. And a
  * turn is a frame's own turn: the next picture CROSS-FADES over the one
  * showing, at the frames' pace, once it has loaded — two layers, the way
  * a deck's frame hands one photo to the next.
@@ -152,9 +152,30 @@ import T from './T.astro';
     items = detail.items;
     dialog.classList.toggle('is-single', items.length < 2);
     show(detail.at);
+    clearTimeout(shutting);
     dialog.showModal();
+    // It FADES IN AND OUT, the dark behind it too (Juan, 2026-11-03: it
+    // vanished at once when the dark was clicked). Done here rather than
+    // with CSS's discrete transitions, which Safari does not run on a
+    // dialog's way out of the top layer.
+    // Its first frame is read hidden, so the fade has somewhere to start.
+    void dialog.offsetWidth;
+    dialog.classList.add('is-shown');
+  });
+  let shutting = 0;
+  const shut = () => {
+    if (!dialog.open || !dialog.classList.contains('is-shown')) return;
+    dialog.classList.remove('is-shown');
+    shutting = window.setTimeout(() => dialog.close(), FADE);
+  };
+  const FADE = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450;
+  // Esc fades it too.
+  dialog.addEventListener('cancel', e => {
+    e.preventDefault();
+    shut();
   });
   dialog.addEventListener('close', () => {
+    dialog.classList.remove('is-shown');
     turn++;
     for (const layer of layers) {
       clear(layer);
@@ -165,10 +186,10 @@ import T from './T.astro';
 
   for (const b of dialog.querySelectorAll<HTMLElement>('[data-v-step]'))
     b.addEventListener('click', () => show(at + Number(b.dataset.vStep)));
-  dialog.querySelector('[data-v-close]')!.addEventListener('click', () => dialog.close());
+  dialog.querySelector('[data-v-close]')!.addEventListener('click', shut);
   // A click on the dark around the picture closes it.
   dialog.addEventListener('click', e => {
-    if (e.target === dialog || (e.target as HTMLElement).classList.contains('room')) dialog.close();
+    if (e.target === dialog || (e.target as HTMLElement).classList.contains('room')) shut();
   });
   dialog.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') show(at + 1);
@@ -212,6 +233,36 @@ import T from './T.astro';
 
   .viewer::backdrop {
     background: rgba(0, 0, 0, 0.6);
+  }
+
+  /* In and out on one fade, the dark behind it with it; the picture
+     settles in from a touch smaller (the script's 450 ms). */
+  .viewer,
+  .viewer::backdrop {
+    opacity: 0;
+    transition: opacity 450ms var(--ease);
+  }
+
+  .viewer.is-shown,
+  .viewer.is-shown::backdrop {
+    opacity: 1;
+  }
+
+  .viewer .room {
+    scale: 0.96;
+    transition: scale 450ms var(--ease);
+  }
+
+  .viewer.is-shown .room {
+    scale: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viewer,
+    .viewer::backdrop,
+    .viewer .room {
+      transition: none;
+    }
   }
 
   /* THE ROOM: 2.5rem clear of the arrows at its sides (1rem in, 2.5rem
@@ -385,7 +436,10 @@ import T from './T.astro';
   }
 
   /* A phone: the arrows move to a row of their own at the foot, and the
-     frame stands upright, as a phone's event frame (PanelDeck). */
+     frame takes the WHOLE ROOM, as a desk's takes nearly all of its
+     (Juan, 2026-11-03): a fixed 4:5 left a fifth of a tall phone empty
+     under it. The room is the same for every picture (the caption's row
+     is fixed), so it is still one frame. */
   @media (max-width: 48rem) {
     .viewer[open] {
       grid-template-rows: 5rem minmax(0, 1fr) auto 5rem;
@@ -397,8 +451,9 @@ import T from './T.astro';
     }
 
     .stage {
-      width: min(100cqw, calc(100cqh * 4 / 5));
-      aspect-ratio: 4 / 5;
+      width: 100cqw;
+      height: 100cqh;
+      aspect-ratio: auto;
     }
 
     .v-cap {
