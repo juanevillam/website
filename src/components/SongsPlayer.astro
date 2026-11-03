@@ -83,9 +83,14 @@ const groups = [
   </div>
   <div class="frame">
     <div class="now">
-      <!-- The cover fills the column; the transport stands over its middle
-           and the words over its foot. -->
+      <!-- The cover, whole, over a blur of itself that fills the column;
+           the transport stands over its middle and the words over its
+           foot. -->
       <div class="art-frame">
+        <div class="art-fill" aria-hidden="true">
+          <img data-layer="fill" alt="" decoding="async" draggable="false" />
+          <img data-layer="fill" alt="" decoding="async" draggable="false" />
+        </div>
         <div class="art" aria-hidden="true">
           <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
           <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
@@ -501,34 +506,48 @@ const groups = [
     background: var(--surface);
   }
 
-  /* THE COVER FILLS THE COLUMN (Juan, 2026-10-28), the transport over its
-     middle and the words over its foot. */
+  /* THE COVER IS SHOWN WHOLE (Juan, 2026-11-03): filling the column, a
+     square cover was cut to whatever shape the column had — a strip in
+     the full player's thirds, its sides on a phone. It stands whole in
+     the column's middle, over a blur of itself that fills the rest, as
+     the decks' media do (PanelDeck); the transport over its middle and
+     the words over its foot. */
   .art-frame {
     position: absolute;
     inset: 0;
   }
 
-  .art {
+  .art,
+  .art-fill {
     position: absolute;
     inset: 0;
+    overflow: hidden;
   }
 
-  .art img {
+  .art img,
+  .art-fill img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-  }
-
-  /* A new song's cover fades in over the last one. */
-  .art img {
     display: block;
-    object-fit: cover;
     opacity: 0;
     transition: opacity var(--dur-settle) var(--ease);
   }
 
-  .art img.is-on {
+  .art img {
+    object-fit: contain;
+  }
+
+  .art-fill img {
+    object-fit: cover;
+    transform: scale(1.2);
+    filter: blur(28px) brightness(0.55);
+  }
+
+  /* A new song's cover fades in over the last one. */
+  .art img.is-on,
+  .art-fill img.is-on {
     opacity: 1;
   }
 
@@ -2067,17 +2086,17 @@ const groups = [
 
   @media (max-width: 48rem) {
     /* ON A PHONE IT IS PHOTOVIEWER'S FRAME (Juan, 2026-10-29): the same
-       rows above and below, a screen's width less 1rem a side, 4:5 — the
-       size Cosmos, Paintings and the events open at, not the whole
-       screen. */
+       rows above and below, a screen's width less 1rem a side, and — as
+       the viewer's since 2026-11-03 — the whole height that leaves, less
+       the viewer's caption row, so the two open at one size. */
     .songs-full[open] {
       grid-template-rows: 5rem minmax(0, 1fr) 5rem;
     }
 
     .full-room {
-      width: min(100% - 2rem, (100dvh - 10rem) * 4 / 5);
-      height: auto;
-      aspect-ratio: 4 / 5;
+      width: calc(100% - 2rem);
+      height: calc(100dvh - 10rem - 1rem - 0.9375rem * 2.8);
+      aspect-ratio: auto;
     }
   }
 
@@ -2275,13 +2294,14 @@ const groups = [
     // and fades in over the last, on the player and in the backdrop alike.
     const layers = (name: string) => [...root.querySelectorAll<HTMLImageElement>(`[data-layer="${name}"]`)];
     const art = layers('art');
+    const blurred = layers('fill');
     const back = layers('backdrop');
     let painted: string | undefined;
     const paintCover = () => {
       const src = items[at].cover;
       if (!awake || src === painted) return;
       painted = src;
-      for (const pair of [art, back]) {
+      for (const pair of [art, blurred, back]) {
         const next = pair.find(l => !l.classList.contains('is-on')) ?? pair[0];
         const others = pair.filter(l => l !== next);
         if (!src) {
