@@ -657,9 +657,13 @@ export const heroFight = (band: HTMLCanvasElement): Battle => {
   const s = stage(band);
   const { W, H } = s;
   const phone = W < 600;
-  const p = newPlayer([-1050, 0, 0], [1, 0, 0]);
+  // A phone's frame is a third of a desk's: there the two start just
+  // inside its edges, or a phone saw their fire before either ship
+  // (Juan's iPhone 15, 2026-11-03). A desk keeps them coming in.
+  const start = phone ? (W / (shipScale(W) * 0.75)) * 0.34 : 1000;
+  const p = newPlayer([-start - 50, 0, 0], [1, 0, 0]);
   // at your height and your depth: the two meet on one level
-  const ace = newAce(s, [950, 0, 0], [-ACE_SPEED, 0, 0], 1, 0.9);
+  const ace = newAce(s, [start - 50, 0, 0], [-ACE_SPEED, 0, 0], 1, 0.9);
   s.setTargets([ace.target]);
   const cam = follow(0.9);
   // Your ship at its one size; the frame draws back only to keep the two

@@ -362,6 +362,13 @@ const SOCIAL = [
     grid-auto-flow: column;
     grid-auto-columns: max-content;
     column-gap: var(--space-4);
+    transition: opacity var(--dur-settle) var(--ease);
+  }
+
+  /* While the destroyer plays over the foot (ShipEgg) its words step
+     back, so the scene is what you look at (Juan, 2026-11-03). */
+  .site-footer.is-show .columns {
+    opacity: 0.2;
   }
 
   ul {

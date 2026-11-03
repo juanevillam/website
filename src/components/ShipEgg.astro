@@ -131,8 +131,11 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
         const ship = await import('../lib/ship');
         const scene = hero ? ship.heroFight : ship.destroyer;
+        // The foot's words step back while it plays (SiteFooter).
+        if (!hero) panel.classList.add('is-show');
         if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 3.6 : 7);
         else await ship.play(band, link, scene);
+        panel.classList.remove('is-show');
       });
       continue;
     }
