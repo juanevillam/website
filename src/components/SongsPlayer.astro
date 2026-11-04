@@ -487,14 +487,14 @@ const groups = [
   }
 
   /* ---------- the frame: the artwork, the list beside it ---------- */
-  /* EQUAL SHARES (Juan, 2026-11-04): the cover and the list halve the
-     card, as the full player's three columns are thirds — and as Sound
-     Shaper on the web splits its window. */
+  /* SHARES BY PRIORITY, 5 : 4 : 3 (Juan, 2026-11-04): the list (the
+     library) 5, the cover (the playing sound) 4, the Shape form 3 — the
+     same progression Sound Shaper on the web splits its window by. */
 
   .frame {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'now side';
     height: 100%;
@@ -2141,13 +2141,13 @@ const groups = [
   /* ---------- the full player on a desk: three columns ---------- */
   /* WITH THE ROOM OF A FULL SCREEN, NOTHING IS A SHEET (Juan, 2026-10-29):
      the cover, the list and the Shape form stand side by side — what the
-     song is, what comes next, how it sounds — in equal thirds (Juan,
-     2026-10-29), so the form is as wide as the list. The form is the same sheet,
+     song is, what comes next, how it sounds — at 4 : 5 : 3 (Juan,
+     2026-11-04; equal thirds before), the list widest and the form least. The form is the same sheet,
      seated in the frame (the script) and drawn as a column: no grabber,
      no close, no rise; the list takes its title bar back, so both columns
      are named. The dock's only job was opening Shape, so it goes. */
   .songs[data-full]:not([data-narrow]) .frame {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr);
     grid-template-areas: 'now side shape';
   }
 
