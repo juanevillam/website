@@ -487,11 +487,14 @@ const groups = [
   }
 
   /* ---------- the frame: the artwork, the list beside it ---------- */
+  /* EQUAL SHARES (Juan, 2026-11-04): the cover and the list halve the
+     card, as the full player's three columns are thirds — and as Sound
+     Shaper on the web splits its window. */
 
   .frame {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'now side';
     height: 100%;
