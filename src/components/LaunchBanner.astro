@@ -3,8 +3,9 @@ import T from './T.astro';
 import { RELEASES } from '../lib/releases';
 
 /**
- * LAUNCH BANNER — Sound Shaper went live on the App Store (2026-10-30),
- * and Juan wants the site to celebrate it: a bar across the very top of
+ * LAUNCH BANNER — Sound Shaper went live on the App Store (2026-10-30)
+ * and on the web at soundshaper.juanevillam.com (2026-11-05); the bar
+ * now announces the web app. Juan wants the site to celebrate it: a bar across the very top of
  * the screen, over the hero, not a floating notice like NarrationSoon.
  *
  * The page is snapped full-height panels, so a bar IN the flow would be
@@ -19,7 +20,7 @@ import { RELEASES } from '../lib/releases';
  * Renders nothing until the listing exists (lib/releases). Remove it from
  * Landing once the launch is old news.
  */
-const href = RELEASES.shaper['app-store'];
+const href = RELEASES.shaper.web;
 ---
 
 {
@@ -55,7 +56,8 @@ const href = RELEASES.shaper['app-store'];
   const bar = document.querySelector<HTMLElement>('[data-launch]');
   const hero = document.getElementById('top');
   const root = document.documentElement;
-  const KEY = 'launch-banner:shaper-ios';
+  // A new key per launch, so someone who closed the App Store bar sees this one.
+  const KEY = 'launch-banner:shaper-web';
   if (bar && hero) {
     let gone = false;
     try {

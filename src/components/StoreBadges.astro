@@ -4,9 +4,10 @@ import T from './T.astro';
 import { RELEASES, type ReleasedApp } from '../lib/releases';
 
 /**
- * One app's two store badges.
+ * One app's two badges: the App Store and the web app (no Google Play
+ * since 2026-11-04 — the portfolio is iOS and the web only).
  *
- * LIVE (a URL in lib/releases.ts): Apple's and Google's OFFICIAL artwork,
+ * LIVE (a URL in lib/releases.ts): Apple's OFFICIAL artwork (the web's own lockup, linked),
  * used unmodified from their own asset packs, localized per language the
  * way every other string on the site is — all three ship, CSS shows the
  * one html[data-lang] names.
@@ -35,7 +36,7 @@ const { app } = Astro.props;
 
 const STORES = [
   { key: 'app-store', name: 'App Store' },
-  { key: 'google-play', name: 'Google Play' },
+  { key: 'web', name: 'Web' },
 ] as const;
 ---
 
@@ -43,7 +44,18 @@ const STORES = [
   {
     STORES.map(store => {
       const href = RELEASES[app][store.key];
-      return href ? (
+      return href && store.key === 'web' ? (
+        <a class="soon web-link" href={href} target="_blank" rel="noopener">
+          <svg class="mark globe" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.25" />
+            <path d="M2.75 12h18.5M12 2.75c2.6 2.6 3.9 5.68 3.9 9.25S14.6 18.65 12 21.25M12 2.75C9.4 5.35 8.1 8.43 8.1 12s1.3 6.65 3.9 9.25" />
+          </svg>
+          <span class="soon-words">
+            <span class="soon-status"><T k="store.web" /></span>
+            <span class="soon-name">{store.name}</span>
+          </span>
+        </a>
+      ) : href ? (
         <a class="badge-link" href={href} aria-label={store.name}>
           {locales.map(l => (
             <img
@@ -63,11 +75,9 @@ const STORES = [
               <path d="M22.03725,12.21089a4.87248,4.87248,0,0,0,1.11452-3.49062,4.95746,4.95746,0,0,0-3.20758,1.65961,4.63634,4.63634,0,0,0-1.14371,3.36139A4.09905,4.09905,0,0,0,22.03725,12.21089Z" />
             </svg>
           ) : (
-            <svg class="mark" viewBox="17.56 12.64 40.76 45.57" aria-hidden="true">
-              <path d="M36.6,34.41l-18.86,20.02s0,0,0,.01c.58,2.17,2.56,3.77,4.92,3.77.94,0,1.83-.26,2.58-.7l.06-.04,21.23-12.25-9.94-10.82Z" />
-              <path d="M55.68,31h-.02s-9.17-5.33-9.17-5.33l-10.33,9.19,10.36,10.36,9.12-5.26c1.6-.86,2.68-2.55,2.68-4.49s-1.07-3.61-2.65-4.47h0Z" />
-              <path d="M17.73,16.44c-.11.42-.17.86-.17,1.31v35.38c0,.45.06.89.17,1.31l19.51-19.51-19.51-18.49Z" />
-              <path d="M36.74,35.43l9.76-9.76-21.21-12.3c-.77-.46-1.67-.73-2.63-.73-2.36,0-4.34,1.6-4.92,3.78h0s19,19,19,19h0Z" />
+            <svg class="mark globe" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9.25" />
+              <path d="M2.75 12h18.5M12 2.75c2.6 2.6 3.9 5.68 3.9 9.25S14.6 18.65 12 21.25M12 2.75C9.4 5.35 8.1 8.43 8.1 12s1.3 6.65 3.9 9.25" />
             </svg>
           )}
           <span class="soon-words">
@@ -147,6 +157,26 @@ const STORES = [
     height: 1.375rem;
     width: auto;
     fill: currentColor;
+  }
+
+  /* The web's mark is a stroked globe, the same ink at the same height. */
+  .globe {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  /* THE WEB APP, LIVE: the same lockup as the tag, as a link — no store
+     owns an official badge for it, so it keeps the site's own. */
+  .web-link {
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color var(--hover);
+  }
+
+  .web-link:hover {
+    border-color: var(--ink-3);
   }
 
   /* The badges' proportions: the status line a bit over half the name's

@@ -3,36 +3,39 @@
  *
  * `null` = not published yet: the badge renders as our own "Coming soon"
  * lockup. A URL = live: the badge becomes Apple's / Google's OFFICIAL
- * artwork, linked to that listing. Nothing else on the page changes.
+ * artwork, linked to that listing (the web's is our own lockup, linked). Nothing else on the page changes.
  *
  * The planned launch order, one flip at a time:
  *
  *   1. Sound Shaper — App Store
  *   2. Topper       — App Store
- *   3. Sound Shaper — Google Play
- *   4. Topper       — Google Play
+ *   3. Sound Shaper — the web (2026-11-05)
  *
  * Paste the listing URL as each one goes live, e.g.
  *   'https://apps.apple.com/app/id0000000000'
- *   'https://play.google.com/store/apps/details?id=com.juanevillam.soundshaper'
  * (the real ids come from App Store Connect / Play Console). The apps' own
  * release work — signing, the Firebase SHA fingerprints, the store listings
  * — is tracked in docs/phase-c-release.md, not here.
  */
-export type Store = 'app-store' | 'google-play';
+export type Store = 'app-store' | 'web';
 export type ReleasedApp = 'shaper' | 'topper' | 'booker';
 
+/**
+ * NO GOOGLE PLAY (Juan, 2026-11-04): the portfolio ships on iOS and the
+ * web only, so the second badge is the WEB APP — Sound Shaper reaches
+ * Android and the desktop through the browser, at its own subdomain.
+ */
 export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
   shaper: {
     'app-store': 'https://apps.apple.com/app/id6823850995',
-    'google-play': null,
+    web: 'https://soundshaper.juanevillam.com',
   },
   topper: {
     'app-store': null,
-    'google-play': null,
+    web: null,
   },
   booker: {
     'app-store': null,
-    'google-play': null,
+    web: null,
   },
 };
