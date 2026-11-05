@@ -87,9 +87,21 @@ const groups = [
            the transport stands over its middle and the words over its
            foot. -->
       <div class="art-frame">
+        <!-- THE FLOW (Sound Shaper's PlayerBackdrop, as the web app draws
+             it): over the still blur, two copies of the cover turn in
+             opposite directions on one music-time clock while a song
+             plays, so its colours drift and pool; paused, they freeze. -->
         <div class="art-fill" aria-hidden="true">
-          <img data-layer="fill" alt="" decoding="async" draggable="false" />
-          <img data-layer="fill" alt="" decoding="async" draggable="false" />
+          <div class="wash" data-layer="fill">
+            <img alt="" decoding="async" draggable="false" />
+            <div class="flow" data-flow="0"><img alt="" decoding="async" draggable="false" /></div>
+            <div class="flow" data-flow="1"><img alt="" decoding="async" draggable="false" /></div>
+          </div>
+          <div class="wash" data-layer="fill">
+            <img alt="" decoding="async" draggable="false" />
+            <div class="flow" data-flow="0"><img alt="" decoding="async" draggable="false" /></div>
+            <div class="flow" data-flow="1"><img alt="" decoding="async" draggable="false" /></div>
+          </div>
         </div>
         <div class="art" aria-hidden="true">
           <img data-layer="art" alt="" width="720" height="720" decoding="async" draggable="false" />
@@ -527,30 +539,95 @@ const groups = [
     overflow: hidden;
   }
 
-  .art img,
-  .art-fill img {
+  .art img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     display: block;
+    object-fit: contain;
     opacity: 0;
     transition: opacity var(--dur-settle) var(--ease);
   }
 
-  .art img {
-    object-fit: contain;
+  /* Its own stacking context, so the front wash's z-index stays under
+     the cover rather than rising over it. */
+  .art-fill {
+    container-type: size;
+    isolation: isolate;
   }
 
-  .art-fill img {
+  /* One cover's wash: the still blur and its two turning copies, faded
+     as one. The outgoing wash waits for the incoming one to be fully in,
+     so it crosses cover to cover and never dips to bare ground; an EVEN
+     dissolve, Sound Shaper's — the site's --ease spends itself in the
+     first frames and reads as a cut. */
+  .wash {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    filter: brightness(0.55);
+    transition: opacity 420ms ease-in-out 420ms;
+  }
+
+  .wash.is-on {
+    z-index: 1;
+    opacity: 1;
+    transition-delay: 0ms;
+  }
+
+  .wash > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
     object-fit: cover;
     transform: scale(1.2);
-    filter: blur(28px) brightness(0.55);
+    filter: blur(28px);
+  }
+
+  /* A turning copy: a square big enough to cover the column at every
+     angle from its off-centre pivot (2.2 × the longer side), blurred at
+     the app's ratio. Sound Shaper's numbers, layer for layer. */
+  .flow {
+    --side: calc(2.2 * max(100cqw, 100cqh));
+    position: absolute;
+    left: calc(50cqw + var(--x) * 100cqw - var(--side) / 2);
+    top: calc(50cqh + var(--y) * 100cqh - var(--side) / 2);
+    width: var(--side);
+    height: var(--side);
+    will-change: transform;
+  }
+
+  .flow[data-flow='0'] {
+    --x: -0.3;
+    --y: -0.2;
+    opacity: 0.85;
+  }
+
+  .flow[data-flow='1'] {
+    --x: 0.32;
+    --y: 0.22;
+    opacity: 0.7;
+  }
+
+  .flow img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    filter: blur(calc(var(--side) * 0.047));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow {
+      display: none;
+    }
   }
 
   /* A new song's cover fades in over the last one. */
-  .art img.is-on,
-  .art-fill img.is-on {
+  .art img.is-on {
     opacity: 1;
   }
 
@@ -2304,7 +2381,7 @@ const groups = [
 
     // THE COVER CROSS-FADES: the new one loads into the layer not showing
     // and fades in over the last, on the player and in the backdrop alike.
-    const layers = (name: string) => [...root.querySelectorAll<HTMLImageElement>(`[data-layer="${name}"]`)];
+    const layers = (name: string) => [...root.querySelectorAll<HTMLElement>(`[data-layer="${name}"]`)];
     const art = layers('art');
     const blurred = layers('fill');
     const back = layers('backdrop');
@@ -2320,8 +2397,11 @@ const groups = [
           pair.forEach(l => l.classList.remove('is-on'));
           continue;
         }
-        next.src = src;
-        next
+        // A wash carries the cover three times (the still blur and the
+        // two turning copies); the cover and the backdrop, once.
+        const imgs = next instanceof HTMLImageElement ? [next] : [...next.querySelectorAll('img')];
+        imgs.forEach(img => (img.src = src));
+        imgs[0]
           .decode()
           .catch(() => {})
           .then(() => {
@@ -2459,6 +2539,35 @@ const groups = [
     audio.addEventListener('play', reveal);
     audio.addEventListener('pause', reveal);
     audio.addEventListener('ended', () => go(at + 1));
+
+    // THE FLOW'S CLOCK (Sound Shaper's useFlow): one phase advances by
+    // real time × playback speed while the song plays and stops on pause,
+    // so the colours freeze where they are. Reduce Motion keeps the still.
+    const FLOW = [
+      { periodS: 24, direction: 1 },
+      { periodS: 33, direction: -1 },
+    ];
+    const turners = [...root.querySelectorAll<HTMLElement>('.flow')];
+    let flowPhase = 0;
+    let flowFrame = 0;
+    const flowTick = (last: number) => (now: number) => {
+      const dt = now - last;
+      // A long gap is a hidden tab coming back, not music played.
+      if (dt < 100) flowPhase += (dt / 1000) * audio.playbackRate;
+      for (const turner of turners) {
+        const layer = FLOW[Number(turner.dataset.flow)];
+        const turn = ((flowPhase / layer.periodS) * 360 * layer.direction) % 360;
+        turner.style.transform = `rotate(${turn}deg)`;
+      }
+      flowFrame = requestAnimationFrame(flowTick(now));
+    };
+    const flow = () => {
+      cancelAnimationFrame(flowFrame);
+      if (audio.paused || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      flowFrame = requestAnimationFrame(flowTick(performance.now()));
+    };
+    audio.addEventListener('play', flow);
+    audio.addEventListener('pause', flow);
     audio.addEventListener('timeupdate', () => progress(audio.currentTime, length()));
     audio.addEventListener('loadedmetadata', () => {
       shaper.reapplyRate();
