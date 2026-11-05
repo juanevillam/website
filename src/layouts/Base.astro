@@ -21,7 +21,11 @@ const {
   title = ui.en['meta.title'],
   noindex = false,
   description = ui.en['meta.description'],
-  image,
+  // A page with no picture of its own shows the site's jv tile. Without one,
+  // LinkedIn and others grab whatever photo they find on the page (the
+  // latest event's). /og.png is docs/profile/linkedin-thumbnails' jv render
+  // in the portfolio repo, copied here.
+  image = '/og.png',
   path = '/',
 } = Astro.props;
 const url = new URL(path, Astro.site);
@@ -41,8 +45,8 @@ const url = new URL(path, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={url} />
-    {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
-    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <script is:inline>
       // Language, pre-paint — an in-place preference, no locale URLs. The
