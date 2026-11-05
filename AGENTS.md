@@ -151,6 +151,19 @@ see the portfolio's `AGENTS.md` → "Release tags".
     re-tidy that paragraph from the new transcript in all three languages,
     keeping the sentence counts equal.
 
+## Songs
+
+The Songs card (`SongsPlayer.astro`, Things I Like) is Sound Shaper's player
+in miniature: the same Shape graph (`lib/shaper.ts`) and, since v1.11.0
+(2026-11-05), the same **Auto DJ**. Its planner — `lib/autoDj/analysis`,
+`plan`, `set`, `sections`, `fx` — is COPIED from the app's `src/lib/autoDj/`
+with only the DSP import pointed at `./dsp` (and re-sorted for the lint); never edit those five here:
+change the app, then copy them again and update the revision in each header.
+`lib/autoDj/director.ts` is the site's own, a port of the app's web director
+onto the card's one `<audio>`. Nothing is fetched until Auto DJ is switched
+on; then it reads every song once (~70 MB the first time) and keeps only each
+song's map in `localStorage`.
+
 ## Copy
 
 - First person, plain, short sentences — Juan's voice, never an AI's: no
