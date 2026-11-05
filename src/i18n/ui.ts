@@ -238,6 +238,13 @@ const en = {
   'shape.nextRoom': 'Next Room',
   'shape.nextRoomDescription':
     'Plays the sound as if it were coming from another room, muffled through a wall.',
+  // Sound Shaper's own words (src/i18n/translations.ts there), with "your
+  // library" made these songs: the set here is mixed from mine.
+  'shape.autoDj': 'Auto DJ',
+  'shape.autoDjDescription':
+    'Mixes parts of every song here into a set, differently every time.',
+  'shape.autoDjPreparing': 'Reading Songs',
+  'shape.autoDjProgress': '{ready} of {total}',
 };
 
 export type UIKey = keyof typeof en;
@@ -446,6 +453,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.nextRoom': 'Habitación contigua',
     'shape.nextRoomDescription':
       'Reproduce el sonido como si viniera de otra habitación, amortiguado por una pared.',
+    'shape.autoDj': 'Auto DJ',
+    'shape.autoDjDescription':
+      'Mezcla partes de todas estas canciones en un set, distinto cada vez.',
+    'shape.autoDjPreparing': 'Leyendo canciones',
+    'shape.autoDjProgress': '{ready} de {total}',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -643,5 +655,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.echoDescription': '添加一次短暂的重复，让声音响两次。',
     'shape.nextRoom': '隔壁房间',
     'shape.nextRoomDescription': '让声音听起来像从隔壁房间传来，隔着一堵墙。',
+    'shape.autoDj': '自动 DJ',
+    'shape.autoDjDescription': '将这里所有歌曲的片段混成一套，每次都不同。',
+    'shape.autoDjPreparing': '正在读取歌曲',
+    'shape.autoDjProgress': '{ready}/{total}',
   },
 };

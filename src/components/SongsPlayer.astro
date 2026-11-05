@@ -61,6 +61,8 @@ const WORDS: UIKey[] = [
   ...LEVELS.map(l => `shape.levels.${l}` as UIKey),
   'songs.play',
   'songs.pause',
+  'shape.autoDj',
+  'shape.autoDjProgress',
 ];
 const row = (s: (typeof songs)[number], i: number) => ({ s, i });
 const groups = [
@@ -412,6 +414,32 @@ const groups = [
           </section>
         ))
       }
+
+      <!-- AUTO DJ — the app's last Shape section: a switch, a footer, and
+           while the songs are read a "Reading Songs · 3 of 9" row. -->
+      <section class="section">
+        <div class="card">
+          <div class="cell">
+            <span class="cell-name" id="songs-dj"><T k="shape.autoDj" /></span>
+            <button
+              type="button"
+              class="switch"
+              role="switch"
+              aria-checked="false"
+              data-dj
+              aria-labelledby="songs-dj"
+              aria-describedby="songs-dj-foot"
+            >
+              <span class="knob"></span>
+            </button>
+          </div>
+          <div class="cell" data-dj-reading hidden>
+            <span class="cell-name"><T k="shape.autoDjPreparing" /></span>
+            <span class="cell-value" data-dj-progress></span>
+          </div>
+        </div>
+        <p class="section-foot" id="songs-dj-foot"><T k="shape.autoDjDescription" /></p>
+      </section>
     </div>
   </div>
 </div>
@@ -499,14 +527,15 @@ const groups = [
   }
 
   /* ---------- the frame: the artwork, the list beside it ---------- */
-  /* SHARES BY PRIORITY, 5 : 4 : 3 (Juan, 2026-11-04): the list (the
-     library) 5, the cover (the playing sound) 4, the Shape form 3 — the
-     same progression Sound Shaper on the web splits its window by. */
+  /* SHARES (Juan, 2026-11-05): the song leads. On the card the playing
+     sound takes 5 and the list 4; full screen the song 5, the list 4 and
+     the Shape form 4 — the list was 5 of each (2026-11-04) and read as
+     the widest thing on a player whose subject is what is playing. */
 
   .frame {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: 'now side';
     height: 100%;
@@ -1523,6 +1552,16 @@ const groups = [
     background: var(--separator);
   }
 
+  .cell[hidden] {
+    display: none;
+  }
+
+  .cell-value {
+    flex: none;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
   .section-foot {
     margin: 0.3125rem 0 0;
     padding: 0 0.875rem;
@@ -2224,7 +2263,7 @@ const groups = [
      no close, no rise; the list takes its title bar back, so both columns
      are named. The dock's only job was opening Shape, so it goes. */
   .songs[data-full]:not([data-narrow]) .frame {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 4fr);
     grid-template-areas: 'now side shape';
   }
 
@@ -2310,8 +2349,9 @@ const groups = [
 </style>
 
 <script>
-  import { createShaper, presetOf, PRESETS, stopToRate, type Level } from '../lib/shaper';
+  import { createShaper, presetOf, PRESETS, rateToStop, stopToRate, type Level } from '../lib/shaper';
   import { meantToClose } from '../lib/dismiss';
+  import { createAutoDj, type DjStatus } from '../lib/autoDj/director';
 
   type Item = {
     id: string;
@@ -2722,6 +2762,11 @@ const groups = [
     const summary = () => {
       const { gains, rate, keepPitch, echo, nextRoom } = shaper.shape;
       const preset = presetOf(gains);
+      // While Auto DJ mixes, the shape is its: the summary says who.
+      if (dj.isOn()) {
+        $('[data-shape-summary]').textContent = word('shape.autoDj');
+        return;
+      }
       $('[data-shape-summary]').textContent =
         [
           preset === 'flat' ? null : word(preset ? `eq.presets.${preset}` : 'shape.custom'),
@@ -2753,11 +2798,13 @@ const groups = [
     presetSelect.addEventListener('change', () => {
       const p = PRESETS.find(x => x.id === presetSelect.value);
       if (!p) return;
+      dj.byHand();
       shaper.set({ gains: [...p.gains] });
       showGains();
     });
     bandInputs.forEach((input, i) =>
       input.addEventListener('input', () => {
+        dj.byHand();
         const gains = shaper.shape.gains.slice();
         gains[i] = Math.round(Number(input.value));
         shaper.set({ gains });
@@ -2773,6 +2820,7 @@ const groups = [
       summary();
     };
     rateInput.addEventListener('input', () => {
+      dj.byHand();
       shaper.set({ rate: stopToRate(Number(rateInput.value)) });
       // The playing mark keeps time with the speed, as the app's does.
       root.style.setProperty('--tempo', String(shaper.shape.rate));
@@ -2780,16 +2828,85 @@ const groups = [
     });
     pitch.addEventListener('click', () => {
       const on = pitch.getAttribute('aria-checked') !== 'true';
+      dj.byHand();
       pitch.setAttribute('aria-checked', String(on));
       shaper.set({ keepPitch: on });
       summary();
     });
     levelSelects.forEach(select =>
       select.addEventListener('change', () => {
+        dj.byHand();
         shaper.set({ [select.dataset.level as 'echo' | 'nextRoom']: select.value as Level });
         summary();
       }),
     );
+
+    // ----- Auto DJ (lib/autoDj/director) -----
+    // A control moved by hand stops it and the move stands; its own switch
+    // off gives the listener's shape back. Nothing is fetched until it is on.
+    const djSwitch = $<HTMLButtonElement>('[data-dj]');
+    const djReading = $('[data-dj-reading]');
+    const PROGRESS_DELAY_MS = 400;
+    let djStatus: DjStatus = { on: false, ready: 0, total: 0 };
+    let readingTimer = 0;
+    const showDj = () => {
+      const { on, ready, total } = djStatus;
+      djSwitch.setAttribute('aria-checked', String(on));
+      $('[data-dj-progress]').textContent = word('shape.autoDjProgress')
+        .replace('{ready}', String(ready))
+        .replace('{total}', String(total));
+      // The wait is named only once it has lasted long enough to be worth it.
+      const reading = on && total > 0 && ready < total;
+      if (!reading) {
+        clearTimeout(readingTimer);
+        readingTimer = 0;
+        djReading.hidden = true;
+      } else if (djReading.hidden && !readingTimer)
+        readingTimer = window.setTimeout(() => {
+          readingTimer = 0;
+          djReading.hidden = !(djStatus.on && djStatus.total > 0 && djStatus.ready < djStatus.total);
+        }, PROGRESS_DELAY_MS);
+      summary();
+    };
+    const showDjShape = () => {
+      const { keepPitch, echo, nextRoom, rate } = shaper.shape;
+      pitch.setAttribute('aria-checked', String(keepPitch));
+      for (const select of levelSelects) select.value = select.dataset.level === 'echo' ? echo : nextRoom;
+      rateInput.value = String(rateToStop(rate));
+      root.style.setProperty('--tempo', String(rate));
+      showGains();
+      showRate();
+    };
+    const dj = createAutoDj({
+      songs: items,
+      current: () => at,
+      position: () => audio.currentTime,
+      playing: () => !audio.paused,
+      shape: () => shaper.shape,
+      apply: move => {
+        shaper.set(move);
+        showDjShape();
+      },
+      cue: (i, startS) => {
+        show(i);
+        if (loaded !== i) {
+          audio.src = items[i].src;
+          loaded = i;
+          audio.addEventListener('loadedmetadata', () => (audio.currentTime = startS), { once: true });
+        } else audio.currentTime = startS;
+        start();
+      },
+      fadeIn: seconds => shaper.fadeIn(seconds),
+      context: () => shaper.context(),
+      changed: status => {
+        djStatus = status;
+        showDj();
+      },
+    });
+    djSwitch.addEventListener('click', () => {
+      if (dj.isOn()) dj.stop({ restore: true });
+      else dj.start();
+    });
 
     // The pickers' options and every written word follow the language.
     const words = () => {
@@ -2797,6 +2914,7 @@ const groups = [
         o.textContent = word(o.value === 'custom' ? 'shape.custom' : `eq.presets.${o.value}`);
       for (const select of levelSelects) for (const o of select.options) o.textContent = word(`shape.levels.${o.value}`);
       showRate();
+      showDj();
       paint();
     };
     new MutationObserver(words).observe(document.documentElement, { attributeFilter: ['data-lang'] });

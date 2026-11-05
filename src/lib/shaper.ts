@@ -221,6 +221,7 @@ export const createShaper = (audio: HTMLAudioElement) => {
     echo: ConvolverNode | null;
     echoTrim: GainNode;
     echoLevel: Level;
+    fade: GainNode;
   } | null = null;
   let echoTimer = 0;
 
@@ -320,7 +321,9 @@ export const createShaper = (audio: HTMLAudioElement) => {
     for (const f of [...bands, ...walls]) node = node.connect(f);
     const wallTrim = ctx.createGain();
     const echoTrim = ctx.createGain();
-    node.connect(wallTrim).connect(echoTrim).connect(ctx.destination);
+    // Unity, except while Auto DJ eases the next sound in (`fadeIn`).
+    const fade = ctx.createGain();
+    node.connect(wallTrim).connect(echoTrim).connect(fade).connect(ctx.destination);
     // The waves along the screen's foot draw the song as it is heard,
     // shaped (lib/listening). Read the way the voice's analyser is.
     const analyser = ctx.createAnalyser();
@@ -339,6 +342,7 @@ export const createShaper = (audio: HTMLAudioElement) => {
       echo: null,
       echoTrim,
       echoLevel: 'off',
+      fade,
     };
     push();
   };
@@ -353,6 +357,35 @@ export const createShaper = (audio: HTMLAudioElement) => {
     set(next: Partial<Shape>) {
       Object.assign(shape, next);
       push();
+    },
+    /** The graph's context, once built — Auto DJ plays its flourishes on it. */
+    context: () => g?.ctx ?? null,
+    /**
+     * Auto DJ's cut: silent now, then up over `seconds` once the next sound
+     * plays — the app's audioEngine.fadeInNextLoad. A jump within the song
+     * already playing fires `seeked`, not `playing`, so either one lifts it,
+     * and a second at most: a silence that never lifts is worse than a cut.
+     */
+    fadeIn(seconds: number) {
+      if (!g) return;
+      const { ctx, fade } = g;
+      fade.gain.cancelScheduledValues(ctx.currentTime);
+      fade.gain.setValueAtTime(0, ctx.currentTime);
+      let done = false;
+      const rise = () => {
+        if (done) return;
+        done = true;
+        audio.removeEventListener('playing', rise);
+        audio.removeEventListener('seeked', rise);
+        clearTimeout(timer);
+        const now = ctx.currentTime;
+        fade.gain.cancelScheduledValues(now);
+        fade.gain.setValueAtTime(0, now);
+        fade.gain.linearRampToValueAtTime(1, now + Math.max(0.01, seconds));
+      };
+      audio.addEventListener('playing', rise);
+      audio.addEventListener('seeked', rise);
+      const timer = setTimeout(rise, 1000);
     },
     /** The speed and pitch again: a new source resets them in some browsers. */
     reapplyRate() {
