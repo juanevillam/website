@@ -68,7 +68,7 @@ const { names } = Astro.props;
     background: color-mix(in srgb, var(--surface) 82%, transparent);
     color: var(--ink);
     cursor: pointer;
-    transition: border-color var(--dur-micro) var(--ease);
+    transition: border-color var(--hover);
   }
 
   .arrow:hover {
@@ -120,8 +120,8 @@ const { names } = Astro.props;
     background: var(--ink-3);
     opacity: 0.5;
     transition:
-      opacity var(--dur-micro) var(--ease),
-      background var(--dur-micro) var(--ease);
+      opacity var(--hover),
+      background var(--hover);
   }
 
   .dot.is-current::after {

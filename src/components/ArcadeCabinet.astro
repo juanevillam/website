@@ -208,8 +208,8 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     font: inherit;
     cursor: pointer;
     transition:
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease);
+      color var(--hover),
+      border-color var(--hover);
   }
 
   .house:hover,
@@ -249,8 +249,8 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     color: var(--surface);
     box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.45);
     transition:
-      background-color var(--dur-micro) var(--ease),
-      box-shadow var(--dur-micro) var(--ease);
+      background-color var(--hover),
+      box-shadow var(--hover);
   }
 
   /* Hover is a TONE, never a scale (Juan, 2026-10-16): a scaled pill

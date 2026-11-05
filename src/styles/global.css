@@ -63,7 +63,12 @@
      fresh fraction of the beat — CSS takes the token, a script reads it
      (lib/motion.ts), so the two can't drift apart:
 
-       micro   150ms  a hover, words fading in or out, a ghost's dissolve
+       micro   150ms  words fading in or out, a ghost's dissolve
+       hover   300ms  a hover or a state's colour (`--hover`): the quick
+                      rung on a gentle curve, since `--ease` lands most of
+                      its change in the first frames and a 150ms colour
+                      change on it read as no transition at all (Juan,
+                      2026-11-04, "like focus does")
        quick   300ms  anything LEAVING; a deck switching apps; small UI
        turn    450ms  a picture ARRIVING; a phone flying; the light moving
        settle  600ms  a picture's last drift into place; a photo's
@@ -71,7 +76,7 @@
        ambient 1.2s   the room's colour changing — felt, not watched
 
      Leaving is always quicker than arriving, so the stage clears before
-     the next thing lands. One curve for all of it: `--ease`. */
+     the next thing lands. One curve for every motion: `--ease`. */
   --beat: 600ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-micro: calc(var(--beat) / 4);
@@ -79,6 +84,8 @@
   --dur-turn: calc(var(--beat) * 0.75);
   --dur-settle: var(--beat);
   --dur-ambient: calc(var(--beat) * 2);
+  /* A hover is a fade, not a motion: the quick rung on CSS's own `ease`. */
+  --hover: var(--dur-quick) cubic-bezier(0.25, 0.1, 0.25, 1);
   /* The step between parts of a card landing one after another. */
   --dur-step: calc(var(--beat) / 18);
   --dur-enter: var(--dur-settle); /* entrances land on the beat */
@@ -317,7 +324,7 @@ a {
   text-decoration: underline;
   text-decoration-color: var(--ink-3);
   text-underline-offset: 0.2em;
-  transition: text-decoration-color var(--dur-micro) var(--ease);
+  transition: text-decoration-color var(--hover);
 }
 
 a:hover {
@@ -694,8 +701,8 @@ html.is-stepped [data-narrator] {
     transform var(--dur-turn) var(--ease),
     opacity var(--dur-turn) var(--ease),
     width var(--dur-settle) var(--ease),
-    color var(--dur-micro) var(--ease),
-    border-color var(--dur-micro) var(--ease);
+    color var(--hover),
+    border-color var(--hover);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -743,8 +750,8 @@ html.is-stepped [data-narrator] {
     transition:
       opacity var(--dur-turn) var(--ease),
       width var(--dur-settle) var(--ease),
-      color var(--dur-micro) var(--ease),
-      border-color var(--dur-micro) var(--ease) !important;
+      color var(--hover),
+      border-color var(--hover) !important;
   }
 }
 
@@ -1197,7 +1204,7 @@ html.is-desk-safari .switcher {
   font-size: 0.9375rem;
   color: var(--ink-waiting);
   cursor: pointer;
-  transition: color var(--dur-quick) var(--ease);
+  transition: color var(--hover);
 }
 
 .song-cue:hover,

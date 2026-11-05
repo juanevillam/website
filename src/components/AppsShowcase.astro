@@ -371,7 +371,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transition:
       opacity var(--dur-quick) var(--ease),
       transform var(--dur-quick) var(--ease),
-      border-color var(--dur-micro) var(--ease),
+      border-color var(--hover),
       visibility 0s linear var(--dur-quick);
   }
 
@@ -382,7 +382,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     transition:
       opacity var(--dur-quick) var(--ease),
       transform var(--dur-quick) var(--ease),
-      border-color var(--dur-micro) var(--ease),
+      border-color var(--hover),
       visibility 0s;
   }
 
@@ -429,7 +429,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     letter-spacing: -0.01em;
     white-space: nowrap;
     cursor: pointer;
-    transition: color var(--dur-micro) var(--ease);
+    transition: color var(--hover);
   }
 
   /* The tile's SVG carries its shadow's margin (AppTile): at its own
@@ -438,7 +438,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .tab :global(svg) {
     max-width: none;
     opacity: 0.55;
-    transition: opacity var(--dur-micro) var(--ease);
+    transition: opacity var(--hover);
   }
 
   .tab:hover {
