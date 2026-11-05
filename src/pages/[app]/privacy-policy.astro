@@ -18,7 +18,9 @@ const sounds = app.content === 'sounds';
 // Every claim here is checked against the apps' own code — see each app's
 // services/firebase (what is stored), useDeleteAccount (what deletion
 // removes), firebase.json (Crashlytics) and, for Sound Shaper,
-// services/firebase/analytics.ts (the only usage counts any app sends).
+// services/firebase/analytics.ts (the only usage counts any app sends), and
+// for its web version web/src (Google sign-in only, App Check on reCAPTCHA
+// Enterprise, no Crashlytics or Analytics, what the browser keeps).
 // Change the app, change this.
 ---
 
@@ -143,6 +145,19 @@ const sounds = app.content === 'sounds';
               : `${app.name} keeps a copy of your library on your phone, so playback and shaping work without internet, and a copy for the Home Screen widget on iPhone. Signing out or deleting your account removes them from the phone.`
           }
         </li>
+        {app.web && (
+          <li>
+            <strong>The web version</strong> — {app.name} also runs in your
+            browser at <a href={`https://${app.web}`}>{app.web}</a>, on the same account and the same services
+            as above. There you sign in with Google only, it sends no crash
+            reports or usage counts, and it checks each request with Google
+            reCAPTCHA Enterprise, which reads signals from your browser to
+            tell a person from a bot. Your browser keeps a cache of your
+            library's details, so it opens quickly, and your settings
+            (language, repeat, and Auto DJ's notes on your songs). Your audio
+            streams and isn't stored there.
+          </li>
+        )}
       </ul>
       <p>
         These services may process your data in the United States and other
@@ -337,6 +352,20 @@ const sounds = app.content === 'sounds';
               : `${app.name} guarda una copia de tu biblioteca en tu teléfono, para que la reproducción y los ajustes de sonido funcionen sin internet, y una copia para el widget de la pantalla de inicio del iPhone. Al cerrar sesión o eliminar tu cuenta, se borran del teléfono.`
           }
         </li>
+        {app.web && (
+          <li>
+            <strong>La versión web</strong>: {app.name} también funciona en
+            tu navegador en <a href={`https://${app.web}`}>{app.web}</a>, con la misma cuenta y los mismos
+            servicios de arriba. Ahí solo inicias sesión con Google, no envía
+            informes de errores ni recuentos de uso, y comprueba cada
+            solicitud con Google reCAPTCHA Enterprise, que lee señales de tu
+            navegador para distinguir a una persona de un bot. Tu navegador
+            guarda una caché con los datos de tu biblioteca, para que abra
+            rápido, y tus ajustes (idioma, repetición y las notas de Auto DJ
+            sobre tus canciones). Tu audio se reproduce en streaming y no se
+            guarda ahí.
+          </li>
+        )}
       </ul>
       <p>
         Estos servicios pueden procesar tus datos en Estados Unidos y otros
@@ -473,6 +502,11 @@ const sounds = app.content === 'sounds';
               : `${app.name} 会在你的手机上保存资料库的副本，让播放和声音调整无需联网也能使用；另有一份供 iPhone 主屏幕小组件使用。退出登录或删除账户后，这些副本会从手机上删除。`
           }
         </li>
+        {app.web && (
+          <li>
+            <strong>网页版</strong>——{app.name} 也可以在浏览器中通过 <a href={`https://${app.web}`}>{app.web}</a> 使用，账户和上述服务与应用相同。网页版仅支持使用 Google 登录，不发送崩溃报告或使用统计，并通过 Google reCAPTCHA Enterprise 校验每个请求，它会读取浏览器的信号来区分真人和机器人。浏览器会缓存你资料库的信息，让它打开得更快，并保存你的设置（语言、重复播放，以及 Auto DJ 对你的歌曲的分析）。音频以流式播放，不会保存在浏览器中。
+          </li>
+        )}
       </ul>
       <p>
         这些服务可能会在美国和其他国家或地区处理你的数据。

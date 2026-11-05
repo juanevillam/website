@@ -24,6 +24,8 @@ export const LEGAL_APPS: {
    * a distributor, not the operator — before anyone has to ask.
    */
   publisher?: string;
+  /** The app's web version, when it has one (its host, no scheme). */
+  web?: string;
 }[] = [
   {
     slug: 'sound-shaper',
@@ -33,6 +35,7 @@ export const LEGAL_APPS: {
     contentEs: 'sonidos',
     contentZh: '音频',
     publisher: 'Grostify LLC',
+    web: 'soundshaper.juanevillam.com',
   },
 ];
 
@@ -47,7 +50,7 @@ export const AUTHOR_FULL_NAME = 'Juan Esteban Villa Mendoza';
 export const APPLE_EULA_URL =
   'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 /** ISO date; each language formats it its own way (see `legalDate`). */
-export const LEGAL_UPDATED = '2026-10-17';
+export const LEGAL_UPDATED = '2026-11-05';
 
 export const legalDate = (locale: Locale) =>
   new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
