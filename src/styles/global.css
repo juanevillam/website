@@ -33,7 +33,7 @@
   --ground: #0d0d0d;
   --ink: #f5f5f5;
   --ink-2: #a3a3a3;
-  --ink-3: #737373;
+  --ink-3: #7a7a7a;
   /* Running text — a step lighter than --ink-2, which reads fine on a
      label but tires the eye across a paragraph (Ana, 2026-10-04). */
   --ink-body: #bdbdbd;
@@ -1202,7 +1202,7 @@ html.is-desk-safari .switcher {
   background: none;
   font: inherit;
   font-size: 0.9375rem;
-  color: var(--ink-waiting);
+  color: var(--ink-3);
   cursor: pointer;
   transition: color var(--hover);
 }
