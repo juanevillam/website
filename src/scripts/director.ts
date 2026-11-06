@@ -161,7 +161,10 @@ const narrs: Narr[] = [];
 // the page's language plays its own when there is one.
 const clipOf = (p: HTMLElement) => {
   const lang = document.documentElement.dataset.lang;
-  return (lang && lang !== 'es' && p.getAttribute(`data-clip-${lang}`)) || p.dataset.clip;
+  return (
+    (lang && lang !== 'es' && p.getAttribute(`data-clip-${lang}`)) ||
+    p.dataset.clip
+  );
 };
 
 const firstVoiced = (block: Narr | undefined, from = 0) => {
@@ -375,7 +378,8 @@ const drawField = (now: number) => {
     heard[i] += d * (d > 0 ? 0.3 : 0.12);
   }
   tone += (brightness - tone) * 0.08;
-  presence += (((session && running) || demo || otherSound() ? 1 : 0) - presence) * 0.04;
+  presence +=
+    (((session && running) || demo || otherSound() ? 1 : 0) - presence) * 0.04;
   // They travel only on voice — a pause holds them where they are.
   travel += dt * 0.0024 * (0.1 + loudness);
 
@@ -537,7 +541,13 @@ const endReading = () => {
  *  respects it too. */
 const HOLD_MS = 8000;
 const SCROLL_KEYS = new Set([
-  'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ',
+  'ArrowUp',
+  'ArrowDown',
+  'PageUp',
+  'PageDown',
+  'Home',
+  'End',
+  ' ',
 ]);
 const scrollBoxOf = (t: EventTarget | null) =>
   t instanceof Element
@@ -546,8 +556,7 @@ const scrollBoxOf = (t: EventTarget | null) =>
 const hold = (box: HTMLElement | null) => {
   if (box) box.dataset.heldUntil = String(Date.now() + HOLD_MS);
 };
-const held = (box: HTMLElement) =>
-  Number(box.dataset.heldUntil) > Date.now();
+const held = (box: HTMLElement) => Number(box.dataset.heldUntil) > Date.now();
 for (const type of ['wheel', 'touchmove'] as const)
   document.addEventListener(type, e => hold(scrollBoxOf(e.target)), {
     passive: true,
@@ -1009,10 +1018,13 @@ const closeDemo = () => {
   video.pause();
   el.classList.remove('is-open', 'is-still');
   document.documentElement.classList.remove('is-demo', 'is-demo-still');
-  setTimeout(() => {
-    if (!demo || demo.el !== el) el.hidden = true;
-    video.currentTime = 0;
-  }, reduceMotion ? 0 : dur('turn'));
+  setTimeout(
+    () => {
+      if (!demo || demo.el !== el) el.hidden = true;
+      video.currentTime = 0;
+    },
+    reduceMotion ? 0 : dur('turn'),
+  );
   then?.();
 };
 
@@ -1022,6 +1034,10 @@ const openDemo = (key: string, then: (() => void) | null) => {
   if (!el || !video) {
     then?.();
     return;
+  }
+  if (video.dataset.poster) {
+    video.poster = video.dataset.poster;
+    video.removeAttribute('data-poster');
   }
   ensureGraph();
   ctx?.resume();
@@ -1075,7 +1091,10 @@ for (const link of document.querySelectorAll<HTMLElement>('[data-song-link]'))
 
 for (const el of document.querySelectorAll<HTMLElement>('[data-song-demo]')) {
   el.querySelector('video')?.addEventListener('ended', closeDemo);
-  el.querySelector('[data-song-demo-close]')?.addEventListener('click', closeDemo);
+  el.querySelector('[data-song-demo-close]')?.addEventListener(
+    'click',
+    closeDemo,
+  );
   // Around the phone is the page, out of focus: a click there closes it
   // — a mouse's, clear of the controls (lib/dismiss).
   const stage = el.querySelector('[data-song-demo-stage]');
@@ -1083,12 +1102,16 @@ for (const el of document.querySelectorAll<HTMLElement>('[data-song-demo]')) {
     if (e.target === stage && meantToClose(e as MouseEvent, el)) closeDemo();
   });
 }
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && demo) {
-    e.stopImmediatePropagation();
-    closeDemo();
-  }
-}, { capture: true });
+window.addEventListener(
+  'keydown',
+  e => {
+    if (e.key === 'Escape' && demo) {
+      e.stopImmediatePropagation();
+      closeDemo();
+    }
+  },
+  { capture: true },
+);
 
 /** The song's line, when the paragraph it belongs to is `p`. */
 const cueOf = (p: HTMLElement) =>

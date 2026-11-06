@@ -70,7 +70,7 @@ export const PROJECTS: DeckItem[] = [
     },
     clip: 'arcade.p1',
     image: { slot: 'arcade' },
-    scene: '/media/arcade/cover.png',
+    scene: '/media/arcade/cover.webp',
     // The submitted entry, on the challenge's own arcade page.
     links: [
       {

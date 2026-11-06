@@ -63,6 +63,7 @@ const pathOf = (p: DeckItem) =>
   share === 'events' ? eventPath(p) : share === 'likes' ? likePath(p) : workPath(p);
 const focusCard = focus ? items.findIndex(p => p.id === focus) : -1;
 const startCard = Math.max(0, start ? items.findIndex(p => p.id === start) : focusCard);
+const isImmediateCard = (i: number) => (focusCard >= 0 || Boolean(start)) && i === startCard;
 // A card's name for attributes, where a translation cannot follow the
 // page's language: the English one.
 const plainName = (p: DeckItem) => (typeof p.name === 'string' ? p.name : ui.en[p.name.k]);
@@ -373,14 +374,23 @@ for (const p of items)
                   >
                     {/* A phone's blur behind the whole capture (the CSS);
                         the poster is the same file, so nothing new loads. */}
-                    <img class="capture-fill" src={still(p.image)} alt="" loading="lazy" decoding="async" draggable="false" />
+                    <img
+                      class="capture-fill"
+                      src={isImmediateCard(i) ? still(p.image) : undefined}
+                      data-src={isImmediateCard(i) ? undefined : still(p.image)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      draggable="false"
+                    />
                     {isVideo(p.image) ? (
                       // The site being scrolled, silent: it plays from its
                       // start while its card is in front (the script below).
                       <video
                         class="capture"
                         src={p.image}
-                        poster={still(p.image)}
+                        poster={isImmediateCard(i) ? still(p.image) : undefined}
+                        data-poster={isImmediateCard(i) ? undefined : still(p.image)}
                         width="1440"
                         height="960"
                         muted
@@ -391,7 +401,8 @@ for (const p of items)
                       />
                     ) : (
                       <img
-                        src={p.image}
+                        src={isImmediateCard(i) ? p.image : undefined}
+                        data-src={isImmediateCard(i) ? undefined : p.image}
                         alt=""
                         width="1440"
                         height="960"
@@ -403,7 +414,8 @@ for (const p of items)
                   </a>
                 ) : (
                   <img
-                    src={p.image}
+                    src={isImmediateCard(i) ? p.image : undefined}
+                    data-src={isImmediateCard(i) ? undefined : p.image}
                     alt={plainName(p)}
                     width="1440"
                     height="960"
@@ -455,11 +467,14 @@ for (const p of items)
                   <div class:list={['photo-cell', layers.length > 1 && 'is-turnable']} data-col={c}>
                     {layers.map((m, k) => {
                       const at = (p.image as Media[]).indexOf(m);
-                      // Past the first two of a frame, a picture waits for
-                      // its turn to come near (the script): a set of 31
-                      // would otherwise fetch all 31.
-                      const src = k < 2 ? still(m) : undefined;
-                      const later = k < 2 ? undefined : still(m);
+                      // Past the first two of a frame on an immediately focused
+                      // card, a picture waits for its turn to come near (the
+                      // script): a set of 31 would otherwise fetch all 31, and
+                      // `<video poster>` would otherwise fetch every poster on
+                      // initial page load before the user scrolls near Events.
+                      const immediate = isImmediateCard(i) && k < 2;
+                      const src = immediate ? still(m) : undefined;
+                      const later = immediate ? undefined : still(m);
                       return (
                         <div
                           class:list={['layer', k === 0 && 'is-on']}
@@ -475,7 +490,8 @@ for (const p of items)
                             <video
                               class="whole"
                               src={m}
-                              poster={still(m)}
+                              poster={src}
+                              data-poster={later}
                               aria-label={plainName(p)}
                               muted
                               loop={layers.length === 1}
@@ -1138,6 +1154,7 @@ for (const p of items)
 
   // Every panel deck on the page (More Work, Events) — one script for all.
   for (const carousel of document.querySelectorAll<HTMLElement>('[data-panel-deck]')) {
+    const section = carousel.closest<HTMLElement>('section');
     // The deck's own cards only: a card's screen may hold a `.card` of its
     // own (the Songs player's Shape form), which is not one to turn to.
     const cards = [...carousel.querySelectorAll<HTMLElement>('.deck-card')];
@@ -1175,11 +1192,17 @@ for (const p of items)
         left.prepend(...all);
         if (!left.querySelector('[data-photo-step]'))
           left.append(...right.querySelectorAll('[data-photo-step]'));
-        // The first two of the folded frame are loaded at once.
-        for (const layer of all.slice(0, 2))
-          for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
-            img.src = img.dataset.src!;
-            img.removeAttribute('data-src');
+        // The first two of the folded frame are loaded at once on an immediately focused card.
+        if ((section?.hasAttribute('data-focused') || section?.hasAttribute('data-start-card')) && screen.closest('.deck-card') === cards[Number(section?.dataset.focusCard ?? section?.dataset.startCard ?? 0)])
+          for (const layer of all.slice(0, 2)) {
+            for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+              img.src = img.dataset.src!;
+              img.removeAttribute('data-src');
+            }
+            for (const v of layer.querySelectorAll<HTMLVideoElement>('video[data-poster]')) {
+              v.poster = v.dataset.poster!;
+              v.removeAttribute('data-poster');
+            }
           }
         right.remove();
         screen.dataset.frames = '1';
@@ -1202,15 +1225,20 @@ for (const p of items)
         l.classList.toggle('is-on', i === 0);
       });
       cell.prepend(...layers);
-      for (const layer of layers.slice(0, 2))
-        for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
-          img.src = img.dataset.src!;
-          img.removeAttribute('data-src');
+      if ((section?.hasAttribute('data-focused') || section?.hasAttribute('data-start-card')) && screen.closest('.deck-card') === cards[Number(section?.dataset.focusCard ?? section?.dataset.startCard ?? 0)])
+        for (const layer of layers.slice(0, 2)) {
+          for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+            img.src = img.dataset.src!;
+            img.removeAttribute('data-src');
+          }
+          for (const v of layer.querySelectorAll<HTMLVideoElement>('video[data-poster]')) {
+            v.poster = v.dataset.poster!;
+            v.removeAttribute('data-poster');
+          }
         }
       screen.toggleAttribute('data-shuffled', true);
     }
 
-    const section = carousel.closest<HTMLElement>('section');
     const paras = cards.map(c => c.querySelector<HTMLElement>('[data-narr-para]'));
     const stillAnchor = carousel.querySelector<HTMLElement>('.narr-static .narr-anchor');
 
@@ -1226,6 +1254,27 @@ for (const p of items)
     // A shared address opens the panel on its card, ALONE: while it is
     // the modal the deck does not turn (lib/links).
     const focusCard = Number(section?.dataset.focusCard ?? section?.dataset.startCard ?? 0);
+    const wakeMedia = (el?: HTMLElement) => {
+      if (!el) return;
+      for (const img of el.querySelectorAll<HTMLImageElement>('img[data-src]')) {
+        img.src = img.dataset.src!;
+        img.removeAttribute('data-src');
+      }
+      for (const v of el.querySelectorAll<HTMLVideoElement>('video[data-poster]')) {
+        v.poster = v.dataset.poster!;
+        v.removeAttribute('data-poster');
+      }
+    };
+    const wakeCard = (card?: HTMLElement) => {
+      if (!card) return;
+      for (const cell of card.querySelectorAll<HTMLElement>('.photo-cell')) {
+        const layers = [...cell.querySelectorAll<HTMLElement>('.layer')];
+        for (const layer of layers.slice(0, 2)) wakeMedia(layer);
+      }
+      for (const screen of card.querySelectorAll<HTMLElement>('.screen:not(.is-photos)'))
+        wakeMedia(screen);
+    };
+    let ready = false;
     const deck = createDeck({
       cards,
       start: focusCard,
@@ -1234,6 +1283,11 @@ for (const p of items)
       keys: carousel,
       swipe: carousel.querySelector<HTMLElement>('.stage'),
       onChange: current => {
+        if (ready) {
+          wakeCard(cards[current]);
+          wakeCard(cards[(current + 1) % cards.length]);
+          wakeCard(cards[(current - 1 + cards.length) % cards.length]);
+        }
         // A frame later: the first call comes while `deck` is still being
         // made.
         requestAnimationFrame(standAnchor);
@@ -1247,6 +1301,7 @@ for (const p of items)
         }
       },
     });
+    ready = true;
 
     // An easter egg's link (lib/eggs) asks for one card of this deck.
     document.addEventListener('deck:show', e => {
@@ -1312,12 +1367,7 @@ for (const p of items)
     };
     // A picture past a frame's first two has no src until its turn comes
     // near: the one showing and the one after it are always loaded.
-    const wake = (layer?: HTMLElement) => {
-      for (const img of layer?.querySelectorAll<HTMLImageElement>('img[data-src]') ?? []) {
-        img.src = img.dataset.src!;
-        img.removeAttribute('data-src');
-      }
-    };
+    const wake = (layer?: HTMLElement) => wakeMedia(layer);
     // The next picture fades in once it can be seen — the one in front
     // stays until then (at most 1.2 s) — so a picture still loading never
     // fades in empty and then pops in (Juan, 2026-10-29).
@@ -1463,22 +1513,17 @@ for (const p of items)
     // plays it, inside the two beats it stands still anyway.
     if (section) {
       const warmPictures = () => {
+        cards.forEach(wakeCard);
         for (const img of section.querySelectorAll<HTMLImageElement>('img[loading="lazy"]'))
           img.loading = 'eager';
       };
-      const whenIdle = () =>
-        'requestIdleCallback' in window
-          ? requestIdleCallback(warmPictures, { timeout: 3000 })
-          : setTimeout(warmPictures, 1500);
-      if (document.readyState === 'complete') whenIdle();
-      else addEventListener('load', whenIdle);
       new IntersectionObserver(
         ([e], io) => {
           if (!e.isIntersecting) return;
           io.disconnect();
           warmPictures();
         },
-        { rootMargin: '200% 0px' }
+        { rootMargin: '50% 0px' }
       ).observe(section);
     }
 

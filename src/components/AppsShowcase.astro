@@ -124,6 +124,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   data-phone-scene
   data-focused={focused ? '' : null}
 >
+  <h2 class="visually-hidden">Apps</h2>
   <!-- The switcher, floating at the header's height (see the docblock). -->
   {
     apps.length > 1 && (
@@ -270,7 +271,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       <img
                         class="shot"
                         data-scene-at
-                        src={card.shots[0].src}
+                        src={a === 0 ? card.shots[0].src : undefined}
+                        data-src={a === 0 ? undefined : card.shots[0].src}
                         alt={`${app.name} — ${card.shots[0].title}`}
                         width={card.shots[0].width}
                         height={card.shots[0].height}
@@ -284,7 +286,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     <div class="slot" data-deck-part="picture">
                       <img
                         class="shot"
-                        src={card.src}
+                        data-src={card.src}
                         alt={`${app.name} — ${card.title}`}
                         width={card.width}
                         height={card.height}
@@ -1019,7 +1021,17 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     // lands on stands level, so the copy (always level) meets it exactly,
     // and leans in from there once it is revealed.
     let flying = false;
+    const wakeImg = (img?: HTMLImageElement | null) => {
+      if (img?.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+      }
+    };
+    const wakeCard = (card?: HTMLElement) =>
+      wakeImg(card?.querySelector<HTMLImageElement>('img.shot'));
     const handOff = (from: HTMLElement, to: HTMLElement) => {
+      wakeCard(from);
+      wakeCard(to);
       if (reduced) return;
       const a = phoneOf(from);
       const b = phoneOf(to);
@@ -1136,6 +1148,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         keys: el,
         swipe: el.querySelector<HTMLElement>('.stage'),
         onChange: current => {
+          if (h.deck) {
+            wakeCard(cards[current]);
+            wakeCard(cards[(current + 1) % cards.length]);
+            wakeCard(cards[(current - 1 + cards.length) % cards.length]);
+          }
           // To or from the welcome — its first card, or the last one the
           // deck wraps round from (Juan, 2026-10-13) — the phone flies.
           if (h.deck && previous !== current && (previous === 0 || current === 0))
@@ -1189,6 +1206,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
       // Turned while still hidden, so the turn draws nothing.
       const target = card ?? 0;
+      wakeCard(to.cards[target]);
+      wakeCard(to.cards[(target + 1) % to.cards.length]);
       if (to.deck.current !== target) to.deck.go(target);
 
       from.el.style.setProperty('--dir', String(dir));
@@ -1271,6 +1290,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       const next = () => {
         const img = queue.shift();
         if (!img) return;
+        wakeImg(img);
         img.loading = 'eager';
         img
           .decode()
@@ -1280,13 +1300,22 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
       idle(next);
     };
     // Not on a connection the person asked to spare: ~5 MB of screenshots
-    // is theirs to spend by picking a tab.
+    // is theirs to spend by picking a tab. Warm only once the section enters
+    // the viewport so initial page load (Hero / LCP) isn't competing for
+    // bandwidth with off-stage carousel slides.
     const spare = (
       navigator as Navigator & { connection?: { saveData?: boolean } }
     ).connection?.saveData;
     if (!spare) {
-      if (document.readyState === 'complete') warm();
-      else addEventListener('load', warm, { once: true });
+      new IntersectionObserver(
+        ([e], io) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          wakeCard(held[active]?.cards[1]);
+          warm();
+        },
+        { threshold: 0.25 }
+      ).observe(root);
     }
 
     select(held[0].cards[0]);
