@@ -4,13 +4,12 @@ import ENCODED from '../data/songs.json';
 
 /**
  * THINGS I LIKE — what Juan loves outside of work, so a visitor knows him
- * a little more: the space photos he loves and the paintings he
- * collected. A gallery on a page of its own (pages/things-i-like),
- * reached from the footer, so the landing never loads a picture of it.
+ * a little more: the space photos he loves and his songs. A gallery on a page of
+ * its own (pages/things-i-like), reached from the footer, so the landing never loads a picture of it.
  *
  * The pictures are made from Juan's own folders by `npm run likes`
  * (scripts/sync-likes.mjs): WebP, 2000 px on the long side. A new space
- * photo or painting is a file in his folder, then the script.
+ * photo is a file in his folder, then the script.
  */
 
 /** One of the space photos, by its file (public/media/likes/cosmos) and
@@ -82,81 +81,9 @@ const SPACE: SpacePhoto[] = [
   { id: 'zs7-environment-nic-cam-image', name: 'ZS7' },
 ];
 
-/**
- * THE PAINTINGS JUAN COLLECTED, by their file (public/media/likes/paintings).
- * A painting with no `by` is a recent one whose artist is not known yet:
- * it shows with its title alone (Juan's call, 2026-10-27) — its artist's
- * name goes here once known.
- */
-export type Painting = { id: string; name: string; by?: string; year?: string };
-
-const CANVASES: Painting[] = [
-  {
-    id: 'belshazzars-feast',
-    name: "Belshazzar's Feast",
-    by: 'John Martin',
-    year: '1820',
-  },
-  {
-    id: 'destruction',
-    name: 'The Course of Empire: Destruction',
-    by: 'Thomas Cole',
-    year: '1836',
-  },
-  {
-    id: 'joshua-sun',
-    name: 'Joshua Commanding the Sun to Stand Still',
-    by: 'John Martin',
-    year: '1816',
-  },
-  { id: 'morning-solace', name: 'Morning Solace' },
-  { id: 'peace-be-still', name: 'Peace, Be Still' },
-  { id: 'peace-is-coming', name: 'Peace Is Coming' },
-  {
-    id: 'ruins-of-an-ancient-city',
-    name: 'Ruins of an Ancient City',
-    by: 'John Martin',
-    year: '1810',
-  },
-  {
-    id: 'sermon-on-the-mount',
-    name: 'The Sermon on the Mount',
-    by: 'Carl Bloch',
-    year: '1877',
-  },
-  {
-    id: 'the-fall-of-babylon',
-    name: 'The Fall of Babylon',
-    by: 'John Martin',
-    year: '1819',
-  },
-  {
-    id: 'the-great-day-of-his-wrath',
-    name: 'The Great Day of His Wrath',
-    by: 'John Martin',
-    year: '1853',
-  },
-  {
-    id: 'the-seventh-plague',
-    name: 'The Seventh Plague of Egypt',
-    by: 'John Martin',
-    year: '1823',
-  },
-  {
-    id: 'the-spinners',
-    name: 'The Spinners',
-    by: 'Diego Velázquez',
-    year: '1657',
-  },
-];
-
-const paintingSrc = (p: Painting) => `/media/likes/paintings/${p.id}.webp`;
-
 export const cosmosSrc = (p: SpacePhoto) => `/media/likes/cosmos/${p.id}.webp`;
 
 export const COSMOS = SPACE;
-
-export const PAINTINGS = CANVASES;
 
 const thumbOf = (src: string) => src.replace(/\.webp$/, '-thumb.webp');
 
@@ -190,8 +117,7 @@ export const coverSrc = (s: Song) =>
 
 /**
  * THE GALLERY'S CARDS — a panel deck like More Work and Events
- * (PanelDeck), on a page of its own (pages/things-i-like). Cosmos and the
- * paintings are ONE frame each that turns through its pictures, in a new
+ * (PanelDeck), on a page of its own (pages/things-i-like). Cosmos is ONE frame that turns through its pictures, in a new
  * random order every visit — THUMBNAILS (~80 KB, 1000 px), only the one
  * showing and the next loaded — with arrows to go through them by hand;
  * a click opens the full picture (PhotoViewer).
@@ -214,21 +140,6 @@ export const LIKES: DeckItem[] = [
     clip: 'likes.cosmos.body',
     image: COSMOS.map(p => thumbOf(cosmosSrc(p))),
     captions: COSMOS.map(p => p.name),
-    wide: true,
-    shuffle: true,
-    links: [],
-  },
-  {
-    id: 'paintings',
-    slug: 'paintings',
-    name: { k: 'likes.paintings.name' },
-    meta: [[{ k: 'likes.paintings.meta' }]],
-    body: 'likes.paintings.body',
-    clip: 'likes.paintings.body',
-    image: PAINTINGS.map(p => thumbOf(paintingSrc(p))),
-    captions: PAINTINGS.map(p =>
-      p.by ? `${p.name} · ${p.by}, ${p.year}` : p.name,
-    ),
     wide: true,
     shuffle: true,
     links: [],

@@ -290,17 +290,6 @@ export const SCRIPTS_ES: ScriptClip[] = [
     ],
   },
   {
-    key: 'likes.paintings.body',
-    where: 'Más de mí · Pinturas',
-    ideas: [
-      'Después de que empecé a ver el espacio, busqué pinturas que también hicieran match conmigo; tuve una época en la que quise coleccionarlas.',
-      'Terminé con el mismo contraste del espacio: cielos inmensos, tormentas y luz, ciudades e imperios cayendo, y la gente diminuta en medio.',
-      'La mayoría son de John Martin y Thomas Cole, pintores del siglo XIX que pintaban el fin del mundo como si lo hubieran visto.',
-      'También el Sermón del Monte de Carl Bloch, Las hilanderas de Velázquez y algunas recientes de las que todavía no sé el pintor.',
-      'No tienen ranking, porque me gustan todas: salen en un orden distinto cada vez.',
-    ],
-  },
-  {
     key: 'likes.songs.body',
     where: 'Más de mí · Canciones',
     ideas: [

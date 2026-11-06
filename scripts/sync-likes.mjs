@@ -1,6 +1,6 @@
 // Makes the pictures of "Things I Like" (lib/likes) from Juan's own folders:
 // the space photos he loves (Webb's and Hubble's, TIFFs of up to 520 MB and
-// 10,000 px a side) and the paintings he collected. The masters never
+// 10,000 px a side). The masters never
 // enter the repo — a Cloudflare build never sees them — so the copies are
 // committed, and this script is how they are refreshed: npm run likes
 // (LIKES_DIR points elsewhere; iCloud Drive's Life folder by default,
@@ -29,10 +29,6 @@ const SETS = [
   {
     dir: 'cosmos',
     name: f => f.replace(/^cosmos-/, '').replace(/\.tiff?$/, ''),
-  },
-  {
-    dir: 'paintings',
-    name: f => f.replace(/^paintings-/, '').replace(/\.(jpe?g|png|webp)$/i, ''),
   },
 ];
 
