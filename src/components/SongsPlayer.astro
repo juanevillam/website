@@ -2167,6 +2167,36 @@ const groups = [
     background: rgb(0 0 0 / 0.6);
   }
 
+  /* In and out on one fade, the dark behind it with it; the room settles in
+     from a touch smaller, matching PhotoViewer's 450ms transition. */
+  .songs-full,
+  .songs-full::backdrop {
+    opacity: 0;
+    transition: opacity 450ms var(--ease);
+  }
+
+  .songs-full.is-shown,
+  .songs-full.is-shown::backdrop {
+    opacity: 1;
+  }
+
+  .songs-full .full-room {
+    scale: 0.96;
+    transition: scale 450ms var(--ease);
+  }
+
+  .songs-full.is-shown .full-room {
+    scale: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .songs-full,
+    .songs-full::backdrop,
+    .songs-full .full-room {
+      transition: none;
+    }
+  }
+
   .full-room {
     grid-row: 2;
     position: relative;
@@ -2978,41 +3008,65 @@ const groups = [
       move();
       if (was && audio.paused) audio.play().catch(() => {});
     };
+    const FADE_FULL = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450;
+    let shuttingFull = 0;
+    let cardStandIn: HTMLElement | null = null;
     const openFull = (from: HTMLButtonElement) => {
-      if (full.open) return;
+      if (full.open && full.classList.contains('is-shown')) return;
+      clearTimeout(shuttingFull);
       fullOpener = from;
       // A Shape sheet floating over the page closes: on a desk it is a
       // column of the full player.
       if (root.dataset.sheet) setSheet(null);
-      keepPlaying(() => room.append(root));
-      root.setAttribute('data-full', '');
-      seat();
-      sync(null);
-      full.showModal();
-      lift();
-      document.documentElement.style.overflow = 'hidden';
+      if (!full.open) {
+        cardStandIn = root.cloneNode(true) as HTMLElement;
+        cardStandIn.removeAttribute('data-songs');
+        cardStandIn.setAttribute('aria-hidden', 'true');
+        cardStandIn.style.pointerEvents = 'none';
+        cardStandIn.querySelector('audio')?.remove();
+        full.before(cardStandIn);
+        keepPlaying(() => room.append(root));
+        root.setAttribute('data-full', '');
+        seat();
+        sync(null);
+        full.showModal();
+        lift();
+        document.documentElement.style.overflow = 'hidden';
+      }
+      void full.offsetWidth;
+      full.classList.add('is-shown');
+    };
+    const shutFull = () => {
+      if (!full.open || !full.classList.contains('is-shown')) return;
+      if (root.dataset.sheet) setSheet(null);
+      full.classList.remove('is-shown');
+      shuttingFull = window.setTimeout(() => full.close(), FADE_FULL);
     };
     full.addEventListener('close', () => {
+      clearTimeout(shuttingFull);
+      full.classList.remove('is-shown');
       if (root.dataset.sheet) setSheet(null);
       root.removeAttribute('data-full');
       seat();
       sync(null);
       lift();
+      cardStandIn?.remove();
+      cardStandIn = null;
       keepPlaying(() => full.before(root));
       document.documentElement.style.overflow = '';
       fullOpener.focus({ preventScroll: true });
     });
     // Esc closes a sheet first, the player only after.
     full.addEventListener('cancel', e => {
-      if (!root.dataset.sheet) return;
       e.preventDefault();
-      setSheet(null);
+      if (root.dataset.sheet) setSheet(null);
+      else shutFull();
     });
-    full.querySelector('[data-full-close]')!.addEventListener('click', () => full.close());
+    full.querySelector('[data-full-close]')!.addEventListener('click', shutFull);
     // A click on the dark around the player closes it — a mouse's, clear
     // of the controls (lib/dismiss).
     full.addEventListener('click', e => {
-      if ((e.target === full || e.target === room) && meantToClose(e, full)) full.close();
+      if ((e.target === full || e.target === room) && meantToClose(e, full)) shutFull();
     });
     // A phone's sheets stand from just under the close button (its 1rem
     // and 2.5rem, and 1rem of air) to the screen's foot: offsets from the

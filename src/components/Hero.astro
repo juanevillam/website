@@ -1,15 +1,14 @@
 ---
 import T from './T.astro';
-import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
+import { clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 import ShipEgg from './ShipEgg.astro';
 
 /**
- * The hero is the wordmark alone — a line of text under it was tried
- * and read as odd. When Juan's intro is recorded (`hero.m4a`, see
- * lib/narration) the wordmark carries the clip: the page's first
- * narrated block, with the narrator parked under it so the pitch can
- * start from the very top.
+ * The hero opens on the wordmark and Juan's intro paragraph (`hero.caption`),
+ * capped like every other section on the page (5 lines on desktop, 3 on
+ * mobile, with the next line fading in the bottom padding), followed by the
+ * narrator anchor.
  */
 const clip = clipFor('hero');
 ---
@@ -26,22 +25,23 @@ const clip = clipFor('hero');
     data-hero-inner
     data-narr-block={clip ? 'hero' : null}
   >
-    <!-- The greeting is the name's EYEBROW — "HI" / "HOLA" / "你好" — in
-         the voice every panel's title takes ("MORE WORK", "EVENTS") and
-         at the same step over what it heads, so the language shows at a
-         glance (Juan, 2026-10-13). A centred word in the name's own face
-         read as foreign to the page; in a panel's corner it read as lost,
-         far from the name it greets. -->
-    <p class="label hello" data-reveal><T k="hero.hi" /></p>
     <h1
       class="display"
       data-reveal
       data-scene-at
-      data-narr-para
-      {...voiceAttrs('hero')}
     >
       juanevillam
     </h1>
+    <p
+      class="body hero-body"
+      data-reveal
+      data-cap="2"
+      data-cap-phone="2"
+      data-narr-para
+      {...voiceAttrs('hero', 'hero.caption')}
+    >
+      <T k="hero.caption" />
+    </p>
     {
       clip && (
         <div class="narr-hold">
@@ -51,11 +51,6 @@ const clip = clipFor('hero');
             data-narr-align="center"
             aria-hidden="true"
           />
-          {/* The intro's words, three lines at a time while it plays
-              (Juan, 2026-10-17). Out of the flow, so the name never moves. */}
-          <p class="narr-caption" data-narr-caption {...captionAttrs('hero', 'hero.caption')}>
-            <T k="hero.caption" />
-          </p>
         </div>
       )
     }
@@ -76,24 +71,10 @@ const clip = clipFor('hero');
     padding: 0 clamp(1.25rem, 4vw, 2.5rem);
   }
 
-  /* A phone stands the name a little over the screen's middle, not on it
-     — the same lift every panel's top took (2026-10-13). */
-  @media (max-width: 48rem) {
-    .hero {
-      padding-bottom: 8svh;
-    }
-  }
-
   .narr-hold {
     position: relative;
     display: flex;
     justify-content: center;
-  }
-
-  .narr-hold .narr-caption {
-    left: 50%;
-    translate: -50% 0;
-    text-align: center;
   }
 
   .hero-inner {
@@ -103,35 +84,17 @@ const clip = clipFor('hero');
     will-change: opacity, transform;
   }
 
-  /* Close over the name it greets — a panel's 1.5rem step stood it too
-     far off a name this size (2026-10-13). */
-  .hello {
-    margin-bottom: 0.5rem;
+  .hero-body {
+    --cap-gap: 1.25rem;
+    max-width: 38rem;
+    text-align: center;
   }
 
   @media (max-width: 48rem) {
-    .hello {
-      margin-bottom: 0.25rem;
+    .hero-body {
+      --cap-gap: 1rem;
+      font-size: 1rem;
+      line-height: 1.55;
     }
   }
-
-  /* A new language's word arrives rather than simply being there: its
-     span is shown fresh on a switch, which replays this. */
-  .hello :global(.t) {
-    animation: hello-in var(--dur-turn) var(--ease) both;
-  }
-
-  @keyframes hello-in {
-    from {
-      opacity: 0;
-      filter: blur(0.25rem);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hello :global(.t) {
-      animation: none;
-    }
-  }
-
 </style>

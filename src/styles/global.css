@@ -166,7 +166,7 @@
      of a shorter screen. It gives up 0.215pt per point of height lost,
      between a floor that clears the pills and a ceiling for tall
      screens. */
-  --stage-top: clamp(5.5rem, 21.5svh - 4rem, 9rem);
+  --stage-top: clamp(5rem, 17svh - 3.25rem, 7.5rem);
   /* A deck's arrows stand clear of the screen's bottom edge, a little
      more on a taller screen. They used to mirror the header's pills at
      1rem (2026-10-13), and in a Chrome window short of full screen that
@@ -182,7 +182,7 @@
 
 @media (max-width: 64rem) {
   :root {
-    --stage-top: clamp(4.5rem, 21.5svh - 5rem, 8rem);
+    --stage-top: clamp(4.5rem, 15svh - 3rem, 6.5rem);
     --gap-block: 2rem;
   }
 }
@@ -195,12 +195,12 @@
        (20px) was too high — the picture crowded the chrome. */
     /* Just under the pills (Juan, 2026-10-13: 1.75rem read as a phone's
        room spent on nothing, then 1rem and 0.75rem a little low). */
-    --stage-top: calc(var(--header-h) + 0.375rem);
+    --stage-top: calc(var(--header-h) + 0.5rem);
     --stage-bottom: 1.25rem;
     --gap-block: 1.5rem;
     /* Where every panel's PICTURE starts — under the eyebrow and its
        0.75rem step (PanelDeck), and the stories' phones on the same line. */
-    --media-top-m: calc(var(--stage-top) + 2.75rem);
+    --media-top-m: calc(var(--stage-top) + 2.25rem);
     /* THE PHONE'S ONE SCREEN SHAPE (Juan, 2026-11-03): every deck's
        picture — More Work's sites, the game's cover, the events' photos,
        More of Me's sets and the Songs player — stands in the same upright
@@ -215,7 +215,7 @@
        Work stood at on every phone before. */
     --screen-ratio-m: 4 / 5;
     --screen-max-m: max(
-      calc(100svh - var(--media-top-m) - 20rem),
+      calc(100svh - var(--media-top-m) - 21rem),
       calc((100vw - 2.5rem) * 2 / 3)
     );
   }
@@ -696,7 +696,8 @@ html.is-stepped .story .deck-controls {
 /* The narrator glides between anchors the same way. Its own width,
    colour and border transitions are restated, since this replaces the
    list. */
-html.is-stepped [data-narrator] {
+html.is-stepped [data-narrator],
+html.is-stepped [data-narr-video] {
   transition:
     transform var(--dur-turn) var(--ease),
     opacity var(--dur-turn) var(--ease),
@@ -713,7 +714,8 @@ html.is-stepped [data-narrator] {
   html.is-stepped .story .intro-scene,
   html.is-stepped .story .cap,
   html.is-stepped .story .deck-controls,
-  html.is-stepped [data-narrator] {
+  html.is-stepped [data-narrator],
+  html.is-stepped [data-narr-video] {
     transition: none;
   }
 }
@@ -885,18 +887,19 @@ html.is-desk-safari .switcher {
   background: color-mix(in srgb, var(--surface) 95%, transparent) !important;
 }
 
-/* ---------- ten lines ----------
+/* ---------- nine lines ----------
    Every card's words — the apps', More Work's, the events' — stand in a
-   box ten of their lines tall at most and scroll past that (Juan,
-   2026-10-13; seven first, which cut too much), so a longer card never
-   stands taller than its neighbours or moves what is under it. The height
-   is set from the words' own line-height (Base.astro); the narrated
-   paragraph is scrolled into it. */
+   box nine of their lines tall at most, with the tenth fading through the
+   bottom padding, and scroll past that (Juan, 2026-11-07; ten before, which
+   showed an eleventh in the fade), so a longer card never stands taller
+   than its neighbours or moves what is under it. The height is set from
+   the words' own line-height (Base.astro); the narrated paragraph is
+   scrolled into it. */
 [data-cap] {
   /* THE FADE LIVES IN PADDING (Juan, 2026-10-13: a fade over the words
      still showed the cut, and dimmed lines meant to be read). The box is
-     ten lines of CONTENT with a fade's depth of padding above and below,
-     so all ten lines stand clear and only words scrolled past them fade.
+     nine lines of CONTENT with a fade's depth of padding above and below,
+     so all nine lines stand clear and the tenth fades through the bottom.
      The TOP padding is taken back by the margin, since it shows words only
      once scrolled; the BOTTOM one is not — words fade through it at rest,
      and whatever follows the box (a store row, the links) has to stand

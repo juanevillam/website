@@ -176,9 +176,42 @@ song's map in `localStorage`.
   "Lead Frontend Developer", but he BUILT Crol ERP Móvil — never "led the
   frontend".
 
-## Brand
+## Brand & UI rules (infer by default — never wait to be told)
 
 The `#F5F5F5` / `#222222` neutrals, the stroke-built "jv" mark, no webfonts.
 The favicon (`public/favicon.svg`) and `src/components/AppTile.astro` are
 ports of the apps' brand tile — when the palette changes, follow the brand
 runbook in the portfolio's `AGENTS.md`, which lists these two files.
+
+- **Every show/hide has an entrance and exit transition.** Never snap an
+  element in or out with raw `[hidden]` alone: toggle a state class (e.g.
+  `.is-dismissed` / `.is-open`) that transitions `opacity` (and `scale` where
+  appropriate) on `--dur-quick` or `--dur-turn` (`var(--ease)`).
+- **Every media frame uses the site's tokens.** Corner radius is always
+  `var(--media-radius)` (phones) or `var(--media-radius-flat)` (cards,
+  screens, the `9:16` narration video companion) — never an arbitrary `rem`
+  guess — paired with `border: 1px solid var(--hairline)`,
+  `background: var(--surface)` and the two-layer shadow
+  (`0 2rem 4rem rgba(0, 0, 0, 0.55), 0 0.5rem 1.25rem rgba(0, 0, 0, 0.4)`).
+- **Media hand-overs cross-fade linearly on `--dur-settle`.** Whether switching
+  photos in `PanelDeck` or switching `.mp4` clips in `NarrationPlayer`, the
+  leaving and arriving layers use `transition: opacity var(--dur-settle) linear`
+  (triggered on `requestAnimationFrame` after the frame is decoded) so the two
+  always add up to 1 and never flash or glitch.
+- **Scroll-driven floating elements never carry a CSS `transform` transition on
+  desktop.** `[data-narrator]` and `[data-narr-video]` are positioned every
+  frame by `requestAnimationFrame`; a CSS `transform` transition fights the
+  render loop and causes lag. Only `html.is-stepped` (touch screens) enables
+  `transition: transform var(--dur-turn) var(--ease)`.
+- **Narration `9:16` video companion & 5-line `[data-cap]` (Juan, 2026-11-08):**
+  - `[data-cap]` shows **5 full lines** (`LINES = 5` in `Base.astro`) with the
+    6th fading through the bottom padding, leaving vertical room below the text
+    column.
+  - `[data-narr-video]` sits to the right of `[data-narrator]` (`vx = nx + nw + 12`)
+    and top-aligned with it (`vy = ny`) so it never rises above the button's
+    vertical level into the text above. It shows ONLY while narration audio is
+    actively playing (`running === true`, hiding with `.is-dismissed` on pause
+    or stop so no paused frame is ever shown), reveals `×` and `1× / 1.5× / 2×`
+    (`preservesPitch = true`) on hover, keeps raw `.webm` takes untouched in
+    `narration-takes/`, and never applies audio filters, EQ, denoiser or volume
+    boost to the voice.

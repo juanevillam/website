@@ -224,16 +224,17 @@ const url = new URL(path, Astro.site);
         light();
       }
 
-      // TEN LINES (global.css `[data-cap]`): each box is as tall as ten
-      // of its words' lines, measured from the first paragraph showing —
-      // asked again whenever it is drawn at a new size (a deck shown, a
-      // breakpoint, late fonts).
+      // FIVE LINES (global.css `[data-cap]`, Juan 2026-11-08): each box is
+      // as tall as five of its words' lines, measured from the first
+      // paragraph showing — with the sixth peeking through the bottom fade —
+      // leaving vertical room below the text column for the 9:16 narration
+      // video companion.
       //
       // A PHONE SETS ITS OWN (Juan, 2026-10-13), as `data-cap-phone`: a
       // number of lines, or `fill` — every whole line that fits between
       // the box's top and whatever stands under it, clear of the docked
       // controls (an app's welcome, which shows no picture on a phone).
-      const LINES = 10;
+      const LINES = 5;
       const phoneQuery = matchMedia('(max-width: 48rem)');
       // The docked row's height (the narrator, the tallest thing in it),
       // its 1rem off the screen's foot, and a step of air above it.
@@ -256,7 +257,9 @@ const url = new URL(path, Astro.site);
         // A title riding at the top of the box (a phone's app slide) is
         // on top of the lines, not one of them.
         const lead = ref === box ? 0 : ref.offsetTop - parseFloat(getComputedStyle(box).paddingTop);
-        const want = phoneQuery.matches ? box.dataset.capPhone : undefined;
+        const want = phoneQuery.matches
+          ? box.dataset.capPhone || box.dataset.cap
+          : box.dataset.cap;
         const cs = getComputedStyle(box);
         const padTop = parseFloat(cs.paddingTop);
         const fade = padTop;

@@ -154,6 +154,12 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
           <div
             class="carousel"
             data-apps-deck={a}
+            data-viewer-items={JSON.stringify(
+              app.slides.map(s => ({
+                src: s.src,
+                name: `${app.name} — ${s.title}`,
+              })),
+            )}
             hidden={a !== 0}
             tabindex="0"
             role="tabpanel"
@@ -193,7 +199,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         </h3>
                       </>
                     )}
-                    <div class="desc" data-cap data-cap-phone={card.kind === 'welcome' ? 'fill' : '4'}>
+                    <div class="desc" data-cap data-cap-phone="3">
                     {card.paras.map((k, i) => (
                       <>
                       <p
@@ -271,6 +277,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       <img
                         class="shot"
                         data-scene-at
+                        data-shot-at="0"
                         src={a === 0 ? card.shots[0].src : undefined}
                         data-src={a === 0 ? undefined : card.shots[0].src}
                         alt={`${app.name} — ${card.shots[0].title}`}
@@ -286,6 +293,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                     <div class="slot" data-deck-part="picture">
                       <img
                         class="shot"
+                        data-shot-at={c - 1}
                         data-src={card.src}
                         alt={`${app.name} — ${card.title}`}
                         width={card.width}
@@ -622,10 +630,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     line-height: 1.05;
   }
 
-  /* A card's words stand in a box of ten lines at most (`data-cap`,
-     global.css), which scrolls past that — so no card's words are taller
-     than another's (Juan, 2026-10-13). The step above the words is the
-     box's; inside it, only the steps between paragraphs. */
+  /* A card's words stand in a box of nine lines at most (`data-cap`,
+     global.css), with the tenth in the fade, which scrolls past that — so
+     no card's words are taller than another's (Juan, 2026-11-07). The step
+     above the words is the box's; inside it, only the steps between
+     paragraphs. */
   .desc {
     --cap-gap: 1.25rem;
   }
@@ -675,6 +684,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    cursor: zoom-in;
   }
 
   /* A slide's phone leans toward the pointer (lib/tilt). */
@@ -759,15 +769,15 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
   /* ---------- phones ---------- */
 
-  @media (max-width: 48rem) {
+    @media (max-width: 48rem) {
     .apps {
-      --shot-h: min(112vw, calc(100svh - var(--stage-top) - 16rem));
+      --shot-h: min(104vw, calc(100svh - var(--stage-top) - 18rem));
     }
 
     /* A step of air under the switcher, which stands on the panel's top
        line on a phone. */
     .decks {
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
 
     /* Icons only: three apps fit between the header's two pills. */
@@ -1174,6 +1184,25 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
           });
         },
       });
+      for (const shot of el.querySelectorAll<HTMLElement>('.shot[data-shot-at]')) {
+        let down: { x: number; y: number } | null = null;
+        shot.addEventListener('pointerdown', e => {
+          down = { x: e.clientX, y: e.clientY };
+        });
+        shot.addEventListener('click', e => {
+          if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 12) return;
+          const items = el.dataset.viewerItems;
+          if (!items) return;
+          document.dispatchEvent(
+            new CustomEvent('viewer:open', {
+              detail: {
+                items: JSON.parse(items),
+                at: Number(shot.dataset.shotAt ?? 0),
+              },
+            }),
+          );
+        });
+      }
       held.push(h);
     }
 
