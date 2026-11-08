@@ -1,113 +1,201 @@
 WEBVTT
 
 1
-00:00:00.000 --> 00:00:02.880
+00:00:00.000 --> 00:00:02.570
 Space Explorer inició como un easter egg para mis
 
 2
-00:00:02.880 --> 00:00:04.050
+00:00:02.570 --> 00:00:03.640
 aplicaciones.
 
 3
-00:00:04.050 --> 00:00:05.640
-En este caso, Sound Shaper.
+00:00:03.640 --> 00:00:07.110
+En este caso Sound Shaper: ibas a enterrar una parte
 
 4
-00:00:05.640 --> 00:00:09.240
-Ibas a entrar a una parte específica de la aplicación y
+00:00:07.110 --> 00:00:09.770
+específica de la aplicación, darle unos tabs ahí
 
 5
-00:00:09.240 --> 00:00:11.520
-ibas a dar una combinación de taps y se iba a abrir
+00:00:09.770 --> 00:00:12.980
+secretos en ciertos lugares y iba a enterrar como en
 
 6
-00:00:11.520 --> 00:00:14.000
-Space Explorer en modo juego.
+00:00:12.980 --> 00:00:16.480
+modo juego y se iba a desplegar un nivel de Sound Shaper
 
 7
-00:00:14.000 --> 00:00:17.050
-Iba a tener varios niveles, que si en el mar,
+00:00:16.480 --> 00:00:17.650
+o dos niveles.
 
 8
-00:00:17.050 --> 00:00:19.650
-en el espacio, una guerra espacial,
+00:00:17.650 --> 00:00:21.150
+Tenía como una historia narrativa completa que se iba a
 
 9
-00:00:19.650 --> 00:00:23.470
-pero lo quité para no complicar Sound Shaper.
+00:00:21.150 --> 00:00:24.650
+unir con el resto de aplicaciones que fuese a sacar.
 
 10
-00:00:23.470 --> 00:00:27.100
-Luego, meses después, aplicamos a una hackathon de
+00:00:24.650 --> 00:00:27.280
+Pero eso sobrecomplicaba mucho el producto y tal vez era
 
 11
-00:00:27.100 --> 00:00:30.040
-Platanus y tenían un reto arcade.
+00:00:27.280 --> 00:00:29.650
+muy difícil que lo encontraran porque estaba muy bien.
 
 12
-00:00:30.040 --> 00:00:33.000
-O sea, crear un videojuego.
+00:00:29.650 --> 00:00:33.050
+Estaba súper oculto y literalmente eso lo sabía yo.
 
 13
-00:00:33.000 --> 00:00:35.000
-Y ya tenía la idea lista, entonces mira,
+00:00:33.050 --> 00:00:36.680
+Entonces, para simplificarlo y dejar Sound Shaper como
 
 14
-00:00:35.000 --> 00:00:35.200
-aproveché.
+00:00:36.680 --> 00:00:40.650
+Sound Shaper, pues lo removí.
 
 15
-00:00:35.000 --> 00:00:38.770
-Lo quité de mis aplicaciones, pero lo usé para aplicar a
+00:00:40.650 --> 00:00:45.080
+Pero justo por horas del destino,
 
 16
-00:00:38.770 --> 00:00:40.000
-la hackathon.
+00:00:45.080 --> 00:00:48.830
+no sé, pero pasó muy cercano los tiempos,
 
 17
-00:00:40.000 --> 00:00:45.820
-Y es básicamente un shooter espacial 3D que cabe en 50
+00:00:48.830 --> 00:00:54.970
+aplicamos una hackathon de Platanus aquí en Venezuela,
 
 18
-00:00:45.820 --> 00:00:46.330
-KB.
+00:00:54.970 --> 00:00:55.650
+en Caracas.
 
 19
-00:00:46.330 --> 00:00:50.000
-O sea, no megabytes, 50 KB.
+00:00:55.650 --> 00:00:59.700
+Y uno de los retos que había como minijuegos,
 
 20
-00:00:50.000 --> 00:00:51.250
-Y la verdad que quedó bastante,
+00:00:59.700 --> 00:01:03.840
+actividad secundaria, era hacer un juego de arcade.
 
 21
-00:00:51.250 --> 00:00:52.000
-bastante cool.
+00:01:03.840 --> 00:01:05.680
+Y ya yo tenía la idea trabajada,
 
 22
-00:00:52.000 --> 00:00:55.110
-Lo pueden jugar también aquí en esta página.
+00:01:05.680 --> 00:01:07.840
+dije: mira, vamos a hacer Space Explorer,
 
 23
-00:00:55.110 --> 00:00:56.790
-Y también lo pueden jugar desde la página oficial de
+00:01:07.840 --> 00:01:09.650
+pero como si fuese un juego de arcade.
 
 24
-00:00:56.790 --> 00:00:58.000
-Platanus.
+00:01:09.650 --> 00:01:13.150
+Y era un reto bastante interesante porque el juego tenía
 
 25
-00:00:58.000 --> 00:01:00.120
-En este momento yo no sé si fue el mejor juego,
+00:01:13.150 --> 00:01:16.650
+que pesar menos, bueno, máximo 50 kilobytes.
 
 26
-00:01:00.120 --> 00:01:02.560
-al menos a nivel técnico, porque por voto popular no
+00:01:16.650 --> 00:01:19.680
+O sea, 50KB.
 
 27
-00:01:02.560 --> 00:01:03.000
-fue.
+00:01:19.680 --> 00:01:25.820
+Y yo logré hacer que fuese un shooter 3D espacial que
 
 28
-00:01:03.000 --> 00:01:07.198
-Pero bueno, igual es un juego mega chulo.
+00:01:25.820 --> 00:01:28.320
+tiene, bueno, el mapa está bastante cool,
+
+29
+00:01:28.320 --> 00:01:32.050
+el estilo es muy simple porque no lo quería hacer muy
+
+30
+00:01:32.050 --> 00:01:33.650
+artístico.
+
+31
+00:01:33.650 --> 00:01:36.670
+Porque yo de pixel art prefería hacer algo más técnico
+
+32
+00:01:36.670 --> 00:01:38.700
+que quedara más chulo incluso.
+
+33
+00:01:38.700 --> 00:01:41.660
+De hecho, tiene un agujero negro también y funciona
+
+34
+00:01:41.660 --> 00:01:45.650
+bastante, bastante, bastante cool.
+
+35
+00:01:45.650 --> 00:01:48.260
+Pues tiene muchas funcionalidades también,
+
+36
+00:01:48.260 --> 00:01:49.700
+la nave cómo se maneja.
+
+37
+00:01:49.700 --> 00:01:51.640
+Muy, muy interesante.
+
+38
+00:01:51.640 --> 00:01:54.760
+Lo puedes jugar aquí en esta página o en la página web
+
+39
+00:01:54.760 --> 00:01:57.650
+oficial de Platanus, bueno, de la Platanus Hack.
+
+40
+00:01:57.650 --> 00:01:59.650
+Y bueno, espero, espero les guste.
+
+41
+00:01:59.650 --> 00:02:02.780
+Como tal, en la Hackathon había muy pocos juegos que
+
+42
+00:02:02.780 --> 00:02:03.850
+eran 3D.
+
+43
+00:02:03.850 --> 00:02:07.200
+Obvio, había muchos que eran muy chulos,
+
+44
+00:02:07.200 --> 00:02:09.650
+pero quedó bastante, bastante cool.
+
+45
+00:02:09.650 --> 00:02:11.650
+Este sí, como ya quedó, quedó.
+
+46
+00:02:11.650 --> 00:02:14.280
+Ya no le voy a meter más porque la idea es que,
+
+47
+00:02:14.280 --> 00:02:17.650
+como quedó para la Hackathon, quedó para siempre.
+
+48
+00:02:17.650 --> 00:02:22.160
+Ya si hago otro juego, pues es otro juego,
+
+49
+00:02:22.160 --> 00:02:24.880
+ya no es Space Explorer.
+
+50
+00:02:24.880 --> 00:02:26.250
+Y si es Space...

@@ -37,8 +37,34 @@ const PUBLIC = path.join(process.cwd(), 'public');
  * voice can arrive a paragraph at a time.
  */
 export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
-  const url = `/media/narration/${lang}/${key}.m4a`;
-  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
+  // English only uses its own audio once its vertical video take (.mp4) is
+  // recorded; until then it plays the Spanish take with English subtitles.
+  // Chinese never has its own recording: it plays English once recorded, or
+  // Spanish until then, with Chinese subtitles (Juan, 2026-11-08).
+  const candidates: Locale[] =
+    lang === 'zh' ? ['en', 'es'] : lang === 'en' ? ['en', 'es'] : ['es'];
+  for (const c of candidates) {
+    if (
+      c === 'en' &&
+      !fs.existsSync(path.join(PUBLIC, `/media/narration/en/${key}.mp4`))
+    ) {
+      continue;
+    }
+    const url = `/media/narration/${c}/${key}.m4a`;
+    if (fs.existsSync(path.join(PUBLIC, url))) return url;
+  }
+  return null;
+};
+
+/** Vertical 9:16 video take alongside the voice clip, when recorded. */
+export const videoFor = (key: string, lang: Locale = 'es'): string | null => {
+  const candidates: Locale[] =
+    lang === 'zh' ? ['en', 'es'] : lang === 'en' ? ['en', 'es'] : ['es'];
+  for (const c of candidates) {
+    const url = `/media/narration/${c}/${key}.mp4`;
+    if (fs.existsSync(path.join(PUBLIC, url))) return url;
+  }
+  return null;
 };
 
 /**
@@ -144,28 +170,43 @@ export const readTimings = (
 ): Record<Locale, ReadMark[]> | undefined => {
   const spoken = spokenWords(key);
   if (!spoken?.length || !(textKey in ui.es)) return undefined;
-  const end = spoken.at(-1)!.t + 0.4;
   const text = (l: Locale) => plainText(ui[l][textKey as UIKey]);
 
-  const esTokens = readTokens(text('es'));
-  const esTimes = alignTimes(
-    esTokens.map(t => t.text),
-    spoken,
+  const spansFor = (refLang: Locale, refSpoken: Spoken[]) => {
+    const refEnd = refSpoken.at(-1)!.t + 0.4;
+    const refTokens = readTokens(text(refLang));
+    const refTimes = alignTimes(
+      refTokens.map(t => t.text),
+      refSpoken,
+    );
+    const refStarts = sentenceStarts(refTokens);
+    return {
+      first: refTimes[0] ?? 0,
+      end: refEnd,
+      times: refTimes,
+      tokens: refTokens,
+      spans: refStarts.map((s, i) => [
+        refTimes[s],
+        i + 1 < refStarts.length ? refTimes[refStarts[i + 1]] : refEnd,
+      ]),
+    };
+  };
+
+  const esRef = spansFor('es', spoken);
+  const hasEnVideo = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/en/${key}.mp4`),
   );
-  const esStarts = sentenceStarts(esTokens);
-  const spans = esStarts.map((s, i) => [
-    esTimes[s],
-    i + 1 < esStarts.length ? esTimes[esStarts[i + 1]] : end,
-  ]);
+  const enSpoken = hasEnVideo ? spokenWords(key, 'en') : undefined;
+  const enRef = enSpoken?.length ? spansFor('en', enSpoken) : undefined;
 
   const out = {
-    es: esTokens.map((t, i) => [t.at, round(esTimes[i])]),
+    es: esRef.tokens.map((t, i) => [t.at, round(esRef.times[i])]),
   } as Record<Locale, ReadMark[]>;
   for (const l of locales) {
     if (l === 'es') continue;
     const tokens = readTokens(text(l));
     // Its own voice: its words on its own clock, like Spanish.
-    const own = clipFor(key, l) ? spokenWords(key, l) : undefined;
+    const own = l === 'en' && hasEnVideo ? enSpoken : undefined;
     if (own?.length) {
       const times = alignTimes(
         tokens.map(t => t.text),
@@ -174,15 +215,18 @@ export const readTimings = (
       out[l] = tokens.map((t, i) => [t.at, round(times[i])]);
       continue;
     }
+    // Chinese plays the English recording when present, so time its sentences
+    // against the English clock (falling back to Spanish before English is recorded).
+    const ref = l === 'zh' && enRef ? enRef : esRef;
     const starts = sentenceStarts(tokens);
     const groups =
-      starts.length === spans.length
+      starts.length === ref.spans.length
         ? starts.map((s, i) => ({
             from: s,
             to: i + 1 < starts.length ? starts[i + 1] : tokens.length,
-            span: spans[i],
+            span: ref.spans[i],
           }))
-        : [{ from: 0, to: tokens.length, span: [esTimes[0] ?? 0, end] }];
+        : [{ from: 0, to: tokens.length, span: [ref.first, ref.end] }];
     out[l] = [];
     for (const g of groups) {
       const words = tokens.slice(g.from, g.to);
@@ -200,13 +244,17 @@ export const readTimings = (
 
 /** A narrated paragraph's data attributes — its clip, and when each of its
  *  words is said in every language, for the director (scripts/director.ts). */
-export const voiceAttrs = (key: string) => {
+export const voiceAttrs = (key: string, textKey: string = key) => {
   const attrs: Record<string, string | undefined> = {
     'data-clip': clipFor(key) ?? undefined,
+    'data-video': videoFor(key) ?? undefined,
   };
   for (const l of locales)
-    if (l !== 'es') attrs[`data-clip-${l}`] = clipFor(key, l) ?? undefined;
-  const timings = readTimings(key);
+    if (l !== 'es') {
+      attrs[`data-clip-${l}`] = clipFor(key, l) ?? undefined;
+      attrs[`data-video-${l}`] = videoFor(key, l) ?? undefined;
+    }
+  const timings = readTimings(key, textKey);
   for (const l of locales)
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;
   return attrs;

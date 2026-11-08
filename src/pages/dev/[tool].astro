@@ -98,8 +98,12 @@ const list = scripts.es;
           <p class="draft" data-draft hidden></p>
         </div>
         <div class="mic">
-          <button type="button" class="pick-mic" data-mic-on>Activar micrófono</button>
-          <select data-mic aria-label="Micrófono" hidden></select>
+          <div class="mic-row">
+            <button type="button" class="pick-mic" data-cam-on>Activar cámara (espejo 9:16)</button>
+            <select data-cam aria-label="Cámara" hidden></select>
+            <button type="button" class="pick-mic" data-mic-on>Activar micrófono</button>
+            <select data-mic aria-label="Micrófono" hidden></select>
+          </div>
           <span class="meter" hidden><span data-meter></span></span>
         </div>
       </header>
@@ -112,7 +116,10 @@ const list = scripts.es;
             <p class="said-text" data-said-text></p>
           </div>
         </div>
-        <img class="shot" data-shot alt="" hidden />
+        <div class="stage-side">
+          <video class="cam-mirror" data-cam-view autoplay muted playsinline hidden></video>
+          <img class="shot" data-shot alt="" hidden />
+        </div>
       </div>
 
       <div class="pill" data-pill hidden></div>
@@ -309,6 +316,77 @@ const list = scripts.es;
         stateEl.textContent = said[mode];
       };
 
+      // Camera (9:16 live mirror beside the script — works with Mac webcam or
+      // wireless iPhone Continuity Camera so Juan can see his gestures without
+      // leaving the teleprompter).
+      let camStream: MediaStream | null = null;
+      const cam = $<HTMLSelectElement>('[data-cam]');
+      const camView = $<HTMLVideoElement>('[data-cam-view]');
+      const listCams = async () => {
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+        const current = camStream?.getVideoTracks()[0]?.getSettings().deviceId;
+        cam.replaceChildren(
+          ...devices.map(d => {
+            const o = new Option(d.label || 'Cámara', d.deviceId);
+            o.selected = d.deviceId === current;
+            return o;
+          }),
+        );
+      };
+      const openCam = async (id?: string) => {
+        camStream?.getTracks().forEach(t => t.stop());
+        const req = (devId?: string) =>
+          navigator.mediaDevices.getUserMedia({
+            video: {
+              ...(devId ? { deviceId: { exact: devId } } : {}),
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
+          });
+        let fellBack = false;
+        try {
+          camStream = await req(id);
+        } catch {
+          // Safari rotates deviceIds across reloads or when Continuity Camera
+          // wakes up, throwing OverconstrainedError on a saved exact id.
+          camStream = await req(undefined);
+          fellBack = true;
+        }
+        const savedLabel = read('tp.cam.label');
+        if ((!id || fellBack) && savedLabel) {
+          const match = (await navigator.mediaDevices.enumerateDevices()).find(
+            d => d.kind === 'videoinput' && d.label === savedLabel,
+          );
+          const currentId = camStream.getVideoTracks()[0]?.getSettings().deviceId;
+          if (match && match.deviceId !== currentId) {
+            try {
+              const nextStream = await req(match.deviceId);
+              camStream.getTracks().forEach(t => t.stop());
+              camStream = nextStream;
+            } catch {}
+          }
+        }
+        camView.srcObject = camStream;
+        camView.hidden = false;
+        await listCams();
+        cam.hidden = false;
+        $('[data-cam-on]').hidden = true;
+      };
+      navigator.mediaDevices.addEventListener('devicechange', () => {
+        if (camStream) listCams();
+      });
+      $('[data-cam-on]').addEventListener('click', () =>
+        openCam(read('tp.cam') ?? undefined).catch(err => {
+          stateEl.textContent = `No hay acceso a la cámara (${err?.name || 'error'}). Revisa el permiso del navegador.`;
+        }),
+      );
+      cam.addEventListener('change', () => {
+        keep('tp.cam', cam.value);
+        const label = cam.selectedOptions[0]?.text;
+        if (label) keep('tp.cam.label', label);
+        openCam(cam.value);
+      });
+
       // Microphones: ask once so the browser names them, then list.
       let stream: MediaStream | null = null;
       const mic = $<HTMLSelectElement>('[data-mic]');
@@ -316,17 +394,39 @@ const list = scripts.es;
       let analyser: AnalyserNode | null = null;
       const openMic = async (id?: string) => {
         stream?.getTracks().forEach(t => t.stop());
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            deviceId: id ? { exact: id } : undefined,
-            // His voice as the mic hears it: the browser's call-quality
-            // processing pumps and gates a narration.
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-            channelCount: 1,
-          },
-        });
+        const req = (devId?: string) =>
+          navigator.mediaDevices.getUserMedia({
+            audio: {
+              ...(devId ? { deviceId: { exact: devId } } : {}),
+              // His voice as the mic hears it: the browser's call-quality
+              // processing pumps and gates a narration.
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+              channelCount: 1,
+            },
+          });
+        let fellBack = false;
+        try {
+          stream = await req(id);
+        } catch {
+          stream = await req(undefined);
+          fellBack = true;
+        }
+        const savedLabel = read('tp.mic.label');
+        if ((!id || fellBack) && savedLabel) {
+          const match = (await navigator.mediaDevices.enumerateDevices()).find(
+            d => d.kind === 'audioinput' && d.label === savedLabel,
+          );
+          const currentId = stream.getAudioTracks()[0]?.getSettings().deviceId;
+          if (match && match.deviceId !== currentId) {
+            try {
+              const nextStream = await req(match.deviceId);
+              stream.getTracks().forEach(t => t.stop());
+              stream = nextStream;
+            } catch {}
+          }
+        }
         const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
         const current = stream.getAudioTracks()[0].getSettings().deviceId;
         mic.replaceChildren(
@@ -345,12 +445,14 @@ const list = scripts.es;
         ctx.createMediaStreamSource(stream).connect(analyser);
       };
       $('[data-mic-on]').addEventListener('click', () =>
-        openMic(read('tp.mic') ?? undefined).catch(() => {
-          stateEl.textContent = 'No hay acceso al micrófono. Revisa el permiso del navegador.';
+        openMic(read('tp.mic') ?? undefined).catch(err => {
+          stateEl.textContent = `No hay acceso al micrófono (${err?.name || 'error'}). Revisa el permiso del navegador.`;
         }),
       );
       mic.addEventListener('change', () => {
         keep('tp.mic', mic.value);
+        const label = mic.selectedOptions[0]?.text;
+        if (label) keep('tp.mic.label', label);
         openMic(mic.value);
       });
       const level = new Float32Array(1024);
@@ -386,10 +488,23 @@ const list = scripts.es;
           if (mode !== 'count') return;
         }
         const chunks: Blob[] = [];
-        recorder = new MediaRecorder(stream!, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 256000 });
+        const tracks = [
+          ...stream!.getAudioTracks(),
+          ...(camStream ? camStream.getVideoTracks() : []),
+        ];
+        const hasVideo = tracks.some(t => t.kind === 'video');
+        const candidates = hasVideo
+          ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+          : ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+        const mimeType = candidates.find(m => MediaRecorder.isTypeSupported(m)) ?? '';
+        recorder = new MediaRecorder(new MediaStream(tracks), {
+          ...(mimeType ? { mimeType } : {}),
+          audioBitsPerSecond: 256000,
+          ...(hasVideo ? { videoBitsPerSecond: 8_000_000 } : {}),
+        });
         recorder.ondataavailable = e => chunks.push(e.data);
         recorder.onstop = () => {
-          take = new Blob(chunks, { type: 'audio/webm' });
+          take = new Blob(chunks, { type: recorder?.mimeType || (hasVideo ? 'video/mp4' : 'audio/mp4') });
           mode = 'done';
           mark(0);
           sync();
@@ -471,7 +586,7 @@ const list = scripts.es;
         }).catch(() => new Response(null, { status: 503 }));
         // A dev server that is down, stale or crashed answers with no JSON;
         // the take stays here either way, so Guardar can be pressed again.
-        let out: { error?: string; m4a: string; length: number; lines: string[] };
+        let out: { error?: string; m4a: string; length: number; lines: string[]; esText?: string; enText?: string };
         try {
           out = await res.json();
         } catch {
@@ -485,6 +600,10 @@ const list = scripts.es;
         }
         c.status = 'new';
         c.audio = out.m4a;
+        if (lang === 'es' && out.enText) {
+          const enClip = scripts.en.find(x => x.key === c.key);
+          if (enClip) enClip.ideas = [out.enText];
+        }
         document
           .querySelector(`[data-pick="${CSS.escape(c.key)}"] [data-dot="${lang}"]`)
           ?.setAttribute('data-status', 'new');
@@ -493,7 +612,10 @@ const list = scripts.es;
         mode = 'idle';
         if (clip() === c) showSaid(out.lines);
         sync();
-        stateEl.textContent = `Guardado · ${out.length.toFixed(1)} s · ${out.lines.length} subtítulos. Revisa lo que dijiste, escúchalo con L, o pasa al siguiente con ↓.`;
+        stateEl.textContent =
+          lang === 'es' && out.enText
+            ? `Guardado · ${out.length.toFixed(1)} s · Traducción EN lista (cambia a EN para repasarla y grabar).`
+            : `Guardado · ${out.length.toFixed(1)} s · ${out.lines.length} subtítulos. Revisa lo que dijiste, escúchalo con L, o pasa al siguiente con ↓.`;
       };
 
       const acts: Record<string, () => unknown> = {
@@ -691,6 +813,29 @@ const list = scripts.es;
         display: grid;
         gap: 0.4rem;
         justify-items: end;
+      }
+      .mic-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .stage-side {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      .cam-mirror {
+        height: min(68vh, 42rem);
+        aspect-ratio: 9 / 16;
+        object-fit: cover;
+        border-radius: 1.75rem;
+        border: 1px solid var(--hairline);
+        background: var(--surface);
+        transform: scaleX(-1);
+      }
+      .cam-mirror[hidden] {
+        display: none;
       }
       .pick-mic,
       .mic select {

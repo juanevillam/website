@@ -8,7 +8,20 @@
  * at his own natural pace from start to finish without clicking through
  * "next idea" buttons.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ui } from '../i18n/ui';
+
+const latestTranslatedEn = (key: string): string | null => {
+  try {
+    const p = path.join(process.cwd(), 'narration-takes/es', `${key}.latest.json`);
+    if (!fs.existsSync(p)) return null;
+    const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+    return typeof data?.en === 'string' && data.en.trim() ? data.en.trim() : null;
+  } catch {
+    return null;
+  }
+};
 
 export type ScriptLang = 'es' | 'en';
 export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en'];
@@ -127,7 +140,7 @@ export const SCRIPTS_EN: ScriptClip[] = CLIPS.map(
     where,
     shot,
     draft,
-    ideas: [clean(ui.en[textKey(key)])],
+    ideas: [latestTranslatedEn(key) ?? clean(ui.en[textKey(key)])],
   }),
 );
 

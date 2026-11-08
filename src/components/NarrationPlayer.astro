@@ -47,6 +47,69 @@ import T from './T.astro';
   </span>
 </button>
 
+<div
+  class="nar-video is-dismissed"
+  data-narr-video
+  hidden
+>
+  <video
+    class="nar-video-media is-active"
+    data-narr-video-layer="0"
+    muted
+    playsinline
+    preload="auto"
+  ></video>
+  <video
+    class="nar-video-media"
+    data-narr-video-layer="1"
+    muted
+    playsinline
+    preload="auto"
+  ></video>
+  <button
+    class="nar-video-close"
+    type="button"
+    data-narr-video-close
+    aria-label="Close video"
+  >
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        d="M4.5 4.5l7 7M11.5 4.5l-7 7"
+      ></path>
+    </svg>
+  </button>
+  <div class="nar-video-rates" role="group" aria-label="Playback speed">
+    <button
+      type="button"
+      class="nar-rate is-active"
+      data-narr-rate="1"
+      aria-pressed="true"
+    >
+      1×
+    </button>
+    <button
+      type="button"
+      class="nar-rate"
+      data-narr-rate="1.5"
+      aria-pressed="false"
+    >
+      1.5×
+    </button>
+    <button
+      type="button"
+      class="nar-rate"
+      data-narr-rate="2"
+      aria-pressed="false"
+    >
+      2×
+    </button>
+  </div>
+</div>
+
 <style>
   .nar-field {
     position: fixed;
@@ -141,6 +204,165 @@ import T from './T.astro';
     visibility: visible;
   }
 
+  /* Vertical 9:16 video companion that travels alongside the narrator button,
+     top-aligned with it (`vy = ny`) and to its right (`vx = nx + nw + 12`)
+     so it never crosses above the button's vertical level into the text.
+     Uses the site's `--media-radius-flat` and two-layer shadow tokens,
+     enters/exits on `--dur-quick`, and cross-fades clips linearly on
+     `--dur-settle` like PanelDeck's media layers. */
+  .nar-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    width: var(--nar-video-w, 6.5rem);
+    height: var(--nar-video-h, 11.56rem);
+    border: 1px solid var(--hairline);
+    border-radius: var(--media-radius-flat);
+    background: var(--surface);
+    box-shadow:
+      0 2rem 4rem rgba(0, 0, 0, 0.55),
+      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    cursor: pointer;
+    scale: 1;
+    will-change: transform, opacity;
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      scale var(--dur-quick) var(--ease),
+      border-color var(--hover);
+  }
+
+  .nar-video[hidden] {
+    display: none;
+  }
+
+  .nar-video.is-dismissed {
+    opacity: 0 !important;
+    scale: 0.94;
+    pointer-events: none !important;
+  }
+
+  .nar-video:hover,
+  .nar-video.is-playing {
+    border-color: var(--ink-3);
+  }
+
+  @media (max-width: 48rem) {
+    .nar-video {
+      --nar-video-w: 3.5rem;
+      --nar-video-h: 6.22rem;
+    }
+  }
+
+  .nar-video-media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-settle) linear;
+  }
+
+  .nar-video-media.is-active {
+    opacity: 1;
+  }
+
+  /* Hidden by default; appears subtly only on hover. */
+  .nar-video-close {
+    position: absolute;
+    top: 0.375rem;
+    right: 0.375rem;
+    z-index: 2;
+    width: 1.4rem;
+    height: 1.4rem;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--hairline) 85%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ground) 72%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      color var(--hover),
+      border-color var(--hover);
+  }
+
+  .nar-video:hover .nar-video-close {
+    opacity: 0.9;
+    pointer-events: auto;
+  }
+
+  .nar-video-close:hover {
+    opacity: 1 !important;
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .nar-video-close svg {
+    width: 0.65rem;
+    height: 0.65rem;
+  }
+
+  /* Speed switcher (1x / 1.5x / 2x with preservePitch), shown on hover. */
+  .nar-video-rates {
+    position: absolute;
+    left: 50%;
+    bottom: 0.4rem;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    border: 1px solid color-mix(in srgb, var(--hairline) 85%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ground) 74%, transparent);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .nar-video:hover .nar-video-rates {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nar-rate {
+    padding: 0.15rem 0.38rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-3);
+    font: inherit;
+    font-size: 0.65rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    cursor: pointer;
+    transition:
+      color var(--hover),
+      background-color var(--hover);
+  }
+
+  .nar-rate:hover {
+    color: var(--ink-2);
+  }
+
+  .nar-rate.is-active {
+    background: color-mix(in srgb, var(--ink) 20%, transparent);
+    color: var(--ink);
+  }
 </style>
 
 <script>

@@ -181,20 +181,58 @@ const save = async (req, res, url) => {
 
   // The clip being replaced is kept, not lost.
   const out = path.join(PUBLIC, lang, `${key}.m4a`);
+  const outMp4 = path.join(PUBLIC, lang, `${key}.mp4`);
   const subs = path.join(PUBLIC, lang, `${key}.vtt`);
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  for (const f of [out, subs])
+  for (const f of [out, outMp4, subs])
     if (fs.existsSync(f))
       fs.renameSync(
         f,
         path.join(takes, 'replaced', `${when}--${path.basename(f)}`),
       );
 
-  // AS RECORDED (Juan, 2026-10-17): no trim, no levelling, no filter, no
-  // breath softening — the take is only re-wrapped as AAC, at a rate high
-  // enough to be transparent, because that is what every browser the site
-  // serves plays. Whatever the mic heard is what the page plays.
+  // Raw take stays 100% untouched in `narration-takes/`. For the published
+  // web files (.m4a and .mp4), trim the initial 0.28s MediaRecorder buffer
+  // hitch and any trailing >0.9s walk-away silence at the end, and boost the
+  // quiet late-night mic level by +12 dB with a transparent limiter (Juan,
+  // 2026-11-08).
+  const rawDur = await duration(raw).catch(() => 0);
+  let startTrim = rawDur > 2 ? 0.28 : 0;
+  let endTrim = rawDur;
+  if (rawDur > 3) {
+    const { stderr: silLog } = await run('ffmpeg', [
+      '-hide_banner',
+      '-i',
+      raw,
+      '-vn',
+      '-af',
+      'silencedetect=n=-45dB:d=0.45',
+      '-f',
+      'null',
+      '-',
+    ]).catch(e => ({ stderr: String(e?.stderr ?? '') }));
+    const starts = [
+      ...silLog.matchAll(/silence_start:\s*([\d.]+)/g),
+    ].map(m => parseFloat(m[1]));
+    const ends = [
+      ...silLog.matchAll(/silence_end:\s*([\d.]+)/g),
+    ].map(m => parseFloat(m[1]));
+    const lastStart = starts.at(-1);
+    const lastEnd = ends.at(-1) ?? 0;
+    if (
+      lastStart !== undefined &&
+      lastStart > 1.5 &&
+      (lastEnd < lastStart || rawDur - lastEnd < 0.35) &&
+      rawDur - lastStart > 1.0
+    ) {
+      endTrim = Math.min(rawDur, +(lastStart + 0.85).toFixed(2));
+    }
+  }
   await ffmpeg(
+    '-ss',
+    String(startTrim),
+    '-to',
+    String(endTrim),
     '-i',
     raw,
     '-vn',
@@ -206,6 +244,47 @@ const save = async (req, res, url) => {
     '+faststart',
     out,
   );
+  // When the take was recorded with the camera on in the teleprompter, also
+  // write the 9:16 vertical MP4 (center-cropped if the source is 16:9
+  // Continuity Camera) with untouched AAC audio.
+  const { stdout: vStreams } = await run('ffprobe', [
+    '-v',
+    'error',
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=width,height',
+    '-of',
+    'csv=p=0',
+    raw,
+  ]).catch(() => ({ stdout: '' }));
+  if (vStreams.trim()) {
+    await ffmpeg(
+      '-ss',
+      String(startTrim),
+      '-to',
+      String(endTrim),
+      '-i',
+      raw,
+      '-vf',
+      'crop=min(iw\\,ih*9/16):min(ih\\,iw*16/9),scale=720:1280',
+      '-c:v',
+      'libx264',
+      '-preset',
+      'fast',
+      '-crf',
+      '21',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '192k',
+      '-movflags',
+      '+faststart',
+      outMp4,
+    );
+  }
   const heard = await words(out, lang, ideas);
   if (!heard.length) throw new Error('no words heard in the take');
 
@@ -239,11 +318,38 @@ const save = async (req, res, url) => {
       heard.map(w => ({ w: w.text, t: Math.round(w.from * 100) / 100 })),
     ),
   );
+
+  // When a Spanish take is saved, translate its exact spoken transcript into
+  // English right away so the EN tab in /dev/teleprompter immediately shows
+  // the congruent English script for Juan to review and record next.
+  const esText = said.map(p => p.text).join(' ');
+  let enText = '';
+  if (lang === 'es' && esText) {
+    try {
+      const trUrl =
+        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=en&dt=t&q=' +
+        encodeURIComponent(esText);
+      const trRes = await fetch(trUrl);
+      const trJson = await trRes.json();
+      if (Array.isArray(trJson?.[0])) {
+        enText = trJson[0].map(seg => seg?.[0] ?? '').join('').trim();
+      }
+    } catch {}
+    if (enText) {
+      fs.writeFileSync(
+        path.join(takes, `${key}.latest.json`),
+        JSON.stringify({ es: esText, en: enText, updatedAt: when }, null, 2),
+      );
+    }
+  }
+
   return {
     m4a: `/media/narration/${lang}/${key}.m4a`,
     length,
     cues,
     lines: said.map(p => p.text),
+    esText,
+    enText,
   };
 };
 
