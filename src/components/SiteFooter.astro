@@ -227,14 +227,24 @@ const SOCIAL = [
   document.fonts?.ready.then(reserve);
   addEventListener('resize', reserve);
 
+  import { dur } from '../lib/motion';
+
   for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-to-top]')) {
     btn.addEventListener('click', () => {
       const mark = document.querySelector<HTMLAnchorElement>('.mark-link');
       if (location.pathname === '/' && mark) {
         mark.click();
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
       }
+      const root = document.documentElement;
+      const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
+      root.classList.add('is-jumping');
+      setTimeout(() => {
+        jump();
+        void document.body.offsetWidth;
+        setTimeout(() => root.classList.remove('is-jumping'), 16);
+      }, dur('micro'));
     });
   }
 </script>
