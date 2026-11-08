@@ -241,7 +241,9 @@ export const createAutoDj = (host: DjHost) => {
     let upNext: Segment | null = null;
     let order: string[] = [];
     const returns = new Map<string, { bar: number; at: number }>();
+    const returned = new Set<string>();
     let cuts = 0;
+    let lastReturnCut = -10;
     let fx: TransitionFx | null = null;
     let rose = false;
     // Kept from the app's shape; the card adopts a cut at once (see `cue`).
@@ -280,7 +282,10 @@ export const createAutoDj = (host: DjHost) => {
     const planRun = (fromId: string | null) => {
       const all = pool();
       const fresh = all.filter(p => !played.has(p.soundId));
-      if (fresh.filter(p => p.soundId !== fromId).length === 0) played.clear();
+      if (fresh.filter(p => p.soundId !== fromId).length === 0) {
+        played.clear();
+        returned.clear();
+      }
       const base = fresh.filter(p => p.soundId !== fromId).length ? fresh : all;
       order = planOrder(base, fromId, setTempo, random);
     };
@@ -326,40 +331,38 @@ export const createAutoDj = (host: DjHost) => {
         );
       };
 
-      // The same song, ahead: an opening left on its build now and then
-      // jumps straight to that song's best chorus.
-      if (
-        segment.part === 'opening' &&
-        segment.endsOn === 'build' &&
-        segment.resumeBar !== undefined &&
-        random() < 0.2
-      ) {
-        plan(segment.soundId, 'later', segment.resumeBar);
-        return;
-      }
-
       if (allRead()) {
         order = order.filter(
           id => id !== segment?.soundId && maps.has(id) && !played.has(id),
         );
-        // A return: a song the set left a couple of cuts ago, picked up
-        // where it stopped — always, once no new song is left.
+        // A return: a song the set left at least 3 cuts ago, picked up on a
+        // later part for a shorter second turn — and at most once every 5
+        // cuts (1–2 times in 10 songs; Juan, 2026-11-07).
         const waiting = [...returns.entries()].filter(
           ([id, r]) =>
-            id !== segment?.soundId && maps.has(id) && cuts - r.at >= 2,
+            id !== segment?.soundId &&
+            maps.has(id) &&
+            !returned.has(id) &&
+            cuts - r.at >= 3,
         );
-        if (waiting.length && (!order.length || random() < 0.35)) {
+        if (
+          waiting.length &&
+          cuts - lastReturnCut >= 5 &&
+          (!order.length || random() < 0.22)
+        ) {
           const [id, r] = waiting.sort((x, y) => x[1].at - y[1].at)[0];
           returns.delete(id);
+          returned.add(id);
+          lastReturnCut = cuts;
           plan(id, 'later', r.bar, !order.length && returns.size === 0);
           return;
         }
         if (!order.length) planRun(segment.soundId);
         const nextId = order.shift();
         const map = nextId ? maps.get(nextId) : undefined;
-        // A new song: in on its opening a third of the time, when it has
+        // A new song: in on its opening a quarter of the time, when it has
         // one worth playing; otherwise on its best part.
-        const opening = !!map && firstPeakBar(map) >= 16 && random() < 0.35;
+        const opening = !!map && firstPeakBar(map) >= 16 && random() < 0.25;
         plan(
           nextId,
           opening ? 'opening' : 'peak',
@@ -422,10 +425,12 @@ export const createAutoDj = (host: DjHost) => {
       const leaving = segment;
       if (
         leaving?.resumeBar !== undefined &&
-        (leaving.part === 'opening' || random() < 0.4)
+        leaving.part !== 'later' &&
+        !returned.has(leaving.soundId) &&
+        (leaving.part === 'opening' || random() < 0.15)
       ) {
         returns.set(leaving.soundId, { bar: leaving.resumeBar, at: cuts });
-        if (returns.size > 3) returns.delete(returns.keys().next().value!);
+        if (returns.size > 2) returns.delete(returns.keys().next().value!);
       }
       returns.delete(target.soundId);
       cuts += 1;
