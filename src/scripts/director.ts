@@ -814,7 +814,7 @@ const placeVideo = (nx: number, ny: number, nw: number, nh: number) => {
     vx = nx - vw - 10;
     vy = ny + nh - vh;
   }
-  narVideo.style.transform = `translate(${vx.toFixed(1)}px, ${vy.toFixed(1)}px)`;
+  narVideo.style.translate = `${vx.toFixed(1)}px ${vy.toFixed(1)}px`;
   narVideo.style.opacity = narrator?.style.opacity ?? '';
   narVideo.style.pointerEvents = narrator?.style.pointerEvents ?? '';
 };
@@ -1412,6 +1412,7 @@ const panels = [...document.querySelectorAll<HTMLElement>('[data-narr-panel]')]
 // Nothing recorded anywhere → no narrator at all.
 if (narrator && narrs.length) {
   narrator.hidden = false;
+  if (narVideo) narVideo.hidden = false;
   requestAnimationFrame(animateNarrator);
 }
 

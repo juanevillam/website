@@ -215,8 +215,8 @@ import T from './T.astro';
     top: 0;
     left: 0;
     z-index: 40;
-    width: var(--nar-video-w, 7.25rem);
-    height: var(--nar-video-h, 12.89rem);
+    width: var(--nar-video-w, 8.25rem);
+    height: var(--nar-video-h, 14.67rem);
     border: 1px solid var(--hairline);
     border-radius: var(--media-radius-flat);
     background: var(--surface);
@@ -226,7 +226,8 @@ import T from './T.astro';
     overflow: hidden;
     cursor: pointer;
     scale: 1;
-    will-change: transform, opacity;
+    transform-origin: center center;
+    will-change: translate, scale, opacity;
     transition:
       opacity var(--dur-quick) var(--ease),
       scale var(--dur-quick) var(--ease),
@@ -250,8 +251,8 @@ import T from './T.astro';
 
   @media (max-width: 48rem) {
     .nar-video {
-      --nar-video-w: 4.25rem;
-      --nar-video-h: 7.56rem;
+      --nar-video-w: 4.75rem;
+      --nar-video-h: 8.44rem;
     }
   }
 

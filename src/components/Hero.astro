@@ -68,7 +68,7 @@ const clip = clipFor('hero');
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+    padding: 12svh clamp(1.25rem, 4vw, 2.5rem) 0;
   }
 
   .narr-hold {
@@ -91,6 +91,10 @@ const clip = clipFor('hero');
   }
 
   @media (max-width: 48rem) {
+    .hero {
+      padding-top: 8svh;
+    }
+
     .hero-body {
       --cap-gap: 1rem;
       font-size: 1rem;

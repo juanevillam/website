@@ -166,7 +166,7 @@
      of a shorter screen. It gives up 0.215pt per point of height lost,
      between a floor that clears the pills and a ceiling for tall
      screens. */
-  --stage-top: clamp(5rem, 17svh - 3.25rem, 7.5rem);
+  --stage-top: clamp(5.5rem, 21.5svh - 4rem, 9rem);
   /* A deck's arrows stand clear of the screen's bottom edge, a little
      more on a taller screen. They used to mirror the header's pills at
      1rem (2026-10-13), and in a Chrome window short of full screen that
@@ -182,7 +182,7 @@
 
 @media (max-width: 64rem) {
   :root {
-    --stage-top: clamp(4.5rem, 15svh - 3rem, 6.5rem);
+    --stage-top: clamp(4.5rem, 21.5svh - 5rem, 8rem);
     --gap-block: 2rem;
   }
 }
@@ -195,7 +195,7 @@
        (20px) was too high — the picture crowded the chrome. */
     /* Just under the pills (Juan, 2026-10-13: 1.75rem read as a phone's
        room spent on nothing, then 1rem and 0.75rem a little low). */
-    --stage-top: calc(var(--header-h) + 0.5rem);
+    --stage-top: calc(var(--header-h) + 0.375rem);
     --stage-bottom: 1.25rem;
     --gap-block: 1.5rem;
     /* Where every panel's PICTURE starts — under the eyebrow and its

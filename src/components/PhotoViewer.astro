@@ -150,9 +150,14 @@ import T from './T.astro';
   };
 
   document.addEventListener('viewer:open', e => {
-    const { detail } = e as CustomEvent<{ items: Item[]; at: number }>;
+    const { detail } = e as CustomEvent<{
+      items: Item[];
+      at: number;
+      phone?: boolean;
+    }>;
     items = detail.items;
     dialog.classList.toggle('is-single', items.length < 2);
+    dialog.classList.toggle('is-phone', Boolean(detail.phone));
     show(detail.at);
     clearTimeout(shutting);
     dialog.showModal();
@@ -447,6 +452,45 @@ import T from './T.astro';
     white-space: nowrap;
   }
 
+  .viewer.is-phone {
+    background: color-mix(in srgb, var(--ground) 84%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .viewer.is-phone::backdrop {
+    background: transparent;
+  }
+
+  .viewer.is-phone .room {
+    grid-row: 1 / -1;
+    padding: 0 6rem;
+  }
+
+  .viewer.is-phone .v-cap {
+    display: none;
+  }
+
+  .viewer.is-phone .fill {
+    display: none;
+  }
+
+  .viewer.is-phone .stage {
+    --demo-ratio: calc(2556 / 1179);
+    --demo-h: calc(100svh - (var(--stage-top) - 1.5rem) - var(--stage-bottom) - 5rem);
+    --demo-r: calc(var(--demo-h) / var(--demo-ratio) * 0.14);
+    height: var(--demo-h);
+    width: calc(var(--demo-h) / var(--demo-ratio));
+    aspect-ratio: 1179 / 2556;
+    border-radius: var(--demo-r) var(--demo-r) calc(var(--demo-r) * 1.136)
+      calc(var(--demo-r) * 1.136);
+    background: var(--surface);
+  }
+
+  .viewer.is-phone .full {
+    object-fit: cover;
+  }
+
   /* A phone: the arrows move to a row of their own at the foot, and the
      frame takes the WHOLE ROOM, as a desk's takes nearly all of its
      (Juan, 2026-11-03): a fixed 4:5 left a fifth of a tall phone empty
@@ -466,6 +510,20 @@ import T from './T.astro';
       width: 100cqw;
       height: 100cqh;
       aspect-ratio: auto;
+    }
+
+    .viewer.is-phone .room {
+      padding: calc(var(--float-gap) * 2 + var(--float-h)) 1rem 5rem;
+    }
+
+    .viewer.is-phone .stage {
+      --demo-h: min(
+        calc((100vw - 2rem) * var(--demo-ratio)),
+        calc(100svh - var(--float-gap) * 2 - var(--float-h) - 6rem)
+      );
+      height: var(--demo-h);
+      width: calc(var(--demo-h) / var(--demo-ratio));
+      aspect-ratio: 1179 / 2556;
     }
 
     .v-cap {

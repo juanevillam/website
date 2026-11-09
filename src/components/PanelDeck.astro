@@ -45,8 +45,8 @@ import type { DeckItem, Media } from '../lib/deck-items';
 
 type Props = {
   id: string;
-  /** The panel's eyebrow. */
-  title: UIKey;
+  /** The panel's eyebrow (omitted when the panel is a single featured showcase). */
+  title?: UIKey;
   items: DeckItem[];
   /** The card a shared address opens (lib/links): the panel then stands
    *  over the page as a modal, on that card alone. */
@@ -217,7 +217,7 @@ for (const p of items)
 ---
 
 <section
-  class="panel-deck"
+  class:list={['panel-deck', !title && 'is-showcase']}
   id={id}
   data-narr-panel={voiced ? '' : null}
   data-focused={focusCard >= 0 ? '' : null}
@@ -225,12 +225,13 @@ for (const p of items)
   data-focus-card={focusCard >= 0 ? focusCard : null}
   data-start-card={startCard > 0 ? startCard : null}
 >
-  <!-- An eyebrow, not a headline: the stars above open on big titles and
-       air; a panel like this is secondary, and a headline plus an intro
-       line stacked over the card is what made it read cramped. -->
-  <h2 class="inner label eyebrow">
-    <T k={title} />
-  </h2>
+  {
+    title && (
+      <h2 class="inner label eyebrow">
+        <T k={title} />
+      </h2>
+    )
+  }
 
   <div
     class="carousel"
@@ -644,6 +645,10 @@ for (const p of items)
     outline: none;
   }
 
+  .panel-deck.is-showcase .carousel {
+    margin-top: 0;
+  }
+
   /* A finger swipes it sideways; the browser keeps the vertical pan. */
   .stage {
     touch-action: pan-y;
@@ -703,6 +708,12 @@ for (const p of items)
     font-weight: 800;
     letter-spacing: var(--track-heading);
     line-height: 1.05;
+  }
+
+  .panel-deck.is-showcase .name {
+    font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+    letter-spacing: var(--track-display);
+    line-height: 0.95;
   }
 
   .meta,
