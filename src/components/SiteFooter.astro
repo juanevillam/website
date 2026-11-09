@@ -163,18 +163,6 @@ const SOCIAL = [
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
   </div>
-  <button type="button" class="to-top" data-to-top aria-label="Back to top">
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-      <path
-        d="M3.5 10 L8 5.5 L12.5 10"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
-  </button>
   {/* Space Explorer's ship takes on the destroyer, now and then, behind
       the foot's words. */}
   {panel && <ShipEgg place="foot" />}
@@ -226,27 +214,6 @@ const SOCIAL = [
   reserve();
   document.fonts?.ready.then(reserve);
   addEventListener('resize', reserve);
-
-  import { dur } from '../lib/motion';
-
-  for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-to-top]')) {
-    btn.addEventListener('click', () => {
-      const mark = document.querySelector<HTMLAnchorElement>('.mark-link');
-      if (location.pathname === '/' && mark) {
-        mark.click();
-        return;
-      }
-      const root = document.documentElement;
-      const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
-      root.classList.add('is-jumping');
-      setTimeout(() => {
-        jump();
-        void document.body.offsetWidth;
-        setTimeout(() => root.classList.remove('is-jumping'), 16);
-      }, dur('micro'));
-    });
-  }
 </script>
 
 <style>
@@ -254,7 +221,6 @@ const SOCIAL = [
      copyright at the foot of the screen, no rule — a panel is set off by
      being a panel. Only the landing's snaps (`is-snap`). */
   .site-footer {
-    position: relative;
     min-height: 100svh;
     display: flex;
     flex-direction: column;
@@ -264,47 +230,8 @@ const SOCIAL = [
   .site-footer.is-snap {
     scroll-snap-align: start;
     scroll-snap-stop: always;
-  }
-
-  /* Scroll-to-top button at the bottom-right, aligned horizontally with
-     the language switcher in the header (`clamp(1.25rem, 4vw, 2.5rem)`). */
-  .to-top {
-    position: absolute;
-    right: clamp(1.25rem, 4vw, 2.5rem);
-    bottom: var(--stage-bottom);
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    width: var(--float-h);
-    height: var(--float-h);
-    padding: 0;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(12px);
-    color: var(--ink-2);
-    cursor: pointer;
-    transition:
-      color var(--hover),
-      border-color var(--hover);
-  }
-
-  .to-top:hover {
-    color: var(--ink);
-    border-color: var(--ink-3);
-  }
-
-  .to-top::before {
-    content: '';
-    position: absolute;
-    inset: -0.5rem;
-    border-radius: 999px;
-  }
-
-  @media (max-width: 48rem) {
-    .site-footer[data-narr-panel] .to-top {
-      right: calc(clamp(1.25rem, 4vw, 2.5rem) + var(--narrator-w) * var(--narrator-scale, 1.2) + 0.75rem);
-    }
+    /* The ship's scene is placed in the foot (ShipEgg). */
+    position: relative;
   }
 
   .inner {

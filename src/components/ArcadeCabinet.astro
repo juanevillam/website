@@ -657,9 +657,10 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     // The page's narrator pauses for the game's own music.
     document.dispatchEvent(new Event('arcade:start'));
     frame = document.createElement('iframe');
-    // The folder, not its index file: Cloudflare Pages answers /arcade/index.html
-    // with a 308 to /arcade/, a round trip before the game can start.
-    frame.src = '/arcade/';
+    // The folder in prod (Cloudflare Pages answers /arcade/index.html with a
+    // 308 to /arcade/), and the explicit index file in `astro dev` where
+    // Vite's public middleware does not resolve directory indexes.
+    frame.src = import.meta.env.DEV ? '/arcade/index.html' : '/arcade/';
     frame.title = 'Space Explorer';
     frame.allow = 'fullscreen; autoplay';
     cabinetScreen.append(frame);

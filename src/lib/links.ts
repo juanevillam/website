@@ -96,8 +96,8 @@ export const FOCUS_PAGES: FocusPage[] = [
       image: app.slides[0].src,
     } satisfies FocusPage;
   }),
-  ...PROJECTS.map(p => deckPage(p, 'work')),
   ...EVENTS.map(e => deckPage(e, 'events')),
+  ...PROJECTS.map(p => deckPage(p, 'work')),
 ];
 
 /** The pages under one prefix, as `getStaticPaths` wants them, the

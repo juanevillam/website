@@ -16,25 +16,32 @@ import type { DeckItem } from './deck-items';
 // oldest last.
 export const PROJECTS: DeckItem[] = [
   {
+    id: 'space-explorer',
+    slug: 'space-explorer',
+    name: 'Space Explorer',
+    meta: [['Platanus Hack'], ['2026']],
+    body: {
+      k: 'arcade.p1',
+      links: {
+        platanus: 'https://hack.platan.us/26-ve',
+        arcade: 'https://hack.platan.us/26/arcade/space-explorer',
+      },
+    },
+    clip: 'arcade.p1',
+    image: { slot: 'arcade' },
+    scene: '/media/arcade/cover.webp',
+    links: [],
+  },
+  {
     id: 'salvalo',
     slug: 'salvalo',
     name: 'Salvalo',
     meta: [[{ k: 'work.cofounder' }], ['2024', { k: 'work.present' }]],
-    body: 'work.salvalo.body',
+    body: { k: 'work.salvalo.body', links: { salvalo: 'https://salvalo.app' } },
     clip: 'work.salvalo.body',
     image: '/media/work/salvalo.mp4',
     visit: 'https://salvalo.app',
-    links: [
-      { label: 'salvalo.app', href: 'https://salvalo.app' },
-      {
-        label: 'App Store',
-        href: 'https://apps.apple.com/es/app/salvalo/id6759407790',
-      },
-      {
-        label: 'Google Play',
-        href: 'https://play.google.com/store/apps/details?id=com.grostify.salvalo',
-      },
-    ],
+    links: [],
   },
   {
     id: 'crol',
@@ -45,49 +52,20 @@ export const PROJECTS: DeckItem[] = [
     clip: 'work.crol.body',
     image: '/media/work/crol.mp4',
     visit: 'https://www.crol.mx',
-    links: [
-      {
-        label: 'App Store',
-        href: 'https://apps.apple.com/mx/app/crol-erp-m%C3%B3vil/id6743251171',
-      },
-      {
-        label: 'Google Play',
-        href: 'https://play.google.com/store/apps/details?id=com.crolapp',
-      },
-    ],
-  },
-  // The easter egg, third (Juan, 2026-10-13): the Platanus arcade entry,
-  // playable from its card (ArcadeCabinet). It was a panel of its own
-  // until 2026-10-02, and More Work's last card until it moved up.
-  {
-    id: 'space-explorer',
-    slug: 'space-explorer',
-    name: 'Space Explorer',
-    meta: [['Platanus Hack'], ['2026']],
-    body: {
-      k: 'arcade.p1',
-      links: { platanus: 'https://hack.platan.us/26-ve' },
-    },
-    clip: 'arcade.p1',
-    image: { slot: 'arcade' },
-    scene: '/media/arcade/cover.webp',
-    // The submitted entry, on the challenge's own arcade page.
-    links: [
-      {
-        label: 'hack.platan.us',
-        href: 'https://hack.platan.us/26/arcade/space-explorer',
-      },
-    ],
+    links: [],
   },
   {
     id: 'maktub',
     slug: 'maktub-art-fund',
     name: 'Maktub Art Fund',
     meta: [[{ k: 'work.freelance' }], ['2026']],
-    body: 'work.maktub.body',
+    body: {
+      k: 'work.maktub.body',
+      links: { maktub: 'https://maktubartfund.com' },
+    },
     clip: 'work.maktub.body',
     image: '/media/work/maktub.mp4',
     visit: 'https://maktubartfund.com',
-    links: [{ label: 'maktubartfund.com', href: 'https://maktubartfund.com' }],
+    links: [],
   },
 ];

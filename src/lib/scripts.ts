@@ -102,12 +102,6 @@ const CLIPS: Array<{
     shot: shot('shaper', 'ios-dark-clip'),
   },
 
-  // More Work
-  { key: 'work.salvalo.body', where: 'Más proyectos · Salvalo' },
-  { key: 'work.crol.body', where: 'Más proyectos · Crol ERP Móvil' },
-  { key: 'arcade.p1', where: 'Más proyectos · Space Explorer' },
-  { key: 'work.maktub.body', where: 'Más proyectos · Maktub Art Fund' },
-
   // Events
   { key: 'events.platanus.body', where: 'Eventos · Platanus Hack 26 Caracas' },
   { key: 'events.summit.body', where: 'Eventos · Startup Venezuela Summit' },
@@ -115,6 +109,12 @@ const CLIPS: Array<{
   { key: 'events.radio.body', where: 'Eventos · Entrevista en OK 101.5' },
   { key: 'events.ilc.body', where: 'Eventos · Charla con Pedro Vallenilla' },
   { key: 'events.alegria.body', where: 'Eventos · Hackathon de AlegrIA' },
+
+  // More Work
+  { key: 'arcade.p1', where: 'Más proyectos · Space Explorer' },
+  { key: 'work.salvalo.body', where: 'Más proyectos · Salvalo' },
+  { key: 'work.crol.body', where: 'Más proyectos · Crol ERP Móvil' },
+  { key: 'work.maktub.body', where: 'Más proyectos · Maktub Art Fund' },
 
   // More of Me (pages/things-i-like)
   { key: 'likes.cosmos.body', where: 'Más de mí · Cosmos' },
