@@ -302,7 +302,8 @@ const SOCIAL = [
 
   .lead .narr-anchor {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 1.5rem);
+    margin-top: 1.5rem;
   }
 
   /* The goodbye's words stand under the narrator, out of the flow. */
@@ -362,7 +363,10 @@ const SOCIAL = [
     grid-auto-flow: column;
     grid-auto-columns: max-content;
     column-gap: var(--space-4);
-    transition: opacity var(--dur-settle) var(--ease);
+    translate: 0 0;
+    transition:
+      opacity var(--dur-settle) var(--ease),
+      translate var(--dur-turn) var(--ease);
   }
 
   /* While the destroyer plays over the foot (ShipEgg) its words step

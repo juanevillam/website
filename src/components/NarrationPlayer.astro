@@ -56,6 +56,7 @@ import T from './T.astro';
     class="nar-video-media is-active"
     data-narr-video-layer="0"
     muted
+    loop
     playsinline
     preload="auto"
   ></video>
@@ -63,9 +64,15 @@ import T from './T.astro';
     class="nar-video-media"
     data-narr-video-layer="1"
     muted
+    loop
     playsinline
     preload="auto"
   ></video>
+  <span class="nar-morph-glyph" aria-hidden="true">
+    <svg viewBox="0 0 16 16">
+      <path fill="currentColor" d="M3.5 2.6v10.8c0 .6.7 1 1.2.7l8.4-5.4a.8.8 0 0 0 0-1.4L4.7 1.9c-.5-.3-1.2.1-1.2.7z"></path>
+    </svg>
+  </span>
   <button
     class="nar-video-close"
     type="button"
@@ -138,8 +145,15 @@ import T from './T.astro';
     cursor: pointer;
     will-change: transform, opacity;
     transition:
+      opacity 60ms linear 170ms,
       color var(--hover),
       border-color var(--hover);
+  }
+
+  :global(html.has-narr-video) .narrator {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 40ms linear 0ms;
   }
 
   .narrator[hidden] {
@@ -211,26 +225,33 @@ import T from './T.astro';
      enters/exits on `--dur-quick`, and cross-fades clips linearly on
      `--dur-settle` like PanelDeck's media layers. */
   .nar-video {
+    --morph-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --morph-dur: 240ms;
     position: fixed;
     top: 0;
     left: 0;
     z-index: 40;
-    width: var(--nar-video-w, 8.25rem);
-    height: var(--nar-video-h, 14.67rem);
+    width: var(--nar-video-w, 7.25rem);
+    height: var(--nar-video-h, 12.89rem);
     border: 1px solid var(--hairline);
     border-radius: var(--media-radius-flat);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
     box-shadow:
       0 2rem 4rem rgba(0, 0, 0, 0.55),
       0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
     overflow: hidden;
     cursor: pointer;
-    scale: 1;
-    transform-origin: center center;
-    will-change: translate, scale, opacity;
+    translate: 0px 0px;
+    opacity: var(--narr-own, 1);
+    will-change: transform, translate, width, height, border-radius, opacity;
     transition:
-      opacity var(--dur-quick) var(--ease),
-      scale var(--dur-quick) var(--ease),
+      translate var(--morph-dur) var(--morph-ease),
+      width var(--morph-dur) var(--morph-ease),
+      height var(--morph-dur) var(--morph-ease),
+      border-radius var(--morph-dur) var(--morph-ease),
+      box-shadow var(--morph-dur) var(--morph-ease),
+      opacity 35ms linear 0ms,
       border-color var(--hover);
   }
 
@@ -239,9 +260,20 @@ import T from './T.astro';
   }
 
   .nar-video.is-dismissed {
-    opacity: 0 !important;
-    scale: 0.94;
+    width: var(--narrator-w);
+    height: var(--narrator-h);
+    border-radius: calc(var(--narrator-h) / 2);
+    box-shadow: none;
+    translate: var(--morph-dx, 0px) var(--morph-dy, 0px);
+    opacity: 0;
     pointer-events: none !important;
+    transition:
+      translate var(--morph-dur) var(--morph-ease),
+      width var(--morph-dur) var(--morph-ease),
+      height var(--morph-dur) var(--morph-ease),
+      border-radius var(--morph-dur) var(--morph-ease),
+      box-shadow var(--morph-dur) var(--morph-ease),
+      opacity 55ms linear 185ms;
   }
 
   .nar-video:hover,
@@ -251,25 +283,67 @@ import T from './T.astro';
 
   @media (max-width: 48rem) {
     .nar-video {
-      --nar-video-w: 4.75rem;
-      --nar-video-h: 8.44rem;
+      --nar-video-w: 6rem;
+      --nar-video-h: 10.67rem;
     }
   }
 
   .nar-video-media {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    top: 50%;
+    left: 50%;
+    width: var(--nar-video-w, 7.25rem);
+    height: var(--nar-video-h, 12.89rem);
+    translate: -50% -50%;
     object-fit: cover;
     display: block;
     pointer-events: none;
     opacity: 0;
-    transition: opacity var(--dur-settle) linear;
+    transition: opacity 160ms linear;
   }
 
   .nar-video-media.is-active {
     opacity: 1;
+  }
+
+  .nar-video.is-dismissed .nar-video-media.is-active {
+    opacity: 0;
+    transition: opacity 150ms linear;
+  }
+
+  .nar-morph-glyph {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    color: var(--ink-2);
+    pointer-events: none;
+    opacity: 0;
+    scale: 0.75;
+    transition:
+      opacity 90ms linear,
+      scale 180ms var(--morph-ease);
+  }
+
+  .nar-morph-glyph svg {
+    width: calc(var(--narrator-glyph) * 0.6);
+    height: calc(var(--narrator-glyph) * 0.6);
+  }
+
+  .nar-video.is-dismissed .nar-morph-glyph {
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity 130ms linear 45ms,
+      scale 220ms var(--morph-ease);
+  }
+
+  .nar-video.is-dismissed .nar-video-close,
+  .nar-video.is-dismissed .nar-video-rates {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 80ms linear;
   }
 
   /* Hidden by default; appears subtly only on hover. */

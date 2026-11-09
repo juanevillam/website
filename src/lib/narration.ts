@@ -56,7 +56,18 @@ export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
   return null;
 };
 
-/** Vertical 9:16 video take alongside the voice clip, when recorded. */
+const FALLBACK_VIDEOS: Record<string, string> = {
+  'events.platanus.body': '/media/narration/es/arcade.p1.mp4',
+  'events.summit.body': '/media/narration/es/events.alegria.body.mp4',
+  'events.panal.body': '/media/narration/es/events.ilc.body.mp4',
+  'events.radio.body': '/media/narration/es/work.crol.body.mp4',
+  'work.salvalo.body': '/media/narration/es/shaper.problem.mp4',
+  'likes.cosmos.body': '/media/narration/es/shaper.solution.mp4',
+  'likes.songs.body': '/media/narration/es/shaper.s3.p2.mp4',
+  footer: '/media/narration/es/hero.mp4',
+};
+
+/** Vertical 9:16 video take alongside the voice clip, when recorded (with fallback to existing takes). */
 export const videoFor = (key: string, lang: Locale = 'es'): string | null => {
   const candidates: Locale[] =
     lang === 'zh' ? ['en', 'es'] : lang === 'en' ? ['en', 'es'] : ['es'];
@@ -64,6 +75,8 @@ export const videoFor = (key: string, lang: Locale = 'es'): string | null => {
     const url = `/media/narration/${c}/${key}.mp4`;
     if (fs.existsSync(path.join(PUBLIC, url))) return url;
   }
+  const fallback = FALLBACK_VIDEOS[key] ?? '/media/narration/es/hero.mp4';
+  if (fs.existsSync(path.join(PUBLIC, fallback))) return fallback;
   return null;
 };
 

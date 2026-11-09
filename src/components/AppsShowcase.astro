@@ -199,7 +199,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         </h3>
                       </>
                     )}
-                    <div class="desc" data-cap data-cap-phone="3">
+                    <div class="desc" data-cap data-cap-phone={card.kind === 'welcome' ? 'fill' : '3'}>
                     {card.paras.map((k, i) => (
                       <>
                       <p
@@ -521,7 +521,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   /* Words in the stories' text column, the picture in the rest. */
   .card {
     display: grid;
-    grid-template-columns: calc(100% * 6 / 13 * 0.81) 1fr;
+    grid-template-columns: var(--screen-cols);
     gap: var(--column-gap);
     align-items: start;
   }
@@ -660,7 +660,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   .narr-slot {
     flex: none;
     height: var(--narrator-h);
-    margin-top: 1.5rem;
+    margin-top: 3rem;
   }
 
   /* The phone: the panel's height, its own corner — the stories' recipe. */
@@ -668,6 +668,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     display: flex;
     justify-content: center;
     margin-top: calc(var(--shot-top) - var(--stage-top));
+    translate: 0 0;
+    transition: translate var(--dur-turn) var(--ease);
   }
 
   /* Its corner is the iPhone screen's, 14% of the phone's OWN width
@@ -704,6 +706,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     left: 0;
     right: 0;
     pointer-events: none;
+    translate: 0 0;
+    transition: translate var(--dur-turn) var(--ease);
   }
 
   .narr-static .narr-anchor {

@@ -119,7 +119,7 @@
      decks' arrows are, and the pill is kept for when it TALKS — it
      stretches to carry the subtitles. Text-carrying controls (the header's
      pills, the app switcher) stay pills. Fixed, so anchors can reserve it. */
-  --narrator-scale: 1.4142136;
+  --narrator-scale: 1.8;
   --narrator-h: calc(var(--float-h) * var(--narrator-scale));
   --narrator-glyph: calc(var(--float-glyph) * var(--narrator-scale));
   --narrator-w: var(--narrator-h);
@@ -189,6 +189,7 @@
 
 @media (max-width: 48rem) {
   :root {
+    --narrator-scale: 1.4142136;
     /* A phone reads top to bottom, so a panel starts near the top (Juan,
        2026-10-05): its eyebrow half a step under the pills. It started
        94px down, under 38px of nothing; standing it ON the pills' line
@@ -547,7 +548,13 @@ html.is-focus {
   flex: none;
   width: var(--narrator-w);
   height: var(--narrator-h);
-  margin-top: 1.5rem;
+  margin-top: 3rem;
+}
+
+@media (max-width: 48rem) {
+  .narr-anchor {
+    margin-top: 1.5rem;
+  }
 }
 
 /* The mark's teleport home (SiteHeader): the page dips to the ground
@@ -696,14 +703,16 @@ html.is-stepped .story .deck-controls {
 /* The narrator glides between anchors the same way. Its own width,
    colour and border transitions are restated, since this replaces the
    list. */
-html.is-stepped [data-narrator],
-html.is-stepped [data-narr-video] {
+html.is-stepped [data-narrator] {
   transition:
     transform var(--dur-turn) var(--ease),
-    opacity var(--dur-turn) var(--ease),
-    width var(--dur-settle) var(--ease),
+    opacity 60ms linear 170ms,
     color var(--hover),
     border-color var(--hover);
+}
+
+html.is-stepped.has-narr-video [data-narrator] {
+  transition: opacity 40ms linear 0ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -731,7 +740,7 @@ html.is-stepped [data-narr-video] {
      at the pills' size the one control a person taps on purpose read as
      too small to hit (Juan, 2026-10-13). */
   :root {
-    --narrator-scale: 1.2;
+    --narrator-scale: 1.45;
   }
 
   /* On the hero it parks under the wordmark instead, centred, as on a
@@ -749,11 +758,6 @@ html.is-stepped [data-narr-video] {
     right: clamp(1.25rem, 4vw, 2.5rem);
     bottom: calc(1rem + env(safe-area-inset-bottom));
     transform: none !important;
-    transition:
-      opacity var(--dur-turn) var(--ease),
-      width var(--dur-settle) var(--ease),
-      color var(--hover),
-      border-color var(--hover) !important;
   }
 }
 

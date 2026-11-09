@@ -281,12 +281,16 @@ const syncVideo = () => {
     if (running) {
       // Avoid seeking during the first 450ms while <audio> and <video> spin up
       // together, which previously caused a 300ms stutter/loop at the start.
+      const targetTime =
+        Number.isFinite(v.duration) && v.duration > 0
+          ? voice.currentTime % v.duration
+          : voice.currentTime;
       if (
         voice.currentTime > 0.45 &&
-        Math.abs(v.currentTime - voice.currentTime) > 0.35 * playbackRate
+        Math.abs(v.currentTime - targetTime) > 0.35 * playbackRate
       ) {
         try {
-          v.currentTime = voice.currentTime;
+          v.currentTime = targetTime;
         } catch {}
       }
       if (v.paused && v.readyState >= 2) v.play().catch(() => {});
@@ -803,19 +807,39 @@ let parks: { anchor: HTMLElement; w: number }[] = [];
 const heroBox = document.getElementById('top');
 const heroAnchor =
   heroBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
+const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
-const placeVideo = (nx: number, ny: number, nw: number, nh: number) => {
+const placeVideo = (
+  nx: number,
+  ny: number,
+  nw: number,
+  nh: number,
+  centerShare = 0,
+) => {
   if (!narVideo || narVideo.hidden) return;
-  let vx = nx + nw + 12;
+  const rem =
+    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const vw = (phone ? 6 : 7.25) * rem;
+  const vh = (phone ? 10.67 : 12.89) * rem;
+  let vx = nx;
   let vy = ny;
-  if (phone && !narrator?.classList.contains('is-parked')) {
-    const vw = narVideo.offsetWidth || 92;
-    const vh = narVideo.offsetHeight || 164;
-    vx = nx - vw - 10;
+  if (!phone) {
+    vx = nx + centerShare * ((nw - vw) / 2);
+    vy = Math.min(ny - 1.75 * rem, innerHeight - vh - 20);
+  } else if (narrator?.classList.contains('is-parked')) {
+    vx = nx + (nw - vw) / 2;
+    vy = Math.min(ny, innerHeight - vh - 16);
+  } else {
+    vx = nx + nw - vw;
     vy = ny + nh - vh;
   }
-  narVideo.style.translate = `${vx.toFixed(1)}px ${vy.toFixed(1)}px`;
-  narVideo.style.opacity = narrator?.style.opacity ?? '';
+  narVideo.style.transform = `translate3d(${vx.toFixed(1)}px, ${vy.toFixed(1)}px, 0)`;
+  narVideo.style.setProperty('--morph-dx', `${(nx - vx).toFixed(1)}px`);
+  narVideo.style.setProperty('--morph-dy', `${(ny - vy).toFixed(1)}px`);
+  narVideo.style.setProperty(
+    '--narr-own',
+    narrator?.style.opacity || '1',
+  );
   narVideo.style.pointerEvents = narrator?.style.pointerEvents ?? '';
 };
 
@@ -845,7 +869,7 @@ const placeNarrator = () => {
       );
       narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
       narrator.style.pointerEvents = own < 0.6 ? 'none' : '';
-      placeVideo(px, py, narrator.offsetWidth, narrator.offsetHeight);
+      placeVideo(px, py, narrator.offsetWidth, narrator.offsetHeight, 1);
       return;
     }
     narrator.classList.remove('is-parked');
@@ -853,26 +877,27 @@ const placeNarrator = () => {
     narrator.style.opacity = has ? '' : '0';
     narrator.style.pointerEvents = has ? '' : 'none';
     const nr = narrator.getBoundingClientRect();
-    placeVideo(nr.left, nr.top, nr.width, nr.height);
+    placeVideo(nr.left, nr.top, nr.width, nr.height, 0);
     return;
   }
   const width = narrator.offsetWidth;
   const height = narrator.offsetHeight;
   let sum = 0;
+  let centerSum = 0;
   let x = 0;
   let y = 0;
   for (const { anchor, w } of parks) {
     const r = anchor.getBoundingClientRect();
-    const left =
-      anchor.dataset.narrAlign === 'center'
-        ? r.left + r.width / 2 - width / 2
-        : r.left;
+    const isCenter = anchor.dataset.narrAlign === 'center';
+    const left = isCenter ? r.left + r.width / 2 - width / 2 : r.left;
     sum += w;
+    if (isCenter) centerSum += w;
     x += left * w;
     y += r.top * w;
   }
   const nx = sum > 0.0001 ? x / sum : 0;
   const ny = sum > 0.0001 ? y / sum : 0;
+  const centerShare = sum > 0.0001 ? centerSum / sum : 0;
   if (sum > 0.0001)
     narrator.style.transform = `translate(${nx.toFixed(1)}px, ${ny.toFixed(1)}px)`;
   // Past the last narrated block (the page's foot) nothing owns the
@@ -881,7 +906,7 @@ const placeNarrator = () => {
   const own = Math.min(1, sum);
   narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
   narrator.style.pointerEvents = own < 0.05 ? 'none' : '';
-  placeVideo(nx, ny, width, height);
+  placeVideo(nx, ny, width, height, centerShare);
 };
 
 const animateNarrator = (now: number) => {
@@ -1419,9 +1444,6 @@ if (narrator && narrs.length) {
 const docks = phone
   ? [...document.querySelectorAll<HTMLElement>('[data-dock]')]
   : [];
-
-// The hero rides out as the first story rides in.
-const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
 const render = (force = false) => {
   // A shared address's modal (lib/links) owns the narrator outright: it
