@@ -37,16 +37,6 @@ const PUBLIC = path.join(process.cwd(), 'public');
  * voice can arrive a paragraph at a time.
  */
 export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
-  // English and Chinese only expose their own data-clip-{lang} once their
-  // own vertical video take (.mp4) is recorded; until then director.ts
-  // falls back to Spanish (or English for Chinese once English is recorded)
-  // and NarrationSoon shows the recording-in-progress notice (Juan, 2026-11-10).
-  if (
-    lang !== 'es' &&
-    !fs.existsSync(path.join(PUBLIC, `/media/narration/${lang}/${key}.mp4`))
-  ) {
-    return null;
-  }
   const url = `/media/narration/${lang}/${key}.m4a`;
   return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
 };
@@ -82,8 +72,14 @@ type Spoken = { w: string; t: number };
 
 /** Spanish keeps its original name; another language's take is
  *  `{key}.{lang}.words.json` (scripts/narration-recorder). */
-const spokenWords = (key: string, lang: Locale = 'es'): Spoken[] | undefined => {
-  const file = path.join(DATA, lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`);
+const spokenWords = (
+  key: string,
+  lang: Locale = 'es',
+): Spoken[] | undefined => {
+  const file = path.join(
+    DATA,
+    lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`,
+  );
   return fs.existsSync(file)
     ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Spoken[])
     : undefined;
@@ -111,7 +107,7 @@ const alignTimes = (shown: string[], spoken: Spoken[]): number[] => {
           ? dp[i + 1][j + 1] + 1
           : Math.max(dp[i + 1][j], dp[i][j + 1]);
   const times: (number | undefined)[] = new Array(n).fill(undefined);
-  for (let i = 0, j = 0; i < n && j < m; ) {
+  for (let i = 0, j = 0; i < n && j < m;) {
     if (a[i] && a[i] === b[j]) {
       times[i] = spoken[j].t;
       i++;
@@ -183,15 +179,15 @@ export const readTimings = (
   };
 
   const esRef = spansFor('es', spoken);
-  const hasEnVideo = fs.existsSync(
-    path.join(PUBLIC, `/media/narration/en/${key}.mp4`),
+  const hasEnAudio = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/en/${key}.m4a`),
   );
-  const enSpoken = hasEnVideo ? spokenWords(key, 'en') : undefined;
+  const enSpoken = hasEnAudio ? spokenWords(key, 'en') : undefined;
   const enRef = enSpoken?.length ? spansFor('en', enSpoken) : undefined;
-  const hasZhVideo = fs.existsSync(
-    path.join(PUBLIC, `/media/narration/zh/${key}.mp4`),
+  const hasZhAudio = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/zh/${key}.m4a`),
   );
-  const zhSpoken = hasZhVideo ? spokenWords(key, 'zh') : undefined;
+  const zhSpoken = hasZhAudio ? spokenWords(key, 'zh') : undefined;
 
   const out = {
     es: esRef.tokens.map((t, i) => [t.at, round(esRef.times[i])]),
@@ -201,9 +197,9 @@ export const readTimings = (
     const tokens = readTokens(text(l));
     // Its own voice: its words on its own clock, like Spanish.
     const own =
-      l === 'en' && hasEnVideo
+      l === 'en' && hasEnAudio
         ? enSpoken
-        : l === 'zh' && hasZhVideo
+        : l === 'zh' && hasZhAudio
           ? zhSpoken
           : undefined;
     if (own?.length) {
@@ -251,6 +247,41 @@ export const readTimings = (
   return out;
 };
 
+/** Start times (s) of each `\n\n`-separated section of a clip's copy, when
+ *  divided into 2+ sections (Juan, 2026-11-10). */
+export const partStartsByLocale = (
+  key: string,
+  textKey: string = key,
+  timings = readTimings(key, textKey),
+): Record<Locale, number[]> | undefined => {
+  if (
+    !timings ||
+    !(textKey in ui.es) ||
+    !ui.es[textKey as UIKey].includes('\n\n')
+  )
+    return undefined;
+  const out = {} as Record<Locale, number[]>;
+  for (const l of locales) {
+    const plain = plainText(ui[l][textKey as UIKey]);
+    const cuts = [0];
+    for (const m of plain.matchAll(/\n\n+/g))
+      cuts.push((m.index ?? 0) + m[0].length);
+    const marks = timings[l];
+    out[l] = cuts.map((ch, idx) => {
+      if (idx === 0) return 0;
+      const hit = marks.find(([at]) => at >= ch);
+      return hit ? round(Math.max(0, hit[1])) : 0;
+    });
+  }
+  return out;
+};
+
+/** Spanish section start times (for building the 1 · 2 · 3 selector). */
+export const partStartsFor = (
+  key: string,
+  textKey: string = key,
+): number[] | undefined => partStartsByLocale(key, textKey)?.es;
+
 /** A narrated paragraph's data attributes — its clip, and when each of its
  *  words is said in every language, for the director (scripts/director.ts). */
 export const voiceAttrs = (key: string, textKey: string = key) => {
@@ -264,8 +295,11 @@ export const voiceAttrs = (key: string, textKey: string = key) => {
       attrs[`data-video-${l}`] = videoFor(key, l) ?? undefined;
     }
   const timings = readTimings(key, textKey);
-  for (const l of locales)
+  const parts = partStartsByLocale(key, textKey, timings);
+  for (const l of locales) {
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;
+    attrs[`data-parts-${l}`] = parts ? JSON.stringify(parts[l]) : undefined;
+  }
   return attrs;
 };
 

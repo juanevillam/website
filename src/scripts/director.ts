@@ -142,9 +142,20 @@ type Story = {
   blocks: (Narr | undefined)[];
 };
 
-const isSafari =
-  /Safari\//.test(navigator.userAgent) &&
-  !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+const isIOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
+// Every browser on iOS (Safari, Google Chrome CriOS, Firefox FxiOS, Edge
+// EdgiOS, in-app WebViews) plus macOS Safari uses Apple's WebKit + AVPlayer.
+// Routing `<audio>` through WebAudio's `createMediaElementSource` attaches
+// `MTAudioProcessingTap`, which delays startup, stalls streaming buffers mid-
+// clip, and drifts clock sync at 1.5× / 2× — so WebKit always plays straight
+// on hardware AVPlayer.
+const isWebKit =
+  isIOS ||
+  (/AppleWebKit\//.test(navigator.userAgent) &&
+    !/Chrome|Chromium|Edg/.test(navigator.userAgent));
 
 const narrator = document.querySelector<HTMLElement>('[data-narrator]');
 const narVideo = document.querySelector<HTMLElement>('[data-narr-video]');
@@ -162,14 +173,21 @@ let activeLayerIdx = 0;
 let videoCollapsed = false;
 let currentVideoSrc = '';
 let playbackRate = 1;
+let videoRateState: -1 | 0 | 1 = 0;
 let videoSpinUpUntil = 0;
 let videoLastSeekAt = 0;
 let settleTimer: ReturnType<typeof setTimeout> | undefined;
-let voiceStartGateTimer: ReturnType<typeof setTimeout> | undefined;
-let waitingForVideo = false;
-let voiceUnlocked = false;
+let videoToken = 0;
+let videoLaunched = false;
+let pendingLaunchSeek = 0;
+let voiceBuffering = false;
+let sessionToken = 0;
+let preloadedForToken = -1;
 let autoScrollUntil = 0;
 let autoScrollBlock: Narr | null = null;
+let pendingVideoStart: number | null = null;
+let partScrollLockUntil = 0;
+let narrPlacementDirty = true;
 
 const preloadAudio = new Audio();
 preloadAudio.preload = 'auto';
@@ -190,6 +208,14 @@ const clampVideoTime = (v: HTMLVideoElement, t: number) =>
     ? Math.min(Math.max(0, t), Math.max(0, v.duration - 0.04))
     : Math.max(0, t);
 
+const isTimeBuffered = (v: HTMLVideoElement, t: number) => {
+  const b = v.buffered;
+  for (let i = 0; i < b.length; i++) {
+    if (t >= b.start(i) && t <= b.end(i) - 0.12) return true;
+  }
+  return false;
+};
+
 const applyAudioRate = (el: HTMLAudioElement, rate: number) => {
   if (el.defaultPlaybackRate !== rate) el.defaultPlaybackRate = rate;
   if (el.playbackRate !== rate) el.playbackRate = rate;
@@ -205,16 +231,22 @@ const applyAudioRate = (el: HTMLAudioElement, rate: number) => {
     legacy.mozPreservesPitch = true;
 };
 
+const effectiveVideoRate = () => {
+  const factor = videoRateState === 1 ? 1.08 : videoRateState === -1 ? 0.92 : 1;
+  return +(playbackRate * factor).toFixed(3);
+};
+
 // Video layers are muted and carry no audio stream (-an): never attach a pitch
-// processor to their timebase, and keep their rate strictly equal to the user's
-// chosen speed (1×, 1.5×, 2×).
+// processor to their timebase.
 const applyVideoRate = (el: HTMLVideoElement, rate: number) => {
-  if (el.defaultPlaybackRate !== rate) el.defaultPlaybackRate = rate;
-  if (el.playbackRate !== rate) el.playbackRate = rate;
+  if (el.defaultPlaybackRate !== playbackRate)
+    el.defaultPlaybackRate = playbackRate;
+  if (Math.abs(el.playbackRate - rate) > 0.002) el.playbackRate = rate;
 };
 
 const setPlaybackRate = (rate: number) => {
   playbackRate = rate;
+  videoRateState = 0;
   applyAudioRate(voice, rate);
   for (const v of narVideoLayers) applyVideoRate(v, rate);
   const v = activeVideoEl();
@@ -228,7 +260,10 @@ const setPlaybackRate = (rate: number) => {
     Number.isFinite(voice.currentTime)
   ) {
     const targetTime = clampVideoTime(v, voice.currentTime);
-    if (Math.abs(v.currentTime - targetTime) > 0.08) {
+    if (
+      Math.abs(v.currentTime - targetTime) > 1.0 &&
+      isTimeBuffered(v, targetTime)
+    ) {
       try {
         v.currentTime = targetTime;
       } catch {}
@@ -242,13 +277,47 @@ const setPlaybackRate = (rate: number) => {
   }
 };
 applyAudioRate(voice, playbackRate);
-// Safari's AVPlayer resets rate to 1.0 on -[AVPlayer play]; re-assert the
+// Safari / iOS AVPlayer resets rate to 1.0 on -[AVPlayer play]; re-assert the
 // chosen playbackRate immediately whenever audio or video enters play/playing.
 voice.addEventListener('play', () => applyAudioRate(voice, playbackRate));
-voice.addEventListener('playing', () => applyAudioRate(voice, playbackRate));
+voice.addEventListener('playing', () => {
+  voiceBuffering = false;
+  applyAudioRate(voice, playbackRate);
+  maybeLaunchVideo();
+});
+voice.addEventListener('waiting', () => {
+  if (!running) return;
+  voiceBuffering = true;
+  const v = activeVideoEl();
+  if (v && !v.paused) v.pause();
+});
+voice.addEventListener('stalled', () => {
+  if (!running || voice.readyState >= 3) return;
+  voiceBuffering = true;
+  const v = activeVideoEl();
+  if (v && !v.paused) v.pause();
+});
+voice.addEventListener('canplay', () => {
+  if (running && !voice.paused) voiceBuffering = false;
+});
+voice.addEventListener('timeupdate', () => {
+  if (
+    !running ||
+    !session ||
+    preloadedForToken === sessionToken ||
+    !Number.isFinite(voice.duration) ||
+    voice.duration <= 0
+  )
+    return;
+  const remRealSec = (voice.duration - voice.currentTime) / playbackRate;
+  if (remRealSec <= 5.5) {
+    preloadedForToken = sessionToken;
+    preloadNext();
+  }
+});
 for (const v of narVideoLayers) {
-  v.addEventListener('play', () => applyVideoRate(v, playbackRate));
-  v.addEventListener('playing', () => applyVideoRate(v, playbackRate));
+  v.addEventListener('play', () => applyVideoRate(v, effectiveVideoRate()));
+  v.addEventListener('playing', () => applyVideoRate(v, effectiveVideoRate()));
 }
 
 /** A shared address's modal is open over the page (lib/links). */
@@ -365,7 +434,9 @@ const nextParaAfter = (
   return null;
 };
 
-/** Pre-load and decode frame 0 of the upcoming video on the hidden standby layer. */
+/** Pre-load the upcoming video on the hidden standby layer near the end of
+ *  the current take. Mobile / iOS loads metadata only so two 20+ MB videos
+ *  never compete for cellular bandwidth or hardware decoders. */
 const preloadStandbyVideo = (src: string | null | undefined) => {
   if (!src || videoCollapsed || narVideoLayers.length < 2) return;
   const standbyIdx = (activeLayerIdx + 1) % narVideoLayers.length;
@@ -374,9 +445,11 @@ const preloadStandbyVideo = (src: string | null | undefined) => {
   if (standbyEl.classList.contains('is-active')) return;
   if (standbyEl.getAttribute('src') === src) return;
   standbyEl.pause();
-  standbyEl.preload = 'auto';
+  const mobileLight = phone || isIOS;
+  standbyEl.preload = mobileLight ? 'metadata' : 'auto';
   standbyEl.src = src;
   standbyEl.load();
+  if (mobileLight) return;
   const primeFrame = () => {
     if (
       standbyEl.getAttribute('src') !== src ||
@@ -405,39 +478,90 @@ const preloadNext = () => {
   preloadStandbyVideo(videoOf(p));
 };
 
+/** Starts `activeVideoEl()` only AFTER `voice` is audibly playing (`!voiceBuffering`),
+ *  preventing `v` from running ahead through the first second and rewinding to 0. */
+const maybeLaunchVideo = () => {
+  if (videoLaunched || !running || videoCollapsed || !currentVideoSrc) return;
+  if (voice.paused || voiceBuffering) return;
+  const v = activeVideoEl();
+  if (!v) return;
+
+  const myToken = videoToken;
+  const desiredStart = Math.max(pendingLaunchSeek, voice.currentTime || 0);
+
+  const commitLaunch = () => {
+    if (
+      videoLaunched ||
+      myToken !== videoToken ||
+      !running ||
+      videoCollapsed ||
+      v !== activeVideoEl()
+    )
+      return;
+    videoLaunched = true;
+    pendingLaunchSeek = 0;
+    videoRateState = 0;
+    v.preload = 'auto';
+    applyVideoRate(v, playbackRate);
+    videoSpinUpUntil = performance.now() + 950;
+    videoLastSeekAt = performance.now();
+    v.classList.add('is-active');
+    for (const other of narVideoLayers) {
+      if (other !== v) {
+        if (!other.paused) other.pause();
+        other.classList.remove('is-active');
+        const stale = other;
+        settleTimer = setTimeout(
+          () => {
+            if (stale !== activeVideoEl()) unloadVideoEl(stale);
+          },
+          dur('settle') + 40,
+        );
+      }
+    }
+    v.play().catch(() => {});
+  };
+
+  // Normal start near 0:00 — play straight from frame 0 with ZERO seek so the
+  // video never jumps back or repeats its opening second.
+  if (desiredStart <= 0.45 && v.currentTime <= 0.45) {
+    commitLaunch();
+    return;
+  }
+
+  // Starting mid-clip (section pill jump, or slow mobile connection where
+  // audio advanced while video was still connecting): seek while paused first.
+  const seekAndLaunch = () => {
+    if (myToken !== videoToken || videoLaunched) return;
+    const target = clampVideoTime(
+      v,
+      Math.max(pendingLaunchSeek, voice.currentTime || 0),
+    );
+    if (Math.abs(v.currentTime - target) > 0.35) {
+      try {
+        v.currentTime = target;
+      } catch {}
+    }
+    commitLaunch();
+  };
+  if (v.readyState >= 1) seekAndLaunch();
+  else v.addEventListener('loadedmetadata', seekAndLaunch, { once: true });
+};
+
 const syncVideo = () => {
   if (!narVideo || !narVideoLayers.length) return;
+  narrPlacementDirty = true;
   const p = activeVideoPara();
   const src = p ? videoOf(p) : undefined;
   const dismissed = !running || !src || videoCollapsed;
   if (dismissed) {
-    clearTimeout(voiceStartGateTimer);
-    waitingForVideo = false;
     narVideo.classList.add('is-dismissed');
     narVideo.classList.remove('is-playing');
     document.documentElement.classList.remove('has-narr-video');
+    videoRateState = 0;
     for (const v of narVideoLayers) {
       if (!v.paused) v.pause();
       applyVideoRate(v, playbackRate);
-    }
-    const v = activeVideoEl();
-    if (
-      session &&
-      v &&
-      !videoCollapsed &&
-      src &&
-      currentVideoSrc === src &&
-      v.readyState >= 2 &&
-      !v.seeking &&
-      Number.isFinite(voice.currentTime) &&
-      voice.currentTime > 0
-    ) {
-      const targetTime = clampVideoTime(v, voice.currentTime);
-      if (Math.abs(v.currentTime - targetTime) > 0.18) {
-        try {
-          v.currentTime = targetTime;
-        } catch {}
-      }
     }
     return;
   }
@@ -457,7 +581,9 @@ const syncVideo = () => {
 
   if (currentVideoSrc !== src) {
     clearTimeout(settleTimer);
-    clearTimeout(voiceStartGateTimer);
+    videoToken++;
+    videoLaunched = false;
+    videoRateState = 0;
     const matchingIdx = narVideoLayers.findIndex(
       v => v.getAttribute('src') === src,
     );
@@ -469,134 +595,115 @@ const syncVideo = () => {
           : activeLayerIdx;
     const prevEl =
       activeLayerIdx !== nextIdx ? narVideoLayers[activeLayerIdx] : null;
+    if (prevEl && !prevEl.paused) prevEl.pause();
     const nextEl = narVideoLayers[nextIdx];
+    if (!nextEl.paused) nextEl.pause();
     currentVideoSrc = src;
     activeLayerIdx = nextIdx;
-    nextEl.preload = 'auto';
+    pendingLaunchSeek = pendingVideoStart ?? 0;
+    pendingVideoStart = null;
+    // Give `voice.m4a` exclusive network priority on mobile until `voice`
+    // enters `playing`; `maybeLaunchVideo()` promotes preload to `'auto'`.
     if (nextEl.getAttribute('src') !== src) {
+      nextEl.preload = phone || isIOS ? 'metadata' : 'auto';
       nextEl.src = src;
-    } else if (nextEl.currentTime > 0.05) {
-      try {
-        nextEl.currentTime = 0;
-      } catch {}
+      nextEl.load();
     }
     applyVideoRate(nextEl, playbackRate);
-    videoSpinUpUntil = performance.now() + 700;
-
-    let revealed = false;
-    const reveal = () => {
-      if (revealed || currentVideoSrc !== src) return;
-      revealed = true;
-      nextEl.classList.add('is-active');
-      if (prevEl && prevEl !== nextEl) {
-        if (!prevEl.paused) prevEl.pause();
-        prevEl.classList.remove('is-active');
-        settleTimer = setTimeout(() => {
-          if (activeLayerIdx !== narVideoLayers.indexOf(prevEl)) {
-            if (session) preloadNext();
-            else unloadVideoEl(prevEl);
-          }
-        }, dur('settle'));
-      } else {
-        preloadNext();
-      }
-    };
-
-    if (nextEl.readyState >= 2) {
-      waitingForVideo = false;
-      reveal();
-    } else {
-      waitingForVideo = true;
-      nextEl.addEventListener(
-        'loadeddata',
-        () => {
-          if (currentVideoSrc !== src) return;
-          reveal();
-        },
-        { once: true },
-      );
-    }
-
-    nextEl.addEventListener(
-      'playing',
-      () => {
-        if (currentVideoSrc !== src || !running) return;
-        applyVideoRate(nextEl, playbackRate);
-        videoSpinUpUntil = performance.now() + 600;
-        if (
-          !voice.paused &&
-          Number.isFinite(voice.currentTime) &&
-          voice.currentTime > 0.08
-        ) {
-          const targetTime = clampVideoTime(nextEl, voice.currentTime);
-          if (Math.abs(nextEl.currentTime - targetTime) > 0.1) {
-            try {
-              nextEl.currentTime = targetTime;
-            } catch {}
-          }
-        }
-      },
-      { once: true },
-    );
-
-    if (running && !waitingForVideo) {
-      nextEl.play().catch(() => {});
-    }
+    maybeLaunchVideo();
   } else {
     const v = activeVideoEl();
-    if (v) {
-      applyVideoRate(v, playbackRate);
-      if (running) {
-        if (
-          v.readyState >= 2 &&
-          !v.seeking &&
-          Number.isFinite(voice.currentTime)
-        ) {
-          const targetTime = clampVideoTime(v, voice.currentTime);
-          if (Math.abs(v.currentTime - targetTime) > 0.18) {
-            try {
-              v.currentTime = targetTime;
-            } catch {}
-          }
-        }
-        if (v.paused && !waitingForVideo) {
-          videoSpinUpUntil = performance.now() + 600;
-          v.play().catch(() => {});
-        }
-      } else if (!v.paused) {
-        v.pause();
+    if (!v) return;
+    if (!running) {
+      if (!v.paused) v.pause();
+      return;
+    }
+    if (!videoLaunched) {
+      maybeLaunchVideo();
+      return;
+    }
+    applyVideoRate(v, effectiveVideoRate());
+    if (v.readyState >= 2 && !v.seeking && Number.isFinite(voice.currentTime)) {
+      const targetTime = clampVideoTime(v, voice.currentTime);
+      // Only hard-seek on resume if video drifted far (> 1.2s, e.g. reopened
+      // after closing `×`) and targetTime is buffered.
+      if (
+        Math.abs(v.currentTime - targetTime) > 1.2 &&
+        isTimeBuffered(v, targetTime)
+      ) {
+        try {
+          v.currentTime = targetTime;
+        } catch {}
       }
+    }
+    if (v.paused && !voiceBuffering) {
+      videoSpinUpUntil = performance.now() + 600;
+      v.play().catch(() => {});
     }
   }
 };
 
 const tickVideoSync = (now: number) => {
-  if (!running || voice.paused || videoCollapsed || waitingForVideo) return;
+  if (!running || videoCollapsed) return;
+  if (!videoLaunched) {
+    maybeLaunchVideo();
+    return;
+  }
+  if (voice.paused || voiceBuffering) return;
   const v = activeVideoEl();
   if (!v || !currentVideoSrc) return;
-  if (v.playbackRate !== playbackRate) applyVideoRate(v, playbackRate);
   if (now <= videoSpinUpUntil) return;
   if (v.paused) {
     if (
       v.readyState >= 2 &&
       !v.seeking &&
-      (!Number.isFinite(v.duration) || v.currentTime < v.duration - 0.08)
+      (!Number.isFinite(v.duration) || v.currentTime < v.duration - 0.12)
     ) {
+      videoRateState = 0;
+      applyVideoRate(v, playbackRate);
+      videoSpinUpUntil = now + 500;
       v.play().catch(() => {});
     }
     return;
   }
-  if (v.seeking || v.readyState < 2) return;
+  if (v.seeking || v.readyState < 3) return;
   const targetTime = clampVideoTime(v, voice.currentTime);
   const drift = targetTime - v.currentTime;
+
+  // Hard-seek ONLY on extreme drift (> 2.8s) AND when `targetTime` is already
+  // buffered in RAM — never aborting an active mobile HTTP stream.
   if (
-    Math.abs(drift) > Math.max(0.3, 0.22 * playbackRate) &&
-    now - videoLastSeekAt > 1800
+    Math.abs(drift) > Math.max(2.8, 1.8 * playbackRate) &&
+    now - videoLastSeekAt > 5000 &&
+    isTimeBuffered(v, targetTime)
   ) {
     videoLastSeekAt = now;
+    videoSpinUpUntil = now + 800;
+    videoRateState = 0;
+    applyVideoRate(v, playbackRate);
     try {
       v.currentTime = targetTime;
     } catch {}
+    return;
+  }
+
+  // Smooth 3-state hysteresis rate nudge (`0.92×` / `1.00×` / `1.08×`):
+  // keeps sequential hardware decode untouched and updates `AVPlayer.rate`
+  // only on state transitions.
+  let nextState: -1 | 0 | 1 = videoRateState;
+  if (videoRateState === 0) {
+    if (drift > 0.18) nextState = 1;
+    else if (drift < -0.18) nextState = -1;
+  } else if (videoRateState === 1) {
+    if (drift <= 0.04) nextState = 0;
+    else if (drift < -0.22) nextState = -1;
+  } else {
+    if (drift >= -0.04) nextState = 0;
+    else if (drift > 0.22) nextState = 1;
+  }
+  if (nextState !== videoRateState) {
+    videoRateState = nextState;
+    applyVideoRate(v, effectiveVideoRate());
   }
 };
 
@@ -622,6 +729,7 @@ const startOf = (block: Narr) => {
 };
 
 const paint = () => {
+  narrPlacementDirty = true;
   for (const n of narrs) {
     const on = session?.block === n;
     n.el.classList.toggle('is-narrating', on);
@@ -645,13 +753,14 @@ let output: GainNode | null = null;
 let freq: Uint8Array<ArrayBuffer> | null = null;
 
 // The analyser needs an AudioContext, which a browser only lets a
-// gesture create — so it is built on the first play. On Safari, routing
-// `voice` through `createMediaElementSource` attaches WebKit's
-// `MTAudioProcessingTap`, which causes audio glitches and clock drift at
-// 1.5× / 2× (`playbackRate !== 1`); so Safari plays `voice` directly on
-// its hardware AVPlayer and synthesizes the subtle horizon wave bands.
+// gesture create — so it is built on the first play. On Apple WebKit
+// (macOS Safari + ALL iOS browsers including Chrome CriOS), routing
+// `<audio>` through `createMediaElementSource` attaches WebKit's
+// `MTAudioProcessingTap`, which stalls streaming buffers and breaks clock
+// sync at 1.5× / 2×; so WebKit skips the WebAudio graph completely and
+// plays straight on hardware AVPlayer while synthesizing the horizon wave.
 const ensureGraph = () => {
-  if (ctx) return;
+  if (isWebKit || ctx) return;
   try {
     ctx = new AudioContext();
     analyser = ctx.createAnalyser();
@@ -662,10 +771,8 @@ const ensureGraph = () => {
     output = ctx.createGain();
     output.gain.value = devSilent ? 0 : 1;
     analyser.connect(output).connect(ctx.destination);
-    if (!isSafari) {
-      const source = ctx.createMediaElementSource(voice);
-      source.connect(analyser);
-    }
+    const source = ctx.createMediaElementSource(voice);
+    source.connect(analyser);
     freq = new Uint8Array(analyser.frequencyBinCount);
   } catch {
     ctx = null;
@@ -687,13 +794,14 @@ let peak = 0.35;
 const voiceBands = (half: number, from = analyser) => {
   const out = new Array(half).fill(0);
   if (
-    isSafari &&
+    isWebKit &&
     from === analyser &&
-    running &&
-    !voice.paused &&
-    !demoPlaying()
+    ((running && !voice.paused) || demoPlaying())
   ) {
-    const t = voice.currentTime * 6.5;
+    const clock = demoPlaying()
+      ? (demo?.video.currentTime ?? 0)
+      : voice.currentTime;
+    const t = clock * 6.5;
     for (let k = 0; k < half; k++) {
       const env = Math.max(0, 1 - (k / half) * 0.72);
       const wave =
@@ -823,6 +931,7 @@ const levelAt = (u: number) => {
 
 const drawField = (now: number) => {
   if (!field || !narrator || narrator.hidden || reduceMotion) return;
+  if (phone && lastFrame && now - lastFrame < 30) return;
   const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
   lastFrame = now;
   const talking = (running && !voice.paused) || demoPlaying() || !!otherSound();
@@ -920,7 +1029,70 @@ const drawField = (now: number) => {
 // the words this wraps by their offset (lib/readAlong cuts both). A clip
 // with no paragraph on screen (the hero's intro, the footer's) is simply
 // heard: the pill never carries words and never changes size.
-const readable = (p: HTMLElement) => p.tagName === 'P';
+const readable = (p: HTMLElement) => !p.hidden;
+
+const partsNavOf = (p: HTMLElement) =>
+  p.parentElement?.querySelector<HTMLElement>('[data-narr-parts]') ?? null;
+
+const partTimesOf = (p: HTMLElement, lang: string): number[] => {
+  const raw =
+    p.dataset[`parts${lang[0].toUpperCase()}${lang.slice(1)}`] ??
+    p.dataset.partsEs;
+  return raw ? JSON.parse(raw) : [];
+};
+
+const fmtPartClock = (sec: number) => {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
+const syncPartLabels = (p: HTMLElement) => {
+  const nav = partsNavOf(p);
+  if (!nav) return;
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  const pts = partTimesOf(p, lang);
+  for (const btn of nav.querySelectorAll<HTMLButtonElement>(
+    '[data-narr-part-btn]',
+  )) {
+    const idx = Number(btn.dataset.narrPartBtn);
+    const sec = pts[idx];
+    if (sec === undefined) continue;
+    const clock = fmtPartClock(sec);
+    btn.title = clock;
+    btn.setAttribute('aria-label', `${idx + 1} (${clock})`);
+  }
+};
+
+const updateIdlePartFromScroll = (p: HTMLElement) => {
+  const nav = partsNavOf(p);
+  if (!nav) return;
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  const partEls = [
+    ...p.querySelectorAll<HTMLElement>(
+      `:scope > .tb[lang="${lang}"] [data-part]`,
+    ),
+  ];
+  if (!partEls.length) return;
+  const cs = getComputedStyle(p);
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const lh = parseFloat(cs.lineHeight) || 24;
+  let here = 0;
+  for (let k = 1; k < partEls.length; k++) {
+    if (partEls[k].offsetTop - padTop <= p.scrollTop + lh * 1.35) here = k;
+    else break;
+  }
+  if (p.scrollTop + p.clientHeight >= p.scrollHeight - 4) {
+    here = partEls.length - 1;
+  }
+  for (const btn of nav.querySelectorAll<HTMLButtonElement>(
+    '[data-narr-part-btn]',
+  )) {
+    btn.classList.toggle(
+      'is-reading-here',
+      Number(btn.dataset.narrPartBtn) === here,
+    );
+  }
+};
 
 type ReadWords = { spans: HTMLElement[]; times: number[] };
 const readCache = new WeakMap<HTMLElement, ReadWords>();
@@ -933,33 +1105,45 @@ const wordsOf = (
 ): ReadWords => {
   const cached = readCache.get(root);
   if (cached) return cached;
-  const texts: Text[] = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let n = walker.nextNode(); n; n = walker.nextNode())
-    texts.push(n as Text);
   const spans: HTMLElement[] = [];
   const offsets: number[] = [];
   let at = 0;
-  for (const node of texts) {
-    const data = node.data;
-    const tokens = readTokens(data);
-    if (tokens.length) {
-      const frag = document.createDocumentFragment();
-      let last = 0;
-      for (const tk of tokens) {
-        if (tk.at > last) frag.append(data.slice(last, tk.at));
-        const span = document.createElement('span');
-        span.className = 'rw';
-        span.textContent = tk.text;
-        frag.append(span);
-        spans.push(span);
-        offsets.push(at + tk.at);
-        last = tk.at + tk.text.length;
+  const wrapContainer = (container: HTMLElement) => {
+    const texts: Text[] = [];
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode())
+      texts.push(n as Text);
+    for (const node of texts) {
+      const data = node.data;
+      const tokens = readTokens(data);
+      if (tokens.length) {
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        for (const tk of tokens) {
+          if (tk.at > last) frag.append(data.slice(last, tk.at));
+          const span = document.createElement('span');
+          span.className = 'rw';
+          span.textContent = tk.text;
+          frag.append(span);
+          spans.push(span);
+          offsets.push(at + tk.at);
+          last = tk.at + tk.text.length;
+        }
+        if (last < data.length) frag.append(data.slice(last));
+        node.replaceWith(frag);
       }
-      if (last < data.length) frag.append(data.slice(last));
-      node.replaceWith(frag);
+      at += data.length;
     }
-    at += data.length;
+  };
+  const partEls = [...root.querySelectorAll<HTMLElement>('[data-part]')];
+  if (partEls.length) {
+    partEls.forEach((partEl, idx) => {
+      // Matches the `\n\n` (length 2) separating sections in `ui.ts` `plainText`.
+      if (idx > 0) at += 2;
+      wrapContainer(partEl);
+    });
+  } else {
+    wrapContainer(root);
   }
   const raw = p.dataset[`read${lang[0].toUpperCase()}${lang.slice(1)}`];
   const marks: ReadMark[] = raw ? JSON.parse(raw) : [];
@@ -981,15 +1165,27 @@ let reading: {
    *  two inks only — what is still to come, and what has been said. */
   box: HTMLElement;
   upTo: number;
+  partIdx: number;
 } | null = null;
 
 const endReading = () => {
   if (!reading) return;
-  reading.p.classList.remove('is-reading', 'is-live');
+  const prevP = reading.p;
+  prevP.classList.remove('is-reading', 'is-live');
   reading.box.classList.remove('is-read-along');
+  const nav = partsNavOf(prevP);
+  if (nav) {
+    for (const btn of nav.querySelectorAll<HTMLButtonElement>(
+      '[data-narr-part-btn]',
+    )) {
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-pressed', 'false');
+    }
+  }
   for (const s of readCache.get(reading.root)?.spans ?? [])
     s.classList.remove('is-read');
   reading = null;
+  updateIdlePartFromScroll(prevP);
 };
 
 /** A box the visitor scrolls by hand is theirs: the voice stops pulling it
@@ -1053,6 +1249,7 @@ document.addEventListener(
  *  at a time as the voice goes on. Not while the visitor holds the box —
  *  until the word comes back into view on its own. */
 const keepInView = (span: HTMLElement) => {
+  if (performance.now() < partScrollLockUntil) return;
   const own = span.closest<HTMLElement>('[data-narr-caption], [data-cap]');
   if (own && held(own)) {
     const b = own.getBoundingClientRect();
@@ -1108,19 +1305,41 @@ const updateRead = () => {
     return;
   }
   const lang = document.documentElement.dataset.lang ?? 'en';
-  const root = p.querySelector<HTMLElement>(`:scope > .t[lang="${lang}"]`) ?? p;
+  const root =
+    p.querySelector<HTMLElement>(
+      `:scope > .t[lang="${lang}"], :scope > .tb[lang="${lang}"]`,
+    ) ?? p;
   if (reading && (reading.p !== p || reading.root !== root)) endReading();
   const words = wordsOf(p, root, lang);
   if (!reading) {
     const box = p.matches('[data-narr-caption]')
       ? p
       : (p.closest<HTMLElement>('[data-cap]') ?? p.parentElement ?? p);
-    reading = { p, root, box, upTo: 0 };
+    reading = { p, root, box, upTo: 0, partIdx: -1 };
     p.classList.add('is-reading');
     box.classList.add('is-read-along');
   }
   p.classList.toggle('is-live', running);
   const t = voice.currentTime || 0;
+  const nav = partsNavOf(p);
+  if (nav) {
+    const pts = partTimesOf(p, lang);
+    let activePart = 0;
+    for (let k = 1; k < pts.length; k++) {
+      if (t + 0.08 >= pts[k]) activePart = k;
+      else break;
+    }
+    if (activePart !== reading.partIdx) {
+      reading.partIdx = activePart;
+      for (const btn of nav.querySelectorAll<HTMLButtonElement>(
+        '[data-narr-part-btn]',
+      )) {
+        const on = Number(btn.dataset.narrPartBtn) === activePart;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', String(on));
+      }
+    }
+  }
   let upTo = 0;
   while (upTo < words.times.length && words.times[upTo] <= t) upTo++;
   if (upTo === reading.upTo) return;
@@ -1149,6 +1368,24 @@ let lastMorphDx = '';
 let lastMorphDy = '';
 let lastVideoOwn = '';
 let lastVideoPe = '';
+let cachedRem =
+  parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+window.addEventListener(
+  'resize',
+  () => {
+    cachedRem =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    narrPlacementDirty = true;
+  },
+  { passive: true },
+);
+window.visualViewport?.addEventListener(
+  'resize',
+  () => {
+    narrPlacementDirty = true;
+  },
+  { passive: true },
+);
 
 const placeVideo = (
   nx: number,
@@ -1158,8 +1395,7 @@ const placeVideo = (
   centerShare = 0,
 ) => {
   if (!narVideo || narVideo.hidden) return;
-  const rem =
-    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const rem = cachedRem;
   const vw = (phone ? 6 : 7.25) * rem;
   const vh = (phone ? 10.67 : 12.89) * rem;
   let vx = nx;
@@ -1231,6 +1467,8 @@ const placeNarrator = () => {
   // from the one place to the other was tried, 2026-10-13, and read as
   // odd on a phone.)
   if (phone) {
+    if (!narrPlacementDirty) return;
+    narrPlacementDirty = false;
     const hero = heroBox?.getBoundingClientRect();
     if (heroAnchor && hero && hero.bottom > innerHeight / 2 && !focusOpen()) {
       const r = heroAnchor.getBoundingClientRect();
@@ -1313,9 +1551,13 @@ const animateNarrator = (now: number) => {
 
 // ----- the session -----
 const stop = () => {
-  clearTimeout(voiceStartGateTimer);
   clearTimeout(settleTimer);
-  waitingForVideo = false;
+  sessionToken++;
+  videoToken++;
+  videoLaunched = false;
+  voiceBuffering = false;
+  pendingLaunchSeek = 0;
+  pendingVideoStart = null;
   autoScrollBlock = null;
   voice.pause();
   session = null;
@@ -1329,14 +1571,25 @@ const stop = () => {
   }, dur('settle'));
 };
 
-const start = (block: Narr, para: number) => {
+const start = (block: Narr, para: number, startTime = 0) => {
   const p = block.paras[para];
   const src = p && clipOf(p);
   if (!src) {
     stop();
     return;
   }
-  clearTimeout(voiceStartGateTimer);
+  sessionToken++;
+  preloadedForToken = -1;
+  // Cancel any unconsumed standby audio download for a different clip so
+  // `voice` gets 100% network priority on mobile.
+  if (preloadedAudioSrc && preloadedAudioSrc !== src) {
+    preloadAudio.pause();
+    preloadAudio.removeAttribute('src');
+    preloadAudio.load();
+    preloadedAudioSrc = '';
+  }
+  pendingVideoStart = startTime > 0 ? startTime : null;
+  voiceBuffering = true;
   ensureGraph();
   ctx?.resume();
   voice.muted = devSilent;
@@ -1345,74 +1598,107 @@ const start = (block: Narr, para: number) => {
   session = { block, para };
   running = true;
   relang = false;
+  const mySessionToken = sessionToken;
+  if (startTime > 0) {
+    const applyVoiceStart = () => {
+      if (mySessionToken !== sessionToken || !running) return;
+      try {
+        voice.currentTime = startTime;
+      } catch {}
+    };
+    if (voice.readyState >= 1) applyVoiceStart();
+    else
+      voice.addEventListener('loadedmetadata', applyVoiceStart, { once: true });
+  }
   claimSession();
   paint();
-  if (!waitingForVideo) {
-    voiceUnlocked = true;
-    voice.play().catch(() => stop());
-  } else {
-    if (!voiceUnlocked) {
-      voiceUnlocked = true;
-      voice
-        .play()
-        .then(() => {
-          if (
-            waitingForVideo &&
-            session?.block === block &&
-            session?.para === para
-          ) {
-            voice.pause();
-            voice.currentTime = 0;
-          }
-        })
-        .catch(() => {});
-    } else {
-      voice.load();
-    }
-    let launched = false;
-    const launchTogether = () => {
-      if (
-        launched ||
-        !running ||
-        session?.block !== block ||
-        session?.para !== para
-      )
-        return;
-      launched = true;
-      clearTimeout(voiceStartGateTimer);
-      waitingForVideo = false;
-      const v = activeVideoEl();
-      if (v && !videoCollapsed) {
-        v.classList.add('is-active');
-        for (const other of narVideoLayers) {
-          if (other !== v) {
-            if (!other.paused) other.pause();
-            other.classList.remove('is-active');
-          }
-        }
-        applyVideoRate(v, playbackRate);
-        v.play().catch(() => {});
-        settleTimer = setTimeout(() => {
-          if (session) preloadNext();
-        }, dur('settle'));
-      }
-      applyAudioRate(voice, playbackRate);
-      voice.play().catch(() => stop());
-    };
-    activeVideoEl()?.addEventListener('loadeddata', launchTogether, {
-      once: true,
-    });
-    voiceStartGateTimer = setTimeout(launchTogether, 320);
-  }
+  voice.play().catch(() => {
+    if (mySessionToken === sessionToken) stop();
+  });
   document.dispatchEvent(new CustomEvent('narr:voice'));
   // Whatever shows this paragraph can follow the voice to it (a deck
   // turns to the card being told).
   document.dispatchEvent(new CustomEvent('narr:para', { detail: p }));
 };
 
+const scrollPartIntoCap = (p: HTMLElement, partIdx: number) => {
+  const box = p.closest<HTMLElement>('[data-cap]') ?? p;
+  delete box.dataset.heldUntil;
+  partScrollLockUntil = performance.now() + 420;
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  const partEl = p.querySelector<HTMLElement>(
+    `:scope > .tb[lang="${lang}"] [data-part="${partIdx}"]`,
+  );
+  if (!partEl) return;
+  const padTop = parseFloat(getComputedStyle(box).paddingTop) || 0;
+  const top = partIdx === 0 ? 0 : Math.max(0, partEl.offsetTop - padTop);
+  box.scrollTo({
+    top,
+    behavior: reduceMotion ? 'auto' : 'smooth',
+  });
+};
+
+const jumpToPart = (block: Narr, para: number, partIdx: number) => {
+  const p = block.paras[para];
+  if (!p || !clipOf(p)) return;
+  const lang = document.documentElement.dataset.lang ?? 'en';
+  const pts = partTimesOf(p, lang);
+  const rawStart = pts[partIdx] ?? 0;
+  const seekTime = partIdx > 0 ? Math.max(0, rawStart - 0.04) : 0;
+  if (!running) videoCollapsed = false;
+  if (block.panel && showing !== block && !focusOpen()) {
+    autoScrollBlock = block;
+    autoScrollUntil = performance.now() + 900;
+    scrollToPanel(block);
+  }
+  scrollPartIntoCap(p, partIdx);
+  if (session?.block === block && session.para === para && !relang) {
+    videoRateState = 0;
+    videoSpinUpUntil = performance.now() + 1000;
+    videoLastSeekAt = performance.now();
+    const seekVoice = () => {
+      if (session?.block !== block || session?.para !== para) return;
+      try {
+        voice.currentTime = seekTime;
+      } catch {}
+    };
+    if (voice.readyState >= 1) seekVoice();
+    else voice.addEventListener('loadedmetadata', seekVoice, { once: true });
+
+    const vSrc = videoOf(p);
+    const v = activeVideoEl();
+    if (v && vSrc && currentVideoSrc === vSrc) {
+      applyVideoRate(v, playbackRate);
+      const seekVid = () => {
+        if (currentVideoSrc !== vSrc) return;
+        try {
+          v.currentTime = clampVideoTime(v, seekTime);
+        } catch {}
+      };
+      if (v.readyState >= 1) seekVid();
+      else v.addEventListener('loadedmetadata', seekVid, { once: true });
+    } else {
+      pendingVideoStart = seekTime > 0 ? seekTime : null;
+    }
+    if (!running) {
+      running = true;
+      claimSession();
+      ensureGraph();
+      ctx?.resume();
+      voice.muted = devSilent;
+      applyAudioRate(voice, playbackRate);
+      paint();
+      voice.play().catch(() => stop());
+      document.dispatchEvent(new CustomEvent('narr:voice'));
+    }
+    updateRead();
+    return;
+  }
+  start(block, para, seekTime);
+};
+
 const pause = () => {
-  clearTimeout(voiceStartGateTimer);
-  waitingForVideo = false;
+  voiceBuffering = false;
   autoScrollBlock = null;
   running = false;
   voice.pause();
@@ -1424,6 +1710,12 @@ const pause = () => {
 // playing on if it was playing, from its start when next resumed.
 let relang = false;
 new MutationObserver(() => {
+  for (const n of narrs) {
+    for (const p of n.paras) {
+      syncPartLabels(p);
+      updateIdlePartFromScroll(p);
+    }
+  }
   if (!session) return;
   const p = session.block.paras[session.para];
   const src = p && clipOf(p);
@@ -1653,10 +1945,11 @@ document.addEventListener('arcade:start', () => {
 // same Spanish take in every language, so it plays on (the read-along
 // reads the page's language each frame).
 
-// Pre-warm the active block's first take when the visitor reaches for the
-// narrator button so the first click starts with frame 0 already decoded.
-const warmInitial = () => {
-  if (session) return;
+// Pre-warm the active block's first take when a desktop mouse approaches the
+// narrator button. Never run on touch (`touchstart`/`pointerdown`), where
+// `click` follows ~60ms later and starting a duplicate `.load()` races `start()`.
+const warmInitial = (e: PointerEvent) => {
+  if (e.pointerType !== 'mouse' || phone || isIOS || session) return;
   const p = activeVideoPara();
   if (!p) return;
   warmAudio(clipOf(p));
@@ -1678,8 +1971,6 @@ const warmInitial = () => {
   }
 };
 narrator?.addEventListener('pointerenter', warmInitial, { passive: true });
-narrator?.addEventListener('pointerdown', warmInitial, { passive: true });
-narrator?.addEventListener('touchstart', warmInitial, { passive: true });
 
 // One control. Pressed on the block being told, it pauses or resumes;
 // anywhere else, it starts telling what the page is showing.
@@ -1878,12 +2169,43 @@ const collect = (
     step,
     panel,
   };
-  // While a block is being told, its paragraphs are tappable too.
-  n.paras.forEach((p, i) =>
-    p.addEventListener('click', () => {
-      if (session?.block === n && clipOf(p)) start(n, i);
-    }),
-  );
+  // While a block is being told, its paragraphs (and section pills, even
+  // when idle) jump straight to that section of the take.
+  n.paras.forEach((p, i) => {
+    const nav = partsNavOf(p);
+    if (nav) {
+      syncPartLabels(p);
+      for (const btn of nav.querySelectorAll<HTMLButtonElement>(
+        '[data-narr-part-btn]',
+      )) {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const partIdx = Number(btn.dataset.narrPartBtn);
+          if (Number.isInteger(partIdx) && partIdx >= 0) {
+            jumpToPart(n, i, partIdx);
+          }
+        });
+      }
+      p.addEventListener('scroll', () => updateIdlePartFromScroll(p), {
+        passive: true,
+      });
+    }
+    p.addEventListener('click', e => {
+      const target = e.target as Element | null;
+      if (target?.closest('a[href], button')) return;
+      if (window.getSelection()?.toString()) return;
+      if (session?.block !== n || !clipOf(p)) return;
+      const partEl = target?.closest<HTMLElement>('[data-part]');
+      if (partEl && p.contains(partEl)) {
+        const partIdx = Number(partEl.dataset.part);
+        if (Number.isInteger(partIdx) && partIdx >= 0) {
+          jumpToPart(n, i, partIdx);
+        }
+        return;
+      }
+      if (session.para !== i) start(n, i);
+    });
+  });
   narrs.push(n);
   return n;
 };
@@ -1982,6 +2304,7 @@ const docks = phone
   : [];
 
 const render = (force = false) => {
+  narrPlacementDirty = true;
   // A shared address's modal (lib/links) owns the narrator outright: it
   // covers the page, so nothing under it is showing.
   const focused = focusOpen()

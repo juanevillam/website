@@ -57,6 +57,8 @@ import T from './T.astro';
     data-narr-video-layer="0"
     muted
     playsinline
+    disablepictureinpicture
+    disableRemotePlayback
     preload="none"
   ></video>
   <video
@@ -64,6 +66,8 @@ import T from './T.astro';
     data-narr-video-layer="1"
     muted
     playsinline
+    disablepictureinpicture
+    disableRemotePlayback
     preload="none"
   ></video>
   <span class="nar-morph-glyph" aria-hidden="true">
@@ -253,6 +257,7 @@ import T from './T.astro';
       border-color var(--hover);
   }
 
+  :global(html.is-webkit) .nar-video,
   :global(html.is-desk-safari) .nar-video {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
@@ -485,6 +490,8 @@ import T from './T.astro';
       scale 140ms var(--ease);
   }
 
+  :global(html.is-webkit) .nar-video-close,
+  :global(html.is-webkit) .nar-video-rates,
   :global(html.is-desk-safari) .nar-video-close,
   :global(html.is-desk-safari) .nar-video-rates {
     -webkit-backdrop-filter: none !important;

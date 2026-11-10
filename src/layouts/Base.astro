@@ -72,6 +72,11 @@ const url = new URL(path, Astro.site);
         // every frame something moves under or with it, and the page's
         // floating controls do both while it scrolls (global.css).
         const ua = navigator.userAgent;
+        const isIOS =
+          /iPad|iPhone|iPod/.test(ua) ||
+          (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        if (isIOS || (/AppleWebKit\//.test(ua) && !/Chrome|Chromium|Edg/.test(ua)))
+          document.documentElement.classList.add('is-webkit');
         if (/Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|Mobile/.test(ua))
           document.documentElement.classList.add('is-desk-safari');
       })();
@@ -251,7 +256,7 @@ const url = new URL(path, Astro.site);
       };
       const capTo = (box: HTMLElement) => {
         const ref =
-          box.tagName === 'P'
+          box.tagName === 'P' || box.classList.contains('body')
             ? box
             : [...box.querySelectorAll<HTMLElement>(':scope > p')].find(c => c.getClientRects().length);
         if (!ref) return;
@@ -308,6 +313,10 @@ const url = new URL(path, Astro.site);
         for (const r of records)
           (r.target as HTMLElement).querySelectorAll<HTMLElement>('[data-cap]').forEach(capTo);
       }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+      new MutationObserver(() => caps.forEach(capTo)).observe(
+        document.documentElement,
+        { attributes: true, attributeFilter: ['data-lang'] },
+      );
       // The paragraph being told scrolls into its box. Measured against the
       // BOX, not with `offsetTop`: that is relative to the nearest
       // positioned ancestor, which is not the box, so starting the voice
