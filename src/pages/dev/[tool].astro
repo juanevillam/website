@@ -1,20 +1,24 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
+import { type Locale, ui, type UIKey } from '../../i18n/ui';
+import { readTimings } from '../../lib/narration';
+import { plainText, readTokens } from '../../lib/readAlong';
 import { SCRIPT_LANGS, scriptsFor } from '../../lib/scripts';
 import '../../styles/global.css';
 
 /**
- * DEV ONLY — /dev/teleprompter. Juan sees each clip's IDEAS (lib/scripts),
- * says them his own way into any microphone the browser can see (the DJI
- * receiver included), and saves: the clip and its subtitles land in
- * public/media/narration/{lang}/ through the dev server's recorder
- * (scripts/narration-recorder.mjs), which transcribes the take — so the
- * subtitles are what he said, timed from when he said it. The transcript
- * shows here after saving, to check for a misheard word.
+ * DEV ONLY — /dev/teleprompter.
  *
- * Spanish is the only voice (lib/narration); English and Chinese are its
- * subtitles, written from the transcripts.
+ * Supports Juan's two-stage narration workflow (2026-11-10):
+ *   1. Toma completa (Video + Audio): Continuity Camera 9:16 mirror + mic,
+ *      producing `{key}.mp4`, `{key}.m4a`, `{key}.vtt`, `{key}.words.json`,
+ *      plus frozen ground-truth `{key}.video-ref.json` & `{key}.video-guide.m4a`.
+ *   2. Lip-Sync ADR (Solo audio sobre video): displays the recorded 9:16
+ *      `{key}.mp4` on the right and a 60fps word-by-word karaoke teleprompter
+ *      on the left (verbatim mouth-sync transcript for `es`, and sentence-paced
+ *      overdub script over the Spanish `.mp4` for `en` and `zh`), recording
+ *      close-mic studio audio without ever touching `{key}.mp4`.
  *
  * In a production build this route has no paths, so it does not exist.
  */
@@ -22,20 +26,75 @@ export const getStaticPaths = () =>
   import.meta.env.PROD ? [] : [{ params: { tool: 'teleprompter' } }];
 
 const LANG_NAME = { es: 'Español', en: 'English', zh: '中文' } as const;
+const ROOT = process.cwd();
+
 const status = (lang: string, key: string) => {
   const has = (ext: string) =>
-    fs.existsSync(path.join(process.cwd(), 'public/media/narration', lang, `${key}.${ext}`));
+    fs.existsSync(path.join(ROOT, 'public/media/narration', lang, `${key}.${ext}`));
   return has('vtt') ? 'new' : has('m4a') ? 'old' : 'none';
 };
+
+const textKeyOf = (key: string): UIKey =>
+  (key === 'hero' || key === 'footer' ? `${key}.caption` : key) as UIKey;
+
+const refWordsFor = (lang: Locale, key: string, hasOwnVideo: boolean) => {
+  const refFile = path.join(ROOT, 'narration-takes', lang, `${key}.video-ref.json`);
+  const timedFile = path.join(
+    ROOT,
+    'src/data/narration',
+    lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`,
+  );
+  if (fs.existsSync(refFile)) {
+    try {
+      return JSON.parse(fs.readFileSync(refFile, 'utf8'));
+    } catch {
+      return [];
+    }
+  }
+  if ((lang === 'es' || hasOwnVideo) && fs.existsSync(timedFile)) {
+    try {
+      return JSON.parse(fs.readFileSync(timedFile, 'utf8'));
+    } catch {
+      return [];
+    }
+  }
+  // Multilingual overdub (`en` / `zh`) over the Spanish `.mp4`: pace every word
+  // of `ui[lang]` against the Spanish video's sentence clock (or the language's
+  // own saved `.m4a` once recorded).
+  const tk = textKeyOf(key);
+  if (!(tk in ui[lang])) return [];
+  const timings = readTimings(key, tk);
+  if (!timings?.[lang]?.length) return [];
+  const tokens = readTokens(plainText(ui[lang][tk]));
+  return tokens.map((tok, i) => ({
+    w: tok.text,
+    t: timings[lang][i]?.[1] ?? 0,
+  }));
+};
+
 const scripts = Object.fromEntries(
   SCRIPT_LANGS.map(lang => [
     lang,
     scriptsFor(lang).map(c => {
       const state = status(lang, c.key);
+      const ownMp4Path = path.join(ROOT, 'public/media/narration', lang, `${c.key}.mp4`);
+      const esMp4Path = path.join(ROOT, 'public/media/narration/es', `${c.key}.mp4`);
+      const hasOwnVideo = fs.existsSync(ownMp4Path);
+      const hasVideo = hasOwnVideo || fs.existsSync(esMp4Path);
+      const videoLang = hasOwnVideo ? lang : 'es';
+      const lipsynced = fs.existsSync(
+        path.join(ROOT, 'narration-takes', lang, `${c.key}.lipsync.json`),
+      );
       return {
         ...c,
         status: state,
         audio: state === 'none' ? null : `/media/narration/${lang}/${c.key}.m4a`,
+        hasVideo,
+        hasOwnVideo,
+        video: hasVideo ? `/media/narration/${videoLang}/${c.key}.mp4` : null,
+        guideAudio: `/__narration/guide?lang=${lang}&key=${encodeURIComponent(c.key)}`,
+        lipsynced,
+        refWords: hasVideo ? refWordsFor(lang, c.key, hasOwnVideo) : [],
       };
     }),
   ]),
@@ -49,7 +108,7 @@ const list = scripts.es;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Teleprompter</title>
+    <title>Teleprompter · Lip-Sync Studio</title>
   </head>
   <body>
     <aside class="list">
@@ -76,47 +135,109 @@ const list = scripts.es;
                   />
                 ))}
               </span>
-              <span class="where">{c.where}</span>
-              <span class="key">{c.key}</span>
+              <span class="row-main">
+                <span class="where">{c.where}</span>
+                <span class="row-sub">
+                  <span class="key">{c.key}</span>
+                  <span class="adr-tag" data-adr-tag={c.key} hidden>ADR ✓</span>
+                </span>
+              </span>
             </button>
           </li>
         ))}
       </ol>
       <p class="legend">
         <span>puntos: es · en · zh</span>
-        <span><span class="dot" data-status="new" /> grabado con guión</span>
-        <span><span class="dot" data-status="old" /> grabación vieja</span>
+        <span><span class="dot" data-status="new" /> grabado con video/guión</span>
+        <span><span class="adr-tag is-inline">ADR ✓</span> audio lip-sync listo</span>
         <span><span class="dot" data-status="none" /> sin grabar</span>
       </p>
     </aside>
 
     <main>
       <header class="top">
-        <div>
-          <p class="label" data-where></p>
+        <div class="top-left">
+          <div class="title-row">
+            <p class="label" data-where></p>
+            <div class="studio-modes" role="group" aria-label="Modo de estudio">
+              <button type="button" class="mode-btn" data-studio-mode="lipsync">
+                Lip-Sync (solo audio)
+              </button>
+              <button type="button" class="mode-btn" data-studio-mode="full">
+                Toma completa (video + audio)
+              </button>
+            </div>
+          </div>
           <p class="key" data-key></p>
           <p class="draft" data-draft hidden></p>
         </div>
+
         <div class="mic">
           <div class="mic-row">
-            <button type="button" class="pick-mic" data-cam-on>Activar cámara (espejo 9:16)</button>
+            <button type="button" class="pick-mic" data-cam-on hidden>
+              Activar cámara (espejo 9:16)
+            </button>
             <select data-cam aria-label="Cámara" hidden></select>
             <button type="button" class="pick-mic" data-mic-on>Activar micrófono</button>
             <select data-mic aria-label="Micrófono" hidden></select>
           </div>
-          <span class="meter" hidden><span data-meter></span></span>
+          <div class="lipsync-tools" data-lipsync-tools hidden>
+            <label class="tool-chk" title="Escucha tu audio guía bajito por audífonos cerrados mientras haces lip-sync (apágalo si usas cornetas)">
+              <input type="checkbox" data-guide-chk />
+              <span>Guía audífonos</span>
+            </label>
+            <label class="tool-chk" title="Voltear horizontalmente el video de referencia si te resulta más cómodo seguir tus gestos en espejo">
+              <input type="checkbox" data-mirror-chk />
+              <span>Espejo</span>
+            </label>
+            <div class="nudge-box" title="Ajuste fino de latencia del micrófono (se aplica en vivo al previsualizar con P y al guardar con S)">
+              <span class="nudge-lbl">Sync:</span>
+              <button type="button" class="nudge-btn" data-nudge="-20">−20</button>
+              <span class="nudge-val" data-nudge-val>0 ms</span>
+              <button type="button" class="nudge-btn" data-nudge="20">+20</button>
+            </div>
+          </div>
+          <div class="meter-wrap" data-meter-wrap hidden>
+            <span class="meter"><span data-meter></span></span>
+            <span class="meter-db" data-meter-db>−∞ dB</span>
+          </div>
         </div>
       </header>
 
       <div class="stage">
-        <div class="col">
+        <div class="col" data-scroll-col>
+          <div class="lipsync-banner" data-lipsync-banner hidden>
+            <span>
+              <strong>Transcripción exacta del video</strong> (incluye muletillas y pausas).
+              Clic en cualquier frase para ir a ese punto; doble clic o <kbd>G</kbd> para ensayar esa parte.
+            </span>
+            <button type="button" class="reset-sel" data-reset-phrase hidden>
+              Volver a 0:00
+            </button>
+          </div>
           <div class="lines" data-lines></div>
           <div class="said" data-said hidden>
-            <p class="label">Lo que dijiste</p>
+            <p class="label">Lo que dijiste (última transcripción guardada)</p>
             <p class="said-text" data-said-text></p>
           </div>
         </div>
+
         <div class="stage-side">
+          <div class="ref-video-wrap" data-ref-wrap hidden>
+            <video
+              class="ref-video"
+              data-ref-video
+              muted
+              playsinline
+              preload="auto"
+            ></video>
+            <div class="ref-badge" data-ref-badge hidden></div>
+            <div class="ref-countdown" data-ref-countdown hidden></div>
+            <div class="ref-foot">
+              <span class="ref-clock" data-ref-clock>0:00.0 / 0:00.0</span>
+              <div class="ref-bar"><span data-ref-progress></span></div>
+            </div>
+          </div>
           <video class="cam-mirror" data-cam-view autoplay muted playsinline hidden></video>
           <img class="shot" data-shot alt="" hidden />
         </div>
@@ -128,15 +249,31 @@ const list = scripts.es;
         <p class="state" data-state></p>
         <div class="buttons">
           <button type="button" data-act="record">Grabar <kbd>R</kbd></button>
-          <button type="button" data-act="next" hidden>Terminar y guardar <kbd>espacio</kbd></button>
+          <button type="button" data-act="punch" hidden>
+            Punch-in desde frase <kbd>U</kbd>
+          </button>
+          <button type="button" data-act="finish" hidden>
+            Terminar (revisar) <kbd>espacio</kbd>
+          </button>
+          <button type="button" data-act="next" hidden>
+            Terminar y guardar <kbd>↵</kbd>
+          </button>
           <button type="button" data-act="stop" hidden>Cancelar <kbd>esc</kbd></button>
-          <button type="button" data-act="take" hidden>Escuchar toma <kbd>P</kbd></button>
+          <button type="button" data-act="take" hidden>
+            Ver Lip-Sync grabado <kbd>P</kbd>
+          </button>
           <button type="button" data-act="save" hidden>Guardar <kbd>S</kbd></button>
-          <button type="button" data-act="current" hidden>Escuchar guardado <kbd>L</kbd></button>
+          <button type="button" data-act="current" hidden>
+            Ver guardado <kbd>L</kbd>
+          </button>
+          <button type="button" data-act="guide" hidden>
+            Ensayar guía original <kbd>G</kbd>
+          </button>
         </div>
-        <p class="hint">
-          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guión · narra el párrafo completo a tu propio ritmo ·
-          <kbd>espacio</kbd> termina y guarda · al guardar se transcribe y se arman los subtítulos
+        <p class="hint" data-hint-bar>
+          <kbd>↑</kbd><kbd>↓</kbd> cambiar clip · <kbd>R</kbd> grabar desde 0:00 ·
+          clic en una frase + <kbd>U</kbd> regrabar solo desde ahí (punch-in) ·
+          <kbd>espacio</kbd> terminar para revisar con <kbd>P</kbd> · <kbd>S</kbd> guardar audio sin tocar el video
         </p>
       </footer>
     </main>
@@ -145,6 +282,7 @@ const list = scripts.es;
 
     <script>
       type Lang = 'es' | 'en' | 'zh';
+      type RefWord = { w: string; t: number };
       type Clip = {
         key: string;
         where: string;
@@ -153,9 +291,34 @@ const list = scripts.es;
         draft?: string;
         status: 'new' | 'old' | 'none';
         audio: string | null;
+        hasVideo: boolean;
+        hasOwnVideo: boolean;
+        video: string | null;
+        guideAudio: string;
+        lipsynced: boolean;
+        refWords: RefWord[];
       };
 
-      const scripts: Record<Lang, Clip[]> = JSON.parse(document.getElementById('clips')!.textContent!);
+      type KaraokeToken = {
+        w: string;
+        t: number;
+        end: number;
+        el?: HTMLSpanElement;
+      };
+      type KaraokePhrase = {
+        idx: number;
+        start: number;
+        end: number;
+        pauseBefore: number;
+        pauseStart: number;
+        tokens: KaraokeToken[];
+        el?: HTMLDivElement;
+        breathFillEl?: HTMLSpanElement;
+      };
+
+      const scripts: Record<Lang, Clip[]> = JSON.parse(
+        document.getElementById('clips')!.textContent!,
+      );
       const read = (k: string) => {
         try {
           return localStorage.getItem(k);
@@ -168,48 +331,259 @@ const list = scripts.es;
           localStorage.setItem(k, v);
         } catch {}
       };
-      let lang: Lang = (read('tp.lang') as Lang) in scripts ? (read('tp.lang') as Lang) : 'es';
+
+      let lang: Lang =
+        (read('tp.lang') as Lang) in scripts ? (read('tp.lang') as Lang) : 'es';
       let clips = scripts[lang];
-      const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+      let studioMode: 'lipsync' | 'full' =
+        read('tp.studioMode') === 'full' ? 'full' : 'lipsync';
+      let nudgeMs = Number(read('tp.nudgeMs') ?? '0') || 0;
+
+      const $ = <T extends HTMLElement>(s: string) =>
+        document.querySelector<T>(s)!;
+      const scrollCol = $('[data-scroll-col]');
       const linesEl = $('[data-lines]');
       const saidEl = $('[data-said]');
       const saidText = $('[data-said-text]');
-      const showSaid = (lines: string[]) => {
-        saidEl.hidden = !lines.length;
-        saidText.textContent = lines.join(' ');
-      };
       const stateEl = $('[data-state]');
       const pill = $('[data-pill]');
       const shot = $<HTMLImageElement>('[data-shot]');
+      const refWrap = $('[data-ref-wrap]');
+      const refVideo = $<HTMLVideoElement>('[data-ref-video]');
+      const refBadge = $('[data-ref-badge]');
+      const refCountdown = $('[data-ref-countdown]');
+      const refClock = $('[data-ref-clock]');
+      const refProgress = $('[data-ref-progress]');
+      const lipsyncTools = $('[data-lipsync-tools]');
+      const lipsyncBanner = $('[data-lipsync-banner]');
+      const resetPhraseBtn = $<HTMLButtonElement>('[data-reset-phrase]');
+      const guideChk = $<HTMLInputElement>('[data-guide-chk]');
+      const mirrorChk = $<HTMLInputElement>('[data-mirror-chk]');
+      const nudgeValEl = $('[data-nudge-val]');
+      const meterWrap = $('[data-meter-wrap]');
+      const meter = $('[data-meter]');
+      const meterDb = $('[data-meter-db]');
       const btn = (a: string) => $<HTMLButtonElement>(`[data-act="${a}"]`);
 
-      // Spoken Spanish runs at about 14 characters a second, English about
-      // as fast, Chinese about 4.5 — a character is a syllable. Said in his
-      // own words an idea runs longer than it reads, so the estimate is
-      // loose on purpose.
-      const CPS: Record<Lang, number> = { es: 14, en: 14, zh: 4.5 };
+      guideChk.checked = read('tp.guide') === '1';
+      mirrorChk.checked = read('tp.mirror') === '1';
+      refVideo.classList.toggle('is-mirrored', mirrorChk.checked);
+
+      const updateNudgeUI = () => {
+        const sign = nudgeMs > 0 ? '+' : '';
+        nudgeValEl.textContent = `${sign}${nudgeMs} ms`;
+      };
+      updateNudgeUI();
+
+      const CPS: Record<Lang, number> = { es: 14, en: 14, zh: 5 };
       const secs = (s: string) => (s.length * 1.2) / CPS[lang] + 0.5;
-      const clipSecs = (c: Clip) => c.ideas.reduce((t, l) => t + secs(l), 0);
-      const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
-      const total = () => {
-        const done = clips.filter(c => c.status === 'new').length;
-        $('[data-total]').textContent =
-          `${done} de ${clips.length} grabados · unos ${fmt(clips.reduce((t, c) => t + clipSecs(c), 0))} en total`;
+      const clipSecs = (c: Clip) => {
+        if (c.refWords.length) {
+          return (c.refWords.at(-1)?.t ?? 0) + 1.2;
+        }
+        return c.ideas.reduce((t, l) => t + secs(l), 0);
+      };
+      const fmt = (s: number) =>
+        `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+      const fmtPrecise = (s: number) => {
+        const clamped = Math.max(0, s);
+        const m = Math.floor(clamped / 60);
+        const sec = (clamped % 60).toFixed(1).padStart(4, '0');
+        return `${m}:${sec}`;
       };
 
-      let index = Math.max(0, clips.findIndex(c => c.key === read('tp.key')));
+      const isLipsyncActive = (c: Clip = clip()) =>
+        studioMode === 'lipsync' && c.hasVideo && c.refWords.length > 0;
+
+      const updateSidebarBadges = () => {
+        for (const c of clips) {
+          const tag = document.querySelector<HTMLElement>(
+            `[data-adr-tag="${CSS.escape(c.key)}"]`,
+          );
+          if (tag) tag.hidden = !c.lipsynced;
+        }
+      };
+
+      const total = () => {
+        const totalDur = fmt(clips.reduce((t, c) => t + clipSecs(c), 0));
+        if (studioMode === 'lipsync' && clips.some(c => c.hasVideo)) {
+          const adrDone = clips.filter(c => c.lipsynced).length;
+          const withVid = clips.filter(c => c.hasVideo).length;
+          $('[data-total]').textContent =
+            `${adrDone} de ${withVid} con lip-sync · ~${totalDur} total`;
+        } else {
+          const done = clips.filter(c => c.status === 'new').length;
+          $('[data-total]').textContent =
+            `${done} de ${clips.length} grabados · ~${totalDur} total`;
+        }
+        updateSidebarBadges();
+      };
+
+      let index = Math.max(
+        0,
+        clips.findIndex(c => c.key === read('tp.key')),
+      );
       let mode: 'idle' | 'count' | 'rec' | 'done' | 'play' = 'idle';
+      let playKind: 'take' | 'saved' | 'guide' = 'saved';
       let line = 0;
       let cues: number[] = [];
+      let playingSubs: string[] = [];
       let take: Blob | null = null;
+      let takeUrl: string | null = null;
+      let takeIsLipsync = false;
+      let takeSyncOffset = 0;
+      let takePunchIn = 0;
+      let takeManualStop = false;
       let recorder: MediaRecorder | null = null;
+      let endStopTimer: number | undefined;
       const player = new Audio();
+      const guidePlayer = new Audio();
+      guidePlayer.preload = 'auto';
+
+      let phrases: KaraokePhrase[] = [];
+      let selectedPhraseIdx = 0;
+      let activeScrolledPhrase = -1;
 
       const clip = () => clips[index];
 
+      const showSaid = (lines: string[]) => {
+        saidEl.hidden = !lines.length || isLipsyncActive();
+        saidText.textContent = lines.join(' ');
+      };
+
+      /** Group verbatim `refWords` into natural breath/clause phrases with pause cues. */
+      const buildKaraokePhrases = (words: RefWord[]): KaraokePhrase[] => {
+        if (!words.length) return [];
+        const tokens: KaraokeToken[] = words.map((w, i) => {
+          const nextT = i + 1 < words.length ? words[i + 1].t : w.t + 0.55;
+          const gap = Math.max(0.08, nextT - w.t);
+          const estSpeak = Math.max(0.14, Math.min(0.65, w.w.length * 0.055));
+          return {
+            w: w.w,
+            t: w.t,
+            end: w.t + Math.min(gap, estSpeak),
+          };
+        });
+
+        const out: KaraokePhrase[] = [];
+        let cur: KaraokeToken[] = [];
+        let pauseBeforeCur = 0;
+        let pauseStartCur = 0;
+
+        const flush = () => {
+          if (!cur.length) return;
+          out.push({
+            idx: out.length,
+            start: cur[0].t,
+            end: cur.at(-1)!.end,
+            pauseBefore: pauseBeforeCur,
+            pauseStart: pauseStartCur,
+            tokens: cur,
+          });
+          cur = [];
+          pauseBeforeCur = 0;
+          pauseStartCur = 0;
+        };
+
+        for (let i = 0; i < tokens.length; i++) {
+          const tk = tokens[i];
+          if (cur.length > 0) {
+            const prev = cur.at(-1)!;
+            const silenceGap = tk.t - prev.end;
+            const rawGap = tk.t - prev.t;
+            const prevEndsSentence = /[.?!…。？！]$/.test(prev.w);
+            const prevEndsClause = /[,;:—，；：、]$/.test(prev.w);
+            const maxTokens = lang === 'zh' ? 20 : 11;
+            const clauseMin = lang === 'zh' ? 12 : 7;
+            const sentMin = lang === 'zh' ? 6 : 4;
+            if (
+              silenceGap >= 0.48 ||
+              rawGap >= 0.85 ||
+              (prevEndsSentence && cur.length >= sentMin) ||
+              (prevEndsClause && cur.length >= clauseMin) ||
+              cur.length >= maxTokens
+            ) {
+              const pStart = prev.end;
+              const pDur = Math.max(0, tk.t - pStart);
+              flush();
+              pauseBeforeCur = pDur >= 0.5 ? pDur : 0;
+              pauseStartCur = pStart;
+            }
+          }
+          cur.push(tk);
+        }
+        flush();
+        return out;
+      };
+
       const renderLines = () => {
+        const c = clip();
+        activeScrolledPhrase = -1;
+        if (isLipsyncActive(c)) {
+          phrases = buildKaraokePhrases(c.refWords);
+          selectedPhraseIdx = Math.min(
+            selectedPhraseIdx,
+            Math.max(0, phrases.length - 1),
+          );
+          const nodes = phrases.map(ph => {
+            const row = document.createElement('div');
+            row.className = 'kp';
+            row.dataset.pIdx = String(ph.idx);
+            if (ph.idx === selectedPhraseIdx) row.classList.add('is-entry');
+
+            const meta = document.createElement('div');
+            meta.className = 'kp-meta';
+            const stampBtn = document.createElement('span');
+            stampBtn.className = 'kp-time';
+            stampBtn.textContent = fmtPrecise(ph.start);
+            meta.append(stampBtn);
+
+            if (ph.pauseBefore >= 0.5) {
+              const breath = document.createElement('span');
+              breath.className = 'kp-breath';
+              const fill = document.createElement('span');
+              fill.className = 'kp-breath-fill';
+              const lbl = document.createElement('span');
+              lbl.className = 'kp-breath-lbl';
+              lbl.textContent = `pausa ${ph.pauseBefore.toFixed(1)}s`;
+              breath.append(fill, lbl);
+              ph.breathFillEl = fill;
+              meta.append(breath);
+            }
+
+            const textWrap = document.createElement('div');
+            textWrap.className = 'kp-words';
+            ph.tokens.forEach((tk, wi) => {
+              if (wi > 0 && lang !== 'zh') textWrap.append(' ');
+              const sp = document.createElement('span');
+              sp.className = 'kw';
+              sp.textContent = tk.w;
+              tk.el = sp;
+              textWrap.append(sp);
+            });
+
+            row.append(meta, textWrap);
+            ph.el = row;
+
+            row.addEventListener('click', () => {
+              selectPhrase(ph.idx, true);
+            });
+            row.addEventListener('dblclick', () => {
+              selectPhrase(ph.idx, false);
+              playGuide();
+            });
+            return row;
+          });
+          linesEl.replaceChildren(...nodes);
+          linesEl.classList.add('is-karaoke');
+          resetPhraseBtn.hidden = selectedPhraseIdx === 0;
+          return;
+        }
+
+        phrases = [];
+        linesEl.classList.remove('is-karaoke');
         linesEl.replaceChildren(
-          ...clip().ideas.map((text, i) => {
+          ...c.ideas.map((text, i) => {
             const p = document.createElement('p');
             p.textContent = text;
             p.dataset.i = String(i);
@@ -218,48 +592,228 @@ const list = scripts.es;
         );
       };
 
+      const clearKaraokePaint = () => {
+        for (const ph of phrases) {
+          ph.el?.classList.remove('is-past', 'is-now', 'is-next');
+          if (ph.breathFillEl) ph.breathFillEl.style.width = '0%';
+          for (const tk of ph.tokens) {
+            tk.el?.classList.remove('is-said', 'is-saying');
+          }
+        }
+        activeScrolledPhrase = -1;
+      };
+
+      /** Paint word-by-word karaoke at video timestamp `t` (seconds), with 85ms visual anticipation. */
+      const paintKaraokeAt = (t: number) => {
+        if (!phrases.length) return;
+        const lead = t + 0.085;
+        let curIdx = 0;
+        for (let i = 0; i < phrases.length; i++) {
+          if (lead >= phrases[i].start || (phrases[i].pauseBefore >= 0.5 && lead >= phrases[i].pauseStart)) {
+            curIdx = i;
+          } else {
+            break;
+          }
+        }
+
+        for (let i = 0; i < phrases.length; i++) {
+          const ph = phrases[i];
+          const el = ph.el;
+          if (!el) continue;
+          const isPast = i < curIdx;
+          const isNow = i === curIdx;
+          const isNext = i === curIdx + 1;
+          el.classList.toggle('is-past', isPast);
+          el.classList.toggle('is-now', isNow);
+          el.classList.toggle('is-next', isNext);
+
+          if (ph.breathFillEl) {
+            if (isPast || t >= ph.start) {
+              ph.breathFillEl.style.width = '100%';
+            } else if (t > ph.pauseStart && ph.start > ph.pauseStart) {
+              const pct = Math.min(
+                100,
+                Math.max(0, ((t - ph.pauseStart) / (ph.start - ph.pauseStart)) * 100),
+              );
+              ph.breathFillEl.style.width = `${pct.toFixed(1)}%`;
+            } else {
+              ph.breathFillEl.style.width = '0%';
+            }
+          }
+
+          if (isPast) {
+            for (const tk of ph.tokens) {
+              tk.el?.classList.add('is-said');
+              tk.el?.classList.remove('is-saying');
+            }
+          } else if (isNow) {
+            for (const tk of ph.tokens) {
+              const saying = lead >= tk.t && t <= tk.end + 0.08;
+              const said = !saying && t > tk.end + 0.08;
+              tk.el?.classList.toggle('is-saying', saying);
+              tk.el?.classList.toggle('is-said', said);
+            }
+          } else {
+            for (const tk of ph.tokens) {
+              tk.el?.classList.remove('is-said', 'is-saying');
+            }
+          }
+        }
+
+        if (curIdx !== activeScrolledPhrase) {
+          activeScrolledPhrase = curIdx;
+          const targetEl = phrases[curIdx]?.el;
+          if (targetEl) {
+            const colRect = scrollCol.getBoundingClientRect();
+            const rowRect = targetEl.getBoundingClientRect();
+            const targetScroll =
+              scrollCol.scrollTop +
+              (rowRect.top - colRect.top) -
+              colRect.height * 0.34;
+            scrollCol.scrollTo({
+              top: Math.max(0, targetScroll),
+              behavior: 'smooth',
+            });
+          }
+        }
+      };
+
+      const selectPhrase = (idx: number, seekMedia: boolean) => {
+        if (mode === 'rec' || mode === 'count') return;
+        selectedPhraseIdx = Math.max(0, Math.min(idx, Math.max(0, phrases.length - 1)));
+        phrases.forEach((ph, i) =>
+          ph.el?.classList.toggle('is-entry', i === selectedPhraseIdx),
+        );
+        resetPhraseBtn.hidden = selectedPhraseIdx === 0;
+        const targetT = phrases[selectedPhraseIdx]?.start ?? 0;
+        if (seekMedia && isLipsyncActive()) {
+          if (mode === 'play') {
+            seekSyncedPlayback(targetT);
+          } else {
+            try {
+              refVideo.currentTime = targetT;
+            } catch {}
+            paintKaraokeAt(targetT);
+          }
+        }
+        sync();
+      };
+
+      resetPhraseBtn.addEventListener('click', () => selectPhrase(0, true));
+
       const mark = (i: number) => {
         line = i;
+        if (isLipsyncActive()) return;
         linesEl.querySelectorAll('p').forEach((p, j) => {
           p.classList.toggle('is-past', j < i);
           p.classList.toggle('is-now', j === i);
         });
-        linesEl.querySelector('.is-now')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        linesEl
+          .querySelector('.is-now')
+          ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      };
+
+      const updateRefClock = () => {
+        if (refWrap.hidden) return;
+        const cur = refVideo.currentTime || 0;
+        const dur = Number.isFinite(refVideo.duration) ? refVideo.duration : clipSecs(clip());
+        refClock.textContent = `${fmtPrecise(cur)} / ${fmtPrecise(dur)}`;
+        const pct = dur > 0 ? Math.min(100, Math.max(0, (cur / dur) * 100)) : 0;
+        refProgress.style.width = `${pct.toFixed(2)}%`;
+      };
+      refVideo.addEventListener('timeupdate', updateRefClock);
+      refVideo.addEventListener('loadedmetadata', updateRefClock);
+
+      const syncStageMedia = () => {
+        const c = clip();
+        const ls = isLipsyncActive(c);
+        lipsyncTools.hidden = !ls;
+        lipsyncBanner.hidden = !ls;
+        $('[data-cam-on]').hidden = ls || Boolean(camStream);
+        cam.hidden = ls || !camStream;
+        camView.hidden = ls || !camStream;
+
+        if (ls && c.video) {
+          refWrap.hidden = false;
+          shot.hidden = true;
+          if (refVideo.getAttribute('src') !== c.video) {
+            refVideo.src = c.video;
+            refVideo.load();
+          }
+          if (guidePlayer.dataset.key !== `${lang}:${c.key}`) {
+            guidePlayer.dataset.key = `${lang}:${c.key}`;
+            guidePlayer.src = `${c.guideAudio}&t=${Date.now()}`;
+          }
+        } else {
+          refWrap.hidden = true;
+          refVideo.pause();
+          shot.hidden = !c.shot;
+          if (c.shot) shot.src = c.shot;
+        }
+
+        document
+          .querySelectorAll<HTMLButtonElement>('[data-studio-mode]')
+          .forEach(b => {
+            const m = b.dataset.studioMode as 'lipsync' | 'full';
+            b.classList.toggle('is-on', m === (ls ? 'lipsync' : 'full'));
+            if (m === 'lipsync') b.disabled = !c.hasVideo || !c.refWords.length;
+          });
       };
 
       const select = (i: number) => {
         if (mode === 'rec' || mode === 'count') return;
         stopPlayback();
         index = (i + clips.length) % clips.length;
-        keep('tp.key', clip().key);
+        const c = clip();
+        keep('tp.key', c.key);
+        if (takeUrl) {
+          URL.revokeObjectURL(takeUrl);
+          takeUrl = null;
+        }
         take = null;
         cues = [];
+        selectedPhraseIdx = 0;
         mode = 'idle';
-        $('[data-where]').textContent = clip().where;
-        $('[data-key]').textContent = `${clip().key} · ${lang} · ~${fmt(clipSecs(clip()))}`;
+        $('[data-where]').textContent = c.where;
+        $('[data-key]').textContent =
+          `${c.key} · ${lang} · ~${fmt(clipSecs(c))}` +
+          (c.lipsynced ? ' · ADR ✓' : c.hasVideo ? ' · video listo' : '');
         const draft = $('[data-draft]');
-        draft.hidden = !clip().draft;
-        draft.textContent = clip().draft ?? '';
-        document.querySelectorAll<HTMLElement>('[data-pick]').forEach(b =>
-          b.classList.toggle('is-on', b.dataset.pick === clip().key),
-        );
+        draft.hidden = !c.draft;
+        draft.textContent = c.draft ?? '';
+        document
+          .querySelectorAll<HTMLElement>('[data-pick]')
+          .forEach(b => b.classList.toggle('is-on', b.dataset.pick === c.key));
         document.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' });
-        shot.hidden = !clip().shot;
-        if (clip().shot) shot.src = clip().shot!;
+
+        syncStageMedia();
         renderLines();
         mark(0);
+        if (isLipsyncActive(c)) {
+          try {
+            refVideo.currentTime = 0;
+          } catch {}
+          clearKaraokePaint();
+          scrollCol.scrollTop = 0;
+        }
         showSaid([]);
-        if (clip().status === 'new') loadSaid(clip());
+        if (c.status === 'new' && !isLipsyncActive(c)) loadSaid(c);
         sync();
       };
 
       /** The saved clip's subtitles: their text, and when each starts. */
       const readVtt = async (c: Clip) => {
-        const vtt = await (await fetch(c.audio!.replace(/\.m4a$/, '.vtt'), { cache: 'no-store' })).text();
-        const cues = [...vtt.matchAll(/(\d+):(\d+):([\d.]+) -->[^\n]*\n([^\n]+)/g)];
+        const vtt = await (
+          await fetch(`${c.audio!.replace(/\.m4a$/, '.vtt')}?t=${Date.now()}`, {
+            cache: 'no-store',
+          })
+        ).text();
+        const matched = [
+          ...vtt.matchAll(/(\d+):(\d+):([\d.]+) -->[^\n]*\n([^\n]+)/g),
+        ];
         return {
-          at: cues.map(m => +m[1] * 3600 + +m[2] * 60 + +m[3]),
-          lines: cues.map(m => m[4]),
+          at: matched.map(m => +m[1] * 3600 + +m[2] * 60 + +m[3]),
+          lines: matched.map(m => m[4]),
         };
       };
       const loadSaid = async (c: Clip) => {
@@ -274,56 +828,184 @@ const list = scripts.es;
         clips = scripts[lang];
         document.documentElement.lang = lang;
         document.documentElement.dataset.tpLang = lang;
-        document.querySelectorAll<HTMLElement>('[data-lang-pick]').forEach(b =>
-          b.setAttribute('aria-selected', String(b.dataset.langPick === lang)),
-        );
+        document
+          .querySelectorAll<HTMLElement>('[data-lang-pick]')
+          .forEach(b =>
+            b.setAttribute('aria-selected', String(b.dataset.langPick === lang)),
+          );
         total();
         select(index);
       };
-      document.querySelectorAll<HTMLButtonElement>('[data-lang-pick]').forEach(b =>
-        b.addEventListener('click', () => {
-          b.blur();
-          pickLang(b.dataset.langPick as Lang);
-        }),
-      );
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-lang-pick]')
+        .forEach(b =>
+          b.addEventListener('click', () => {
+            b.blur();
+            pickLang(b.dataset.langPick as Lang);
+          }),
+        );
+
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-studio-mode]')
+        .forEach(b =>
+          b.addEventListener('click', () => {
+            if (mode === 'rec' || mode === 'count') return;
+            b.blur();
+            const next = b.dataset.studioMode as 'lipsync' | 'full';
+            if (next === 'lipsync' && (!clip().hasVideo || !clip().refWords.length))
+              return;
+            studioMode = next;
+            keep('tp.studioMode', studioMode);
+            total();
+            select(index);
+          }),
+        );
+
+      guideChk.addEventListener('change', () => {
+        keep('tp.guide', guideChk.checked ? '1' : '0');
+        if (mode === 'rec' && isLipsyncActive()) {
+          if (guideChk.checked) {
+            guidePlayer.volume = 0.3;
+            guidePlayer.currentTime = refVideo.currentTime;
+            guidePlayer.play().catch(() => {});
+          } else {
+            guidePlayer.pause();
+          }
+        }
+      });
+
+      mirrorChk.addEventListener('change', () => {
+        keep('tp.mirror', mirrorChk.checked ? '1' : '0');
+        refVideo.classList.toggle('is-mirrored', mirrorChk.checked);
+      });
+
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-nudge]')
+        .forEach(b =>
+          b.addEventListener('click', () => {
+            b.blur();
+            const delta = Number(b.dataset.nudge) || 0;
+            nudgeMs = Math.max(-300, Math.min(300, nudgeMs + delta));
+            keep('tp.nudgeMs', String(nudgeMs));
+            updateNudgeUI();
+            // Live re-sync while previewing a recorded lip-sync take!
+            if (mode === 'play' && playKind === 'take' && takeIsLipsync) {
+              const vidT = refVideo.currentTime;
+              const targetAudioT = Math.max(
+                0,
+                effectiveSyncOffset() + (vidT - takePunchIn),
+              );
+              try {
+                player.currentTime = targetAudioT;
+              } catch {}
+            }
+          }),
+        );
+
+      const effectiveSyncOffset = () =>
+        Math.max(0, takeSyncOffset + nudgeMs / 1000);
 
       const sync = () => {
         const c = clip();
-        btn('record').hidden = mode === 'rec' || mode === 'count' || !c.ideas.length;
-        btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
+        const ls = isLipsyncActive(c);
+        const selTime = phrases[selectedPhraseIdx]?.start ?? 0;
+        const canPunch =
+          ls &&
+          selectedPhraseIdx > 0 &&
+          Boolean(c.audio) &&
+          mode !== 'rec' &&
+          mode !== 'count';
+
+        btn('record').hidden =
+          mode === 'rec' || mode === 'count' || (!ls && !c.ideas.length);
+        btn('record').firstChild!.textContent = ls
+          ? take
+            ? 'Repetir desde 0:00 '
+            : 'Grabar Lip-Sync '
+          : take
+            ? 'Repetir '
+            : 'Grabar ';
+
+        btn('punch').hidden = !canPunch;
+        if (canPunch) {
+          btn('punch').firstChild!.textContent =
+            `Punch-in desde ${fmtPrecise(selTime)} `;
+        }
+
+        btn('finish').hidden = mode !== 'rec' || !ls;
         btn('next').hidden = mode !== 'rec';
-        btn('next').firstChild!.textContent =
-          line + 1 >= c.ideas.length ? 'Terminar y guardar ' : lang === 'es' ? 'Siguiente idea ' : 'Siguiente bloque ';
-        btn('stop').hidden = mode !== 'rec';
-        btn('take').hidden = !take || mode === 'rec';
-        btn('save').hidden = !take || mode === 'rec';
+        btn('next').firstChild!.textContent = ls
+          ? 'Terminar y guardar '
+          : line + 1 >= c.ideas.length
+            ? 'Terminar y guardar '
+            : 'Siguiente bloque ';
+
+        btn('stop').hidden = mode !== 'rec' && mode !== 'count';
+        btn('take').hidden = !take || mode === 'rec' || mode === 'count';
+        btn('take').firstChild!.textContent = takeIsLipsync
+          ? 'Ver Lip-Sync grabado '
+          : 'Escuchar toma ';
+        btn('save').hidden = !take || mode === 'rec' || mode === 'count';
         btn('current').hidden = !c.audio || mode === 'rec' || mode === 'count';
-        linesEl.classList.toggle('is-rec', mode === 'rec');
-        const said: Record<string, string> = {
-          idle:
-            c.status === 'new'
-              ? 'Ya grabado. Puedes repetirlo.'
-              : !c.ideas.length
-                ? 'Este guión aún no está escrito en este idioma.'
-                : c.status === 'old'
-                  ? 'Hay una grabación vieja, de antes del guión.'
-                  : 'Sin grabar.',
-          count: 'Preparado…',
-          rec: `Grabando (${lang})…`,
-          done: 'Toma lista. Escúchala o guárdala.',
-          play: 'Reproduciendo…',
-        };
-        stateEl.textContent = said[mode];
+        btn('current').firstChild!.textContent = ls
+          ? 'Ver guardado '
+          : 'Escuchar guardado ';
+        btn('guide').hidden = !ls || mode === 'rec' || mode === 'count';
+
+        linesEl.classList.toggle('is-rec', mode === 'rec' || mode === 'play');
+
+        if (mode === 'idle') {
+          refBadge.hidden = true;
+          refCountdown.hidden = true;
+          if (ls) {
+            stateEl.textContent = c.lipsynced
+              ? `Lip-Sync ADR ya guardado para ${c.key}. Pulsa L para verlo, G para guía original, o R para grabar otra toma.`
+              : `Modo Lip-Sync listo (${c.refWords.length} palabras exactas · video intacto). Conecta tu mic de cerca y pulsa R.`;
+          } else {
+            stateEl.textContent =
+              c.status === 'new'
+                ? 'Ya grabado. Puedes repetirlo.'
+                : !c.ideas.length
+                  ? 'Este guión aún no está escrito en este idioma.'
+                  : 'Sin grabar.';
+          }
+        } else if (mode === 'done') {
+          refBadge.hidden = true;
+          refCountdown.hidden = true;
+          stateEl.textContent = takeIsLipsync
+            ? takePunchIn > 0
+              ? `Punch-in listo (desde ${fmtPrecise(takePunchIn)}). Pulsa P para ver el lip-sync o S para empalmar y guardar.`
+              : 'Toma Lip-Sync lista. Pulsa P para verificar tus labios con el nuevo audio, o S para guardar (el video .mp4 no se toca).'
+            : 'Toma lista. Escúchala con P o guárdala con S.';
+        } else if (mode === 'play') {
+          refCountdown.hidden = true;
+          if (ls) {
+            refBadge.hidden = false;
+            refBadge.className = 'ref-badge is-play';
+            refBadge.textContent =
+              playKind === 'take'
+                ? '▶ PREVIEW TOMA NUEVA'
+                : playKind === 'guide'
+                  ? '▶ AUDIO GUÍA ORIGINAL'
+                  : '▶ GUARDADO ACTUAL';
+          }
+          stateEl.textContent =
+            playKind === 'take'
+              ? `Viendo preview Lip-Sync (Sync ${nudgeMs >= 0 ? '+' : ''}${nudgeMs} ms). Usa −20/+20 ms si quieres afinar, o pulsa S para guardar.`
+              : playKind === 'guide'
+                ? 'Ensayando con el audio guía original del video… (espacio para pausar)'
+                : 'Reproduciendo versión guardada en disco… (espacio para pausar)';
+        }
       };
 
-      // Camera (9:16 live mirror beside the script — works with Mac webcam or
-      // wireless iPhone Continuity Camera so Juan can see his gestures without
-      // leaving the teleprompter).
+      // Camera (only used in Stage 1 `full` mode)
       let camStream: MediaStream | null = null;
       const cam = $<HTMLSelectElement>('[data-cam]');
       const camView = $<HTMLVideoElement>('[data-cam-view]');
       const listCams = async () => {
-        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
+          d => d.kind === 'videoinput',
+        );
         const current = camStream?.getVideoTracks()[0]?.getSettings().deviceId;
         cam.replaceChildren(
           ...devices.map(d => {
@@ -347,8 +1029,6 @@ const list = scripts.es;
         try {
           camStream = await req(id);
         } catch {
-          // Safari rotates deviceIds across reloads or when Continuity Camera
-          // wakes up, throwing OverconstrainedError on a saved exact id.
           camStream = await req(undefined);
           fellBack = true;
         }
@@ -367,17 +1047,15 @@ const list = scripts.es;
           }
         }
         camView.srcObject = camStream;
-        camView.hidden = false;
         await listCams();
-        cam.hidden = false;
-        $('[data-cam-on]').hidden = true;
+        syncStageMedia();
       };
       navigator.mediaDevices.addEventListener('devicechange', () => {
         if (camStream) listCams();
       });
       $('[data-cam-on]').addEventListener('click', () =>
         openCam(read('tp.cam') ?? undefined).catch(err => {
-          stateEl.textContent = `No hay acceso a la cámara (${err?.name || 'error'}). Revisa el permiso del navegador.`;
+          stateEl.textContent = `No hay acceso a la cámara (${err?.name || 'error'}).`;
         }),
       );
       cam.addEventListener('change', () => {
@@ -387,23 +1065,22 @@ const list = scripts.es;
         openCam(cam.value);
       });
 
-      // Microphones: ask once so the browser names them, then list.
+      // Microphones: pure unprocessed studio capture
       let stream: MediaStream | null = null;
       const mic = $<HTMLSelectElement>('[data-mic]');
-      const meter = $('[data-meter]');
       let analyser: AnalyserNode | null = null;
+      let micAudioCtx: AudioContext | null = null;
       const openMic = async (id?: string) => {
         stream?.getTracks().forEach(t => t.stop());
         const req = (devId?: string) =>
           navigator.mediaDevices.getUserMedia({
             audio: {
               ...(devId ? { deviceId: { exact: devId } } : {}),
-              // His voice as the mic hears it: the browser's call-quality
-              // processing pumps and gates a narration.
               echoCancellation: false,
               noiseSuppression: false,
               autoGainControl: false,
               channelCount: 1,
+              sampleRate: 48000,
             },
           });
         let fellBack = false;
@@ -427,7 +1104,9 @@ const list = scripts.es;
             } catch {}
           }
         }
-        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
+          d => d.kind === 'audioinput',
+        );
         const current = stream.getAudioTracks()[0].getSettings().deviceId;
         mic.replaceChildren(
           ...devices.map(d => {
@@ -437,16 +1116,17 @@ const list = scripts.es;
           }),
         );
         mic.hidden = false;
-        meter.parentElement!.hidden = false;
+        meterWrap.hidden = false;
         $('[data-mic-on]').hidden = true;
-        const ctx = new AudioContext();
-        analyser = ctx.createAnalyser();
+        micAudioCtx?.close().catch(() => {});
+        micAudioCtx = new AudioContext();
+        analyser = micAudioCtx.createAnalyser();
         analyser.fftSize = 1024;
-        ctx.createMediaStreamSource(stream).connect(analyser);
+        micAudioCtx.createMediaStreamSource(stream).connect(analyser);
       };
       $('[data-mic-on]').addEventListener('click', () =>
         openMic(read('tp.mic') ?? undefined).catch(err => {
-          stateEl.textContent = `No hay acceso al micrófono (${err?.name || 'error'}). Revisa el permiso del navegador.`;
+          stateEl.textContent = `No hay acceso al micrófono (${err?.name || 'error'}).`;
         }),
       );
       mic.addEventListener('change', () => {
@@ -455,16 +1135,26 @@ const list = scripts.es;
         if (label) keep('tp.mic.label', label);
         openMic(mic.value);
       });
+
       const level = new Float32Array(1024);
+      let heldDb = -60;
       const tick = () => {
         if (analyser) {
           analyser.getFloatTimeDomainData(level);
           let peak = 0;
           for (const v of level) peak = Math.max(peak, Math.abs(v));
           meter.style.width = `${Math.min(100, peak * 100)}%`;
-          meter.classList.toggle('is-hot', peak > 0.95);
+          meter.classList.toggle('is-hot', peak > 0.94);
+          meter.classList.toggle('is-good', peak >= 0.12 && peak <= 0.85);
+          const db = peak > 0.0001 ? 20 * Math.log10(peak) : -60;
+          heldDb = db > heldDb ? db : heldDb * 0.94 + db * 0.06;
+          meterDb.textContent =
+            heldDb <= -55 ? '−∞ dB' : `${heldDb.toFixed(0)} dB`;
         }
-        if (mode === 'play') {
+        if ((mode === 'rec' || mode === 'count' || mode === 'play') && isLipsyncActive()) {
+          paintKaraokeAt(refVideo.currentTime || 0);
+          updateRefClock();
+        } else if (mode === 'play' && !isLipsyncActive()) {
           const t = player.currentTime;
           let i = 0;
           while (i + 1 < cues.length && cues[i + 1] <= t) i++;
@@ -475,11 +1165,203 @@ const list = scripts.es;
       };
       requestAnimationFrame(tick);
 
+      const waitSeek = (v: HTMLVideoElement, target: number) =>
+        new Promise<void>(resolve => {
+          const done = () => {
+            v.removeEventListener('seeked', done);
+            resolve();
+          };
+          if (v.readyState >= 1 && Math.abs(v.currentTime - target) < 0.03) {
+            resolve();
+            return;
+          }
+          v.addEventListener('seeked', done, { once: true });
+          const apply = () => {
+            try {
+              v.currentTime = target;
+            } catch {
+              resolve();
+            }
+          };
+          if (v.readyState >= 1) apply();
+          else v.addEventListener('loadedmetadata', apply, { once: true });
+          setTimeout(done, 500);
+        });
+
+      let saveWhenDone = false;
+
+      const startLipsyncRecord = async (punchFromPhrase = false) => {
+        stopPlayback();
+        clearTimeout(endStopTimer);
+        if (!stream) await openMic(read('tp.mic') ?? undefined);
+
+        const punchSec =
+          punchFromPhrase && selectedPhraseIdx > 0
+            ? (phrases[selectedPhraseIdx]?.start ?? 0)
+            : 0;
+        const preRollStart = punchSec > 0 ? Math.max(0, punchSec - 3.0) : 0;
+
+        mode = 'count';
+        if (takeUrl) {
+          URL.revokeObjectURL(takeUrl);
+          takeUrl = null;
+        }
+        take = null;
+        takeIsLipsync = true;
+        takePunchIn = punchSec;
+        takeManualStop = false;
+        saveWhenDone = false;
+
+        await waitSeek(refVideo, preRollStart);
+        paintKaraokeAt(preRollStart);
+        sync();
+
+        // Start MediaRecorder BEFORE countdown so Opus encoder spin-up happens
+        // during the pre-roll, giving 0ms hitch and exact `performance.now()` sync!
+        const chunks: Blob[] = [];
+        const tracks = [...stream!.getAudioTracks()];
+        const candidates = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+        ];
+        const mimeType =
+          candidates.find(m => MediaRecorder.isTypeSupported(m)) ?? '';
+        recorder = new MediaRecorder(new MediaStream(tracks), {
+          ...(mimeType ? { mimeType } : {}),
+          audioBitsPerSecond: 256000,
+        });
+
+        let recStartPerf = 0;
+        const startedPromise = new Promise<void>(resolve => {
+          recorder!.onstart = () => {
+            recStartPerf = performance.now();
+            resolve();
+          };
+        });
+        recorder.ondataavailable = e => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+        recorder.onstop = () => {
+          clearTimeout(endStopTimer);
+          refVideo.pause();
+          guidePlayer.pause();
+          refBadge.hidden = true;
+          refCountdown.hidden = true;
+          if (mode === 'idle') return; // Cancelled via Esc
+          take = new Blob(chunks, {
+            type: recorder?.mimeType || 'audio/webm',
+          });
+          takeUrl = URL.createObjectURL(take);
+          mode = 'done';
+          sync();
+          if (saveWhenDone) {
+            saveWhenDone = false;
+            save();
+          }
+        };
+
+        recorder.start();
+        await startedPromise;
+
+        if (punchSec === 0) {
+          // 3 · 2 · 1 visual countdown while recorder is already smoothly rolling.
+          refCountdown.hidden = false;
+          refBadge.hidden = false;
+          refBadge.className = 'ref-badge is-count';
+          refBadge.textContent = 'PREPARADO';
+          for (const n of [3, 2, 1]) {
+            refCountdown.textContent = String(n);
+            stateEl.textContent = `Lip-Sync empieza en ${n}…`;
+            await new Promise(r => setTimeout(r, 550));
+            if (mode !== 'count') return;
+          }
+          refCountdown.hidden = true;
+          if (guideChk.checked) {
+            guidePlayer.volume = 0.3;
+            guidePlayer.currentTime = 0;
+            guidePlayer.play().catch(() => {});
+          }
+          await refVideo.play();
+          takeSyncOffset = Math.max(0, (performance.now() - recStartPerf) / 1000);
+          mode = 'rec';
+          refBadge.className = 'ref-badge is-rec';
+          refBadge.textContent = '● REC LIP-SYNC';
+          stateEl.textContent =
+            'Grabando Lip-Sync… sigue las palabras iluminadas (espacio = revisar, enter = guardar).';
+          sync();
+        } else {
+          // Punch-in pre-roll: play video from `punchSec - 3s` so Juan locks into
+          // his own rhythm, then punch in seamlessly at `punchSec`!
+          refBadge.hidden = false;
+          refBadge.className = 'ref-badge is-count';
+          if (guideChk.checked) {
+            guidePlayer.volume = 0.32;
+            guidePlayer.currentTime = preRollStart;
+            guidePlayer.play().catch(() => {});
+          }
+          await refVideo.play();
+          await new Promise<void>(resolve => {
+            const check = () => {
+              if (mode !== 'count') {
+                resolve();
+                return;
+              }
+              const rem = punchSec - refVideo.currentTime;
+              if (rem <= 0.015) {
+                takeSyncOffset = Math.max(
+                  0,
+                  (performance.now() - recStartPerf) / 1000,
+                );
+                resolve();
+                return;
+              }
+              refBadge.textContent = `PRE-ROLL · ENTRA EN ${rem.toFixed(1)}s`;
+              stateEl.textContent = `Pre-roll… entras en ${rem.toFixed(1)}s`;
+              requestAnimationFrame(check);
+            };
+            requestAnimationFrame(check);
+          });
+          if (mode !== 'count') return;
+          if (!guideChk.checked) guidePlayer.pause();
+          mode = 'rec';
+          refBadge.className = 'ref-badge is-rec';
+          refBadge.textContent = `● PUNCH-IN (${fmtPrecise(punchSec)})`;
+          stateEl.textContent = `Grabando Punch-in desde ${fmtPrecise(punchSec)}… (espacio = cortar aquí y revisar, o sigue hasta el final).`;
+          sync();
+        }
+
+        // Auto-stop 350ms after the clip's own video finishes so trailing consonants breathe cleanly.
+        // When dubbing `en`/`zh` over the Spanish guide video (`!c.hasOwnVideo`), keep recording until
+        // Juan presses Space/Enter so a slightly longer translated sentence is never cut off.
+        const onVidEnd = () => {
+          if (mode !== 'rec') return;
+          if (clip().hasOwnVideo) {
+            endStopTimer = window.setTimeout(() => {
+              if (mode === 'rec') {
+                takeManualStop = false;
+                recorder?.stop();
+              }
+            }, 350);
+          } else {
+            refBadge.textContent = '● GRABANDO (VIDEO GUÍA TERMINÓ)';
+            stateEl.textContent =
+              'Video guía terminó — termina tu frase tranquilo y pulsa Espacio (revisar) o S (guardar).';
+          }
+        };
+        refVideo.addEventListener('ended', onVidEnd, { once: true });
+      };
+
       const record = async () => {
+        if (isLipsyncActive()) {
+          return startLipsyncRecord(false);
+        }
         stopPlayback();
         if (!stream) await openMic(read('tp.mic') ?? undefined);
         mode = 'count';
         take = null;
+        takeIsLipsync = false;
+        takePunchIn = 0;
         mark(0);
         sync();
         for (const n of [3, 2, 1]) {
@@ -494,9 +1376,15 @@ const list = scripts.es;
         ];
         const hasVideo = tracks.some(t => t.kind === 'video');
         const candidates = hasVideo
-          ? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+          ? [
+              'video/webm;codecs=vp9,opus',
+              'video/webm;codecs=vp8,opus',
+              'video/webm',
+              'video/mp4',
+            ]
           : ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
-        const mimeType = candidates.find(m => MediaRecorder.isTypeSupported(m)) ?? '';
+        const mimeType =
+          candidates.find(m => MediaRecorder.isTypeSupported(m)) ?? '';
         recorder = new MediaRecorder(new MediaStream(tracks), {
           ...(mimeType ? { mimeType } : {}),
           audioBitsPerSecond: 256000,
@@ -504,7 +1392,12 @@ const list = scripts.es;
         });
         recorder.ondataavailable = e => chunks.push(e.data);
         recorder.onstop = () => {
-          take = new Blob(chunks, { type: recorder?.mimeType || (hasVideo ? 'video/mp4' : 'audio/mp4') });
+          if (mode === 'idle') return;
+          take = new Blob(chunks, {
+            type: recorder?.mimeType || (hasVideo ? 'video/mp4' : 'audio/mp4'),
+          });
+          if (takeUrl) URL.revokeObjectURL(takeUrl);
+          takeUrl = URL.createObjectURL(take);
           mode = 'done';
           mark(0);
           sync();
@@ -518,136 +1411,313 @@ const list = scripts.es;
         sync();
       };
 
-      // Only his place in the list: the take's timing comes from the
-      // transcript, not from these taps. Past the LAST idea it ends the
-      // take and saves it — one button the whole way through.
-      let saveWhenDone = false;
+      const punch = () => {
+        if (mode === 'rec' || mode === 'count' || !isLipsyncActive()) return;
+        startLipsyncRecord(true);
+      };
+
+      const finishToReview = () => {
+        if (mode !== 'rec') return;
+        saveWhenDone = false;
+        takeManualStop = true;
+        recorder?.stop();
+      };
+
       const next = () => {
         if (mode !== 'rec') return;
-        if (line + 1 >= clip().ideas.length) {
+        if (isLipsyncActive() || line + 1 >= clip().ideas.length) {
           saveWhenDone = true;
-          return stop();
+          takeManualStop = true;
+          recorder?.stop();
+          return;
         }
         mark(line + 1);
         sync();
       };
 
-      const stop = () => {
-        if (mode === 'count') {
+      const cancelRec = () => {
+        clearTimeout(endStopTimer);
+        if (mode === 'count' || mode === 'rec') {
           mode = 'idle';
-          return sync();
+          refVideo.pause();
+          guidePlayer.pause();
+          if (recorder && recorder.state !== 'inactive') {
+            recorder.stop();
+          }
+          sync();
         }
-        if (mode !== 'rec') return;
-        recorder?.stop();
       };
 
       const stopPlayback = () => {
         player.pause();
+        guidePlayer.pause();
+        if (mode === 'play') {
+          refVideo.pause();
+          mode = take ? 'done' : 'idle';
+        }
         pill.hidden = true;
-        if (mode === 'play') mode = take ? 'done' : 'idle';
       };
 
-      let playingSubs: string[] = [];
-      const play = async (src: string, at: number[], lines: string[] = []) => {
-        stopPlayback();
-        cues = at;
-        playingSubs = lines;
-        player.src = src;
-        await player.play();
-        mode = 'play';
-        pill.hidden = false;
-        sync();
+      const seekSyncedPlayback = (videoSec: number) => {
+        if (mode !== 'play' || !isLipsyncActive()) return;
+        if (playKind === 'take' && takeIsLipsync) {
+          const clampedVid = Math.max(takePunchIn, videoSec);
+          const audioSec = Math.max(
+            0,
+            effectiveSyncOffset() + (clampedVid - takePunchIn),
+          );
+          try {
+            refVideo.currentTime = clampedVid;
+            player.currentTime = audioSec;
+          } catch {}
+        } else {
+          try {
+            refVideo.currentTime = videoSec;
+            player.currentTime = videoSec;
+          } catch {}
+        }
       };
+
+      const playSyncedWithVideo = async (
+        audioSrc: string,
+        kind: 'take' | 'saved' | 'guide',
+        startVidSec = 0,
+        audioOffsetForStart = 0,
+      ) => {
+        stopPlayback();
+        playKind = kind;
+        player.src = audioSrc;
+        await waitSeek(refVideo, startVidSec);
+        await new Promise<void>(resolve => {
+          if (player.readyState >= 1) resolve();
+          else player.addEventListener('loadedmetadata', () => resolve(), { once: true });
+          setTimeout(resolve, 400);
+        });
+        try {
+          player.currentTime = Math.max(0, audioOffsetForStart);
+        } catch {}
+        mode = 'play';
+        sync();
+        await Promise.all([
+          refVideo.play().catch(() => {}),
+          player.play().catch(() => {}),
+        ]);
+      };
+
       player.addEventListener('ended', () => {
         stopPlayback();
         mark(0);
         sync();
       });
 
-      // A take not yet saved has no transcript: it plays without the pill.
-      const playTake = () => take && play(URL.createObjectURL(take), [0], []);
+      const playTake = async () => {
+        if (!take || !takeUrl) return;
+        if (takeIsLipsync && isLipsyncActive()) {
+          const startFrom =
+            selectedPhraseIdx > 0
+              ? Math.max(takePunchIn, phrases[selectedPhraseIdx]?.start ?? 0)
+              : takePunchIn;
+          const audioStart =
+            effectiveSyncOffset() + (startFrom - takePunchIn);
+          await playSyncedWithVideo(takeUrl, 'take', startFrom, audioStart);
+          return;
+        }
+        stopPlayback();
+        cues = [0];
+        playingSubs = [];
+        player.src = takeUrl;
+        await player.play();
+        mode = 'play';
+        pill.hidden = false;
+        sync();
+      };
 
       const playCurrent = async () => {
         const c = clip();
         if (!c.audio) return;
-        const { at, lines } = c.status === 'new' ? await readVtt(c) : { at: [0], lines: [] };
-        play(`${c.audio}?t=${Date.now()}`, at, lines);
+        if (isLipsyncActive(c)) {
+          const startFrom = phrases[selectedPhraseIdx]?.start ?? 0;
+          await playSyncedWithVideo(
+            `${c.audio}?t=${Date.now()}`,
+            'saved',
+            startFrom,
+            startFrom,
+          );
+          return;
+        }
+        const { at, lines } =
+          c.status === 'new' ? await readVtt(c) : { at: [0], lines: [] };
+        stopPlayback();
+        cues = at;
+        playingSubs = lines;
+        player.src = `${c.audio}?t=${Date.now()}`;
+        await player.play();
+        mode = 'play';
+        pill.hidden = false;
+        sync();
+      };
+
+      const playGuide = async () => {
+        const c = clip();
+        if (!isLipsyncActive(c)) return;
+        const startFrom = phrases[selectedPhraseIdx]?.start ?? 0;
+        await playSyncedWithVideo(
+          `${c.guideAudio}&t=${Date.now()}`,
+          'guide',
+          startFrom,
+          startFrom,
+        );
       };
 
       const save = async () => {
-        if (!take || mode === 'rec') return;
+        if (!take || mode === 'rec' || mode === 'count') return;
         stopPlayback();
-        stateEl.textContent = 'Guardando y transcribiendo…';
         const c = clip();
-        const res = await fetch(`/__narration/save?lang=${lang}&key=${encodeURIComponent(c.key)}`, {
-          method: 'POST',
-          headers: { 'x-ideas': encodeURIComponent(JSON.stringify(c.ideas)) },
-          body: take,
-        }).catch(() => new Response(null, { status: 503 }));
-        // A dev server that is down, stale or crashed answers with no JSON;
-        // the take stays here either way, so Guardar can be pressed again.
-        let out: { error?: string; m4a: string; length: number; lines: string[]; esText?: string; enText?: string };
+        const isLs = takeIsLipsync;
+        stateEl.textContent = isLs
+          ? 'Guardando Lip-Sync (256 kbps AAC, sin tocar el .mp4) y actualizando tiempos…'
+          : 'Guardando video + audio y transcribiendo…';
+
+        const promptIdeas = isLs && c.refWords.length
+          ? [c.refWords.map(w => w.w).join(lang === 'zh' ? '' : ' ')]
+          : c.ideas;
+
+        const saveMode = isLs ? 'lipsync' : 'full';
+        const headers: Record<string, string> = {
+          'x-ideas': encodeURIComponent(JSON.stringify(promptIdeas)),
+        };
+        if (isLs) {
+          headers['x-sync-offset'] = effectiveSyncOffset().toFixed(4);
+          headers['x-punch-in'] = takePunchIn.toFixed(4);
+          headers['x-manual-stop'] = takeManualStop ? '1' : '0';
+        }
+
+        const res = await fetch(
+          `/__narration/save?lang=${lang}&key=${encodeURIComponent(c.key)}&mode=${saveMode}`,
+          {
+            method: 'POST',
+            headers,
+            body: take,
+          },
+        ).catch(() => new Response(null, { status: 503 }));
+
+        let out: {
+          error?: string;
+          m4a: string;
+          length: number;
+          lines: string[];
+          esText?: string;
+          enText?: string;
+          lipsynced?: boolean;
+        };
         try {
           out = await res.json();
         } catch {
-          out = { error: `el servidor respondió ${res.status} sin datos`, m4a: '', length: 0, lines: [] };
+          out = {
+            error: `el servidor respondió ${res.status} sin datos`,
+            m4a: '',
+            length: 0,
+            lines: [],
+          };
         }
         if (!res.ok || out.error) {
           mode = 'done';
           sync();
-          stateEl.textContent = `No se pudo guardar (${out.error}). La toma sigue aquí: pulsa Guardar otra vez.`;
+          stateEl.textContent = `No se pudo guardar (${out.error}). La toma sigue en memoria: pulsa S otra vez.`;
           return;
         }
+
         c.status = 'new';
         c.audio = out.m4a;
+        if (out.lipsynced) c.lipsynced = true;
+        if (!isLs) {
+          // Fresh Stage 1 video take: pull new refWords so Lip-Sync mode is immediately available.
+          const refRes = await fetch(
+            `/__narration/ref?lang=${lang}&key=${encodeURIComponent(c.key)}`,
+          ).catch(() => null);
+          if (refRes?.ok) {
+            const info = await refRes.json();
+            c.hasVideo = Boolean(info.hasVideo);
+            c.video = info.videoUrl;
+            c.lipsynced = Boolean(info.lipsynced);
+            if (Array.isArray(info.words)) c.refWords = info.words;
+          }
+        }
         if (lang === 'es' && out.enText) {
           const enClip = scripts.en.find(x => x.key === c.key);
           if (enClip) enClip.ideas = [out.enText];
         }
+
         document
           .querySelector(`[data-pick="${CSS.escape(c.key)}"] [data-dot="${lang}"]`)
           ?.setAttribute('data-status', 'new');
+        $('[data-key]').textContent =
+          `${c.key} · ${lang} · ~${fmt(clipSecs(c))}` +
+          (c.lipsynced ? ' · ADR ✓' : c.hasVideo ? ' · video listo' : '');
         total();
+
+        if (takeUrl) {
+          URL.revokeObjectURL(takeUrl);
+          takeUrl = null;
+        }
         take = null;
         mode = 'idle';
-        if (clip() === c) showSaid(out.lines);
+        if (clip() === c && !isLipsyncActive(c)) showSaid(out.lines);
         sync();
-        stateEl.textContent =
-          lang === 'es' && out.enText
-            ? `Guardado · ${out.length.toFixed(1)} s · Traducción EN lista (cambia a EN para repasarla y grabar).`
-            : `Guardado · ${out.length.toFixed(1)} s · ${out.lines.length} subtítulos. Revisa lo que dijiste, escúchalo con L, o pasa al siguiente con ↓.`;
+        stateEl.textContent = isLs
+          ? `Lip-Sync guardado ✓ · ${out.length.toFixed(1)} s exactos · video .mp4 intacto. Pulsa L para verlo o ↓ para el siguiente.`
+          : `Guardado · ${out.length.toFixed(1)} s · ${out.lines.length} subtítulos.`;
       };
 
       const acts: Record<string, () => unknown> = {
         record,
+        punch,
+        finish: finishToReview,
         next,
-        stop,
+        stop: cancelRec,
         take: playTake,
         save,
         current: playCurrent,
+        guide: playGuide,
       };
       document.querySelectorAll<HTMLButtonElement>('[data-act]').forEach(b =>
         b.addEventListener('click', () => {
           b.blur();
-          acts[b.dataset.act!]();
+          acts[b.dataset.act!]?.();
         }),
       );
-      document.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b, i) =>
-        b.addEventListener('click', () => select(i)),
-      );
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-pick]')
+        .forEach((b, i) => b.addEventListener('click', () => select(i)));
 
       document.addEventListener('keydown', e => {
-        if (e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey) return;
+        if (
+          e.target instanceof HTMLSelectElement ||
+          e.target instanceof HTMLInputElement ||
+          e.metaKey ||
+          e.ctrlKey
+        )
+          return;
         const k = e.key.toLowerCase();
         const map: Record<string, () => unknown> = {
-          ' ': () => (mode === 'rec' ? next() : mode === 'play' ? stopPlayback() : undefined),
-          arrowright: next,
-          enter: next,
-          escape: () => (mode === 'play' ? (stopPlayback(), sync()) : stop()),
+          ' ': () =>
+            mode === 'rec'
+              ? isLipsyncActive()
+                ? finishToReview()
+                : next()
+              : mode === 'play'
+                ? (stopPlayback(), sync())
+                : undefined,
+          enter: () => (mode === 'rec' ? next() : undefined),
+          arrowright: () => (!isLipsyncActive() && mode === 'rec' ? next() : undefined),
+          escape: () =>
+            mode === 'play' ? (stopPlayback(), sync()) : cancelRec(),
           r: () => mode !== 'rec' && mode !== 'count' && record(),
-          p: playTake,
-          s: save,
-          l: playCurrent,
+          u: () => mode !== 'rec' && mode !== 'count' && punch(),
+          p: () => mode !== 'rec' && mode !== 'count' && playTake(),
+          s: () => mode !== 'rec' && mode !== 'count' && save(),
+          l: () => mode !== 'rec' && mode !== 'count' && playCurrent(),
+          g: () => mode !== 'rec' && mode !== 'count' && playGuide(),
           arrowdown: () => select(index + 1),
           arrowup: () => select(index - 1),
         };
@@ -663,7 +1733,7 @@ const list = scripts.es;
     <style is:global>
       body {
         display: grid;
-        grid-template-columns: 19rem 1fr;
+        grid-template-columns: 19.5rem 1fr;
         height: 100vh;
         overflow: hidden;
         margin: 0;
@@ -696,47 +1766,74 @@ const list = scripts.es;
 
       .list {
         overflow-y: auto;
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 1rem;
         border-right: 1px solid var(--hairline);
       }
       .list ol {
         list-style: none;
-        margin: 1rem 0;
+        margin: 0.85rem 0;
         padding: 0;
       }
-      /* A hairline between scripts, so where one clip ends is plain. */
       .list li + li {
-        margin-top: 0.25rem;
-        padding-top: 0.25rem;
+        margin-top: 0.2rem;
+        padding-top: 0.2rem;
         border-top: 1px solid var(--hairline);
       }
-      .list button {
+      .list ol button {
         display: grid;
         grid-template-columns: auto 1fr;
         gap: 0 0.6rem;
         align-items: center;
         width: 100%;
-        padding: 0.525rem 0.675rem;
+        padding: 0.48rem 0.65rem;
         border: 0;
         border-radius: 0.5rem;
         background: none;
         color: var(--ink-2);
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         text-align: left;
         cursor: pointer;
       }
-      .list button:hover {
+      .list ol button:hover {
         background: var(--surface);
       }
-      .list button.is-on {
+      .list ol button.is-on {
         background: var(--surface);
         color: var(--ink);
       }
+      .row-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .row-sub {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4rem;
+        margin-top: 0.12rem;
+      }
       .list .key {
-        grid-column: 2;
-        margin-top: 0.1rem;
         font-size: 0.6875rem;
+      }
+      .adr-tag {
+        padding: 0.08rem 0.38rem;
+        border-radius: 999px;
+        background: rgba(86, 194, 255, 0.16);
+        border: 1px solid rgba(86, 194, 255, 0.45);
+        color: #7cd4ff;
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+      }
+      .adr-tag.is-inline {
+        display: inline-block;
+      }
+      .adr-tag[hidden] {
+        display: none;
       }
       .dot {
         display: inline-block;
@@ -761,7 +1858,7 @@ const list = scripts.es;
       .langs {
         display: flex;
         gap: 0.25rem;
-        margin-top: 0.75rem;
+        margin-top: 0.65rem;
       }
       .langs button {
         flex: 1;
@@ -785,7 +1882,7 @@ const list = scripts.es;
         gap: 0.2rem;
       }
       .draft {
-        margin-top: 0.4rem;
+        margin-top: 0.35rem;
         font-family: var(--font-mono);
         font-size: 0.75rem;
         color: #e5a00d;
@@ -803,57 +1900,133 @@ const list = scripts.es;
       .top {
         display: flex;
         justify-content: space-between;
-        gap: 1rem;
-        padding: 1.5rem 2rem 0;
+        align-items: flex-start;
+        gap: 1.25rem;
+        padding: 1.15rem 2rem 0.75rem;
+        border-bottom: 1px solid var(--hairline);
       }
-      .top .key {
-        margin-top: 0.25rem;
+      .top-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
       }
+      .title-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .studio-modes {
+        display: inline-flex;
+        padding: 0.15rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--surface);
+      }
+      .mode-btn {
+        padding: 0.28rem 0.75rem;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--ink-3);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        cursor: pointer;
+      }
+      .mode-btn.is-on {
+        background: color-mix(in srgb, var(--ink) 18%, transparent);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .mode-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
       .mic {
         display: grid;
-        gap: 0.4rem;
+        gap: 0.45rem;
         justify-items: end;
       }
-      .mic-row {
+      .mic-row,
+      .lipsync-tools {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 0.5rem;
         justify-content: flex-end;
       }
-      .stage-side {
-        display: flex;
-        gap: 1rem;
+      .lipsync-tools[hidden],
+      .meter-wrap[hidden],
+      .mic [hidden] {
+        display: none !important;
+      }
+      .tool-chk {
+        display: inline-flex;
         align-items: center;
-      }
-      .cam-mirror {
-        height: min(68vh, 42rem);
-        aspect-ratio: 9 / 16;
-        object-fit: cover;
-        border-radius: 1.75rem;
+        gap: 0.35rem;
+        padding: 0.25rem 0.55rem;
         border: 1px solid var(--hairline);
+        border-radius: 0.45rem;
         background: var(--surface);
-        transform: scaleX(-1);
+        color: var(--ink-2);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        cursor: pointer;
+        user-select: none;
       }
-      .cam-mirror[hidden] {
-        display: none;
+      .nudge-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.18rem 0.4rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.45rem;
+        background: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-2);
+      }
+      .nudge-btn {
+        padding: 0.1rem 0.35rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.3rem;
+        background: var(--ground);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+      .nudge-btn:hover {
+        border-color: var(--ink-3);
+      }
+      .nudge-val {
+        min-width: 3.6rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink);
       }
       .pick-mic,
       .mic select {
-        max-width: 20rem;
-        padding: 0.35rem 0.5rem;
+        max-width: 19rem;
+        padding: 0.32rem 0.55rem;
         border: 1px solid var(--hairline);
         border-radius: 0.5rem;
         background: var(--surface);
         color: var(--ink-2);
         font: inherit;
-        font-size: 0.8125rem;
+        font-size: 0.8rem;
       }
       .pick-mic {
         cursor: pointer;
       }
+      .meter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
       .meter {
-        width: 12rem;
-        height: 0.25rem;
+        width: 11rem;
+        height: 0.32rem;
         border-radius: 1rem;
         background: var(--hairline);
         overflow: hidden;
@@ -863,9 +2036,21 @@ const list = scripts.es;
         height: 100%;
         width: 0;
         background: var(--ink-2);
+        transition: width 40ms linear;
+      }
+      .meter span.is-good {
+        background: #6fcf8a;
       }
       .meter span.is-hot {
         background: #e5484d;
+      }
+      .meter-db {
+        min-width: 3.6rem;
+        text-align: right;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-3);
       }
 
       .stage {
@@ -875,12 +2060,41 @@ const list = scripts.es;
         min-height: 0;
         padding: 0 2rem;
       }
-      /* Every idea readable at once — they are a map, not a script. */
       .col {
         min-height: 0;
         overflow-y: auto;
-        padding: 2rem 0;
+        padding: 1.25rem 0 45vh;
+        scroll-behavior: smooth;
       }
+      .lipsync-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.65rem;
+        background: color-mix(in srgb, var(--surface) 75%, transparent);
+        font-size: 0.8rem;
+        color: var(--ink-2);
+      }
+      .lipsync-banner[hidden],
+      .reset-sel[hidden] {
+        display: none;
+      }
+      .reset-sel {
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
       .lines {
         margin: 0;
         padding: 0;
@@ -892,7 +2106,6 @@ const list = scripts.es;
         line-height: 1.45;
         letter-spacing: var(--track-heading);
         color: var(--ink-2);
-        transition: color var(--dur-micro) var(--ease), opacity var(--dur-micro) var(--ease);
       }
       .lines.is-rec p.is-past {
         opacity: 0.4;
@@ -900,6 +2113,223 @@ const list = scripts.es;
       .lines.is-rec p.is-now {
         color: var(--ink);
       }
+
+      /* ---------- Karaoke Lip-Sync Phrase Rows ---------- */
+      .lines.is-karaoke {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .kp {
+        display: grid;
+        grid-template-columns: 6.5rem 1fr;
+        gap: 0.85rem;
+        align-items: baseline;
+        padding: 0.6rem 0.85rem;
+        border: 1px solid transparent;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        transition:
+          background-color 120ms ease,
+          border-color 120ms ease,
+          opacity 140ms ease;
+      }
+      .kp:hover {
+        background: color-mix(in srgb, var(--surface) 60%, transparent);
+      }
+      .kp.is-entry {
+        border-color: color-mix(in srgb, var(--ink-3) 65%, transparent);
+      }
+      .lines.is-rec .kp.is-past {
+        opacity: 0.34;
+      }
+      .lines.is-rec .kp.is-now {
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+        border-color: var(--ink-3);
+        opacity: 1;
+      }
+      .lines.is-rec .kp.is-next {
+        opacity: 0.88;
+      }
+      .kp-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-3);
+        user-select: none;
+      }
+      .kp.is-entry .kp-time::before {
+        content: '▶ ';
+        color: #7cd4ff;
+      }
+      .kp-breath {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.12rem 0.4rem;
+        border-radius: 999px;
+        border: 1px solid var(--hairline);
+        background: var(--ground);
+        overflow: hidden;
+        width: fit-content;
+      }
+      .kp-breath-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        background: rgba(124, 212, 255, 0.28);
+      }
+      .kp-breath-lbl {
+        position: relative;
+        z-index: 1;
+        font-size: 0.64rem;
+        color: #9ddfff;
+      }
+      .kp-words {
+        font-size: clamp(1.3rem, 1.9vw, 1.68rem);
+        line-height: 1.42;
+        letter-spacing: var(--track-heading);
+        color: var(--ink-2);
+      }
+      .kp.is-now .kp-words {
+        color: color-mix(in srgb, var(--ink) 78%, transparent);
+      }
+      .kw {
+        display: inline;
+        border-radius: 0.25rem;
+        transition: color 70ms linear, background-color 70ms linear;
+      }
+      .kw.is-said {
+        color: var(--ink);
+      }
+      .kp.is-past .kw.is-said {
+        color: var(--ink-3);
+      }
+      .kw.is-saying {
+        color: #fff;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.14);
+        box-shadow: 0 2px 0 0 #7cd4ff;
+      }
+
+      /* ---------- Right-side 9:16 Reference Video ---------- */
+      .stage-side {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem 0;
+      }
+      .ref-video-wrap {
+        position: relative;
+        height: min(72vh, 44rem);
+        aspect-ratio: 9 / 16;
+        border-radius: 1.5rem;
+        border: 1px solid var(--hairline);
+        background: #000;
+        overflow: hidden;
+        box-shadow: 0 1.5rem 3.5rem rgba(0, 0, 0, 0.55);
+      }
+      .ref-video-wrap[hidden],
+      .ref-badge[hidden],
+      .ref-countdown[hidden],
+      .cam-mirror[hidden],
+      .shot[hidden] {
+        display: none !important;
+      }
+      .ref-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .ref-video.is-mirrored {
+        transform: scaleX(-1);
+      }
+      .ref-badge {
+        position: absolute;
+        top: 0.85rem;
+        left: 0.85rem;
+        padding: 0.28rem 0.65rem;
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        backdrop-filter: blur(10px);
+      }
+      .ref-badge.is-rec {
+        background: rgba(229, 72, 77, 0.88);
+        color: #fff;
+      }
+      .ref-badge.is-count {
+        background: rgba(229, 160, 13, 0.88);
+        color: #111;
+      }
+      .ref-badge.is-play {
+        background: rgba(20, 20, 22, 0.82);
+        border: 1px solid var(--hairline);
+        color: var(--ink);
+      }
+      .ref-countdown {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.38);
+        color: #fff;
+        font-size: 5.5rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+        pointer-events: none;
+      }
+      .ref-foot {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 1.5rem 0.85rem 0.65rem;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        pointer-events: none;
+      }
+      .ref-clock {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-variant-numeric: tabular-nums;
+        color: rgba(255, 255, 255, 0.88);
+      }
+      .ref-bar {
+        height: 0.22rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+      }
+      .ref-bar span {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: #fff;
+      }
+
+      .cam-mirror {
+        height: min(68vh, 42rem);
+        aspect-ratio: 9 / 16;
+        object-fit: cover;
+        border-radius: 1.5rem;
+        border: 1px solid var(--hairline);
+        background: var(--surface);
+        transform: scaleX(-1);
+      }
+      .shot {
+        align-self: center;
+        height: min(62vh, 40rem);
+        border-radius: 1.5rem;
+        border: 1px solid var(--hairline);
+      }
+
       .said {
         margin-top: 2rem;
         padding-top: 1rem;
@@ -913,17 +2343,6 @@ const list = scripts.es;
         font-size: 1rem;
         line-height: 1.55;
         color: var(--ink-2);
-      }
-      /* global.css makes every img a block, which beats [hidden]. */
-      .shot[hidden],
-      .mic [hidden] {
-        display: none;
-      }
-      .shot {
-        align-self: center;
-        height: min(62vh, 40rem);
-        border-radius: 1.75rem;
-        border: 1px solid var(--hairline);
       }
 
       .pill {
@@ -940,11 +2359,14 @@ const list = scripts.es;
         color: var(--ink);
         font-size: 1rem;
       }
+      .pill[hidden] {
+        display: none;
+      }
 
       .controls {
         display: grid;
-        gap: 0.75rem;
-        padding: 1rem 2rem 1.5rem;
+        gap: 0.65rem;
+        padding: 0.9rem 2rem 1.25rem;
         border-top: 1px solid var(--hairline);
       }
       .buttons {
@@ -954,26 +2376,25 @@ const list = scripts.es;
       }
       .buttons button {
         display: inline-flex;
-        gap: 0.5rem;
+        gap: 0.45rem;
         align-items: center;
-        padding: 0.55rem 1rem;
+        padding: 0.5rem 0.95rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
         background: var(--surface);
         color: var(--ink);
         font: inherit;
-        font-size: 0.9375rem;
+        font-size: 0.9rem;
         cursor: pointer;
       }
       .buttons button:hover {
         border-color: var(--ink-3);
       }
-      .buttons button[hidden] {
-        display: none;
+      .buttons button[data-act='save'] {
+        border-color: rgba(111, 207, 138, 0.55);
+        background: rgba(111, 207, 138, 0.14);
       }
-      /* Spanish is said from ideas; every other language is read. */
-      html:not([data-tp-lang='es']) [data-hint-es],
-      html[data-tp-lang='es'] [data-hint-read] {
+      .buttons button[hidden] {
         display: none;
       }
       .state {

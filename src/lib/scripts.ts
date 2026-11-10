@@ -14,17 +14,23 @@ import { ui } from '../i18n/ui.ts';
 
 const latestTranslatedEn = (key: string): string | null => {
   try {
-    const p = path.join(process.cwd(), 'narration-takes/es', `${key}.latest.json`);
+    const p = path.join(
+      process.cwd(),
+      'narration-takes/es',
+      `${key}.latest.json`,
+    );
     if (!fs.existsSync(p)) return null;
     const data = JSON.parse(fs.readFileSync(p, 'utf8'));
-    return typeof data?.en === 'string' && data.en.trim() ? data.en.trim() : null;
+    return typeof data?.en === 'string' && data.en.trim()
+      ? data.en.trim()
+      : null;
   } catch {
     return null;
   }
 };
 
-export type ScriptLang = 'es' | 'en';
-export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en'];
+export type ScriptLang = 'es' | 'en' | 'zh';
+export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en', 'zh'];
 
 export type ScriptClip = {
   key: string;
@@ -144,6 +150,16 @@ export const SCRIPTS_EN: ScriptClip[] = CLIPS.map(
   }),
 );
 
+export const SCRIPTS_ZH: ScriptClip[] = CLIPS.map(
+  ({ key, where, shot, draft }) => ({
+    key,
+    where,
+    shot,
+    draft,
+    ideas: [clean(ui.zh[textKey(key)])],
+  }),
+);
+
 /** Every clip's script in one language. */
 export const scriptsFor = (lang: ScriptLang): ScriptClip[] =>
-  lang === 'en' ? SCRIPTS_EN : SCRIPTS_ES;
+  lang === 'en' ? SCRIPTS_EN : lang === 'zh' ? SCRIPTS_ZH : SCRIPTS_ES;
