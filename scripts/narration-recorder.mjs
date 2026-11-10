@@ -223,12 +223,12 @@ const save = async (req, res, url) => {
       'null',
       '-',
     ]).catch(e => ({ stderr: String(e?.stderr ?? '') }));
-    const starts = [
-      ...silLog.matchAll(/silence_start:\s*([\d.]+)/g),
-    ].map(m => parseFloat(m[1]));
-    const ends = [
-      ...silLog.matchAll(/silence_end:\s*([\d.]+)/g),
-    ].map(m => parseFloat(m[1]));
+    const starts = [...silLog.matchAll(/silence_start:\s*([\d.]+)/g)].map(m =>
+      parseFloat(m[1]),
+    );
+    const ends = [...silLog.matchAll(/silence_end:\s*([\d.]+)/g)].map(m =>
+      parseFloat(m[1]),
+    );
     const lastStart = starts.at(-1);
     const lastEnd = ends.at(-1) ?? 0;
     if (
@@ -274,28 +274,42 @@ const save = async (req, res, url) => {
     raw,
   ]).catch(() => ({ stdout: '' }));
   if (vStreams.trim()) {
-    const estDur = Math.max(10, Number.isFinite(rawDur) && rawDur > 0 ? rawDur : 60);
-    const maxKbps = Math.min(550, Math.floor((19 * 8192) / estDur));
+    const estDur = Math.max(
+      10,
+      Number.isFinite(endTrim - startTrim) && endTrim > startTrim
+        ? endTrim - startTrim
+        : Number.isFinite(rawDur) && rawDur > 0
+          ? rawDur
+          : 60,
+    );
+    // Cloudflare Pages caps static files at 25 MiB: budget up to 23.5 MiB for
+    // long takes, and up to 1800 kbps (CRF 19) for short/medium takes so
+    // iPhone Continuity Camera recordings stay sharp without straining decode
+    // at 2x playback.
+    const maxKbps = Math.min(1800, Math.floor((23.5 * 8192) / estDur));
+    const scale = estDur <= 160 ? '720:1280' : '540:960';
     await ffmpeg(
       ...trimArgs,
       '-i',
       raw,
       '-vf',
-      'crop=min(iw\\,ih*9/16):min(ih\\,iw*16/9),scale=540:960',
+      `crop=min(iw\\,ih*9/16):min(ih\\,iw*16/9),scale=${scale}:flags=lanczos`,
       '-r',
       '30',
       '-c:v',
       'libx264',
       '-preset',
-      'fast',
+      'slow',
+      '-profile:v',
+      'high',
       '-crf',
-      '23',
+      '19',
       '-g',
-      '30',
-      '-keyint_min',
-      '30',
+      '120',
       '-bf',
-      '0',
+      '3',
+      '-aq-mode',
+      '2',
       '-maxrate',
       `${maxKbps}k`,
       '-bufsize',
@@ -355,7 +369,10 @@ const save = async (req, res, url) => {
       const trRes = await fetch(trUrl);
       const trJson = await trRes.json();
       if (Array.isArray(trJson?.[0])) {
-        enText = trJson[0].map(seg => seg?.[0] ?? '').join('').trim();
+        enText = trJson[0]
+          .map(seg => seg?.[0] ?? '')
+          .join('')
+          .trim();
       }
     } catch {}
     if (enText) {
