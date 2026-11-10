@@ -18,10 +18,14 @@ import { ANALYSIS_SAMPLE_RATE, analyzeSamples, type SongMap } from './analysis';
 import { synthFx, type FxName } from './fx';
 import {
   AUTO_DJ_STYLES,
+  DJ_FOCUS_RANK,
+  moveFocus,
   nextMoveIndex,
   rng,
   stateAt,
+  type AutoDjMode,
   type AutoDjStyle,
+  type DjFocus,
   type DjMove,
 } from './plan';
 import {
@@ -29,6 +33,7 @@ import {
   joinSegment,
   planOrder,
   planSegment,
+  planSoundSegment,
   transitionFx,
   type Part,
   type PoolSound,
@@ -37,7 +42,13 @@ import {
 } from './set';
 import type { Shape } from '../shaper';
 
-export type DjStatus = { on: boolean; ready: number; total: number };
+export type DjStatus = {
+  on: boolean;
+  mode: AutoDjMode;
+  focus: DjFocus | null;
+  ready: number;
+  total: number;
+};
 
 export type DjHost = {
   /** The songs, in the card's order. */
@@ -50,9 +61,11 @@ export type DjHost = {
   apply(move: Partial<Shape>): void;
   /** Bring song `i` in at `startS` and play it. */
   cue(i: number, startS: number): void;
+  /** Rewind the current song to `atS` and ensure it plays. */
+  rewind(atS: number): void;
   fadeIn(seconds: number): void;
   context(): AudioContext | null;
-  /** On, off, or more of the songs read. */
+  /** On, off, focus changed, or more of the songs read. */
   changed(status: DjStatus): void;
 };
 
@@ -176,6 +189,7 @@ const getSongMap = (src: string): Promise<SongMap | null> => {
 const LOOKAHEAD_S = 0.35;
 const JUMP_S = 1;
 const CUE_LEAD_S = 0.12;
+const FOCUS_HOLD_MS = 2000;
 
 type Snapshot = Pick<
   Shape,
@@ -184,9 +198,17 @@ type Snapshot = Pick<
 
 export const createAutoDj = (host: DjHost) => {
   let on = false;
+  let mode: AutoDjMode = 'off';
   let snapshot: Snapshot | null = null;
   let stopDirecting: (() => void) | null = null;
-  let status: DjStatus = { on: false, ready: 0, total: 0 };
+  let lastFocusAt = 0;
+  let status: DjStatus = {
+    on: false,
+    mode: 'off',
+    focus: null,
+    ready: 0,
+    total: 0,
+  };
   const publish = (patch: Partial<DjStatus>) => {
     status = { ...status, ...patch };
     host.changed(status);
@@ -194,6 +216,16 @@ export const createAutoDj = (host: DjHost) => {
 
   const applyMove = (move: Partial<DjMove>) => {
     const now = host.shape();
+    const nextFocus = moveFocus(
+      {
+        gains: now.gains,
+        nextRoom: now.nextRoom,
+        echo: now.echo,
+        rate: now.rate,
+        keepPitch: now.keepPitch,
+      },
+      move,
+    );
     const patch: Partial<Shape> = {};
     if (move.gains && move.gains.some((g, i) => g !== now.gains[i]))
       patch.gains = [...move.gains];
@@ -206,9 +238,23 @@ export const createAutoDj = (host: DjHost) => {
     if (move.keepPitch !== undefined && move.keepPitch !== now.keepPitch)
       patch.keepPitch = move.keepPitch;
     if (Object.keys(patch).length) host.apply(patch);
+    if (nextFocus) {
+      const cur = status.focus;
+      const nowMs = Date.now();
+      const holdCurrent =
+        cur !== null &&
+        cur !== nextFocus &&
+        DJ_FOCUS_RANK[cur] >= DJ_FOCUS_RANK[nextFocus] &&
+        nowMs - lastFocusAt < FOCUS_HOLD_MS;
+      if (!holdCurrent) {
+        if (status.focus !== nextFocus) publish({ focus: nextFocus });
+        lastFocusAt = nowMs;
+      }
+    }
   };
 
-  const direct = (): (() => void) => {
+  const direct = (activeMode: 'sound' | 'all'): (() => void) => {
+    const singleSound = activeMode === 'sound';
     let cancelled = false;
     const ids = host.songs.map(s => s.src);
     const indexOf = (id: string) => ids.indexOf(id);
@@ -216,7 +262,13 @@ export const createAutoDj = (host: DjHost) => {
     const failed = new Set<string>();
     const played = new Set<string>();
     const random = rng(Math.floor(Math.random() * 2 ** 31));
+    lastFocusAt = 0;
     let setTempo = 0;
+    let firstJoin = true;
+
+    // Starting DJ Juan (or switching between This Song and All Songs) rewinds
+    // the current song to 0:00 so the mix starts from the beginning.
+    host.rewind(0);
 
     // The set's mood is the DJ's: Club, Slowed or Hyper, one to three
     // segments at a time, Club the home it comes back to most.
@@ -258,6 +310,10 @@ export const createAutoDj = (host: DjHost) => {
     };
 
     const publishProgress = () => {
+      if (singleSound) {
+        publish({ ready: 0, total: 0 });
+        return;
+      }
       const done = ids.filter(id => maps.has(id) || failed.has(id));
       publish({ ready: done.length, total: ids.length });
     };
@@ -307,6 +363,19 @@ export const createAutoDj = (host: DjHost) => {
 
     const chooseUpNext = () => {
       if (!segment || upNext || cued) return;
+      if (singleSound) {
+        const map = maps.get(segment.soundId);
+        if (!map) return;
+        setUpNext(
+          planSoundSegment({
+            sound: { soundId: segment.soundId, map },
+            style: nextStyle(),
+            seed: Math.floor(random() * 2 ** 31),
+            atS: 0,
+          }),
+        );
+        return;
+      }
       const all = pool();
       if (all.length < 2) return;
       const plan = (
@@ -393,21 +462,35 @@ export const createAutoDj = (host: DjHost) => {
       chooseUpNext();
     };
 
-    /** Make the playing song the set's segment, from where it is. */
+    /** Make the playing song the set's segment, from the start on entry. */
     const join = () => {
       const id = ids[host.current()];
       const map = maps.get(id);
       if (!map) return; // read first; `pump` joins when it lands
-      const position = host.position();
+      const startFromTop = singleSound || firstJoin;
+      firstJoin = false;
+      const nowPos = host.position();
+      if (startFromTop && nowPos > 0.35) {
+        host.rewind(0);
+      }
+      const atS = startFromTop ? 0 : nowPos;
+      const seed = Math.floor(random() * 2 ** 31);
       begin(
-        joinSegment({
-          sound: { soundId: id, map },
-          style: nextStyle(),
-          seed: Math.floor(random() * 2 ** 31),
-          atS: position,
-          setTempo,
-        }),
-        position,
+        singleSound
+          ? planSoundSegment({
+              sound: { soundId: id, map },
+              style: nextStyle(),
+              seed,
+              atS: 0,
+            })
+          : joinSegment({
+              sound: { soundId: id, map },
+              style: nextStyle(),
+              seed,
+              atS,
+              setTempo,
+            }),
+        atS,
       );
     };
 
@@ -464,9 +547,9 @@ export const createAutoDj = (host: DjHost) => {
       pumping = true;
       try {
         while (!cancelled) {
-          const todo = [ids[host.current()], ...ids].find(
-            id => !maps.has(id) && !failed.has(id),
-          );
+          const curId = ids[host.current()];
+          const candidates = singleSound ? [curId] : [curId, ...ids];
+          const todo = candidates.find(id => !maps.has(id) && !failed.has(id));
           if (!todo) break;
           const map = await getSongMap(todo);
           if (cancelled) return;
@@ -474,7 +557,7 @@ export const createAutoDj = (host: DjHost) => {
           else failed.add(todo);
           publishProgress();
           if (!segment && !cued) join();
-          else if (allRead() && !order.length) {
+          else if (!singleSound && allRead() && !order.length) {
             planRun(segment?.soundId ?? null);
             if (!cued) setUpNext(null);
             chooseUpNext();
@@ -582,26 +665,42 @@ export const createAutoDj = (host: DjHost) => {
   /** Off. From its own switch the shape goes back; from any other control
    *  the listener has taken over, and the sound stays where it is. */
   const stop = ({ restore }: { restore: boolean }) => {
-    if (!on) return;
+    if (!on && mode === 'off') return;
     on = false;
+    mode = 'off';
     stopDirecting?.();
     stopDirecting = null;
-    publish({ on: false });
+    publish({ on: false, mode: 'off', focus: null });
     if (restore && snapshot)
       host.apply({ ...snapshot, gains: [...snapshot.gains] });
     snapshot = null;
   };
 
-  return {
-    isOn: () => on,
-    /** On: the listener's shape is kept, to be given back from the switch. */
-    start() {
-      if (on) return;
+  const setMode = (nextMode: AutoDjMode) => {
+    if (nextMode === 'off') {
+      stop({ restore: true });
+      return;
+    }
+    if (on && mode === nextMode) return;
+    stopDirecting?.();
+    stopDirecting = null;
+    if (!snapshot) {
       const { gains, nextRoom, echo, rate, keepPitch } = host.shape();
       snapshot = { gains: [...gains], nextRoom, echo, rate, keepPitch };
-      on = true;
-      publish({ on: true });
-      stopDirecting = direct();
+    }
+    on = true;
+    mode = nextMode;
+    publish({ on: true, mode: nextMode, focus: null });
+    stopDirecting = direct(nextMode);
+  };
+
+  return {
+    isOn: () => on,
+    mode: () => mode,
+    setMode,
+    /** On: the listener's shape is kept, to be given back from the switch. */
+    start(nextMode: 'sound' | 'all' = 'all') {
+      setMode(nextMode);
     },
     stop,
     /** A control moved by hand: the DJ lets go, the move stands. */

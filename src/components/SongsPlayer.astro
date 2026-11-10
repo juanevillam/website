@@ -4,6 +4,7 @@ import AppTile from './AppTile.astro';
 import { SONGS, songSrc, coverSrc, thumbSrc } from '../lib/likes';
 import { sceneAttr, sceneOf } from '../lib/scene';
 import { BANDS, EQ_MAX_DB, EQ_MIN_DB, LEVELS, PRESETS, RATE_LAST_STOP, rateToStop } from '../lib/shaper';
+import { AUTO_DJ_MODES } from '../lib/autoDj/plan';
 import type { UIKey } from '../i18n/ui';
 
 /**
@@ -59,6 +60,7 @@ const WORDS: UIKey[] = [
   'shape.echo',
   'shape.nextRoom',
   ...LEVELS.map(l => `shape.levels.${l}` as UIKey),
+  ...AUTO_DJ_MODES.map(m => `shape.autoDjMode.${m}` as UIKey),
   'songs.play',
   'songs.pause',
   'shape.autoDj',
@@ -294,7 +296,7 @@ const groups = [
       </button>
     </div>
     <div class="form" data-scroll-edge>
-      <div class="section">
+      <div class="section" data-dj-section="presets">
         <label class="cell picker">
           <span class="cell-name"><T k="shape.presets" /></span>
           <span class="picker-value">
@@ -309,7 +311,7 @@ const groups = [
         </label>
       </div>
 
-      <section class="section" aria-labelledby="songs-eq">
+      <section class="section" data-dj-section="eq" aria-labelledby="songs-eq">
         <h5 class="section-head" id="songs-eq"><T k="eq.title" /></h5>
         <div class="card">
           {
@@ -339,7 +341,7 @@ const groups = [
         <p class="section-foot"><T k="eq.hint" /></p>
       </section>
 
-      <section class="section" aria-labelledby="songs-speed">
+      <section class="section" data-dj-section="speed" aria-labelledby="songs-speed">
         <h5 class="section-head split" id="songs-speed">
           <span><T k="shape.speed" /></span>
           <span class="head-value" data-rate-label aria-hidden="true">1×</span>
@@ -361,7 +363,7 @@ const groups = [
         </div>
       </section>
 
-      <section class="section">
+      <section class="section" data-dj-section="keepPitch">
         <div class="card">
           <div class="cell">
             <span class="cell-name" id="songs-pitch"><T k="shape.keepPitch" /></span>
@@ -383,7 +385,7 @@ const groups = [
 
       {
         (['echo', 'nextRoom'] as const).map(fx => (
-          <section class="section">
+          <section class="section" data-dj-section={fx}>
             <div class="card">
               <label class="cell picker">
                 <span class="cell-name">
@@ -396,14 +398,7 @@ const groups = [
                     ))}
                   </select>
                   <svg viewBox="0 0 12 18" aria-hidden="true">
-                    <path
-                      d="M2.5 6.5 6 3l3.5 3.5M2.5 11.5 6 15l3.5-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
+                    <path d="M2.5 6.5 6 3l3.5 3.5M2.5 11.5 6 15l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
                   </svg>
                 </span>
               </label>
@@ -415,24 +410,22 @@ const groups = [
         ))
       }
 
-      <!-- AUTO DJ — the app's last Shape section: a switch, a footer, and
-           while the songs are read a "Reading Songs · 3 of 9" row. -->
+      <!-- AUTO DJ — the app's last Shape section: a menu picker (Off,
+           This Song, All Songs), a footer, and while the songs are read in
+           All Songs mode a "Reading Songs · 3 of 9" row. -->
       <section class="section">
         <div class="card">
-          <div class="cell">
-            <span class="cell-name" id="songs-dj"><T k="shape.autoDj" /></span>
-            <button
-              type="button"
-              class="switch"
-              role="switch"
-              aria-checked="false"
-              data-dj
-              aria-labelledby="songs-dj"
-              aria-describedby="songs-dj-foot"
-            >
-              <span class="knob"></span>
-            </button>
-          </div>
+          <label class="cell picker">
+            <span class="cell-name"><T k="shape.autoDj" /></span>
+            <span class="picker-value">
+              <select data-dj-mode aria-describedby="songs-dj-foot">
+                {AUTO_DJ_MODES.map(m => <option value={m}>{m}</option>)}
+              </select>
+              <svg viewBox="0 0 12 18" aria-hidden="true">
+                <path d="M2.5 6.5 6 3l3.5 3.5M2.5 11.5 6 15l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </span>
+          </label>
           <div class="cell" data-dj-reading hidden>
             <span class="cell-name"><T k="shape.autoDjPreparing" /></span>
             <span class="cell-value" data-dj-progress></span>
@@ -469,11 +462,13 @@ const groups = [
     --glass-ink: #2a2a2a;
     --sheet-bg: rgb(26 26 26 / 0.97);
     --cell-bg: rgb(255 255 255 / 0.075);
+    --card: rgb(99 99 102 / 0.72);
     --separator: rgb(255 255 255 / 0.1);
     --muted: rgb(235 235 245 / 0.6);
     --faint: rgb(235 235 245 / 0.3);
     --track: rgb(120 120 128 / 0.36);
     --switch-on: #30d158;
+    --spring: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .songs {
@@ -1570,11 +1565,11 @@ const groups = [
     color: var(--muted);
   }
 
-  /* A MENU PICKER ROW — the app's Presets, Echo and Next Room on iOS: the
-     name, then the value with its up-down chevrons. The select is the
-     browser's own, so the menu that opens is the platform's. */
+  /* A MENU PICKER ROW — the app's Presets, Echo, Next Room and DJ Juan on
+     iOS: the name, then the value with its up-down chevrons. */
   .picker {
     cursor: pointer;
+    user-select: none;
   }
 
   /* ONE LINE IN EVERY LANGUAGE (Juan, 2026-10-29: "Ajustes
@@ -1589,23 +1584,18 @@ const groups = [
     text-overflow: ellipsis;
   }
 
-  .picker .picker-value {
-    flex: none;
-  }
-
   .picker-value {
-    position: relative;
-    display: flex;
+    flex: none;
+    display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    min-width: 0;
     color: var(--muted);
   }
 
   .picker select {
     -webkit-appearance: none;
     appearance: none;
-    max-width: 12rem;
+    max-width: 11rem;
     margin: 0;
     padding: 0.25rem 0;
     border: 0;
@@ -1615,12 +1605,11 @@ const groups = [
     font-size: 0.9375rem;
     text-align: right;
     text-align-last: right;
-    field-sizing: content;
     cursor: pointer;
   }
 
   .picker select option {
-    background: #1e1e1e;
+    background: var(--sheet-bg);
     color: var(--ink);
   }
 
@@ -1628,12 +1617,12 @@ const groups = [
     flex: none;
     width: 0.625rem;
     height: 0.9375rem;
+    pointer-events: none;
   }
 
   .picker:has(select:focus-visible) {
-    outline: 2px solid var(--ink);
+    outline: 2px solid var(--focus);
     outline-offset: -2px;
-    border-radius: 0.625rem;
   }
 
   .picker select:focus-visible {
@@ -2382,6 +2371,7 @@ const groups = [
   import { createShaper, presetOf, PRESETS, rateToStop, stopToRate, type Level } from '../lib/shaper';
   import { meantToClose } from '../lib/dismiss';
   import { createAutoDj, type DjStatus } from '../lib/autoDj/director';
+  import { isAutoDjMode, type DjFocus } from '../lib/autoDj/plan';
 
   type Item = {
     id: string;
@@ -2408,10 +2398,12 @@ const groups = [
     const side = $('[data-side]');
     const openers = [...root.querySelectorAll<HTMLButtonElement>('[data-open]')];
     const bandInputs = [...root.querySelectorAll<HTMLInputElement>('[data-band]')];
+    const presetSelect = $<HTMLSelectElement>('[data-preset]');
     const rateInput = $<HTMLInputElement>('[data-rate]');
     const pitch = $<HTMLButtonElement>('[data-pitch]');
-    const presetSelect = $<HTMLSelectElement>('[data-preset]');
-    const levelSelects = [...root.querySelectorAll<HTMLSelectElement>('[data-level]')];
+    const levelSelects = [...sheet.querySelectorAll<HTMLSelectElement>('[data-level]')];
+    const djSelect = $<HTMLSelectElement>('[data-dj-mode]');
+    const form = sheet.querySelector<HTMLElement>('.form')!;
     const card = root.closest<HTMLElement>('.deck-card');
     let at = 0;
     let loaded = -1;
@@ -2809,6 +2801,22 @@ const groups = [
           .join(' · ') || word('shape.none');
     };
 
+    // A `<select>` collapses to its widest `<option>`, not the one showing.
+    // The options hold only the chosen one's words while it rests, and all of
+    // them the moment it is opened.
+    const sizeSelect = (s: HTMLSelectElement) => {
+      const label = (o: HTMLOptionElement) => word(o.dataset.k!);
+      for (const o of s.options) o.textContent = o.value === s.value ? label(o) : '';
+    };
+    const fillSelect = (s: HTMLSelectElement) => {
+      for (const o of s.options) o.textContent = word(o.dataset.k!);
+    };
+    for (const s of [presetSelect, ...levelSelects, djSelect]) {
+      s.addEventListener('pointerdown', () => fillSelect(s));
+      s.addEventListener('focus', () => fillSelect(s));
+      s.addEventListener('blur', () => sizeSelect(s));
+    }
+
     const showGains = () => {
       const gains = shaper.shape.gains;
       bandInputs.forEach((input, i) => {
@@ -2819,10 +2827,10 @@ const groups = [
         input.setAttribute('aria-valuetext', `${db} dB`);
       });
       const preset = presetOf(gains);
-      // A hand-shaped curve is a value too: Custom is listed only then.
-      const custom = presetSelect.querySelector<HTMLOptionElement>('[value="custom"]')!;
+      const custom = presetSelect.querySelector<HTMLOptionElement>('option[value="custom"]')!;
       custom.hidden = preset !== null;
       presetSelect.value = preset ?? 'custom';
+      sizeSelect(presetSelect);
       summary();
     };
     presetSelect.addEventListener('change', () => {
@@ -2863,30 +2871,63 @@ const groups = [
       shaper.set({ keepPitch: on });
       summary();
     });
-    levelSelects.forEach(select =>
-      select.addEventListener('change', () => {
+    const showLevels = () => {
+      for (const s of levelSelects) {
+        const fx = s.dataset.level as 'echo' | 'nextRoom';
+        s.value = shaper.shape[fx];
+        sizeSelect(s);
+      }
+    };
+    for (const s of levelSelects) {
+      s.addEventListener('change', () => {
+        const fx = s.dataset.level as 'echo' | 'nextRoom';
         dj.byHand();
-        shaper.set({ [select.dataset.level as 'echo' | 'nextRoom']: select.value as Level });
+        shaper.set({ [fx]: s.value as Level });
+        sizeSelect(s);
         summary();
-      }),
-    );
+      });
+    }
 
     // ----- Auto DJ (lib/autoDj/director) -----
-    // A control moved by hand stops it and the move stands; its own switch
-    // off gives the listener's shape back. Nothing is fetched until it is on.
-    const djSwitch = $<HTMLButtonElement>('[data-dj]');
+    // A control moved by hand stops it and the move stands; its own menu
+    // picker Off gives the listener's shape back. Nothing is fetched until on.
     const djReading = $('[data-dj-reading]');
     const PROGRESS_DELAY_MS = 400;
-    let djStatus: DjStatus = { on: false, ready: 0, total: 0 };
+    let djStatus: DjStatus = { on: false, mode: 'off', focus: null, ready: 0, total: 0 };
+    let lastScrolledFocus: DjFocus | null = null;
     let readingTimer = 0;
+
+    const scrollToFocus = (focus: DjFocus) => {
+      const maxScroll = Math.max(0, form.scrollHeight - form.clientHeight);
+      if (maxScroll <= 0) return;
+      let top = form.scrollTop;
+      if (focus === 'presets' || focus === 'eq') {
+        top = 0;
+      } else {
+        const target = form.querySelector<HTMLElement>(`[data-dj-section="${focus}"]`);
+        if (target) {
+          const formRect = form.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const offsetInForm = targetRect.top - formRect.top + form.scrollTop;
+          top = Math.min(Math.max(0, offsetInForm - form.clientHeight * 0.4), maxScroll);
+        } else if (focus === 'echo' || focus === 'nextRoom') {
+          top = maxScroll;
+        }
+      }
+      if (Math.abs(form.scrollTop - top) > 2) {
+        form.scrollTo({ top, behavior: 'smooth' });
+      }
+    };
+
     const showDj = () => {
-      const { on, ready, total } = djStatus;
-      djSwitch.setAttribute('aria-checked', String(on));
+      const { on, mode, focus, ready, total } = djStatus;
+      djSelect.value = mode;
+      sizeSelect(djSelect);
       $('[data-dj-progress]').textContent = word('shape.autoDjProgress')
         .replace('{ready}', String(ready))
         .replace('{total}', String(total));
       // The wait is named only once it has lasted long enough to be worth it.
-      const reading = on && total > 0 && ready < total;
+      const reading = mode === 'all' && total > 0 && ready < total;
       if (!reading) {
         clearTimeout(readingTimer);
         readingTimer = 0;
@@ -2894,18 +2935,16 @@ const groups = [
       } else if (djReading.hidden && !readingTimer)
         readingTimer = window.setTimeout(() => {
           readingTimer = 0;
-          djReading.hidden = !(djStatus.on && djStatus.total > 0 && djStatus.ready < djStatus.total);
+          djReading.hidden = !(djStatus.mode === 'all' && djStatus.total > 0 && djStatus.ready < djStatus.total);
+          if (sheet.classList.contains('is-floating')) replace();
         }, PROGRESS_DELAY_MS);
+      if (on && focus && focus !== lastScrolledFocus) {
+        lastScrolledFocus = focus;
+        scrollToFocus(focus);
+      } else if (!on) {
+        lastScrolledFocus = null;
+      }
       summary();
-    };
-    const showDjShape = () => {
-      const { keepPitch, echo, nextRoom, rate } = shaper.shape;
-      pitch.setAttribute('aria-checked', String(keepPitch));
-      for (const select of levelSelects) select.value = select.dataset.level === 'echo' ? echo : nextRoom;
-      rateInput.value = String(rateToStop(rate));
-      root.style.setProperty('--tempo', String(rate));
-      showGains();
-      showRate();
     };
     const dj = createAutoDj({
       songs: items,
@@ -2915,7 +2954,13 @@ const groups = [
       shape: () => shaper.shape,
       apply: move => {
         shaper.set(move);
-        showDjShape();
+        const { rate, keepPitch } = shaper.shape;
+        pitch.setAttribute('aria-checked', String(keepPitch));
+        rateInput.value = String(rateToStop(rate));
+        root.style.setProperty('--tempo', String(rate));
+        showGains();
+        showLevels();
+        showRate();
       },
       cue: (i, startS) => {
         show(i);
@@ -2926,6 +2971,15 @@ const groups = [
         } else audio.currentTime = startS;
         start();
       },
+      rewind: atS => {
+        if (loaded !== at) {
+          start();
+          audio.addEventListener('loadedmetadata', () => (audio.currentTime = atS), { once: true });
+        } else {
+          if (Math.abs(audio.currentTime - atS) > 0.05) audio.currentTime = atS;
+          if (audio.paused) start();
+        }
+      },
       fadeIn: seconds => shaper.fadeIn(seconds),
       context: () => shaper.context(),
       changed: status => {
@@ -2933,16 +2987,15 @@ const groups = [
         showDj();
       },
     });
-    djSwitch.addEventListener('click', () => {
-      if (dj.isOn()) dj.stop({ restore: true });
-      else dj.start();
+    djSelect.addEventListener('change', () => {
+      const m = djSelect.value;
+      if (isAutoDjMode(m)) dj.setMode(m);
     });
 
     // The pickers' options and every written word follow the language.
     const words = () => {
-      for (const o of presetSelect.options)
-        o.textContent = word(o.value === 'custom' ? 'shape.custom' : `eq.presets.${o.value}`);
-      for (const select of levelSelects) for (const o of select.options) o.textContent = word(`shape.levels.${o.value}`);
+      showGains();
+      showLevels();
       showRate();
       showDj();
       paint();
@@ -3107,5 +3160,6 @@ const groups = [
     follow();
     words();
     showGains();
+    showLevels();
   }
 </script>
