@@ -80,100 +80,29 @@ for (const p of items)
   if (Array.isArray(p.image))
     for (const m of p.image) if (await isSideways(still(m))) wide.add(m);
 
-// The frames of a card whose screen is photos: three pictures or fewer
-// take ONE frame, one at a time (two frames of one picture each read as
-// static, Juan, 2026-10-11); more take two. A card lists its videos and
-// its photos each by what matters most — the ones Juan is in longest
-// first (Juan, 2026-10-27). Every frame ALTERNATES photo and video (video
-// after video read as a reel), the two frames crossed — the left opens on
-// a photo, the right on a video — so one stands still while the other
-// moves; when one kind runs out, the other fills the rest.
-//
-// SHAPES ALTERNATE TOO (Juan, 2026-10-27): upright after sideways down a
-// frame, and the two frames unlike each other at the same turn — a
-// sideways photo beside a sideways video read as repetitive. With two
-// shapes there are few enough ways to lay a card out (2^n, 4,096 for a
-// twelve) to try them all: the layout with the fewest repeats wins, and
-// among those the one that moves pictures least from their importance.
-// Each kind then fills its slots of each shape in its own order.
+// One 3:2 frame per card (Juan, 2026-11-10): just like More Work and Things I
+// Like, so the visitor never watches two event videos plus the narrator at
+// once and laptops decode at most one card video beside the voice. A card
+// lists its videos and its photos each by what matters most — the ones Juan
+// is in longest first (Juan, 2026-10-27). The frame ALTERNATES photo and
+// video (video after video read as a reel; when one kind runs out, the other
+// fills the rest) and upright after sideways where it can, each kind in its
+// own importance order.
 const columns = (p: DeckItem): Media[][] => {
   const all = p.image as Media[];
   const photos = all.filter(m => !isVideo(m));
   const videos = all.filter(isVideo);
-  // A card that says where its frames split keeps its own order: the
-  // first `split` pictures run the left frame, the rest the right.
-  if (p.split && all.length > 3 && !p.wide)
-    return [all.slice(0, p.split), all.slice(p.split)];
-  const count = all.length <= 3 || p.wide ? 1 : 2;
-
-  // The slots, turn by turn: which frame, which turn, which kind.
-  type Slot = { f: number; k: number; photo: boolean };
-  const slots: Slot[] = [];
-  let left = { photo: photos.length, video: videos.length };
-  for (let k = 0; left.photo + left.video > 0; k++)
-    for (let f = 0; f < count && left.photo + left.video > 0; f++) {
-      const want = (k % 2 === 0) === (f === 0);
-      const photo = want ? left.photo > 0 : left.video === 0;
-      slots.push({ f, k, photo });
-      if (photo) left.photo--;
-      else left.video--;
-    }
-
-  const sideways = (ms: Media[]) => ms.filter(m => wide.has(m)).length;
-  const need = { photo: sideways(photos), video: sideways(videos) };
-  const n = slots.length;
-  let best: { mask: number; repeats: number; moved: number } | undefined;
-  // Too many to try (a long list on one frame): keep the given order.
-  if (n <= 14)
-    for (let mask = 0; mask < 1 << n; mask++) {
-      // As many sideways slots of each kind as there are sideways pictures.
-      let ph = 0;
-      let vi = 0;
-      for (let i = 0; i < n; i++)
-        if (mask & (1 << i)) slots[i].photo ? ph++ : vi++;
-      if (ph !== need.photo || vi !== need.video) continue;
-      const shapeOf = (i: number) => (mask >> i) & 1;
-      let repeats = 0;
-      for (let i = 0; i < n; i++)
-        for (let j = i + 1; j < n; j++) {
-          const a = slots[i];
-          const b = slots[j];
-          // The same frame, one turn apart; or the two frames at one turn.
-          const near = (a.f === b.f && b.k === a.k + 1) || (a.k === b.k && a.f !== b.f);
-          if (near && shapeOf(i) === shapeOf(j)) repeats++;
-        }
-      // How far each picture lands from its place in its kind's order.
-      let moved = 0;
-      const seen = { photo: [0, 0], video: [0, 0] };
-      const order = { photo: [] as number[], video: [] as number[] };
-      for (let i = 0; i < n; i++) order[slots[i].photo ? 'photo' : 'video'].push(i);
-      for (const kind of ['photo', 'video'] as const) {
-        const list = kind === 'photo' ? photos : videos;
-        const byShape = [list.filter(m => !wide.has(m)), list.filter(m => wide.has(m))];
-        order[kind].forEach((slot, place) => {
-          const shape = shapeOf(slot);
-          const m = byShape[shape][seen[kind][shape]++];
-          moved += Math.abs(place - list.indexOf(m));
-        });
-      }
-      if (!best || repeats < best.repeats || (repeats === best.repeats && moved < best.moved))
-        best = { mask, repeats, moved };
-    }
-
-  const frames: Media[][] = Array.from({ length: count }, () => []);
-  const queues = {
-    photo: [photos.filter(m => !wide.has(m)), photos.filter(m => wide.has(m))],
-    video: [videos.filter(m => !wide.has(m)), videos.filter(m => wide.has(m))],
+  const out: Media[] = [];
+  const take = (queue: Media[]) => {
+    const last = out.at(-1);
+    const i = last ? queue.findIndex(m => wide.has(m) !== wide.has(last)) : 0;
+    return queue.splice(i < 0 ? 0 : i, 1)[0];
   };
-  slots.forEach((slot, i) => {
-    const kind = slot.photo ? 'photo' : 'video';
-    const list = kind === 'photo' ? photos : videos;
-    const m = best
-      ? queues[kind][(best.mask >> i) & 1].shift()!
-      : list.find(x => !frames.flat().includes(x))!;
-    frames[slot.f].push(m);
-  });
-  return frames;
+  for (let k = 0; photos.length || videos.length; k++) {
+    const mine = k % 2 === 0 ? photos : videos;
+    out.push(take(mine.length ? mine : k % 2 === 0 ? videos : photos));
+  }
+  return [out];
 };
 
 // Screens of their own (the game's), rendered from the named slots.
@@ -783,23 +712,14 @@ for (const p of items)
     position: relative;
   }
 
-  /* EVENT PHOTOS: the screen's own 3:2 frame — one, or two upright 3:4
-     columns side by side. */
+  /* EVENT PHOTOS: the screen's own 3:2 frame — one frame per card, just
+     like More Work and Things I Like (Juan, 2026-11-10). */
   .screen.is-photos {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
+    grid-template-columns: 1fr;
     background: var(--ground);
   }
-
-  .screen.is-photos[data-frames='1'] {
-    grid-template-columns: 1fr;
-  }
-
-  /* A phone's event frame is one big picture rather than two small ones
-     side by side (the script folds them), in the phone's one screen
-     shape (global.css `--screen-ratio-m`, set under phones below). */
 
   .photo-cell {
     position: relative;
@@ -907,16 +827,26 @@ for (const p of items)
 
   /* Each picture is a layer: whole, centred, over a still blur of
      itself. The layer showing is `.is-on`; the hand-over is a cross-fade
-     at the ladder's `settle` (2026-10-13 — two beats read as slow). */
+     at the ladder's `settle` (2026-10-13 — two beats read as slow).
+     Layers that have finished fading out go `visibility: hidden` so the
+     compositor never blurs or composites 17 hidden `.fill` backdrops behind
+     the active one. */
   .layer {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity var(--dur-settle) linear;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-settle) linear,
+      visibility 0s linear var(--dur-settle);
   }
 
   .layer.is-on {
     opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--dur-settle) linear,
+      visibility 0s linear 0s;
   }
 
   /* A shuffled frame stays blank until its pictures are dealt (the
@@ -1182,54 +1112,8 @@ for (const p of items)
     // own (the Songs player's Shape form), which is not one to turn to.
     const cards = [...carousel.querySelectorAll<HTMLElement>('.deck-card')];
 
-    // ONE FRAME ON A PHONE (Juan, 2026-10-13): two upright columns across
-    // a phone's width stood each photo about 195 x 260 — too small for
-    // pictures taken on a camera. A phone folds them into one tall frame
-    // (the CSS), alternating photo and video the way a desk's frames do,
-    // each kind in the order the card lists it.
-    if (matchMedia('(max-width: 48rem)').matches)
-      for (const screen of carousel.querySelectorAll<HTMLElement>('.screen.is-photos')) {
-        const [left, right] = [...screen.querySelectorAll<HTMLElement>('.photo-cell')];
-        if (!left || !right) continue;
-        const byAt = (a: HTMLElement, b: HTMLElement) =>
-          Number(a.dataset.at ?? 0) - Number(b.dataset.at ?? 0);
-        const layers = [...screen.querySelectorAll<HTMLElement>('.layer')];
-        const photoLayers = layers.filter(l => !l.querySelector('video')).sort(byAt);
-        const videoLayers = layers.filter(l => l.querySelector('video')).sort(byAt);
-        // As a desk's frames deal them (`columns` above): photo and video
-        // by turns, upright and sideways by turns where it can.
-        const all: HTMLElement[] = [];
-        const take = (queue: HTMLElement[]) => {
-          const last = all.at(-1);
-          const i = last
-            ? queue.findIndex(l => l.hasAttribute('data-wide') !== last.hasAttribute('data-wide'))
-            : 0;
-          return queue.splice(i < 0 ? 0 : i, 1)[0];
-        };
-        for (let k = 0; photoLayers.length || videoLayers.length; k++) {
-          const mine = k % 2 === 0 ? photoLayers : videoLayers;
-          all.push(take(mine.length ? mine : k % 2 === 0 ? videoLayers : photoLayers));
-        }
-        all.forEach((layer, i) => layer.classList.toggle('is-on', i === 0));
-        // The layers go under the frame's own buttons, which stay on top.
-        left.prepend(...all);
-        if (!left.querySelector('[data-photo-step]'))
-          left.append(...right.querySelectorAll('[data-photo-step]'));
-        // The first two of the folded frame are loaded at once on an immediately focused card.
-        if ((section?.hasAttribute('data-focused') || section?.hasAttribute('data-start-card')) && screen.closest('.deck-card') === cards[Number(section?.dataset.focusCard ?? section?.dataset.startCard ?? 0)])
-          for (const layer of all.slice(0, 2)) {
-            for (const img of layer.querySelectorAll<HTMLImageElement>('img[data-src]')) {
-              img.src = img.dataset.src!;
-              img.removeAttribute('data-src');
-            }
-            for (const v of layer.querySelectorAll<HTMLVideoElement>('video[data-poster]')) {
-              v.poster = v.dataset.poster!;
-              v.removeAttribute('data-poster');
-            }
-          }
-        right.remove();
-        screen.dataset.frames = '1';
-      }
+    // Every card already renders one `.photo-cell` frame at build time
+    // (`columns` above), on both desk and phone.
     // A NEW ORDER EVERY VISIT for a set that is loved whole (`shuffle`):
     // the frame's pictures, and the viewer's with them, are dealt again
     // before the first one shows (the CSS holds the frame blank till then).
@@ -1453,6 +1337,7 @@ for (const p of items)
           })
         );
       });
+    const SETTLE_TURN = dur('quick');
     const sync = () =>
       frames.forEach((card, i) =>
         card.forEach(f => {
@@ -1467,15 +1352,19 @@ for (const p of items)
             const v = videoOf(f);
             if (v) {
               // A VIDEO WAITS ITS TURN (Juan, 2026-10-13): it stands on its
-              // first frame while the card fades in and a beat more, then
-              // plays — started the instant the panel arrived, it read as
-              // already under way, as if it had begun without you.
-              v.preload = 'auto';
-              v.currentTime = 0;
+              // first frame (its poster) while the card fades in and a beat
+              // more, then plays — and `preload = 'auto'` waits until the
+              // card's fade settles so it never fights the narrator's video
+              // handover or the deck's transition.
               clearTimeout(f.timer);
               f.timer = window.setTimeout(() => {
-                if (f.running) hold(f, BEAT * 10);
-              }, BEAT * 2);
+                if (!f.running || videoOf(f) !== v) return;
+                v.preload = 'auto';
+                v.currentTime = 0;
+                f.timer = window.setTimeout(() => {
+                  if (f.running) hold(f, BEAT * 10);
+                }, Math.max(200, BEAT * 2 - SETTLE_TURN));
+              }, SETTLE_TURN);
             } else hold(f, BEAT * (10 + f.col));
           } else {
             clearTimeout(f.timer);
@@ -1497,11 +1386,18 @@ for (const p of items)
         clearTimeout(captureTimers[i]);
         if (on) {
           v.dataset.on = '1';
-          v.preload = 'auto';
-          v.currentTime = 0;
+          // Let the card fade and the narrator video transition finish first
+          // (`SETTLE_TURN`) while the capture's poster `.jpg` stands in
+          // place, then warm and play the capture so turning from Space
+          // Explorer to Salvalo at 2× never stutters.
           captureTimers[i] = window.setTimeout(() => {
-            if (v.dataset.on) v.play().catch(() => {});
-          }, BEAT * 2);
+            if (!v.dataset.on) return;
+            v.preload = 'auto';
+            v.currentTime = 0;
+            captureTimers[i] = window.setTimeout(() => {
+              if (v.dataset.on) v.play().catch(() => {});
+            }, Math.max(200, BEAT * 2 - SETTLE_TURN));
+          }, SETTLE_TURN);
         } else {
           delete v.dataset.on;
           v.pause();
