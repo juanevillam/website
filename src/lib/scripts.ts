@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ui } from '../i18n/ui';
+import { ui } from '../i18n/ui.ts';
 
 const latestTranslatedEn = (key: string): string | null => {
   try {

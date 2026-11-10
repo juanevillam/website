@@ -775,7 +775,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
 
     @media (max-width: 48rem) {
     .apps {
-      --shot-h: min(104vw, calc(100svh - var(--stage-top) - 18rem));
+      --shot-h: min(104vw, calc(100svh - var(--stage-top) - 22.5rem));
     }
 
     /* A step of air under the switcher, which stands on the panel's top
@@ -919,28 +919,24 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     }
   }
 
-  /* SHORT DESKS (a 720pt laptop window): the welcome's two paragraphs, the
-     store row and the narrator under them reached past the deck's arrows.
-     The pitch steps down a size and its gaps tighten. */
+  /* SHORT DESKS (a 720pt laptop window): the pitch steps down a size and
+     its gaps tighten so the column and the video under it fit the shorter
+     height while keeping the exact same 3rem narrator slot spacing. */
   @media (min-width: 48.01rem) and (max-height: 50rem) {
-    .is-welcome .body {
+    .words .body {
       font-size: 0.9375rem;
       line-height: 1.55;
     }
 
-    .is-welcome .desc {
+    .desc {
       --cap-gap: 0.875rem;
     }
 
-    .is-welcome .words .body + .body {
+    .words .body + .body {
       margin-top: 0.625rem;
     }
 
-    .is-welcome .store-row :global(.stores) {
-      margin-top: 1.25rem;
-    }
-
-    .is-welcome .narr-slot {
+    .store-row :global(.stores) {
       margin-top: 1rem;
     }
   }

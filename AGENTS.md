@@ -187,12 +187,7 @@ runbook in the portfolio's `AGENTS.md`, which lists these two files.
   element in or out with raw `[hidden]` alone: toggle a state class (e.g.
   `.is-dismissed` / `.is-open`) that transitions `opacity` (and `scale` where
   appropriate) on `--dur-quick` or `--dur-turn` (`var(--ease)`).
-- **Every media frame uses the site's tokens.** Corner radius is always
-  `var(--media-radius)` (phones) or `var(--media-radius-flat)` (cards,
-  screens, the `9:16` narration video companion) — never an arbitrary `rem`
-  guess — paired with `border: 1px solid var(--hairline)`,
-  `background: var(--surface)` and the two-layer shadow
-  (`0 2rem 4rem rgba(0, 0, 0, 0.55), 0 0.5rem 1.25rem rgba(0, 0, 0, 0.4)`).
+- **Every media frame uses the site's `rem` tokens (invariant under browser zoom).** Corner radius is always in `rem` (`--media-radius: 2.5rem` / `--media-radius-flat: 1.25rem` on desktop, `2rem` / `1rem` on mobile `<= 48rem` for screens and cards; `--nar-video-r: 0.75rem` on desktop and `0.625rem` on mobile for the compact `9:16` narration video companion, matching the Songs player's tighter web borders rather than an iOS screen bezel; never `svh`/`vw`, which invert under browser zoom) — paired with `border: 1px solid var(--hairline)`, `background: var(--surface)` and the two-layer shadow (`0 2rem 4rem rgba(0, 0, 0, 0.55), 0 0.5rem 1.25rem rgba(0, 0, 0, 0.4)`).
 - **Media hand-overs cross-fade linearly on `--dur-settle`.** Whether switching
   photos in `PanelDeck` or switching `.mp4` clips in `NarrationPlayer`, the
   leaving and arriving layers use `transition: opacity var(--dur-settle) linear`
@@ -203,15 +198,26 @@ runbook in the portfolio's `AGENTS.md`, which lists these two files.
   frame by `requestAnimationFrame`; a CSS `transform` transition fights the
   render loop and causes lag. Only `html.is-stepped` (touch screens) enables
   `transition: transform var(--dur-turn) var(--ease)`.
-- **Narration `9:16` video companion & 5-line `[data-cap]` (Juan, 2026-11-08):**
-  - `[data-cap]` shows **5 full lines** (`LINES = 5` in `Base.astro`) with the
-    6th fading through the bottom padding, leaving vertical room below the text
+- **Narration `9:16` video companion & 6-line `[data-cap]` (Juan, 2026-11-08 / 2026-11-10):**
+  - `[data-cap]` shows **6 full lines** (`LINES = 6` in `Base.astro`) with the
+    7th fading through the bottom padding, leaving vertical room below the text
     column.
-  - `[data-narr-video]` sits to the right of `[data-narrator]` (`vx = nx + nw + 12`)
-    and top-aligned with it (`vy = ny`) so it never rises above the button's
-    vertical level into the text above. It shows ONLY while narration audio is
-    actively playing (`running === true`, hiding with `.is-dismissed` on pause
-    or stop so no paused frame is ever shown), reveals `×` and `1× / 1.5× / 2×`
+  - Every `.narr-slot` and `.narr-anchor` on desktop keeps a fixed `margin-top: 3rem`
+    below the last vertical UI element in its column (never reduced by short-height
+    media queries), and `placeVideo` in `director.ts` places `[data-narr-video]` at
+    `vy = ny - 1.75 * rem` on desktop (`vy = ny` when parked on the hero on mobile)
+    without clamping `vy` upward against `innerHeight`, so the gap between the last
+    vertical UI element and the narrator (`3rem`) / video (`1.25rem`) is invariant
+    and never overlaps buttons or links above it on smaller windows or laptops. On
+    mobile (`<= 48rem`), where the video docks in the bottom-right corner
+    (`6rem × 10.67rem`), `dockReserve()` in `Base.astro` reserves `--nar-video-h`
+    and `--shot-h` / `--screen-max-m` reserve `22.5rem` so the text and action rows
+    stay clear above the video. On desktop in the footer (`SiteFooter.astro`),
+    `.lead .narr-caption` sits to the right of the video (`left: calc(7.25rem + 1.75rem)`,
+    gliding to `left: calc(var(--narrator-w) + 1.25rem)` when the video is collapsed)
+    so the video never covers the footer's live read-along text. It shows ONLY while
+    narration audio is actively playing (`running === true`, hiding with `.is-dismissed`
+    on pause or stop so no paused frame is ever shown), reveals `×` and `1× / 1.5× / 2×`
     (`preservesPitch = true`) on hover, keeps raw `.webm` takes untouched in
     `narration-takes/`, and never applies audio filters, EQ, denoiser or volume
     boost to the voice.

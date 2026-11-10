@@ -139,17 +139,12 @@
      1.25x the ratio's 4. */
   --content-max: 74.375rem; /* 1190px */
   --column-gap: calc(var(--space-4) * 1.25);
-  /* THE MEDIA CORNER — one radius for every picture on the page: the
-     stories' phones, More Work's screenshots, the events' photos, the
-     game's cover. It is the phone's own: an iPhone screen's corner (55pt
-     on 393pt, 14% of its width) at the size the stories draw the phone —
-     on a desk the phone stands the panel's height less 6.5rem, 1179:2556,
-     so 14% of its width is 6.46svh less 0.42rem. */
-  --media-radius: max(1rem, calc(6.46svh - 0.42rem));
-  /* ...and for a FLAT picture — a screenshot, a photo, the game's cover —
-     exactly half of it: the full phone corner on a wide frame read too
-     round (Juan, 2026-10-02); half keeps the family resemblance. */
-  --media-radius-flat: calc(var(--media-radius) / 2);
+  /* THE MEDIA CORNER — in rem so it scales locked to the elements that
+     carry it at every viewport size and browser zoom level (svh/vw grew
+     past rem when zooming out and shrank below it when zooming in).
+     Matches the Songs player's web sheet/dock standard (1.25rem). */
+  --media-radius: 2.5rem;
+  --media-radius-flat: 1.25rem;
   /* The SCREEN beside a block of words — the game's 4:3 cabinet and every
      project card's capture share it, so the foot of the page reads as one
      standard: words in the stories' text column, a 4:3 screen in the rest,
@@ -216,8 +211,8 @@
        Work stood at on every phone before. */
     --screen-ratio-m: 4 / 5;
     --screen-max-m: max(
-      calc(100svh - var(--media-top-m) - 21rem),
-      calc((100vw - 2.5rem) * 2 / 3)
+      9rem,
+      calc(100svh - var(--media-top-m) - 22.5rem)
     );
   }
 }
@@ -602,11 +597,11 @@ html.is-jumping body {
   }
 }
 
-/* On a phone the stories draw the phone by the screen's WIDTH (112vw
-   tall), so its corner — and every picture's — is 14% of 51.66vw. */
+/* On a phone, kept in rem so browser zoom never alters corner roundness. */
 @media (max-width: 48rem) {
   :root {
-    --media-radius: 7.23vw;
+    --media-radius: 2rem;
+    --media-radius-flat: 1rem;
   }
 }
 

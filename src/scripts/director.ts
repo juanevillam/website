@@ -106,6 +106,7 @@ if (import.meta.env.DEV)
     __narrVoice: voice,
     __narrSilence: () => {
       devSilent = true;
+      voice.muted = true;
       if (output) output.gain.value = 0;
     },
   });
@@ -141,6 +142,10 @@ type Story = {
   blocks: (Narr | undefined)[];
 };
 
+const isSafari =
+  /Safari\//.test(navigator.userAgent) &&
+  !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+
 const narrator = document.querySelector<HTMLElement>('[data-narrator]');
 const narVideo = document.querySelector<HTMLElement>('[data-narr-video]');
 const narVideoLayers = narVideo
@@ -148,6 +153,8 @@ const narVideoLayers = narVideo
   : [];
 const narVideoClose =
   narVideo?.querySelector<HTMLButtonElement>('[data-narr-video-close]') ?? null;
+const narVideoRates =
+  narVideo?.querySelector<HTMLElement>('.nar-video-rates') ?? null;
 const narRateBtns = narVideo
   ? [...narVideo.querySelectorAll<HTMLButtonElement>('[data-narr-rate]')]
   : [];
@@ -155,33 +162,75 @@ let activeLayerIdx = 0;
 let videoCollapsed = false;
 let currentVideoSrc = '';
 let playbackRate = 1;
+let videoSpinUpUntil = 0;
+let videoLastSeekAt = 0;
 
 const activeVideoEl = (): HTMLVideoElement | null =>
   narVideoLayers[activeLayerIdx] ?? null;
 
-const applyPlaybackRate = (el: HTMLMediaElement, rate: number) => {
-  el.defaultPlaybackRate = rate;
-  el.playbackRate = rate;
-  if ('preservesPitch' in el) el.preservesPitch = true;
-  const legacy = el as HTMLMediaElement & {
+const applyAudioRate = (el: HTMLAudioElement, rate: number) => {
+  if (el.defaultPlaybackRate !== rate) el.defaultPlaybackRate = rate;
+  if (el.playbackRate !== rate) el.playbackRate = rate;
+  if ('preservesPitch' in el && el.preservesPitch !== true)
+    el.preservesPitch = true;
+  const legacy = el as HTMLAudioElement & {
     webkitPreservesPitch?: boolean;
     mozPreservesPitch?: boolean;
   };
-  if ('webkitPreservesPitch' in legacy) legacy.webkitPreservesPitch = true;
-  if ('mozPreservesPitch' in legacy) legacy.mozPreservesPitch = true;
+  if ('webkitPreservesPitch' in legacy && legacy.webkitPreservesPitch !== true)
+    legacy.webkitPreservesPitch = true;
+  if ('mozPreservesPitch' in legacy && legacy.mozPreservesPitch !== true)
+    legacy.mozPreservesPitch = true;
+};
+
+// Video layers are muted and carry no audio stream (-an): never attach a pitch
+// processor to their timebase, and keep their rate strictly equal to the user's
+// chosen speed (1×, 1.5×, 2×).
+const applyVideoRate = (el: HTMLVideoElement, rate: number) => {
+  if (el.defaultPlaybackRate !== rate) el.defaultPlaybackRate = rate;
+  if (el.playbackRate !== rate) el.playbackRate = rate;
 };
 
 const setPlaybackRate = (rate: number) => {
   playbackRate = rate;
-  applyPlaybackRate(voice, rate);
-  for (const v of narVideoLayers) applyPlaybackRate(v, rate);
+  applyAudioRate(voice, rate);
+  for (const v of narVideoLayers) applyVideoRate(v, rate);
+  const v = activeVideoEl();
+  if (
+    running &&
+    v &&
+    !v.paused &&
+    !voice.paused &&
+    v.readyState >= 2 &&
+    !v.seeking &&
+    Number.isFinite(voice.currentTime)
+  ) {
+    const targetTime =
+      Number.isFinite(v.duration) && v.duration > 0
+        ? voice.currentTime % v.duration
+        : voice.currentTime;
+    if (Math.abs(v.currentTime - targetTime) > 0.08) {
+      try {
+        v.currentTime = targetTime;
+      } catch {}
+    }
+  }
+  videoSpinUpUntil = performance.now() + 700;
   for (const btn of narRateBtns) {
     const active = Number(btn.dataset.narrRate) === rate;
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-pressed', String(active));
   }
 };
-applyPlaybackRate(voice, playbackRate);
+applyAudioRate(voice, playbackRate);
+// Safari's AVPlayer resets rate to 1.0 on -[AVPlayer play]; re-assert the
+// chosen playbackRate immediately whenever audio or video enters play/playing.
+voice.addEventListener('play', () => applyAudioRate(voice, playbackRate));
+voice.addEventListener('playing', () => applyAudioRate(voice, playbackRate));
+for (const v of narVideoLayers) {
+  v.addEventListener('play', () => applyVideoRate(v, playbackRate));
+  v.addEventListener('playing', () => applyVideoRate(v, playbackRate));
+}
 
 /** A shared address's modal is open over the page (lib/links). */
 const focusOpen = () => !!document.querySelector('[data-focused]');
@@ -198,9 +247,17 @@ const narrs: Narr[] = [];
 
 // Every paragraph's Spanish clip rides on it as data-clip, and its clip in
 // another language, once recorded, as data-clip-{lang} (lib/narration):
-// the page's language plays its own when there is one.
+// the page's language plays its own when there is one, while Chinese falls
+// back to English once recorded and to Spanish until then.
 const clipOf = (p: HTMLElement) => {
   const lang = document.documentElement.dataset.lang;
+  if (lang === 'zh') {
+    return (
+      p.getAttribute('data-clip-zh') ||
+      p.getAttribute('data-clip-en') ||
+      p.dataset.clip
+    );
+  }
   return (
     (lang && lang !== 'es' && p.getAttribute(`data-clip-${lang}`)) ||
     p.dataset.clip
@@ -209,10 +266,25 @@ const clipOf = (p: HTMLElement) => {
 
 const videoOf = (p: HTMLElement) => {
   const lang = document.documentElement.dataset.lang;
+  if (lang === 'zh') {
+    return (
+      p.getAttribute('data-video-zh') ||
+      p.getAttribute('data-video-en') ||
+      p.dataset.video
+    );
+  }
   return (
     (lang && lang !== 'es' && p.getAttribute(`data-video-${lang}`)) ||
     p.dataset.video
   );
+};
+
+const unloadVideoEl = (el: HTMLVideoElement) => {
+  el.pause();
+  if (el.hasAttribute('src')) {
+    el.removeAttribute('src');
+    el.load();
+  }
 };
 
 const activeVideoPara = (): HTMLElement | null => {
@@ -232,7 +304,32 @@ const syncVideo = () => {
     narVideo.classList.add('is-dismissed');
     narVideo.classList.remove('is-playing');
     document.documentElement.classList.remove('has-narr-video');
-    for (const v of narVideoLayers) if (!v.paused) v.pause();
+    for (const v of narVideoLayers) {
+      if (!v.paused) v.pause();
+      applyVideoRate(v, playbackRate);
+    }
+    const v = activeVideoEl();
+    if (
+      session &&
+      v &&
+      !videoCollapsed &&
+      src &&
+      currentVideoSrc === src &&
+      v.readyState >= 2 &&
+      !v.seeking &&
+      Number.isFinite(voice.currentTime) &&
+      voice.currentTime > 0
+    ) {
+      const targetTime =
+        Number.isFinite(v.duration) && v.duration > 0
+          ? voice.currentTime % v.duration
+          : voice.currentTime;
+      if (Math.abs(v.currentTime - targetTime) > 0.18) {
+        try {
+          v.currentTime = targetTime;
+        } catch {}
+      }
+    }
     return;
   }
   if (narVideo.hidden) {
@@ -248,55 +345,129 @@ const syncVideo = () => {
   }
   narVideo.classList.toggle('is-playing', running);
   document.documentElement.classList.add('has-narr-video');
+
   if (currentVideoSrc !== src) {
     const prevEl = narVideoLayers[activeLayerIdx];
-    const nextIdx = currentVideoSrc ? (activeLayerIdx + 1) % narVideoLayers.length : activeLayerIdx;
+    const nextIdx = currentVideoSrc
+      ? (activeLayerIdx + 1) % narVideoLayers.length
+      : activeLayerIdx;
     const nextEl = narVideoLayers[nextIdx];
     currentVideoSrc = src;
     activeLayerIdx = nextIdx;
+    if (prevEl && prevEl !== nextEl && !prevEl.paused) prevEl.pause();
+    nextEl.preload = 'auto';
     nextEl.src = src;
-    applyPlaybackRate(nextEl, playbackRate);
-    nextEl.load();
-    const flip = () => {
-      if (activeLayerIdx !== nextIdx) return;
-      applyPlaybackRate(nextEl, playbackRate);
-      if (running) nextEl.play().catch(() => {});
-      requestAnimationFrame(() => {
-        if (activeLayerIdx !== nextIdx) return;
-        nextEl.classList.add('is-active');
-        if (prevEl && prevEl !== nextEl) {
-          prevEl.classList.remove('is-active');
-          setTimeout(() => {
-            if (activeLayerIdx !== narVideoLayers.indexOf(prevEl)) prevEl.pause();
-          }, dur('settle'));
-        }
-      });
-    };
-    if (nextEl.readyState >= 2) flip();
-    else nextEl.addEventListener('loadeddata', flip, { once: true });
-  }
-  const v = activeVideoEl();
-  if (v) {
-    if (v.playbackRate !== playbackRate) applyPlaybackRate(v, playbackRate);
-    if (running) {
-      // Avoid seeking during the first 450ms while <audio> and <video> spin up
-      // together, which previously caused a 300ms stutter/loop at the start.
-      const targetTime =
-        Number.isFinite(v.duration) && v.duration > 0
-          ? voice.currentTime % v.duration
-          : voice.currentTime;
-      if (
-        voice.currentTime > 0.45 &&
-        Math.abs(v.currentTime - targetTime) > 0.35 * playbackRate
-      ) {
-        try {
-          v.currentTime = targetTime;
-        } catch {}
+    applyVideoRate(nextEl, playbackRate);
+    videoSpinUpUntil = performance.now() + 700;
+    const reveal = () => {
+      if (currentVideoSrc !== src) return;
+      nextEl.classList.add('is-active');
+      if (prevEl && prevEl !== nextEl) {
+        prevEl.classList.remove('is-active');
+        setTimeout(() => {
+          if (activeLayerIdx !== narVideoLayers.indexOf(prevEl))
+            unloadVideoEl(prevEl);
+        }, dur('settle'));
       }
-      if (v.paused && v.readyState >= 2) v.play().catch(() => {});
-    } else if (!v.paused) {
-      v.pause();
+    };
+    if (nextEl.readyState >= 2) reveal();
+    else nextEl.addEventListener('loadeddata', reveal, { once: true });
+
+    const startOffset = Number.isFinite(voice.currentTime)
+      ? voice.currentTime
+      : 0;
+    nextEl.addEventListener(
+      'playing',
+      () => {
+        if (currentVideoSrc !== src || !running) return;
+        applyVideoRate(nextEl, playbackRate);
+        videoSpinUpUntil = performance.now() + 600;
+        if (startOffset > 0.25) {
+          const targetTime =
+            Number.isFinite(nextEl.duration) && nextEl.duration > 0
+              ? voice.currentTime % nextEl.duration
+              : voice.currentTime;
+          if (Math.abs(nextEl.currentTime - targetTime) > 0.12) {
+            try {
+              nextEl.currentTime = targetTime;
+            } catch {}
+          }
+          return;
+        }
+        if (
+          !voice.paused &&
+          !voice.seeking &&
+          Math.abs(voice.currentTime - nextEl.currentTime) > 0.08 &&
+          voice.currentTime < 1.5
+        ) {
+          try {
+            voice.currentTime = nextEl.currentTime;
+          } catch {}
+        }
+      },
+      { once: true },
+    );
+
+    if (running) {
+      nextEl.play().catch(() => {});
     }
+  } else {
+    const v = activeVideoEl();
+    if (v) {
+      applyVideoRate(v, playbackRate);
+      if (running) {
+        if (
+          v.readyState >= 2 &&
+          !v.seeking &&
+          Number.isFinite(voice.currentTime)
+        ) {
+          const targetTime =
+            Number.isFinite(v.duration) && v.duration > 0
+              ? voice.currentTime % v.duration
+              : voice.currentTime;
+          if (Math.abs(v.currentTime - targetTime) > 0.18) {
+            try {
+              v.currentTime = targetTime;
+            } catch {}
+          }
+        }
+        if (v.paused) {
+          videoSpinUpUntil = performance.now() + 600;
+          v.play().catch(() => {});
+        }
+      } else if (!v.paused) {
+        v.pause();
+      }
+    }
+  }
+};
+
+const tickVideoSync = (now: number) => {
+  if (!running || voice.paused || videoCollapsed) return;
+  const v = activeVideoEl();
+  if (!v || !currentVideoSrc) return;
+  if (v.playbackRate !== playbackRate) applyVideoRate(v, playbackRate);
+  if (now <= videoSpinUpUntil) return;
+  if (v.paused) {
+    if (v.readyState >= 2 && !v.seeking) {
+      v.play().catch(() => {});
+    }
+    return;
+  }
+  if (v.seeking || v.readyState < 2) return;
+  const targetTime =
+    Number.isFinite(v.duration) && v.duration > 0
+      ? voice.currentTime % v.duration
+      : voice.currentTime;
+  const drift = targetTime - v.currentTime;
+  if (
+    Math.abs(drift) > Math.max(0.3, 0.22 * playbackRate) &&
+    now - videoLastSeekAt > 1800
+  ) {
+    videoLastSeekAt = now;
+    try {
+      v.currentTime = targetTime;
+    } catch {}
   }
 };
 
@@ -345,13 +516,15 @@ let output: GainNode | null = null;
 let freq: Uint8Array<ArrayBuffer> | null = null;
 
 // The analyser needs an AudioContext, which a browser only lets a
-// gesture create — so it is built on the first play. Routing the voice
-// through it is also what makes it audible from then on.
+// gesture create — so it is built on the first play. On Safari, routing
+// `voice` through `createMediaElementSource` attaches WebKit's
+// `MTAudioProcessingTap`, which causes audio glitches and clock drift at
+// 1.5× / 2× (`playbackRate !== 1`); so Safari plays `voice` directly on
+// its hardware AVPlayer and synthesizes the subtle horizon wave bands.
 const ensureGraph = () => {
   if (ctx) return;
   try {
     ctx = new AudioContext();
-    const source = ctx.createMediaElementSource(voice);
     analyser = ctx.createAnalyser();
     analyser.fftSize = 2048;
     analyser.minDecibels = -85;
@@ -359,7 +532,11 @@ const ensureGraph = () => {
     analyser.smoothingTimeConstant = 0.72;
     output = ctx.createGain();
     output.gain.value = devSilent ? 0 : 1;
-    source.connect(analyser).connect(output).connect(ctx.destination);
+    analyser.connect(output).connect(ctx.destination);
+    if (!isSafari) {
+      const source = ctx.createMediaElementSource(voice);
+      source.connect(analyser);
+    }
     freq = new Uint8Array(analyser.frequencyBinCount);
   } catch {
     ctx = null;
@@ -380,6 +557,19 @@ let peak = 0.35;
  *  page plays (lib/listening). */
 const voiceBands = (half: number, from = analyser) => {
   const out = new Array(half).fill(0);
+  if (isSafari && from === analyser && running && !voice.paused && !demoPlaying()) {
+    const t = voice.currentTime * 6.5;
+    for (let k = 0; k < half; k++) {
+      const env = Math.max(0, 1 - (k / half) * 0.72);
+      const wave =
+        0.48 +
+        0.28 * Math.sin(t * (1.1 + k * 0.17) + k * 0.9) +
+        0.24 * Math.cos(t * (2.3 - k * 0.09) - k * 0.6);
+      out[k] = Math.min(1, Math.max(0.05, wave * env)) ** 1.4;
+    }
+    brightness = 0.32 + 0.08 * Math.sin(t * 0.7);
+    return out;
+  }
   if (!from) return out;
   if (!freq || freq.length !== from.frequencyBinCount)
     freq = new Uint8Array(from.frequencyBinCount);
@@ -500,7 +690,8 @@ const drawField = (now: number) => {
   if (!field || !narrator || narrator.hidden || reduceMotion) return;
   const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
   lastFrame = now;
-  const talking = (running && !voice.paused) || demoPlaying() || !!otherSound();
+  const talking =
+    (running && !voice.paused) || demoPlaying() || !!otherSound();
   hostField();
 
   // Quick enough to follow the voice, eased enough not to twitch.
@@ -809,6 +1000,12 @@ const heroAnchor =
   heroBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
 const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
+let lastVideoTx = '';
+let lastMorphDx = '';
+let lastMorphDy = '';
+let lastVideoOwn = '';
+let lastVideoPe = '';
+
 const placeVideo = (
   nx: number,
   ny: number,
@@ -825,29 +1022,64 @@ const placeVideo = (
   let vy = ny;
   if (!phone) {
     vx = nx + centerShare * ((nw - vw) / 2);
-    vy = Math.min(ny - 1.75 * rem, innerHeight - vh - 20);
+    vy = ny - 1.75 * rem;
   } else if (narrator?.classList.contains('is-parked')) {
     vx = nx + (nw - vw) / 2;
-    vy = Math.min(ny, innerHeight - vh - 16);
+    vy = ny;
   } else {
     vx = nx + nw - vw;
     vy = ny + nh - vh;
   }
-  narVideo.style.transform = `translate3d(${vx.toFixed(1)}px, ${vy.toFixed(1)}px, 0)`;
-  narVideo.style.setProperty('--morph-dx', `${(nx - vx).toFixed(1)}px`);
-  narVideo.style.setProperty('--morph-dy', `${(ny - vy).toFixed(1)}px`);
-  narVideo.style.setProperty(
-    '--narr-own',
-    narrator?.style.opacity || '1',
-  );
-  narVideo.style.pointerEvents = narrator?.style.pointerEvents ?? '';
+  const tx = `translate3d(${vx.toFixed(1)}px, ${vy.toFixed(1)}px, 0)`;
+  if (tx !== lastVideoTx) {
+    lastVideoTx = tx;
+    narVideo.style.transform = tx;
+  }
+  const dx = `${(nx - vx).toFixed(1)}px`;
+  if (dx !== lastMorphDx) {
+    lastMorphDx = dx;
+    narVideo.style.setProperty('--morph-dx', dx);
+  }
+  const dy = `${(ny - vy).toFixed(1)}px`;
+  if (dy !== lastMorphDy) {
+    lastMorphDy = dy;
+    narVideo.style.setProperty('--morph-dy', dy);
+  }
+  const own = narrator?.style.opacity || '1';
+  if (own !== lastVideoOwn) {
+    lastVideoOwn = own;
+    narVideo.style.setProperty('--narr-own', own);
+  }
+  const pe = narrator?.style.pointerEvents ?? '';
+  if (pe !== lastVideoPe) {
+    lastVideoPe = pe;
+    narVideo.style.pointerEvents = pe;
+  }
+};
+
+let lastNarrTx = '';
+let lastParkX = '';
+let lastParkY = '';
+let lastNarrOp = '__init__';
+let lastNarrPe = '__init__';
+let lastNarrParked = false;
+
+const setNarrStyle = (op: string, pe: string) => {
+  if (!narrator) return;
+  if (op !== lastNarrOp) {
+    lastNarrOp = op;
+    narrator.style.opacity = op;
+  }
+  if (pe !== lastNarrPe) {
+    lastNarrPe = pe;
+    narrator.style.pointerEvents = pe;
+  }
 };
 
 // Every frame, not only on scroll: the anchors themselves move with the
 // page's scroll-coupled motion.
 const placeNarrator = () => {
   if (!narrator || narrator.hidden) return;
-  syncVideo();
   // A phone's narrator never travels: it stays in its corner, shown
   // only while the screen holds a block it can tell — except on the
   // hero, where it stands centred under the name and fades as the hero
@@ -860,22 +1092,34 @@ const placeNarrator = () => {
       const r = heroAnchor.getBoundingClientRect();
       const px = r.left + r.width / 2 - narrator.offsetWidth / 2;
       const py = r.top;
-      narrator.classList.add('is-parked');
-      narrator.style.setProperty('--park-x', `${px.toFixed(1)}px`);
-      narrator.style.setProperty('--park-y', `${py.toFixed(1)}px`);
+      if (!lastNarrParked) {
+        lastNarrParked = true;
+        narrator.classList.add('is-parked');
+      }
+      const pxStr = `${px.toFixed(1)}px`;
+      if (pxStr !== lastParkX) {
+        lastParkX = pxStr;
+        narrator.style.setProperty('--park-x', pxStr);
+      }
+      const pyStr = `${py.toFixed(1)}px`;
+      if (pyStr !== lastParkY) {
+        lastParkY = pyStr;
+        narrator.style.setProperty('--park-y', pyStr);
+      }
       const own = Math.min(
         1,
         (hero.bottom - innerHeight / 2) / (innerHeight / 4),
       );
-      narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
-      narrator.style.pointerEvents = own < 0.6 ? 'none' : '';
+      setNarrStyle(own < 0.999 ? own.toFixed(3) : '', own < 0.6 ? 'none' : '');
       placeVideo(px, py, narrator.offsetWidth, narrator.offsetHeight, 1);
       return;
     }
-    narrator.classList.remove('is-parked');
+    if (lastNarrParked) {
+      lastNarrParked = false;
+      narrator.classList.remove('is-parked');
+    }
     const has = !!showing && firstVoiced(showing) >= 0;
-    narrator.style.opacity = has ? '' : '0';
-    narrator.style.pointerEvents = has ? '' : 'none';
+    setNarrStyle(has ? '' : '0', has ? '' : 'none');
     const nr = narrator.getBoundingClientRect();
     placeVideo(nr.left, nr.top, nr.width, nr.height, 0);
     return;
@@ -898,20 +1142,25 @@ const placeNarrator = () => {
   const nx = sum > 0.0001 ? x / sum : 0;
   const ny = sum > 0.0001 ? y / sum : 0;
   const centerShare = sum > 0.0001 ? centerSum / sum : 0;
-  if (sum > 0.0001)
-    narrator.style.transform = `translate(${nx.toFixed(1)}px, ${ny.toFixed(1)}px)`;
+  if (sum > 0.0001) {
+    const tx = `translate(${nx.toFixed(1)}px, ${ny.toFixed(1)}px)`;
+    if (tx !== lastNarrTx) {
+      lastNarrTx = tx;
+      narrator.style.transform = tx;
+    }
+  }
   // Past the last narrated block (the page's foot) nothing owns the
   // narrator: it fades with the block that lets it go, instead of being
   // left standing wherever that block last put it.
   const own = Math.min(1, sum);
-  narrator.style.opacity = own < 0.999 ? own.toFixed(3) : '';
-  narrator.style.pointerEvents = own < 0.05 ? 'none' : '';
+  setNarrStyle(own < 0.999 ? own.toFixed(3) : '', own < 0.05 ? 'none' : '');
   placeVideo(nx, ny, width, height, centerShare);
 };
 
 const animateNarrator = (now: number) => {
   updateRead();
   updateCues();
+  tickVideoSync(now);
   placeNarrator();
   listen();
   drawField(now);
@@ -924,6 +1173,12 @@ const stop = () => {
   session = null;
   running = false;
   paint();
+  setTimeout(() => {
+    if (!session && !running) {
+      currentVideoSrc = '';
+      for (const v of narVideoLayers) unloadVideoEl(v);
+    }
+  }, dur('settle'));
 };
 
 const start = (block: Narr, para: number) => {
@@ -935,14 +1190,15 @@ const start = (block: Narr, para: number) => {
   }
   ensureGraph();
   ctx?.resume();
+  voice.muted = devSilent;
+  voice.src = src;
+  applyAudioRate(voice, playbackRate);
   session = { block, para };
   running = true;
   relang = false;
   claimSession();
-  voice.src = src;
-  applyPlaybackRate(voice, playbackRate);
-  voice.play().catch(() => stop());
   paint();
+  voice.play().catch(() => stop());
   document.dispatchEvent(new CustomEvent('narr:voice'));
   // Whatever shows this paragraph can follow the voice to it (a deck
   // turns to the card being told).
@@ -969,7 +1225,8 @@ new MutationObserver(() => {
 }).observe(document.documentElement, { attributeFilter: ['data-lang'] });
 
 const resume = () => {
-  if (relang && session) {
+  if (!session) return;
+  if (relang || voice.currentTime === 0) {
     relang = false;
     start(session.block, session.para);
     return;
@@ -977,9 +1234,10 @@ const resume = () => {
   running = true;
   claimSession();
   ctx?.resume();
-  applyPlaybackRate(voice, playbackRate);
-  voice.play().catch(() => stop());
+  voice.muted = devSilent;
+  applyAudioRate(voice, playbackRate);
   paint();
+  voice.play().catch(() => stop());
   document.dispatchEvent(new CustomEvent('narr:voice'));
 };
 
@@ -1175,6 +1433,10 @@ narVideoClose?.addEventListener('click', e => {
   placeNarrator();
 });
 
+narVideoRates?.addEventListener('click', e => {
+  e.stopPropagation();
+});
+
 for (const btn of narRateBtns) {
   btn.addEventListener('click', e => {
     e.stopPropagation();
@@ -1183,7 +1445,13 @@ for (const btn of narRateBtns) {
   });
 }
 
-narVideo?.addEventListener('click', () => {
+narVideo?.addEventListener('click', e => {
+  if (
+    (e.target as Element | null)?.closest(
+      '[data-narr-video-close], .nar-video-rates',
+    )
+  )
+    return;
   narrator?.click();
 });
 

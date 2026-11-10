@@ -236,10 +236,13 @@ const url = new URL(path, Astro.site);
       // controls (an app's welcome, which shows no picture on a phone).
       const LINES = 6;
       const phoneQuery = matchMedia('(max-width: 48rem)');
-      // The docked row's height (the narrator, the tallest thing in it),
-      // its 1rem off the screen's foot, and a step of air above it.
+      // The docked corner's height (the 9:16 narration video on the right,
+      // the tallest thing in it), its 1rem off the screen's foot, and a
+      // step of air above it so neither the text nor the store row ever
+      // reaches down into the video's zone.
       const probe = document.createElement('div');
-      probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--narrator-h)';
+      probe.style.cssText =
+        'position:absolute;visibility:hidden;height:var(--nar-video-h,10.67rem)';
       const dockReserve = () => {
         document.body.append(probe);
         const h = probe.offsetHeight;
@@ -275,7 +278,7 @@ const url = new URL(path, Astro.site);
           const below = after.length ? Math.max(...after) - r.bottom : 0;
           const top = r.top - (section?.getBoundingClientRect().top ?? 0);
           const room = innerHeight - dockReserve() - top - padTop - fade - below;
-          lines = Math.max(3, Math.floor(room / lh));
+          lines = Math.min(LINES, Math.max(3, Math.floor(room / lh)));
         }
         box.style.maxHeight = `${lead + lh * lines}px`;
         // Words hidden past the box: only then does it keep a fade's depth
@@ -298,6 +301,7 @@ const url = new URL(path, Astro.site);
         box.addEventListener('scroll', () => more(box), { passive: true });
       });
       document.fonts?.ready.then(() => caps.forEach(capTo));
+      addEventListener('resize', () => caps.forEach(capTo), { passive: true });
       // An app's deck shown by its tab: its boxes measured at once, without
       // waiting on a frame.
       new MutationObserver(records => {

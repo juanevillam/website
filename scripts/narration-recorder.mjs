@@ -51,8 +51,20 @@ const duration = async file => {
     '-of',
     'csv=p=0',
     file,
-  ]);
-  return parseFloat(stdout);
+  ]).catch(() => ({ stdout: '' }));
+  const d = parseFloat(stdout);
+  if (Number.isFinite(d) && d > 0) return d;
+  const { stderr } = await run('ffmpeg', [
+    '-hide_banner',
+    '-i',
+    file,
+    '-vn',
+    '-f',
+    'null',
+    '-',
+  ]).catch(e => ({ stderr: String(e?.stderr ?? '') }));
+  const m = [...stderr.matchAll(/time=(\d+):(\d+):([\d.]+)/g)].at(-1);
+  return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + parseFloat(m[3]) : 0;
 };
 
 const stamp = s => {
@@ -228,11 +240,14 @@ const save = async (req, res, url) => {
       endTrim = Math.min(rawDur, +(lastStart + 0.85).toFixed(2));
     }
   }
+  const trimArgs =
+    Number.isFinite(endTrim) && endTrim > startTrim
+      ? ['-ss', String(startTrim), '-to', String(endTrim)]
+      : startTrim > 0
+        ? ['-ss', String(startTrim)]
+        : [];
   await ffmpeg(
-    '-ss',
-    String(startTrim),
-    '-to',
-    String(endTrim),
+    ...trimArgs,
     '-i',
     raw,
     '-vn',
@@ -259,27 +274,35 @@ const save = async (req, res, url) => {
     raw,
   ]).catch(() => ({ stdout: '' }));
   if (vStreams.trim()) {
+    const estDur = Math.max(10, Number.isFinite(rawDur) && rawDur > 0 ? rawDur : 60);
+    const maxKbps = Math.min(550, Math.floor((19 * 8192) / estDur));
     await ffmpeg(
-      '-ss',
-      String(startTrim),
-      '-to',
-      String(endTrim),
+      ...trimArgs,
       '-i',
       raw,
       '-vf',
-      'crop=min(iw\\,ih*9/16):min(ih\\,iw*16/9),scale=720:1280',
+      'crop=min(iw\\,ih*9/16):min(ih\\,iw*16/9),scale=540:960',
+      '-r',
+      '30',
       '-c:v',
       'libx264',
       '-preset',
       'fast',
       '-crf',
-      '21',
+      '23',
+      '-g',
+      '30',
+      '-keyint_min',
+      '30',
+      '-bf',
+      '0',
+      '-maxrate',
+      `${maxKbps}k`,
+      '-bufsize',
+      `${maxKbps * 2}k`,
       '-pix_fmt',
       'yuv420p',
-      '-c:a',
-      'aac',
-      '-b:a',
-      '192k',
+      '-an',
       '-movflags',
       '+faststart',
       outMp4,

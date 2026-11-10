@@ -19,7 +19,10 @@ import T from './T.astro';
     <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
     <path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" />
   </svg>
-  <p class="soon-text"><T k="soon.narration" /></p>
+  <p class="soon-text">
+    <span data-soon-default><T k="soon.narration" /></span>
+    <span data-soon-zh-after-en hidden><T k="soon.narration.zhAfterEn" /></span>
+  </p>
   <button type="button" class="soon-close" data-soon-close>
     <span class="sr-only"><T k="soon.close" /></span>
     <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
@@ -31,23 +34,38 @@ import T from './T.astro';
   const root = document.documentElement;
   // Only where there is something to hear.
   if (box && document.querySelector('[data-narrator]')) {
-    const key = (lang: string) => `narration-soon:${lang}`;
+    const defaultSpan = box.querySelector<HTMLElement>('[data-soon-default]');
+    const zhAfterEnSpan = box.querySelector<HTMLElement>('[data-soon-zh-after-en]');
+    const allClips = () => [...document.querySelectorAll('[data-clip]')];
+    const isEnVoiced = () =>
+      allClips().length > 0 &&
+      allClips().every(p => p.hasAttribute('data-clip-en'));
+    const key = (lang: string) =>
+      `narration-video-soon:${lang}:${isEnVoiced() ? 'en' : 'es'}`;
     const gone = new Set<string>();
     const dismissed = (lang: string) => {
-      if (gone.has(lang)) return true;
+      const k = key(lang);
+      if (gone.has(k)) return true;
       try {
-        return localStorage.getItem(key(lang)) === '1';
+        return localStorage.getItem(k) === '1';
       } catch {
         return false;
       }
     };
     const update = () => {
       const lang = root.dataset.lang ?? 'en';
+      const clips = allClips();
       // Gone for good once every clip on the page has his voice in that
       // language too (lib/narration).
-      const voiced = [...document.querySelectorAll('[data-clip]')].every(p =>
-        p.hasAttribute(`data-clip-${lang}`),
-      );
+      const voiced =
+        clips.length > 0 &&
+        clips.every(p => p.hasAttribute(`data-clip-${lang}`));
+      const enDone = isEnVoiced();
+      if (defaultSpan && zhAfterEnSpan) {
+        const useAfterEn = lang === 'zh' && enDone;
+        defaultSpan.hidden = useAfterEn;
+        zhAfterEnSpan.hidden = !useAfterEn;
+      }
       const show = lang !== 'es' && !voiced && !dismissed(lang);
       if (show) {
         box.hidden = false;
@@ -62,9 +80,10 @@ import T from './T.astro';
     };
     box.querySelector('[data-soon-close]')!.addEventListener('click', () => {
       const lang = root.dataset.lang ?? 'en';
-      gone.add(lang);
+      const k = key(lang);
+      gone.add(k);
       try {
-        localStorage.setItem(key(lang), '1');
+        localStorage.setItem(k, '1');
       } catch {}
       update();
     });

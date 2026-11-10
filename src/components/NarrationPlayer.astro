@@ -58,7 +58,7 @@ import T from './T.astro';
     muted
     loop
     playsinline
-    preload="auto"
+    preload="none"
   ></video>
   <video
     class="nar-video-media"
@@ -66,7 +66,7 @@ import T from './T.astro';
     muted
     loop
     playsinline
-    preload="auto"
+    preload="none"
   ></video>
   <span class="nar-morph-glyph" aria-hidden="true">
     <svg viewBox="0 0 16 16">
@@ -218,15 +218,15 @@ import T from './T.astro';
     visibility: visible;
   }
 
-  /* Vertical 9:16 video companion that travels alongside the narrator button,
-     top-aligned with it (`vy = ny`) and to its right (`vx = nx + nw + 12`)
-     so it never crosses above the button's vertical level into the text.
-     Uses the site's `--media-radius-flat` and two-layer shadow tokens,
-     enters/exits on `--dur-quick`, and cross-fades clips linearly on
-     `--dur-settle` like PanelDeck's media layers. */
+  /* Vertical 9:16 video companion that travels alongside the narrator button.
+     Uses a compact rem corner token (`--nar-video-r`) proportional to its
+     small frame (matching the Songs player's tighter web borders rather than
+     an iOS screen bezel, and invariant under browser zoom) plus the site's
+     two-layer shadow. */
   .nar-video {
     --morph-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --morph-dur: 240ms;
+    --nar-video-r: 0.75rem;
     position: fixed;
     top: 0;
     left: 0;
@@ -234,7 +234,7 @@ import T from './T.astro';
     width: var(--nar-video-w, 7.25rem);
     height: var(--nar-video-h, 12.89rem);
     border: 1px solid var(--hairline);
-    border-radius: var(--media-radius-flat);
+    border-radius: var(--nar-video-r);
     background: color-mix(in srgb, var(--surface) 82%, transparent);
     backdrop-filter: blur(12px);
     box-shadow:
@@ -244,7 +244,7 @@ import T from './T.astro';
     cursor: pointer;
     translate: 0px 0px;
     opacity: var(--narr-own, 1);
-    will-change: transform, translate, width, height, border-radius, opacity;
+    will-change: transform, opacity;
     transition:
       translate var(--morph-dur) var(--morph-ease),
       width var(--morph-dur) var(--morph-ease),
@@ -253,6 +253,12 @@ import T from './T.astro';
       box-shadow var(--morph-dur) var(--morph-ease),
       opacity 35ms linear 0ms,
       border-color var(--hover);
+  }
+
+  :global(html.is-desk-safari) .nar-video {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: color-mix(in srgb, var(--surface) 95%, transparent) !important;
   }
 
   .nar-video[hidden] {
@@ -285,6 +291,7 @@ import T from './T.astro';
     .nar-video {
       --nar-video-w: 6rem;
       --nar-video-h: 10.67rem;
+      --nar-video-r: 0.625rem;
     }
   }
 
@@ -339,19 +346,16 @@ import T from './T.astro';
       scale 220ms var(--morph-ease);
   }
 
-  .nar-video.is-dismissed .nar-video-close,
-  .nar-video.is-dismissed .nar-video-rates {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 80ms linear;
-  }
-
-  /* Hidden by default; appears subtly only on hover. */
+  /* Hidden by default; fades and floats in smoothly on hover (or on touch
+     where there is no hover). Uses `--hover` (gentle cubic-bezier(0.25, 0.1,
+     0.25, 1)) for opacity so the fade is visibly smooth rather than snapping
+     in the first frames of `--ease`. Pointer-events remain active while the
+     video is open so Safari never drops a click on × or 2×. */
   .nar-video-close {
     position: absolute;
     top: 0.375rem;
     right: 0.375rem;
-    z-index: 2;
+    z-index: 3;
     width: 1.4rem;
     height: 1.4rem;
     padding: 0;
@@ -364,27 +368,49 @@ import T from './T.astro';
     place-items: center;
     cursor: pointer;
     opacity: 0;
-    pointer-events: none;
+    translate: 0 -0.2rem;
+    scale: 0.92;
+    pointer-events: auto;
     transition:
-      opacity var(--dur-quick) var(--ease),
+      opacity var(--hover),
+      translate var(--dur-quick) var(--ease),
+      scale var(--dur-quick) var(--ease),
       color var(--hover),
+      background-color var(--hover),
       border-color var(--hover);
   }
 
-  .nar-video:hover .nar-video-close {
-    opacity: 0.9;
-    pointer-events: auto;
+  .nar-video-close::before {
+    content: '';
+    position: absolute;
+    inset: -0.35rem;
+    border-radius: 999px;
   }
 
-  .nar-video-close:hover {
-    opacity: 1 !important;
+  .nar-video:hover .nar-video-close,
+  .nar-video:focus-within .nar-video-close {
+    opacity: 0.88;
+    translate: 0 0;
+    scale: 1;
+  }
+
+  .nar-video:hover .nar-video-close:hover,
+  .nar-video-close:focus-visible {
+    opacity: 1;
+    scale: 1.06;
     color: var(--ink);
     border-color: var(--ink-3);
+    background: color-mix(in srgb, var(--ground) 88%, transparent);
+  }
+
+  .nar-video:hover .nar-video-close:active {
+    scale: 0.94;
   }
 
   .nar-video-close svg {
     width: 0.65rem;
     height: 0.65rem;
+    pointer-events: none;
   }
 
   /* Speed switcher (1x / 1.5x / 2x with preservePitch), shown on hover. */
@@ -392,51 +418,135 @@ import T from './T.astro';
     position: absolute;
     left: 50%;
     bottom: 0.4rem;
-    transform: translateX(-50%);
-    z-index: 2;
-    display: flex;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     align-items: center;
-    gap: 0.125rem;
+    gap: 0.1rem;
     padding: 0.125rem;
     border: 1px solid color-mix(in srgb, var(--hairline) 85%, transparent);
     border-radius: 999px;
     background: color-mix(in srgb, var(--ground) 74%, transparent);
     backdrop-filter: blur(8px);
     opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--dur-quick) var(--ease);
+    translate: -50% 0.25rem;
+    scale: 0.94;
+    pointer-events: auto;
+    transition:
+      opacity var(--hover),
+      translate var(--dur-quick) var(--ease),
+      scale var(--dur-quick) var(--ease),
+      border-color var(--hover),
+      background-color var(--hover);
   }
 
-  .nar-video:hover .nar-video-rates {
+  .nar-video:hover .nar-video-rates,
+  .nar-video:focus-within .nar-video-rates {
     opacity: 1;
-    pointer-events: auto;
+    translate: -50% 0;
+    scale: 1;
+  }
+
+  .nar-video-rates:hover {
+    border-color: var(--ink-3);
+  }
+
+  @media (hover: none) {
+    .nar-video-close {
+      opacity: 0.9;
+      translate: 0 0;
+      scale: 1;
+    }
+
+    .nar-video-rates {
+      opacity: 1;
+      translate: -50% 0;
+      scale: 1;
+    }
+  }
+
+  .nar-video.is-dismissed .nar-video-close {
+    opacity: 0;
+    translate: 0 -0.2rem;
+    scale: 0.9;
+    pointer-events: none !important;
+    transition:
+      opacity 90ms linear,
+      translate 140ms var(--ease),
+      scale 140ms var(--ease);
+  }
+
+  .nar-video.is-dismissed .nar-video-rates {
+    opacity: 0;
+    translate: -50% 0.25rem;
+    scale: 0.92;
+    pointer-events: none !important;
+    transition:
+      opacity 90ms linear,
+      translate 140ms var(--ease),
+      scale 140ms var(--ease);
+  }
+
+  :global(html.is-desk-safari) .nar-video-close,
+  :global(html.is-desk-safari) .nar-video-rates {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: color-mix(in srgb, var(--ground) 88%, transparent) !important;
   }
 
   .nar-rate {
-    padding: 0.15rem 0.38rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.2rem;
+    padding: 0;
     border: none;
     border-radius: 999px;
     background: transparent;
     color: var(--ink-3);
     font: inherit;
-    font-size: 0.65rem;
+    font-size: 0.64rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
-    line-height: 1.1;
+    letter-spacing: -0.015em;
+    line-height: 1;
+    white-space: nowrap;
     cursor: pointer;
+    scale: 1;
     transition:
       color var(--hover),
-      background-color var(--hover);
+      background-color var(--hover),
+      box-shadow var(--hover),
+      scale var(--dur-micro) var(--ease);
+  }
+
+  @media (max-width: 48rem) {
+    .nar-video-rates {
+      gap: 0.08rem;
+      padding: 0.1rem;
+    }
+
+    .nar-rate {
+      width: 1.6rem;
+      height: 1.12rem;
+      font-size: 0.58rem;
+    }
   }
 
   .nar-rate:hover {
-    color: var(--ink-2);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+  }
+
+  .nar-rate:active {
+    scale: 0.93;
   }
 
   .nar-rate.is-active {
-    background: color-mix(in srgb, var(--ink) 20%, transparent);
+    background: color-mix(in srgb, var(--ink) 22%, transparent);
     color: var(--ink);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   }
 </style>
 

@@ -691,6 +691,18 @@ for (const p of items)
     --cap-gap: 1.25rem;
   }
 
+  @media (min-width: 48.01rem) and (max-height: 50rem) {
+    .words .body {
+      --cap-gap: 0.875rem;
+      font-size: 0.9375rem;
+      line-height: 1.55;
+    }
+
+    .links {
+      margin-top: 0.875rem;
+    }
+  }
+
   /* A step below the stars' titles — this panel is secondary. */
   /* The Copy Link glyph rides at the end of the name (CopyLink). */
   .name :global(.copy-link),

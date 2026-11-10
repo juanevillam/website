@@ -37,47 +37,24 @@ const PUBLIC = path.join(process.cwd(), 'public');
  * voice can arrive a paragraph at a time.
  */
 export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
-  // English only uses its own audio once its vertical video take (.mp4) is
-  // recorded; until then it plays the Spanish take with English subtitles.
-  // Chinese never has its own recording: it plays English once recorded, or
-  // Spanish until then, with Chinese subtitles (Juan, 2026-11-08).
-  const candidates: Locale[] =
-    lang === 'zh' ? ['en', 'es'] : lang === 'en' ? ['en', 'es'] : ['es'];
-  for (const c of candidates) {
-    if (
-      c === 'en' &&
-      !fs.existsSync(path.join(PUBLIC, `/media/narration/en/${key}.mp4`))
-    ) {
-      continue;
-    }
-    const url = `/media/narration/${c}/${key}.m4a`;
-    if (fs.existsSync(path.join(PUBLIC, url))) return url;
+  // English and Chinese only expose their own data-clip-{lang} once their
+  // own vertical video take (.mp4) is recorded; until then director.ts
+  // falls back to Spanish (or English for Chinese once English is recorded)
+  // and NarrationSoon shows the recording-in-progress notice (Juan, 2026-11-10).
+  if (
+    lang !== 'es' &&
+    !fs.existsSync(path.join(PUBLIC, `/media/narration/${lang}/${key}.mp4`))
+  ) {
+    return null;
   }
-  return null;
+  const url = `/media/narration/${lang}/${key}.m4a`;
+  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
 };
 
-const FALLBACK_VIDEOS: Record<string, string> = {
-  'events.platanus.body': '/media/narration/es/arcade.p1.mp4',
-  'events.summit.body': '/media/narration/es/events.alegria.body.mp4',
-  'events.panal.body': '/media/narration/es/events.ilc.body.mp4',
-  'events.radio.body': '/media/narration/es/work.crol.body.mp4',
-  'work.salvalo.body': '/media/narration/es/shaper.problem.mp4',
-  'likes.cosmos.body': '/media/narration/es/shaper.solution.mp4',
-  'likes.songs.body': '/media/narration/es/shaper.s3.p2.mp4',
-  footer: '/media/narration/es/hero.mp4',
-};
-
-/** Vertical 9:16 video take alongside the voice clip, when recorded (with fallback to existing takes). */
+/** Vertical 9:16 video take alongside the voice clip, when recorded. */
 export const videoFor = (key: string, lang: Locale = 'es'): string | null => {
-  const candidates: Locale[] =
-    lang === 'zh' ? ['en', 'es'] : lang === 'en' ? ['en', 'es'] : ['es'];
-  for (const c of candidates) {
-    const url = `/media/narration/${c}/${key}.mp4`;
-    if (fs.existsSync(path.join(PUBLIC, url))) return url;
-  }
-  const fallback = FALLBACK_VIDEOS[key] ?? '/media/narration/es/hero.mp4';
-  if (fs.existsSync(path.join(PUBLIC, fallback))) return fallback;
-  return null;
+  const url = `/media/narration/${lang}/${key}.mp4`;
+  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
 };
 
 /**
@@ -162,7 +139,7 @@ const alignTimes = (shown: string[], spoken: Spoken[]): number[] => {
   return out;
 };
 
-const ENDS = /[.?!…。？！]$/;
+const ENDS = /[.?!…。？！][»”"')\]]*$/;
 
 /** Token indices where each sentence starts. */
 const sentenceStarts = (tokens: { text: string }[]) => {
@@ -211,6 +188,10 @@ export const readTimings = (
   );
   const enSpoken = hasEnVideo ? spokenWords(key, 'en') : undefined;
   const enRef = enSpoken?.length ? spansFor('en', enSpoken) : undefined;
+  const hasZhVideo = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/zh/${key}.mp4`),
+  );
+  const zhSpoken = hasZhVideo ? spokenWords(key, 'zh') : undefined;
 
   const out = {
     es: esRef.tokens.map((t, i) => [t.at, round(esRef.times[i])]),
@@ -219,7 +200,12 @@ export const readTimings = (
     if (l === 'es') continue;
     const tokens = readTokens(text(l));
     // Its own voice: its words on its own clock, like Spanish.
-    const own = l === 'en' && hasEnVideo ? enSpoken : undefined;
+    const own =
+      l === 'en' && hasEnVideo
+        ? enSpoken
+        : l === 'zh' && hasZhVideo
+          ? zhSpoken
+          : undefined;
     if (own?.length) {
       const times = alignTimes(
         tokens.map(t => t.text),
@@ -232,14 +218,24 @@ export const readTimings = (
     // against the English clock (falling back to Spanish before English is recorded).
     const ref = l === 'zh' && enRef ? enRef : esRef;
     const starts = sentenceStarts(tokens);
-    const groups =
-      starts.length === ref.spans.length
-        ? starts.map((s, i) => ({
-            from: s,
-            to: i + 1 < starts.length ? starts[i + 1] : tokens.length,
-            span: ref.spans[i],
-          }))
-        : [{ from: 0, to: tokens.length, span: [ref.first, ref.end] }];
+    const groups = starts.map((s, i) => {
+      const loIdx = Math.min(
+        ref.spans.length - 1,
+        Math.floor((i * ref.spans.length) / starts.length),
+      );
+      const hiIdx = Math.min(
+        ref.spans.length - 1,
+        Math.max(
+          loIdx,
+          Math.floor(((i + 1) * ref.spans.length) / starts.length) - 1,
+        ),
+      );
+      return {
+        from: s,
+        to: i + 1 < starts.length ? starts[i + 1] : tokens.length,
+        span: [ref.spans[loIdx][0], ref.spans[hiIdx][1]],
+      };
+    });
     out[l] = [];
     for (const g of groups) {
       const words = tokens.slice(g.from, g.to);

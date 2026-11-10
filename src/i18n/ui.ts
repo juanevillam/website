@@ -33,7 +33,9 @@ const en = {
   listen: 'Listen',
   pause: 'Pause',
   'soon.narration':
-    "My narration in English is coming soon. For now you'll hear me in Spanish and read along in English.",
+    "I'm currently recording the English videos. For now you'll see and hear me in Spanish with English subtitles.",
+  'soon.narration.zhAfterEn':
+    "I'm currently recording the Chinese videos.",
   'soon.close': 'Dismiss',
   // The hero's greeting over the wordmark — the one word that shows at a
   // glance which language the page is in (as the GitHub profile's
@@ -49,7 +51,7 @@ const en = {
   'hero.caption':
     "Hi, I'm Juan Villa and I love making software. I always say I like making software the way I like playing video games, and that's going for the platinum. I also think it's the closest thing to magic in this simulation, because if you can imagine something and figure out how to build it, you can create some really cool things. And once you pair that software with hardware, you can create things that are even cooler. A fun fact about this page: I built it with a single challenge — to make it as personal as possible, without looking at a single reference. Beyond giving it my own branding, I decided to record myself, so the page plays like a movie in video, audio and subtitles, like a little Horcrux of mine living here. It's designed to be as timeless as possible as the years go by. Here I'll show you what I'm up to and the things I like. Welcome.",
   'footer.caption':
-    "Well, thanks for listening. If you have any comments, you can message me on LinkedIn or Instagram. And I'm still building, and still going for the platinum.",
+    "Thank you so much for listening to me, watching me and reading me. If you have any comments, you can reach me through the different channels available, while I keep building and going for the platinum. If you made it all the way here and watched everything on the main page, congratulations, because some of these takes were really long. As a fun fact, I didn't record all these videos in a single session—or I would have lost my voice—and out of many takes I always picked the one that felt most natural, which is why my framing changes or you might hear rain in the background. I'm super happy to have built this page; let's see what I build next, and thanks for stopping by.",
   'song.listen': 'Watch the Demo',
   'song.teaser': 'Hear DÁKITI in Sound Shaper',
   'legal.terms': 'Terms and Conditions',
@@ -123,7 +125,7 @@ const en = {
   'work.crol.body':
     '[Crol](crol) is a cloud ERP for SMBs in Mexico. There I started with Conto Pay, a much simpler, easier-to-use product from Crol where I led the development of the web app, the mobile app and the landing page. That mobile app then became the foundation for Crol ERP Móvil, which I also designed and built from scratch.',
   'work.salvalo.body':
-    "I'm a cofounder of [Salvalo](salvalo), my startup. Every day, shops close with products that can still be sold, and Salvalo turns them into packs with a price and a pickup time. The customer finds one nearby on the app's map, reserves it, pays the shop directly and picks it up with a verification code. The example I always give: a bakery has 10 cachitos in the morning, by 5 in the afternoon it has 3 left and 2 loaves of French bread, and it makes a pack out of them at a reduced closing price. The shop wins, because it moves that product instead of losing it, and it gains customers, because Salvalo is an extra sales channel. And the customer gets the same morning cachitos, in the afternoon, at a discount, in a really easy way. I'm the technical cofounder: I redesigned the app and the website, and I handle all the frontend development. I'm also Salvalo's representative here in Venezuela, so I go out to pitch shops and show up at every event on Salvalo's behalf.",
+    "I'm a cofounder of [Salvalo](salvalo), my startup as a first-time founder, and it's a food-offers marketplace. Every day in Venezuela businesses close the day with food or products that could have been sold, and Salvalo solves that problem: imagine a bakery that makes 10 cachitos in the morning and by the afternoon has 3 left along with 2 French breads, puts together a pack and sells it through the app at a closing offer price. Both sides win because the shop doesn't lose the product, lands a sale and gains a new customer through Salvalo as an external sales channel, while the customer gets the morning's fresh cachitos in the afternoon at a bargain price in a super convenient way. The app flow is simple—the hard part is onboarding shops and bringing in customers—and as Salvalo's representative here in Venezuela I've been focusing heavily on sales, pitching businesses in person and overcoming my old introverted side, while as a technical founder I also worked on the web system, landing page and mobile app. A real startup experience pushes you to grow both as a founder and as a person, and most of the events I attended this year—like El Panal and the Startup Venezuela Summit—were representing Salvalo here in the country where I was born and live; that's Salvalo, so go save your packs.",
   'work.maktub.body':
     "[Maktub Art Fund](maktub) is a client from Mexico. It's a standalone landing page — which normally wouldn't catch my eye on its own — but it had a really interesting, modern, fashion-forward design I hadn't built before, and I really liked how the final result turned out.",
 
@@ -165,36 +167,36 @@ const en = {
   'events.interview': 'Interview',
   'events.radio.when': 'Oct 2026',
   'events.radio.body':
-    "This was [Salvalo](salvalo)'s first radio interview, on [Cheo Noguera](cheo)'s show on [OK 101.5 FM](ok101) in Barquisimeto. I was in the studio and my cofounder joined from Madrid. I gave the usual example: you make 10 cachitos, by 4 you have 3 left, and you make a pack out of them. On the live stream people were asking us how to download it, and we explained what Salvalo is right there to every listener.",
+    "This was [Salvalo](salvalo)'s first radio interview on [OK 101.5 FM](ok101) on [Cheo Noguera](cheo)'s show here in Barquisimeto. It was my first time on the radio—I had been on TV much younger—and my cofounder Abrahan joined online from Spain. I thought I would be nervous, and instead I just wanted to keep talking: we shared our story and how we started, answered listeners right there as people installed the app, and I gave the example I always use—imagine a bakery makes 10 cachitos in the morning and by 6 in the afternoon 3 are left, so with those 3 cachitos and 2 French breads you build a pack at a closing offer price in the app as an extra sales channel that saves the product, lands the sale and brings in a new customer, while the customer gets the morning's fresh cachitos and French bread at an offer price. I also value every event I go to representing Salvalo as startup founder training for the projects ahead—learning how to explain a startup to any profile, like a bakery owner of 20 years—and I hope to be back on the mic soon.",
   'events.radio.m':
     "[Salvalo](salvalo)'s first interview, live on [OK 101.5 FM](ok101) in Barquisimeto: the host downloaded the app on air while I walked his listeners through it.",
   'events.meetup': 'Meetup',
   'events.panal.when': 'Oct 2026',
   'events.panal.body':
-    "[El Panal](panal) is a movement [Manuel Sira](manuel) started here in Barquisimeto: lots of people building all kinds of things. There are people in marketing, fashion, CRM, inventory, psychology and health apps, and there were talks on artificial intelligence, on growing your company by measuring its data well, and on standing out in the age of AI by having real taste in what you build. Every startup at the event had 30 seconds to pitch, and I, nervous, gave [Salvalo](salvalo)'s. It wasn't the best pitch I've ever given, but it was Salvalo's first official one at an event of that caliber. I went with my friends from [Tripealo](tripealo) and left with new friends from other apps, new contacts and a few leads for Salvalo. It was the warm-up right before heading to the Startup Summit in Caracas: the practice before the practice.",
+    "[El Panal](panal) is a movement [Manuel Sira](manuel) created here in Barquisimeto to bring together every kind of tech profile in Lara state so it isn't always only in Caracas. I went with my friends from [Tripealo](tripealo), and out of around 140 people at the Jirajara Hotel, a few rounds of founders got 30 seconds on the big countdown screen to pitch; I passed in the second round and gave [Salvalo](salvalo)'s first official pitch with my classic bakery example. I was nervous with the 30-second buzzer behind me, yet I finished the whole pitch and took it as great practice alongside people building psychology apps, a bathroom-finder app called [Resty](resty), marketing, fashion and CRMs. There were talks on growing your business by measuring internal data and on how, in the era of AI, what sets you apart isn't just technical execution—since machines can build anything—but human taste, like a master carpenter's handcrafted armchair versus a factory one. Each person is a cell in the honeycomb connecting with others: I landed leads for Salvalo, practiced losing the fear of pitching as a first-time founder, and added the second event badge to my collection.",
   'events.panal.m':
     'A night of [El Panal](panal) in Barquisimeto: talks on AI, data and taste, and 30 seconds to pitch [Salvalo](salvalo). Nervous, but I gave it, and left with new friends and a lead or two.',
   'events.summit': 'Summit',
   'events.summit.when': 'Oct 2026',
   'events.summit.body':
-    "I was at the [Startup Venezuela Summit](summit), at Caracas Campus. Honestly, I had never been to an event like it. There were talks all day, people from other countries making connections, and everyone was building every kind of product. We heard [Víctor Cárdenas](slash) of Slash again, and [Pedro Vallenilla](pedro) of [Cashea](cashea). We were also at a workshop with [Enrique Rivas](enrique), of [Fina](fina) and [Innoven](innoven). I applied with [Salvalo](salvalo) at Innoven's stand and stuck our photo on the wall of Venezuelan founders to leave our mark. I also met a lot of people, like one of the cofounders of [Rial](rial). What I took most from those two days is that building a startup is hard, but it's worth it: with ambition, drive and passion you can make it. It doesn't matter your age, your country or where you come from: if you're willing to do it, it can be done. And the other thing is what Steve Jobs said: the people crazy enough to think they can change the world are the ones who actually do. I got home super excited, still processing all the talks and everything I lived through in those two days.",
+    "I attended the [Startup Venezuela Summit](summit) at Caracas Campus, and I had never been to an event like it. We saw [Pedro Vallenilla](pedro) of [Cashea](cashea) and [Víctor Cárdenas](slash) of Slash again, met one of the cofounders of [Rial](rial) and people from abroad—including Venezuelan-founded US venture funds that were early investors in Anthropic—making it the most global tech event I've experienced. Beyond the main stages, the app updated in real time with sessions inside the corporate offices at Caracas Campus, including a reverse pitch where VCs pitched founders and shared how they look for startups aiming for a billion dollars a year. We also joined a private workshop with [Fina](fina) and [Innoven](innoven), where I applied with [Salvalo](salvalo), put my photo on the wall and got an Innoven cap. My biggest takeaway—echoing Steve Jobs on those crazy enough to change the world, and adding another badge to my collection alongside my friends from [Tripealo](tripealo)—is that no matter your age or background, if you put your heart into building a startup and aim for the global big leagues, you can make it happen.",
   'events.summit.m':
     "Two days at the Startup Venezuela Summit with [Tripealo](tripealo): talks by [Slash](slash) and [Cashea](cashea), a private workshop with Fina and Innoven we were invited to for our founders' jackets, and [Salvalo](salvalo) on the wall of Venezuelan founders.",
   'events.platanus.when': 'Oct 2026',
   'events.platanus.body':
-    "Right after the Startup Venezuela Summit, we went straight to [Platanus Hack 26 Caracas](platanus). Platanus ran its hackathon as a tour across Latin America, and my team and I got into the Caracas edition. We applied with our developer profiles, the same team from the AlegrIA hackathon, not as [Tripealo](tripealo) or [Salvalo](salvalo), but each with our own background. It was funny: literally a year after AlegrIA 2025, we were back in [Yummy](yummy)'s offices for another hackathon, only this time much tougher on the technical side. We built [Tridi](tridi), which turns an ordinary video of a person into movement data for robots: a simulated robot learns to move on its own by imitating you. You take any video, the movement is tracked and brought into a physics simulation, the robot learns to move across different terrains and conditions, and the simulation data and trained policy are exported ready for hardware. We built it on the idea that robotics and AI is the new sexy. We slept little, but what I learned at AlegrIA and all the mental work I'd put in helped me a lot. And not just me: the whole team was super locked in. Our mentor was [Sebastián Alcalá](sebastian), a product engineer at Yummy and a cofounder of [Wink](wink). We didn't win, but the level was impressive, right up there with Buenos Aires, Mexico and Bogotá. A fun detail: our table was right next to Platanus Hack's arcade, the one I made Space Explorer for. Several times, while we were working, we watched other participants walk by and play it, and I'll always remember the look on their faces, that 'hey, this game is really cool'. I didn't say anything so they could enjoy it on their own without me in the middle. We also made great friends and connections: the technical talent in Venezuela is strong. That was our second hackathon in a row together, and as they say, third time's the charm.",
+    "Right after leaving the Startup Venezuela Summit we went straight to [Platanus Hack 26 Caracas](platanus), Platanus Ventures' first Latin America hackathon tour, held once again at [Yummy](yummy)'s offices a full year after the AlegrIA hackathon. We built non-stop for 36 hours on very little sleep, applying everything my team and I had learned in past hackathons under the premise that Physical AI is the new sexy. We chose the 3D track and created [Tridi](tridi), which takes ordinary video of people—from a camera or pre-recorded—and turns it into training data and policies for humanoid robots, or even a Mars rover, inside a physics simulation we built so robots can learn everyday actions before touching the real world. We didn't win, though the technical level in Caracas was right up there with Buenos Aires, Mexico City and Bogotá, and we were grateful to the Platanus and Yummy teams and our mentor [Sebastián Alcalá](sebastian), product engineer at Yummy and cofounder of [Wink](wink), as we aim for third time's the charm next year. The badge they gave us is a card-sized NFC tag I carry in my wallet pointed straight to juanevillam.com, closing out an intense October week in Caracas.",
   'events.platanus.m':
     "Straight from the summit to Platanus Hack 26 Caracas, back in [Yummy](yummy)'s offices with the AlegrIA team: we built [Tridi](tridi), video turned into movement data for robots. No prize, but a much tougher hackathon, and people playing Space Explorer next door.",
   'likes.title': 'More of Me',
   'likes.cosmos.name': 'Cosmos',
   'likes.cosmos.body':
-    "Space has always fascinated me. When you see how vast it is, how infinite its scales are, just at the level of galaxies, a lot of what worries me or what I think about life, what I want and what I don't, stops making sense. There are things out there so immense, like a black hole or a supernova, and we are a mind this complex in a body this fragile, weak and mortal: a contrast on another scale. Everything that has happened and will happen in human history, so far, has happened on this planet, one of many in the solar system, which is one of many systems in the Milky Way, which is one of many galaxies in a cluster, in a supercluster, and so on. The nearest star is four light-years away: scales so big you just say 'wow'. Right now someone is happy about something that happened to them and someone is sad, people are being born and people are dying, people are building and people are destroying. It's such a crazy contrast it feels like a simulation: each of us believes we're special, but we're a character who can have an effect on the world, not at the scale of the universe. The universe is indifferent to humans. And instead of rejecting that feeling, I learned to admire it and to love existence itself: it's incredible that we are the universe experiencing itself, in all its greatness. That's why I started looking at lots of space photos from the [James Webb](webb) and the [Hubble](hubble), and I'd spend hours on a single photo without listening to anything, immersed, absorbed by those images. You wonder whether they're real or a montage, and yes, they're real. These are my favorites, and I have no way to rank them: I don't know which is better than another. Some are at the scale of stars and others at the scale of galaxies, where you say 'this is a whole galaxy', with who knows how many solar systems, and we haven't even explored our whole planet. And since I love them so much, I wanted to share them here.",
+    "Space has always fascinated me: when you try to grasp how vast and infinite it is, there's no word for the contrast that everything in human history has happened on Earth—one planet in the solar system, in the Milky Way, inside a galaxy cluster, supercluster and megacluster without end. Stars, supernovas, colliding black holes and galaxies merging make you realize the universe is indifferent to our human worries—whether someone is sad, happy, sick or healthy—putting us in our place as a tiny ant in an incomprehensible cosmos, a feeling I came to love because nothing is more real than these [James Webb](webb) and [Hubble](hubble) photos. For me, humanity really has only two fundamental problems that are linked into one: space exploration—which inspired the name of my first game, Space Explorer, wishing I had been born in a Star Wars future across multiple galaxies—and immortality, because with the nearest star four light-years away, exploring the universe takes a body far less fragile than ours, perhaps backing up consciousness across solar systems and loading into advanced robots. When I die—if I die—I want to be working directly on space exploration or immortality, and I also find AI poetic because ever since humans discovered fire we were destined to create the intelligence that succeeds us, to the point I'd bet money we're in a simulation. The first time I saw these photos I put on headphones with nothing playing and stared at them for hours: I have no way to rank them, because all of them are breathtaking and for me nothing is more real than these photos.",
   // More of Me's Songs card and its player (SongsPlayer): the Shape
   // sheet's words are Sound Shaper's own (its i18n/translations.ts).
   'likes.songs.name': 'Songs',
   'likes.songs.meta': 'My Ranking',
   'likes.songs.body':
-    "Here are some of my favorite songs. If you notice, they share an electronic style that I call cybernetic, futuristic: I don't know if it's called techno or what. The fewer lyrics a song has, the more I like it: to me they're more music than songs, and those are my top. It would be cool if you tried to guess my favorite parts, the clips I keep of each song in my personal [Sound Shaper](shaper) library, as a way to get to know me better. The rest are songs of every kind, so you can play with all the filters and the live DJ mode right here on the page.",
+    "Here I share some of my favorite songs: they have a style I call cybernetic and futuristic—probably techno—and the fewer lyrics a song has, the more I like it, because when music expresses so much without saying a word it hits differently. If you've made it this far through the videos, try guessing which clips I keep of these tracks in my personal [Sound Shaper](shaper) library to see how my personality works. This card is built as a live Sound Shaper experience preloaded with my top tracks and a few fun ones—no login needed—so you can play with the filters or turn on DJ Juan, which mixes the songs automatically the way I would. This section is more relaxed and personal so I could gesture freely, leave the videos as long as I want on my own site, and give my landing page a live Sound Shaper preview through my favorite songs.",
   'songs.top': 'My Top',
   'songs.more': 'More Songs',
   'songs.library': 'Songs',
@@ -238,9 +240,12 @@ const en = {
   // library" made these songs: the set here is mixed from mine.
   'shape.autoDj': 'DJ Juan',
   'shape.autoDjDescription':
-    'Mixes parts of every song here into a set, differently every time.',
+    'Mixes this song or all of these songs on the beat, differently every time.',
   'shape.autoDjPreparing': 'Reading Songs',
   'shape.autoDjProgress': '{ready} of {total}',
+  'shape.autoDjMode.off': 'Off',
+  'shape.autoDjMode.sound': 'This Song',
+  'shape.autoDjMode.all': 'All Songs',
 };
 
 export type UIKey = keyof typeof en;
@@ -257,7 +262,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     listen: 'Escuchar',
     pause: 'Pausar',
     'soon.narration':
-      'Muy pronto, mi narración en otros idiomas. Por ahora me escuchas en español.',
+      'Muy pronto, mis videos en inglés y en chino. Por ahora me ves y me escuchas en español.',
+    'soon.narration.zhAfterEn':
+      'Ahorita estoy grabando los videos en chino.',
     'soon.close': 'Cerrar',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
@@ -268,7 +275,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.caption':
       'Hola, yo soy Juan Villa y me encanta hacer software. Siempre digo que me gusta hacer software como me gusta jugar videojuegos, y eso es yendo por el platino. Además creo que es de las cosas más cercanas que hay a la magia en esta simulación, porque si te imaginas algo y encuentras la manera de hacerlo, puedes crear cosas bastante cool. Y si después ese software que hiciste lo unes con hardware, puedes crear cosas incluso más cool. Como dato curioso de esta página, la hice con un solo reto: que fuese lo más personal posible, sin ver ni una sola referencia. Aparte de que tenía que tener un branding muy mío, dije: me grabo y listo, así que la página está como si fuese una película, en video, en audio y subtitulada, como un mini Horrocrux mío viviendo aquí. Está diseñada para ser lo más timeless posible a medida que pasan los años. En esta página les voy a mostrar en qué ando metido y cosas que me gustan. Bienvenidos.',
     'footer.caption':
-      'Bueno, gracias por escucharme. Si tienes algún comentario, me puedes escribir por LinkedIn o por Instagram. Y yo sigo construyendo, y sigo yendo por el platino.',
+      'Muchas gracias por escucharme, por verme y por leerme. Si tienes algún comentario, me lo puedes hacer llegar por los diferentes medios disponibles, mientras yo sigo construyendo y sigo yendo por el platino. Si llegaste hasta este punto y viste todo lo de la página principal, te felicito porque hay unos videos que fueron bien largos. Como dato curioso, estos videos no los grabé todos en una sola sesión —porque me habría quedado sin voz— y de muchas tomas siempre escogí la que quedara lo más natural posible, por eso en unas cambia el encuadre o se escucha lluvia de fondo. Súper contento de haber hecho esta página; vamos a ver qué sigo haciendo, y gracias por pasearse por aquí.',
     'song.listen': 'Ver el demo',
     'song.teaser': 'Así suena DÁKITI en Sound Shaper',
     'legal.terms': 'Términos y condiciones',
@@ -334,7 +341,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.crol.body':
       '[Crol](crol) es un ERP para PyMEs en México. En Crol empecé con Conto Pay, un producto mucho más simple y fácil de usar de Crol en el que lideré el desarrollo del sistema web, la aplicación móvil y la landing page. Esa aplicación móvil fue después la base para Crol ERP Móvil, que también construí y diseñé desde cero.',
     'work.salvalo.body':
-      'Soy cofundador de [Salvalo](salvalo), mi startup. Los comercios cierran cada día con productos que todavía se pueden vender, y en Salvalo los conviertes en packs con precio y horario de recogida. El cliente lo encuentra cerca en el mapa de la aplicación, lo aparta, le paga directo al comercio y lo recoge con un código de verificación. El ejemplo que siempre pongo: una panadería tiene 10 cachitos en la mañana, a las 5 de la tarde le quedan 3 y 2 panes franceses, y arma un pack con eso a un precio de cierre reducido. Gana el comercio, porque mueve ese producto y no lo pierde, y gana más clientes, porque Salvalo es un canal de ventas extra. Y el cliente se lleva los mismos cachitos de la mañana, en la tarde, a precio de oferta y de manera súper cómoda. Yo soy el cofundador técnico: rediseñé la aplicación y la página web, y me encargo de todo el desarrollo frontend. Además soy el representante de Salvalo aquí en Venezuela, así que salgo a hacerle pitch a comercios y a estar en todos los eventos en nombre de Salvalo.',
+      'Soy cofundador de [Salvalo](salvalo), mi startup como first-time founder, y es un marketplace de ofertas de comida. Todos los días en Venezuela hay negocios que cierran el día con comida o productos que se pudieron vender, y Salvalo soluciona ese problema: imagínate una panadería que hace 10 cachitos en la mañana y en la tarde le quedan 3 y 2 panes franceses, arma un pack con esos productos y los vende por la aplicación a precio de oferta y de cierre. Ambos lados ganan porque el comercio no pierde ese producto, consigue una nueva venta y un nuevo cliente con Salvalo como canal de ventas externo, mientras del lado del cliente son los mismos cachitos de la mañana en la tarde a precio de oferta y de una manera muy cómoda. El proceso de la aplicación es sencillo —lo difícil es agregar comercios y buscar clientes— y como representante de Salvalo aquí en Venezuela me estoy especializando en ventas, haciéndole pitch a los negocios y perdiendo la pena que tenía antes como perfil introvertido, además de trabajar como perfil técnico en el sistema web, la landing page y la aplicación móvil. Esa experiencia de una startup real te empuja a mejorar como founder y como persona, y la mayoría de los eventos a los que fui este año —como El Panal y el Startup Venezuela Summit— fueron como Salvalo aquí en el país en el que nací y vivo actualmente; eso es Salvalo, y bueno, salven sus packs.',
     'work.maktub.body':
       '[Maktub Art Fund](maktub) es un cliente de México. Es una landing page — que por sí sola normalmente no me llama tanto la atención —, pero tenía un diseño bastante interesante, muy moderno y muy fashion que no había hecho antes, y me gustó mucho el resultado final.',
 
@@ -376,34 +383,34 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.interview': 'Entrevista',
     'events.radio.when': 'oct 2026',
     'events.radio.body':
-      'Esta fue la primera entrevista de [Salvalo](salvalo) en la radio, en el programa de [Cheo Noguera](cheo) en [OK 101.5 FM](ok101) de Barquisimeto. Yo estaba en el estudio y mi cofundador estaba conectado desde Madrid. Expliqué el ejemplo de siempre: haces 10 cachitos, a las 4 te quedan 3 y armas un pack con eso. En el live había personas preguntándonos cómo descargarla, y explicamos directamente qué es Salvalo a todos los oyentes.',
+      'Esta fue la primera entrevista de [Salvalo](salvalo) en la radio en [OK 101.5 FM](ok101) en el programa de [Cheo Noguera](cheo) acá en Barquisimeto. Fue mi primera vez en la radio —ya había ido a televisión mucho más pequeño— y estuvo también mi cofundador Abrahan vía online desde España. Pensé que iba a estar nervioso, pero más bien tenía ganas de seguir contando qué es Salvalo, nuestra historia y cómo empezamos; habían oyentes preguntándonos que se instalaron la aplicación ahí mismo, y di el ejemplo que siempre doy: imagina que eres una panadería, en la mañana tienes 10 cachitos y a las 6 de la tarde te quedan 3, entonces con esos 3 cachitos y 2 panes franceses armas un pack a precio de cierre por la aplicación como un canal extra de ventas para no perder el producto, conseguir la venta y ganar un nuevo cliente, mientras el cliente lleva los mismos cachitos y pan francés de la mañana a precio de oferta. Cada evento al que voy representando a Salvalo me sirve como entrenamiento de startup founder para los siguientes proyectos —comunicar una startup a cualquier perfil, como un dueño de panadería de 20 años— y espero repetir pronto para seguir practicando mis habilidades locutoras.',
     'events.radio.m':
       'La primera entrevista de [Salvalo](salvalo), en vivo en [OK 101.5 FM](ok101) de Barquisimeto: el locutor descargó la app al aire mientras se la explicaba a sus oyentes.',
     'events.meetup': 'Encuentro',
     'events.panal.when': 'oct 2026',
     'events.panal.body':
-      '[El Panal](panal) es un movimiento que creó [Manuel Sira](manuel) aquí en Barquisimeto: muchas personas construyendo de todo. Hay gente de marketing, de moda, CRM, inventario, aplicaciones de psicología y de salud, y hubo charlas de inteligencia artificial, de cómo hacer crecer tu empresa midiendo bien sus datos y de cómo diferenciarte en la era de la IA teniendo buen gusto al crear. Cada startup que fue al evento tenía 30 segundos para hacer su pitch, y yo, nervioso, di el de [Salvalo](salvalo). No fue el mejor que he dado, pero sí el primer pitch oficial de Salvalo en un evento de ese calibre. Fui con mis amigos de [Tripealo](tripealo) y salí con amigos nuevos de otras aplicaciones, contactos y uno que otro lead para Salvalo. Fue el calentamiento justo antes de irnos al Startup Summit en Caracas: la práctica antes de la práctica.',
+      '[El Panal](panal) es un movimiento que creó [Manuel Sira](manuel) acá en Barquisimeto para juntar a todo tipo de perfiles de tecnología en el estado Lara y que no sea todo siempre en Caracas. Fui con mis amigos de [Tripealo](tripealo) y, entre unas 140 personas en el Hotel Jirajara, hubo varias rondas para dar un pitch de 30 segundos; pasé en la segunda ronda y di el primer pitch oficial de [Salvalo](salvalo) con el ejemplo que siempre doy de la panadería. Estaba nervioso porque tenías atrás una pantalla con el contador de 30 segundos que te cortaba al llegar a cero, pero logré decir todo completo y lo tomé como una muy buena práctica junto a gente haciendo aplicaciones de psicología, una app de baños llamada [Resty](resty), marketing, moda y sistemas CRM. Hubo charlas sobre cómo crecer tu negocio midiendo datos y estadísticas internas y sobre cómo, en plena época de la inteligencia artificial, lo que te diferencia ya no es tanto lo técnico —porque la máquina hace todo— sino el gusto humano y artístico, como un sillón hecho a mano por un artesano frente a uno de fábrica. Cada persona es un panal que se interconecta con otros: conseguí leads para Salvalo, practiqué perder el miedo a vender tu idea como first-time founder y guardé el segundo identificador en mi colección.',
     'events.panal.m':
       'Una noche de [El Panal](panal) en Barquisimeto: charlas de IA, datos y gusto, y 30 segundos para el pitch de [Salvalo](salvalo). Nervioso, pero lo di, y me fui con amigos nuevos y uno que otro lead.',
     'events.summit': 'Summit',
     'events.summit.when': 'oct 2026',
     'events.summit.body':
-      'Estuve en el [Startup Venezuela Summit](summit), en el Caracas Campus. La verdad es que nunca había ido a un evento así. Hubo charlas todo el día, gente de otros países haciendo conexiones, y todo el mundo estaba construyendo todo tipo de productos. Escuchamos de nuevo a [Víctor Cárdenas](slash), de Slash, y a [Pedro Vallenilla](pedro), de [Cashea](cashea). También estuvimos en un workshop con [Enrique Rivas](enrique), de [Fina](fina) e [Innoven](innoven). Postulé a [Salvalo](salvalo) en el stand de Innoven y pegué nuestra foto en la pared de founders venezolanos para dejar la huella. También conocí a muchas personas, como a uno de los cofundadores de [Rial](rial). Lo que más me llevé de los dos días es que hacer una startup es difícil, pero vale la pena: con ambición, ganas y pasión lo puedes lograr. No importa tu edad, tu país ni de dónde vienes: si estás dispuesto a hacerlo, se puede lograr. Y lo otro es lo que dijo Steve Jobs: los que están lo suficientemente locos como para creer que pueden cambiar el mundo son los que realmente lo hacen. Llegué a mi casa súper emocionado, terminando de procesar todas las charlas y experiencias que viví en esos dos días.',
+      'Estuve en el [Startup Venezuela Summit](summit) en el Caracas Campus, y la verdad nunca había ido a un evento así. Vimos de nuevo a [Pedro Vallenilla](pedro) de [Cashea](cashea) y a [Víctor Cárdenas](slash) de Slash, conocí a uno de los cofundadores de [Rial](rial) y a personas del extranjero —incluyendo fondos americanos con founders venezolanos que fueron early investors en Anthropic—, siendo el evento más globalizado al que he ido. Además de los auditorios, el cronograma se actualizaba en tiempo real con charlas en las oficinas de empresas del Caracas Campus, como un pitch inverso donde los fondos de venture capital hacían pitch a los founders contando que buscan startups proyectadas a un billón de dólares al año. También estuvimos en un workshop privado de [Fina](fina) con la gente de [Innoven](innoven), donde postulé a [Salvalo](salvalo), pegué mi foto en la pared y me llevé una gorra de Innoven. El aprendizaje más grande que me llevé —recordando la frase de Steve Jobs sobre los suficientemente locos como para cambiar el mundo y sumando otro identificador a mi colección junto a mis amigos de [Tripealo](tripealo)— es que sin importar tu edad ni de dónde vengas, si le metes corazón y apuntas a las grandes ligas globales, lo puedes lograr.',
     'events.summit.m':
       'Dos días en el Startup Venezuela Summit con [Tripealo](tripealo): charlas de [Slash](slash) y [Cashea](cashea), un workshop privado con Fina e Innoven al que nos invitaron por nuestras chaquetas de founders, y [Salvalo](salvalo) en la pared de founders venezolanos.',
     'events.platanus.when': 'oct 2026',
     'events.platanus.body':
-      'Justo saliendo del Startup Venezuela Summit, fuimos directo a [Platanus Hack 26 Caracas](platanus). Platanus hizo su hackathon en modo gira por Latinoamérica, y mi equipo y yo quedamos en la edición de Caracas. Aplicamos con nuestros perfiles de desarrollador, el mismo equipo de la hackathon de AlegrIA, no como [Tripealo](tripealo) ni como [Salvalo](salvalo), sino cada uno con su perfil. Fue gracioso: literalmente un año después de AlegrIA 2025, volvimos a las oficinas de [Yummy](yummy) a otra hackathon, pero esta vez mucho más fuerte a nivel técnico. Construimos [Tridi](tridi), que convierte un video normal de una persona en data de movimiento para robots: un robot simulado aprende a moverse solo imitándote. Tomas cualquier video, se rastrea el movimiento y se lleva a una simulación física, el robot aprende a moverse en distintos terrenos y condiciones, y se exportan los datos y el modelo entrenado listos para hardware. Lo hicimos bajo la premisa de que la robótica y la IA is the new sexy. Dormimos poco, pero lo que aprendí en AlegrIA y todo ese trabajo mental me sirvió muchísimo. Y no solo a mí: todo el equipo estuvo muy locked in. Nuestro mentor fue [Sebastián Alcalá](sebastian), product engineer en Yummy y cofundador de [Wink](wink). No ganamos, pero el nivel estuvo brutal, a la par de Buenos Aires, México y Bogotá. Como dato curioso, nuestra mesa estaba justo al lado del arcade de Platanus Hack, para el que hice Space Explorer. Varias veces, mientras trabajábamos, veíamos a otros participantes pasar y jugarlo, y siempre me voy a acordar de sus caras de «epa, mira, este juego está chulo». No les dije nada para que lo disfrutaran a su manera sin estar yo en medio. También hicimos grandes amigos y conexiones: el talento técnico en Venezuela es duro. Ya llevábamos dos hackathons seguidos juntos, y como dicen, la tercera es la vencida.',
+      'Justo saliendo del Startup Venezuela Summit fuimos directo al [Platanus Hack 26 Caracas](platanus), la primera gira de hackathons por Latinoamérica de Platanus Ventures, y adivinen dónde fue: de nuevo en las oficinas de [Yummy](yummy), literalmente un año después de la hackathon de AlegrIA. Fueron 36 horas construyendo sin parar y durmiendo poco, aplicando todo lo que mi equipo y yo aprendimos en hackathons pasadas bajo la premisa de que Physical AI is the new sexy. Escogimos el track de 3D e hicimos [Tridi](tridi), que toma video de personas —con tu cámara o pregrabado— y lo transforma en data de entrenamiento y políticas para robots humanoides, o incluso un robot explorador de Marte, dentro de una simulación física creada por nosotros para enseñarles acciones del mundo real. No ganamos, pero el nivel técnico en Caracas estuvo a la par de Buenos Aires, Ciudad de México y Bogotá, y quedamos súper agradecidos con el equipo de Platanus, de Yummy y nuestro mentor [Sebastián Alcalá](sebastian), product engineer en Yummy y cofundador de [Wink](wink), esperando que el próximo año la tercera sea la vencida. El identificador que nos dieron es una tarjeta con NFC para llevar en la cartera que redirigí directo a juanevillam.com, cerrando una semana en Caracas súper cargada de tecnología.',
     'events.platanus.m':
       'Del Summit directo a Platanus Hack 26 Caracas, de vuelta en las oficinas de [Yummy](yummy) con el equipo de AlegrIA: construimos [Tridi](tridi), video convertido en data de movimiento para robots. Sin premio, pero una hackathon mucho más fuerte, y gente jugando Space Explorer al lado.',
     'likes.title': 'Más de mí',
     'likes.cosmos.name': 'Cosmos',
     'likes.cosmos.body':
-      'El espacio siempre me ha fascinado. Al ver lo vasto que es, lo infinitas que son sus escalas, tan solo a nivel galáctico, mucho de lo que me preocupa o pienso de la vida, de lo que quiero y de lo que no quiero, deja de tener sentido. Hay cosas tan imponentes allá afuera, como un agujero negro o una supernova, y nosotros somos una mente tan compleja en un cuerpo tan frágil, débil y mortal: un contraste de otra escala. Todo lo que ha pasado y pasará en la historia de la humanidad, hasta ahora, ha pasado en este planeta, uno de los muchos del sistema solar, que es uno de los muchos sistemas de la Vía Láctea, que es una de las muchas galaxias de un cúmulo, de un supercúmulo, y así sucesivamente. La estrella más cercana está a cuatro años luz de distancia: escalas tan grandes que dices «wow». Ahorita mismo hay alguien feliz por algo que le pasó y alguien triste, gente naciendo y gente muriendo, gente construyendo y gente destruyendo. Es un contraste tan loco que parece una simulación: cada uno cree que es especial, pero somos un personaje que puede tener efecto en el mundo, no a nivel universal. El universo es indiferente hacia el humano. Y en vez de rechazar ese sentimiento, aprendí a admirarlo y a amar la existencia misma: es increíble que seamos el universo experimentándose a sí mismo, en toda su grandeza. Por eso empecé a ver muchas fotos del espacio del [James Webb](webb) y del [Hubble](hubble), y duraba horas viendo una sola foto sin escuchar nada, inmerso, absorbido por esas imágenes. Uno se pregunta si son reales o un montaje, y sí, son de verdad. Estas son mis favoritas, y no tengo manera de rankearlas: no sé cuál es mejor que otra. Unas son a nivel de estrellas y otras a nivel de galaxias, donde dices «esto es una galaxia entera», con quién sabe cuántos sistemas solares, y nosotros ni siquiera hemos explorado nuestro planeta completo. Así como me encantan, las quería compartir acá.',
+      'El espacio siempre me ha fascinado: al ver lo vasto e infinito que es, no hay palabra para el contraste de que todo lo que ha pasado en la historia humana ha ocurrido en la Tierra, un planeta del sistema solar, en la Vía Láctea, dentro de un cúmulo, un supercúmulo y un megaclúster sin fin. Las estrellas, las supernovas, los agujeros negros chocando y las galaxias fusionándose te muestran que el universo es indiferente a nuestras preocupaciones —que si alguien está triste, feliz, enfermo o con salud— y te ponen en tu lugar como una simple hormiga en un universo incomprensible, un sentimiento que empecé a amar porque no hay nada más real que estas fotos del [James Webb](webb) y del [Hubble](hubble). Para mí la humanidad tiene dos problemas primordiales que se unen en uno: la exploración espacial —de ahí viene el nombre de mi primer juego, Space Explorer, porque me habría gustado nacer en un futuro tipo Star Wars entre múltiples galaxias— y la búsqueda de la inmortalidad, ya que con la estrella más cercana a cuatro años luz necesitas superar este cuerpo tan frágil, tal vez extrayendo tu conciencia con backups en múltiples sistemas solares para cargarla en robots avanzados. Al momento de morir —si es que muero— me gustaría estar trabajando directamente en exploración espacial o inmortalidad, y también me parece poética la inteligencia artificial porque desde que el humano descubrió el fuego estaba destinado a crear al ser que lo reemplazaría, al punto de que apostaría plata a que estamos en una simulación. Como dato curioso, cuando vi estas fotos por primera vez me puse audífonos sin escuchar nada y las vi durante horas: no tengo manera de rankearlas porque todas son breathtaking y para mí no hay nada más real que estas fotos.',
     'likes.songs.name': 'Canciones',
     'likes.songs.meta': 'Mi ranking',
     'likes.songs.body':
-      'Aquí les comparto algunas de mis canciones favoritas. Si se fijan, tienen un estilo electrónico, que yo llamo cibernético, futurista: no sé si se llama techno o qué. Mientras menos letra tenga una canción, más me gusta: para mí son más música que canciones, y esas sí son mi top. Sería chulo que intentaran adivinar mis partes favoritas, los clips que tengo de cada canción en mi librería personal de [Sound Shaper](shaper), como un ejercicio para conocerme más. Las demás son canciones de todo tipo, para que puedan probar todos los filtros y el modo DJ en vivo aquí mismo en la página.',
+      'Aquí les comparto algunas de mis canciones favoritas: tienen un estilo que llamo cibernético y futurista —en realidad creo que es techno— y mientras menos letra tenga la canción más me gusta, porque cuando expresa mucho sin decir una sola palabra tiene algo distinto. Si llegaron hasta este punto viendo los videos, traten de adivinar cuáles son los clips que tengo en mi [Sound Shaper](shaper) personal de estas canciones para ver cómo funciona mi personalidad. Esto está construido como el propio Sound Shaper cargado con canciones de mi top y otras para jugar —sin necesidad de iniciar sesión— para que prueben los filtros o activen la funcionalidad de DJ Juan, entrenado por mí para mezclar automáticamente a mi gusto. Esta sección es menos seria y más personal para poder gesticular libremente, dejar los videos tan largos como quiera porque es mi página y meterle a mi landing un preview en vivo de Sound Shaper con mis canciones favoritas.',
     'songs.top': 'Mi top',
     'songs.more': 'Más canciones',
     'songs.library': 'Canciones',
@@ -423,7 +430,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.done': 'OK',
     'shape.presets': 'Ajustes preestablecidos',
     'shape.custom': 'Personalizado',
-    'shape.levels.off': 'Desactivado',
+    'shape.levels.off': 'No',
     'shape.levels.low': 'Bajo',
     'shape.levels.medium': 'Medio',
     'shape.levels.high': 'Alto',
@@ -447,9 +454,12 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Reproduce el sonido como si viniera de otra habitación, amortiguado por una pared.',
     'shape.autoDj': 'DJ Juan',
     'shape.autoDjDescription':
-      'Mezcla partes de todas estas canciones en un set, distinto cada vez.',
+      'Mezcla esta canción o todas estas canciones al ritmo, distinto cada vez.',
     'shape.autoDjPreparing': 'Leyendo canciones',
     'shape.autoDjProgress': '{ready} de {total}',
+    'shape.autoDjMode.off': 'No',
+    'shape.autoDjMode.sound': 'Esta canción',
+    'shape.autoDjMode.all': 'Todas',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -460,7 +470,10 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: '访问',
     listen: '收听',
     pause: '暂停',
-    'soon.narration': '在中文模式下，你会听到我的英语原声，并可以跟着中文文字阅读。',
+    'soon.narration':
+      '我需要先录完英文视频，之后再录中文视频。目前你会看到并听到我的西班牙语视频，并配有中文字幕。',
+    'soon.narration.zhAfterEn':
+      '我正在录制中文视频。目前你会看到并听到我的英语视频，并配有中文字幕。',
     'soon.close': '关闭',
     'hero.hi': '你好',
     'store.soon': '即将推出',
@@ -469,9 +482,9 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'launch.get': '打开',
     'store.web': '打开',
     'hero.caption':
-      '嗨，我是 Juan Villa，我热爱做软件。我常说我喜欢用打电子游戏的方式来做软件，那就是冲着白金奖杯去。我觉得软件是人类创造的最美好的事物之一，因为它最接近魔法。只要你能想象出来并找到实现的方法，它就能让你无中生有。如果之后再把它和硬件结合起来，就能做出非常非常酷的东西。在这个页面上，我会展示我目前正在忙什么，以及我喜欢的事物，而且全部由我亲自讲述。我对自己说：我们要做一个没有任何参考模板的网站，这里的一切都是我不参考任何人的作品独立搭建的。我又想，怎样才能让它尽可能真实、真诚？那就是把自己录进视频里——这就是我本人，不是 AI——当然还有我的声音。这里记录了我刚才提到的一切，希望你们喜欢。',
+      '嗨，我是 Juan Villa，我热爱做软件。我常说我喜欢像打电子游戏那样做软件，也就是冲着白金奖杯去。而且我觉得它是这个模拟世界里最接近魔法的东西，因为只要你能想象出来并找到实现的方法，就能创造出非常酷的事物。要是之后再把做出来的软件和硬件结合起来，还能创造出更酷的东西。关于这个网页有个有趣的小细节，我做它时只给自己定了一个挑战：不看任何参考模板，尽可能做出最真实的个人风格。除了赋予它完全属于我的品牌风格之外，我还决定把自己录下来，让整个页面像一部有画面、有声音、带字幕的电影，就像我留在这里生活的一个小小魂器。它的设计也尽可能经得起岁月考验，不会随时间过时。在这个页面里，我会向大家展示我正在忙什么以及我喜欢的事物。欢迎你。',
     'footer.caption':
-      '好了，谢谢你听我说。如果你有什么想法，可以在 LinkedIn 或 Instagram 上给我发消息。我还在继续做东西，也还在继续冲白金。',
+      '非常感谢你听我讲、看我的视频、读我的文字。如果你有任何想法或建议，可以通过页面上的各种方式联系我，而我也会继续创造、继续冲白金。如果你一路看到了这里，把主页上的内容都看完了，那我要恭喜你，因为有些视频真的挺长的。说个有趣的小细节，这些视频并不是一次录完的——不然嗓子早就哑了——每次录很多遍后我都会挑选最自然的一条，所以有些视频里的取景会不太一样，或者能听到背景里的雨声。真的很开心做出了这个网页；看看接下来我还会做些什么吧，谢谢你来这里逛逛。',
     'song.listen': '观看示例',
     'song.teaser': '听听 DÁKITI 在 Sound Shaper 里的效果',
     'legal.terms': '条款与条件',
@@ -487,25 +500,25 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'notFound.home': '前往首页',
 
     'shaper.problem':
-      '我以前常在 YouTube Music 听歌，但广告总是弹出来。很多时候，如果我喜欢一首歌，我就喜欢听它的慢速版、加速版、超慢版或超快版。而且大多数时候，我其实只想听歌里我真正喜欢的那 20 或 30 秒，一遍又一遍地循环播放。',
+      '我以前经常在 YouTube Music 听歌，但广告总是接连不断地弹出来。很多时候我喜欢把一首歌听五个版本：慢速、超慢、原速、快速和超快。还有很多时候，我只想听歌曲中间最精彩的那 30 秒。然后一遍又一遍、一遍又一遍地循环听。',
     'shaper.solution':
-      '所以我做了 Sound Shaper，一个甚至不需要网络就能用的个人 MP3 播放器。每首歌只要导入一次，就能调慢、调快，加上你想要的音效，调节均衡器，还能把最喜欢的部分做成片段。在 YouTube Music 上，别人上传的歌是什么样就是什么样，想听别的版本只能祈祷有人上传过；而在这里，你把歌加进来、自己动手调，由你决定怎么听，全凭你的喜好。它原本只是我做给自己用的工具，但实在太好用了，而且做出来的效果我很满意，所以我决定把它发布出来与大家分享。',
+      '所以我做了 Sound Shaper，一个免费、无广告且开源的个人 MP3 播放器，里面有很多有趣的功能：声音预设、适合懂音乐的你精细调节的手动均衡器、实时播放变速以及很酷的音频滤镜。它还有自动 DJ——DJ Juan，也就是我本人当 DJ——完全按照我想要的方式运行。你可以把自己最喜欢的部分做成片段，给这些片段加上任意塑形效果循环播放——比如把一首歌的所有片段加速连播——而且手机锁屏后音乐依然会继续播放。',
     'shaper.s1.p1':
-      '这是你的资料库。这个应用本身不下载音乐：你自己导入自己的 MP3，仅供个人使用，在这里按住拖动就能按你喜欢的顺序排列。',
+      '这是你的资料库。这个应用本身不下载音乐：你自己上传自己的 MP3，在这里按住拖动就能按你最喜欢的方式整理曲库。',
     'shaper.s1.p2':
-      '它支持小组件、锁定屏幕和灵动岛。从这里也能进入设置，修改账户信息、应用语言和外观。还有一个小细节：像 PlayStation 那样的奖杯。你用得越多，解锁的奖杯就越多，直到拿到珍贵的白金奖杯。',
+      '它支持小组件，在这个界面你还可以切换应用的主题——深色模式或浅色模式——以及语言。它还有像 PlayStation 一样的奖杯系统：你用得越多，应用给你的奖励就越多、奖杯等级越高，直到拿到梦寐以求的白金奖杯。',
     'shaper.s2.p1':
-      '这是播放器界面，很常规，就像 YouTube Music、Spotify 或 Apple Music 一样。在这里你可以播放、暂停和切换歌曲。',
+      '这是播放器界面，就跟 YouTube Music 或 Apple Music 一样。在这里你可以点击播放、暂停、下一首或上一首。',
     'shaper.s2.p2':
-      '真正的重点在下方的工具栏，从那里可以打开 Shape 和 Clips。这两个功能就是这个应用存在的理由。',
+      '但最重要的是底部的工具栏，那基本上就是这个应用存在的两个核心理由：Shape 和 Clips。',
     'shaper.s3.p1':
-      'Sound Shaper 这个名字就来自这里，来自 Shape：因为这个应用就是一个声音塑形器。里面有现成的预设，懂一点音乐的话也可以手动调均衡器，还能把歌曲的速度调慢或调快，随你喜欢。',
+      'Sound Shaper 这个名字就源于这里：它是一个声音塑形器。在这里你可以调节播放速度、预设、均衡器和滤镜，或者开启自动 DJ 模式。',
     'shaper.s3.p2':
-      '保持原调是做起来最有意思的部分。在 YouTube 上，把歌曲放慢后，人声听起来就像慢动作一样失真；而在这里，你可以选择在放慢节奏的同时让音色保持正常，反过来加速也一样，不会变成花栗鼠般尖锐的声音，而是保留原本的声线。里面还有回声和隔壁房间（next room）这样的音效，可以组合起来，让音乐听起来像在演唱会现场、在演唱会外面的停车场，或者像在听隔壁邻居家的派对。有时戴上耳机、闭上眼睛，它真的能把你带到那个场景里，非常有意思。这里给你一个简短的例子，听听 Bad Bunny 和 Jhay Cortez 的 DÁKITI 配上应用里的音效是什么效果——在下面的歌曲板块你还可以试听更多歌曲并实时体验这些音效。',
+      '保持音调是开发过程中最有趣的部分之一。在 YouTube 或 YouTube Music 上，如果你把歌曲或视频调成 2 倍速或 0.75 倍速，人声就会变得极快或极慢，就像快进或慢动作一样。而在 Sound Shaper 里，你可以让节奏变快或变慢的同时保留人声原本自然的音调。此外还有回声和隔壁房间（next room）这样的滤镜，把它们组合起来玩，感觉就像瞬间穿越到了演唱会现场、站在演唱会外的停车场、听着隔壁邻居家震耳欲聋的派对，或者在派对中途走进洗手间洗脸时听到那种带着怀旧感的闷响。这里给你快速展示一下 Bad Bunny 的 DÁKITI 在 Sound Shaper 自动 DJ 模式下听起来是什么效果。',
     'shaper.s4.p1':
-      'Clips 的灵感来自 Apple 的语音备忘录，我正是用那个应用录下了做这个软件和这个网站的想法。你只要选出歌曲里最喜欢的那一段，再给它起个名字就好了。',
+      '做 Clips 时我从 Apple 的语音备忘录汲取了很多灵感，我正是用那个应用录下了做这个网页和 Sound Shaper 的所有点子。你只需挑出自己最喜欢的那一段保存成片段——想建多少个片段都可以，没有上限。',
     'shaper.s4.p2':
-      '把它保存为片段，就能一遍又一遍地循环听。在这里也可以打开 Shape，让你正在制作或编辑的片段完全照你的方式响起。',
+      '把它保存为片段后，就能一遍又一遍地循环听。在这里你也可以直接打开 Shape，为你正在制作的片段塑形，听听它在特定塑形效果下的声音。',
     'arcade.play': '开始游戏',
     'arcade.fullscreen': '全屏',
     'arcade.resume': '点击游戏即可游玩。',
@@ -522,7 +535,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.c.start': '开始与暂停',
     // One sentence around a link: before it, the link's words, after it.
     'arcade.p1':
-      'Space Explorer 最初是我为自己的应用做的彩蛋。每次做应用，我都喜欢在里面藏个小彩蛋；在 Sound Shaper 里，只要进入某个特定界面、按特定组合连点几下，Space Explorer 就会作为隐藏游戏打开。它原本有好几个关卡——海底、太空、以及一场大型太空战——但最后我没有放进正式版里，免得让应用变得太复杂、体积变大或显得累赘。几个月后，我们报名了 [Platanus](platanus) 黑客松，发现有一个可选的街机挑战，可以为他们办公室的街机做一款游戏。我想到自己手头正好有现成的原型，而且报名还能增加入选黑客松的机会，就决定把它改造成街机版提交上去。这是一款只有 50 KB 的 3D 太空射击游戏——注意是 KB，不是 MB，文件极小，挑战的难点就在于把所有内容塞进 50 KB 里，说实话成品相当酷。你可以在这个页面上直接玩，也可以在 [Platanus 的官方网站](arcade)上玩。虽然它没有拿奖，但依然是一款超酷的游戏，也是我对自己作品精益求精的一个缩影。',
+      'Space Explorer 最初是为我的应用准备的彩蛋，具体来说就是 Sound Shaper：你进入应用里的某个特定位置，按特定暗号连点几下，就会展开一两个关卡，用一段故事把我的所有应用串联起来。但这会让产品变得过于复杂，而且藏得太深只有我自己知道，所以为了保持 Sound Shaper 简洁我就把它移除了。正好那几天我们报名了在加拉加斯举办的 [Platanus](platanus) 黑客松，里面有个附加挑战是做一个不超过 50 KB 的街机游戏。因为点子已经打磨好了，我就把 Space Explorer 做成了一款 50 KB 以内的 3D 太空射击游戏——有黑洞和精心调校的飞船操控，走的是比像素风更有技术含量的 3D 路线。你可以直接在这个页面上玩，也可以去 [Platanus Hack 的官方网站](arcade)上玩。那场黑客松里很少有 3D 游戏，它当时提交时是什么样，就永远保留什么样。',
 
     // More Work — the secondary projects carousel.
     'work.title': '更多作品',
@@ -534,11 +547,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.freelance': '自由职业',
     // One paragraph around a link to Crol; its clip is `work.crol.body`.
     'work.crol.body':
-      '在面向墨西哥企业的云端 ERP [Crol](crol)，我最初打造了 Conto Pay，它是 Crol 更简单、更好用的版本：包括它的主站、落地页和移动应用。而这个应用后来成为了 Crol ERP Móvil 的基础——我也从零开始设计并独立开发了这款移动应用。',
+      '[Crol](crol) 是面向墨西哥中小企业的云端 ERP。在 Crol 我从 Conto Pay 起步，它是 Crol 旗下一款更简单易用的产品，我主导开发了它的网页系统、移动应用和落地页。而那款移动应用后来也成为了 Crol ERP Móvil 的基础，同样由我从零开始设计并构建。',
     'work.salvalo.body':
-      '我是 [Salvalo](salvalo) 的联合创始人，这是我的创业公司。商家每天打烊时都有还能卖的商品，在 Salvalo 上把它们变成带价格和取货时间的组合包。顾客在应用的地图上找到附近的组合包，预订，直接付款给商家，再凭验证码取货。我常举的例子：一家面包店早上有 10 个 cachito，到下午 5 点还剩 3 个和 2 个法式面包，就把它们打包，用打烊折扣价出售。商家赢了，因为商品卖出去而不是浪费，还多了顾客，因为 Salvalo 是额外的销售渠道。顾客则在下午以优惠价、非常方便地买到早上那些 cachito。我是技术联合创始人：我重新设计了应用和网站，负责全部前端开发。我也是 Salvalo 在委内瑞拉的代表，所以会去向商家介绍，也代表 Salvalo 参加各种活动。',
+      '我是 [Salvalo](salvalo) 的联合创始人，这是我作为首次创业者创立的美食特惠交易平台。在委内瑞拉，每天都有商家在打烊时剩下本可以卖出的食物或商品，而 Salvalo 解决了这个问题：想象一家面包店早上做了 10 个 cachito，到了下午还剩 3 个加 2 根法棍，商家把它们组合成特惠包，在应用上以打烊折扣价售出。双方都能受益，因为商家不会白白浪费商品，通过 Salvalo 这个外部销售渠道促成了交易并获得新客户，而顾客也能在下午以优惠的价格、极其方便的方式买到早上新鲜出炉的 cachito。应用的使用流程很简单——真正的难点在于拓展商家和吸引用户——作为 Salvalo 目前在委内瑞拉的代表，我把重心放在了销售上，亲自上门向商家路演，克服了自己以前偏内向的性格，同时作为技术出身的联合创始人，我也负责了网页系统、落地页和移动应用的开发。真正做一家认真的创业公司会推动你作为创始人和个人快速成长，今年我参加的大多数活动——比如 El Panal 和 Startup Venezuela Summit——都是代表 Salvalo 在我出生和生活的这个国家参加的；这就是 Salvalo，快来拯救你们的美食包吧。',
     'work.maktub.body':
-      '[Maktub Art Fund](maktub) 是一位来自墨西哥的客户。那是一个落地页，这类项目我平时很少接，因为常规网站的开发往往大同小异，但这个项目的视觉设计非常漂亮、现代又时尚，一下吸引了我，所以我接手把它做了出来，最终成品也相当酷。',
+      '[Maktub Art Fund](maktub) 是一位来自墨西哥的客户。它是一个独立的落地页——单看类型的话平时可能不会太吸引我——但它的设计非常有趣、现代且很有时尚感，是我以前没做过的风格，最终呈现出来的效果我非常喜欢。',
 
     // Phone copy (see en).
     'shaper.problem.m':
@@ -564,46 +577,46 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'events.hackathon': '黑客松',
     'events.alegria.when': '2025 年 10 月',
     'events.alegria.body':
-      '这一段故事更多。有一天，和我一起读小学和中学的 [Pastor](pastor) 给我发消息，介绍我认识 [Cesar](cesar) 和 [Ale](ale)，一起报名一场黑客松：他们还差一个人，问我愿不愿意加入。以前的 Juan 会因为害羞或嫌麻烦而拒绝，但这次我想，最坏不过是没被录取，至少我们能学到很多。我们头脑风暴了好几个点子，最后胜出的是 [Tripealo](tripealo)，一个委内瑞拉旅游体验的交易平台。在一千多名报名者中，我们入选了前一百名，去加拉加斯 [Yummy](yummy) 总部参赛。虽然最后没有获奖，但我现场听了许多在硅谷与美国顶尖公司同台竞技的创始人分享，带着满满的动力离开。之后他们继续深耕 Tripealo，而我则和我的联合创始人全力投入了 [Salvalo](salvalo)。如今他们就像我的创始人兄弟：大家并肩作战，各自打磨各自的产品。这成了我人生的一个转折点——从以前单纯写代码的程序员 Juan，蜕变成真正开始打造自己产品的创业者 Juan。我非常感谢那段经历，它让我从许多人身上学到了很多，也让我更了解自己。',
+      '这一段有更多故事。和我一起读小学和中学的 [Pastor](pastor) 有一天突然给我发消息，把 [Ale](ale) 和 [Cesar](cesar) 介绍给我，一起报名参加由 [Yummy](yummy)、[Cashea](cashea)、[Slash](slash) 和 AlegrIA Labs 在加拉加斯 Yummy 办公室举办的黑客松。以前的 Juan 多半会因为害羞、害怕或犯懒而拒绝，但那一刻我对自己说：至少我们能学到很多东西，干就完了。开了几次会后，我们决定做 [Tripealo](tripealo)——一个面向委内瑞拉的旅行体验平台，拍了报名视频，从上千名报名者中入选前 100 名，去加拉加斯连续开发了 36 个小时。虽然没有获奖也没进前十，但它让我对创业世界和自己都有了极深的认识。后来他们继续推进 Tripealo，我则退出来创办了 [Salvalo](salvalo)，不过在创业路上我们依然并肩同行。我把参加过的每场活动的胸牌都像无限宝石一样珍藏着，因为一看到它们就能瞬间回到当时的场景、那些讲座和认识的创始人们。那是只埋头写代码的程序员 Juan 蜕变为打造人们真正使用的产品的 Juan 的转折点：那年十月在加拉加斯的前后，我的思维方式彻底改变了。',
     'events.alegria.m':
       '在加拉加斯参加委内瑞拉第一场 vibe coding 黑客松的三天。没有拿奖，却交到新朋友，也从 [Yummy](yummy)、[Cashea](cashea) 和 [Slash](slash) 的创始人那里学到很多。它正是让 [Tripealo](tripealo) 和 [Salvalo](salvalo) 起步的那一推。',
     'events.talk': '讲座',
     'events.ilc.when': '2026 年 9 月',
     'events.ilc.body':
-      '此前在由 [Cashea](cashea) 和 [Yummy](yummy) 主办的 AlegrIA 黑客松上，我们曾与 Cashea 的联合创始人 [Pedro Vallenilla](pedro) 进行过一次线上交流。几个月后，他亲自来到我的家乡巴基西梅托，与 [Elías Sayegh 神父](elias) 一起带来了一场更深入、更完整的升级版分享。我们就坐在[胡亚雷斯剧院](juares)的正前方第二排。他讲述了自己在做出现象级产品 Cashea 之前，曾连续经历过好几次创业失败，但他一直坚持到了最后。最让我触动的是他对委内瑞拉的看法：在经历了这一切之后，这里反而成了一片可以建造任何事物的旷野，因为许多在其他国家早已普及的科技方案在这里依然空白。因此，无论从哪个角度看，现在的委内瑞拉正处于创业的黄金时代——这不仅是理论，更是正在发生的现实。',
+      '在 AlegrIA Labs 黑客松上，[Pedro Vallenilla](pedro) 曾通过视频连线分享；一年后，他亲自来到我在委内瑞拉拉腊州的家乡巴基西梅托，与 [Elías Sayegh 神父](elias) 一起做了一场领导力演讲。我们和团队一起去听，就坐在[剧院](juares)的第二排，离舞台非常近。去之前我把他的所有采访都看了一遍，而在现场他讲了许多我以前从没听过的细节故事。最让我印象深刻的是他把委内瑞拉看作一片旷野（greenfield）：在经历了这一切之后，这里有巨大的空间去打造那些在拉美其他国家已经存在的技术产品。看看 [Cashea](cashea) 就知道了——不做银行却做分期信用，顶着所有人的质疑起步，最初一家店一家店上门推广时还被人当成疯子。在其他项目没跑通时依然咬牙往前冲、直到做出如今撬动委内瑞拉相当一部分 GDP 的 Cashea，能在现场亲眼见证这种冲劲真的太酷了。',
     'events.ilc.m':
       '这次在我的城市亲耳听 [Cashea](cashea) 的 [Pedro Vallenilla](pedro) 讲：一次成功的创业，接连几次失败，然后是 Cashea，以及为什么委内瑞拉是创造的好地方。',
     'events.interview': '采访',
     'events.radio.when': '2026 年 10 月',
     'events.radio.body':
-      '这是 [Salvalo](salvalo) 的第一次电台采访，在巴基西梅托 [OK 101.5 FM](ok101) 的 [Cheo Noguera](cheo) 节目里。我在录音室，我的联合创始人从马德里连线。我讲了那个老例子：你做了 10 个 cachito，到 4 点还剩 3 个，就把它们做成一个组合包。直播里有人问我们怎么下载，我们就当场向所有听众解释了 Salvalo 是什么。',
+      '这是 [Salvalo](salvalo) 的第一次电台采访，在巴基西梅托 [OK 101.5 FM](ok101) 的 [Cheo Noguera](cheo) 节目里。这是我第一次上电台——更小的时候上过电视——我的联合创始人 Abrahan 从西班牙在线连线。我原以为会紧张，结果反而特别想继续讲 Salvalo 的故事和起步；现场有听众提问并当场安装了应用，我也讲了我常举的例子：假设你是一家面包店，早上做了 10 个 cachito，下午 6 点还剩 3 个，你就用这 3 个 cachito 加 2 个法棍组合成打烊特惠包发到应用上，作为额外的销售渠道避免浪费、促成交易并带来新客户，而顾客也能以特惠价买到早上做的新鲜 cachito 和法棍。代表 Salvalo 参加的每一次活动都是我作为创业者的训练，学会向开了 20 年面包店的老板等不同人群讲清楚一家创业公司，希望很快能再次上麦练习主持。',
     'events.radio.m':
       '[Salvalo](salvalo) 的第一次采访，在巴基西梅托 [OK 101.5 FM](ok101) 直播：主持人在节目中下载了 App，我向听众讲解它的用法。',
     'events.meetup': '交流会',
     'events.panal.when': '2026 年 10 月',
     'events.panal.body':
-      '[El Panal](panal) 是 [Manuel Sira](manuel) 在巴基西梅托发起的一个运动：很多人在这里做各种各样的东西。有做营销、时尚、CRM、库存，以及心理和健康应用的人，还有关于人工智能、如何衡量数据来发展公司、以及在 AI 时代如何靠品味脱颖而出的演讲。每个到场的初创公司都有 30 秒的路演时间，我很紧张，但讲了 [Salvalo](salvalo) 的。那不是我讲得最好的一次，却是 Salvalo 在这种级别活动上的第一次正式路演。我和 [Tripealo](tripealo) 的朋友们一起去，离开时多了来自其他应用的新朋友、新联系人，还有几个 Salvalo 的潜在客户。那正是我们去加拉加斯参加 Startup Summit 之前的热身：练习之前的练习。',
+      '[El Panal](panal) 是 [Manuel Sira](manuel) 在巴基西梅托发起的一个运动，旨在把拉腊州各种与科技相关的从业者聚集在一起，让科技活动不再只集中于加拉加斯。我和 [Tripealo](tripealo) 的朋友们一起去参加，在 Jirajara 酒店的大约 140 人里，分了几轮进行 30 秒限时路演；我在第二轮上台，用我常举的面包店例子完成了 [Salvalo](salvalo) 的第一次正式路演。当时我挺紧张的，因为身后大屏幕上就是 30 秒倒计时，一到零就会响铃打断，不过我还是完整讲完了全部内容，并把它当作一次极好的练习；现场还有做心理应用的、做一款叫 [Resty](resty) 的找洗手间应用的，以及做营销、时尚和 CRM 系统的伙伴。活动上还有关于通过衡量内部数据来发展业务、以及在人工智能时代如何脱颖而出的分享——因为机器什么技术都能做，真正拉开差距的是人的审美与艺术品味，就像工匠亲手打造的扶手椅与工厂流水线产品的区别。每个人都像蜂巢里的一个蜂格彼此连接：我为 Salvalo 拿到了潜在客户线索，作为首次创业者练习了克服推销想法的羞怯，也在我的收藏里收入了第二枚活动胸牌。',
     'events.panal.m':
       '在巴基西梅托参加 [El Panal](panal) 的一个夜晚：关于 AI、数据和品味的讲座，还有 30 秒为 [Salvalo](salvalo) 路演。很紧张，但我讲完了，带走了新朋友和几条潜在客户线索。',
     'events.summit': '峰会',
     'events.summit.when': '2026 年 10 月',
     'events.summit.body':
-      '我参加了在 Caracas Campus 举办的 [Startup Venezuela Summit](summit)。说实话，我从没去过这样的活动。一整天都有讲座，来自其他国家的人在建立联系，每个人都在做各种各样的产品。我们再次听了 Slash 的 [Víctor Cárdenas](slash)，还有 [Cashea](cashea) 的 [Pedro Vallenilla](pedro)。我们还参加了 [Fina](fina) 和 [Innoven](innoven) 的 [Enrique Rivas](enrique) 主持的工作坊。我在 Innoven 的展位为 [Salvalo](salvalo) 报了名，还把我们的照片贴在委内瑞拉创始人墙上留下印记。我也认识了很多人，比如 [Rial](rial) 的一位联合创始人。这两天我最大的收获是：创业很难，但值得；只要有野心、动力和热情，你就能做到。无论你多大、来自哪个国家、出身如何：只要你愿意去做，就能做到。还有一点是史蒂夫·乔布斯说的：那些疯狂到以为自己能改变世界的人，才是真正改变世界的人。回到家时我非常兴奋，还在消化这两天经历的所有讲座和体验。',
+      '我参加了在 Caracas Campus 举办的 [Startup Venezuela Summit](summit)，说实话我以前从没去过这样的活动。我们再次听到了 [Cashea](cashea) 的 [Pedro Vallenilla](pedro) 和 Slash 的 [Víctor Cárdenas](slash) 的分享，认识了 [Rial](rial) 的一位联合创始人以及许多来自海外的人——包括由委内瑞拉创始人参与创立、早期投资了 Anthropic 的美国风投基金——这也是我参加过的最国际化的一场科技创业盛会。除了主会场之外，活动应用还会实时更新在 Caracas Campus 企业办公区举办的闭门分享，比如一场反向路演，不是创始人向风投路演，而是风投向创始人路演，讲述他们如何寻找有望做到年营收十亿美元的创业公司。我们还参加了 [Fina](fina) 与 [Innoven](innoven) 的私人工作坊，我在现场为 [Salvalo](salvalo) 报名投递了 Innoven，把照片贴上了创始人墙，还拿到了一顶 Innoven 的帽子。这两天带给我最大的启发——就像史蒂夫·乔布斯那句“那些疯狂到以为自己能改变世界的人，才是真正改变世界的人”，以及我和 [Tripealo](tripealo) 朋友们一起收入收藏的又一枚胸牌——就是无论你的年龄、出身或背景如何，只要全心投入并瞄准全球顶级舞台，你就一定能做到。',
     'events.summit.m':
       '和 [Tripealo](tripealo) 在 Startup Venezuela Summit 的两天：[Slash](slash) 和 [Cashea](cashea) 的分享，因为创始人夹克被邀请参加的 Fina 与 Innoven 私人工作坊，还有贴上委内瑞拉创始人墙的 [Salvalo](salvalo)。',
     'events.platanus.when': '2026 年 10 月',
     'events.platanus.body':
-      '刚离开 Startup Venezuela Summit，我们就直接去了 [Platanus Hack 26 Caracas](platanus)。Platanus 把黑客松办成了拉美巡回，我和我的团队入选了加拉加斯站。我们以开发者身份报名，还是 AlegrIA 黑客松的同一支队伍，不是以 [Tripealo](tripealo) 或 [Salvalo](salvalo) 的名义，而是各自以个人背景报名。很有意思：在 2025 年 AlegrIA 黑客松整整一年后，我们又回到 [Yummy](yummy) 的办公室参加另一场黑客松，只是这次技术难度高得多。我们做了 [Tridi](tridi)，它把一段普通的人物视频变成机器人的动作数据：一个模拟机器人通过模仿你自己学会移动。拿任意一段视频，追踪其中的动作并导入物理模拟，机器人在不同地形和条件下学会移动，然后把模拟数据和训练好的策略导出为可用于硬件的格式。我们的出发点是：机器人和 AI 就是新的潮流。我们睡得很少，但在 AlegrIA 学到的东西和磨炼出的心态帮了我很多，整个团队都非常投入。我们的导师是 [Sebastián Alcalá](sebastian)，Yummy 的产品工程师，也是 [Wink](wink) 的联合创始人。我们没有赢，但整体水平令人惊叹，丝毫不逊于布宜诺斯艾利斯、墨西哥和波哥大。一个有趣的细节：我们的桌子就在 Platanus Hack 街机旁边，我就是为它做了 Space Explorer。好几次我们工作时看到其他参赛者走过来玩，我会一直记得他们脸上那种“哇，这游戏真酷”的表情。我没有出声打扰，让他们自己享受游戏。我们还交了很多朋友：委内瑞拉的技术人才真的很强。那已经是我们一起连续参加的第二场黑客松了，正所谓事不过三。',
+      '刚离开 Startup Venezuela Summit，我们就直接去了 [Platanus Hack 26 Caracas](platanus)，这是 Platanus Ventures 首次举办的拉美巡回黑客松，而且猜猜是在哪里办的：整整一年之后，我们又回到了 AlegrIA 黑客松所在的 [Yummy](yummy) 办公室。那 36 个小时里我们几乎没怎么睡，不停地构建，把我和团队在历次黑客松中学到的一切都用上了，核心理念就是具身智能（Physical AI）是新的潮流。我们选择了 3D 赛道并做出了 [Tridi](tridi)，它可以把相机拍摄或预先录制的普通人物视频转化为人形机器人——甚至是火星探测车——的训练数据与行动策略，放进我们自己构建的物理模拟环境中，让机器人在进入现实世界之前就能学会各种日常动作。虽然我们没有赢，但加拉加斯站的技术水准完全不输布宜诺斯艾利斯、墨西哥城和波哥大；我们非常感谢 Platanus 和 Yummy 团队，以及我们的导师、Yummy 产品工程师兼 [Wink](wink) 联合创始人 [Sebastián Alcalá](sebastian)，希望明年再战能够事不过三。这次发给我们的胸牌是一张可以放进钱包的 NFC 卡片，我把它的链接直接指向了 juanevillam.com，为在加拉加斯这充实的科技周画上了句号。',
     'events.platanus.m':
       '从峰会直接去了 Platanus Hack 26 Caracas，和 AlegrIA 的队友回到 [Yummy](yummy) 的办公室：我们做了 [Tridi](tridi)，把视频变成机器人的动作数据。没有拿奖，但这是一场难得多的黑客松，旁边还有人在玩 Space Explorer。',
     'likes.title': '更多关于我',
     'likes.cosmos.name': '宇宙',
     'likes.cosmos.body':
-      '太空一直让我着迷。当你看到它有多浩瀚、它的尺度有多无限，哪怕只是在星系的层面，很多让我担心的事、我对人生的想法、我想要和不想要的东西，都不再有意义。外面有那么宏伟的东西，比如黑洞或超新星，而我们是装在如此脆弱、虚弱又会死去的身体里的如此复杂的心智：这是另一个尺度上的反差。人类历史上发生过和将要发生的一切，到目前为止，都发生在这颗星球上，它是太阳系众多行星之一，太阳系是银河系众多星系之一，银河系又是一个星系团、一个超星系团中的众多星系之一，如此类推。离我们最近的恒星在四光年之外：尺度大到你只能说“哇”。此时此刻，有人因为发生在自己身上的事而开心，有人在难过，有人出生，有人死去，有人在建造，有人在毁灭。这种反差疯狂到像一场模拟：每个人都以为自己很特别，但我们只是一个能对世界产生影响的角色，在宇宙的尺度上却不是。宇宙对人类漠不关心。我没有排斥这种感觉，而是学会了欣赏它，去爱存在本身：我们就是宇宙在体验它自己的伟大，这太不可思议了。所以我开始看很多[詹姆斯·韦伯](webb)和[哈勃](hubble)拍的太空照片，常常对着一张照片看上好几个小时，什么也不听，沉浸其中，被这些画面吸引。你会怀疑它们是真的还是合成的，而它们确实是真的。这些是我最喜欢的，我没办法给它们排名：我不知道哪张比哪张更好。有些是恒星尺度的，有些是星系尺度的，你会说“这是一整个星系”，里面不知道有多少个太阳系，而我们连自己的星球都还没有完全探索过。正因为我这么喜欢它们，所以想在这里分享。',
+      '太空一直让我着迷：当你试着去理解它有多浩瀚、多无限时，根本找不到词来形容那种反差——人类历史上发生过的一切都发生在地球上，而地球只是太阳系的一颗行星，太阳系只是银河系的一部分，外面还有星系团、超星系团和无边无际的巨型结构。恒星、超新星、相撞的黑洞以及彼此吞并的星系让你意识到，宇宙对人类的烦恼——无论谁开心、难过、生病还是健康——都毫不在意，把你放回一个在不可思议的宇宙面前如同小小蚂蚁的位置，而我没有排斥这种感觉，反而越来越热爱它，因为没有什么比这些[詹姆斯·韦伯](webb)和[哈勃](hubble)拍下的太空照片更真实了。对我来说，全人类归根结底只有两个紧密相连的根本问题：一是太空探索——我为 Platanus Hack 做的第一款游戏 Space Explorer 的名字就源于此，因为我一直希望能出生在像《星球大战》那样跨越多个星系的未来——二是寻找永生，因为离太阳最近的恒星也有四光年远，想要实现那种尺度的星际探索就必须超越这具脆弱的肉体，比如把意识提取并备份到多个恒星系的计算机里，再加载到先进的机器人身上。到我死去的那一刻——如果我会死的话——我希望自己正在直接从事太空探索或永生相关的事业，而且我也觉得人工智能极具诗意，因为人类自从发现火的那一刻起，就注定要创造出替代自己的存在，甚至如果让我打赌，我更愿意赌我们活在一场模拟之中。说个有趣的小细节，我第一次看到这些照片时戴着耳机什么也没放，就这样着迷地看了好几个小时：我根本没办法给它们排名，因为每一张都美得令人窒息，对我来说没有什么比这些照片更真实了。',
     'likes.songs.name': '歌曲',
     'likes.songs.meta': '我的排行',
     'likes.songs.body':
-      '这里和大家分享一些我最喜欢的歌。仔细听，它们都有一种电子风格，我称之为赛博、未来感：我也不知道它是不是叫 techno。一首歌的歌词越少，我越喜欢：对我来说它们更像是音乐而不是歌曲，这些才是我的最爱。如果你们能猜猜我最喜欢的部分，也就是我在自己的 [Sound Shaper](shaper) 曲库里为每首歌保存的片段，会很有意思，也算是更了解我的一种方式。其余的是各种类型的歌，方便你们直接在这个页面上试试所有的滤镜和实时 DJ 模式。',
+      '这里和大家分享一些我最喜欢的歌：它们都有一种我称之为赛博、未来感的风格——其实应该算是 techno——而且歌词越少的歌我越喜欢，因为当一首曲子不靠一个字就能表达出丰富的情感时，会有一种很特别的感觉。如果你一路看视频来到了这里，不妨猜猜这些歌里我保存在自己个人 [Sound Shaper](shaper) 曲库里的最爱片段是哪几段，看看能不能猜中我的性格。这个板块就是直接把 Sound Shaper 搬了过来，预装了我最爱的歌和几首拿来玩的歌——不用登录就能直接用——你可以尽情试玩各种滤镜，或者打开由我亲自按自己品味训练的 DJ Juan 功能来自动混音。这一节比前面的板块更轻松、更私人，所以我可以自在地比划手势，在自己的网站上想把视频留多长就留多长，顺便通过我最爱的歌在主页上放一个可以直接试玩的 Sound Shaper 预览。',
     'songs.top': '我的最爱',
     'songs.more': '更多歌曲',
     'songs.library': '歌曲',
@@ -643,8 +656,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.nextRoom': '隔壁房间',
     'shape.nextRoomDescription': '让声音听起来像从隔壁房间传来，隔着一堵墙。',
     'shape.autoDj': 'DJ Juan',
-    'shape.autoDjDescription': '将这里所有歌曲的片段混成一套，每次都不同。',
+    'shape.autoDjDescription': '跟随节拍混音当前歌曲或这里的所有歌曲，每次都不同。',
     'shape.autoDjPreparing': '正在读取歌曲',
     'shape.autoDjProgress': '{ready}/{total}',
+    'shape.autoDjMode.off': '关闭',
+    'shape.autoDjMode.sound': '当前歌曲',
+    'shape.autoDjMode.all': '所有歌曲',
   },
 };

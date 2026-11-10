@@ -40,11 +40,11 @@ const focus = page?.focus;
   <!-- Juan's apps, the page's main subject: every one in one panel. -->
   <AppsShowcase apps={APPS} focused={focus?.section === 'apps'} />
 
-  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
-  <EventsDeck focus={focus?.section === 'events' ? focus.card : undefined} />
-
   <!-- Everything else, secondary: one card per project (Space Explorer first). -->
   <WorkCarousel focus={focus?.section === 'work' ? focus.card : undefined} />
+
+  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
+  <EventsDeck focus={focus?.section === 'events' ? focus.card : undefined} />
 
   <!-- Each app's legal and help pages, and Juan elsewhere. -->
   <SiteFooter panel />
