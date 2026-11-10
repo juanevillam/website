@@ -10,9 +10,10 @@ import { locales, ui, type UIKey } from '../i18n/ui';
 type Props = {
   k: UIKey;
   links: Record<string, string>;
+  paragraphs?: boolean;
 };
 
-const { k, links } = Astro.props;
+const { k, links, paragraphs = false } = Astro.props;
 
 const MARK = /(\[[^\]]+\]\([a-z0-9-]+\))/;
 const parts = (text: string) =>
@@ -20,6 +21,7 @@ const parts = (text: string) =>
     const m = seg.match(/^\[([^\]]+)\]\(([a-z0-9-]+)\)$/);
     return m ? { text: m[1], href: links[m[2]] } : { text: seg };
   });
+const hasSections = paragraphs && ui.es[k].includes('\n\n');
 ---
 
 {
@@ -28,7 +30,11 @@ const parts = (text: string) =>
   // space inside each link ("Pastor ,") and one before the paragraph's
   // first word — which shifted every word off its timing, so the whole
   // paragraph lit at once while it was read aloud (Juan, 2026-10-27).
-  locales.map(l => (
-    <span class="t" lang={l}>{parts(ui[l][k]).map(p => (p.href ? <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a> : p.text))}</span>
-  ))
+  hasSections
+    ? locales.map(l => (
+        <div class="tb" lang={l}>{ui[l][k].split('\n\n').map((sec, idx) => <p class="body-part" data-part={idx}>{parts(sec).map(p => (p.href ? <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a> : p.text))}</p>)}</div>
+      ))
+    : locales.map(l => (
+        <span class="t" lang={l}>{parts(ui[l][k]).map(p => (p.href ? <a href={p.href} target="_blank" rel="noopener noreferrer">{p.text}</a> : p.text))}</span>
+      ))
 }
