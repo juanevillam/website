@@ -164,9 +164,31 @@ let currentVideoSrc = '';
 let playbackRate = 1;
 let videoSpinUpUntil = 0;
 let videoLastSeekAt = 0;
+let settleTimer: ReturnType<typeof setTimeout> | undefined;
+let voiceStartGateTimer: ReturnType<typeof setTimeout> | undefined;
+let waitingForVideo = false;
+let voiceUnlocked = false;
+let autoScrollUntil = 0;
+let autoScrollBlock: Narr | null = null;
+
+const preloadAudio = new Audio();
+preloadAudio.preload = 'auto';
+let preloadedAudioSrc = '';
+
+const warmAudio = (src: string | null | undefined) => {
+  if (!src || preloadedAudioSrc === src) return;
+  preloadedAudioSrc = src;
+  preloadAudio.src = src;
+  preloadAudio.load();
+};
 
 const activeVideoEl = (): HTMLVideoElement | null =>
   narVideoLayers[activeLayerIdx] ?? null;
+
+const clampVideoTime = (v: HTMLVideoElement, t: number) =>
+  Number.isFinite(v.duration) && v.duration > 0
+    ? Math.min(Math.max(0, t), Math.max(0, v.duration - 0.04))
+    : Math.max(0, t);
 
 const applyAudioRate = (el: HTMLAudioElement, rate: number) => {
   if (el.defaultPlaybackRate !== rate) el.defaultPlaybackRate = rate;
@@ -205,10 +227,7 @@ const setPlaybackRate = (rate: number) => {
     !v.seeking &&
     Number.isFinite(voice.currentTime)
   ) {
-    const targetTime =
-      Number.isFinite(v.duration) && v.duration > 0
-        ? voice.currentTime % v.duration
-        : voice.currentTime;
+    const targetTime = clampVideoTime(v, voice.currentTime);
     if (Math.abs(v.currentTime - targetTime) > 0.08) {
       try {
         v.currentTime = targetTime;
@@ -244,6 +263,8 @@ let running = false;
 let showing: Narr | undefined;
 
 const narrs: Narr[] = [];
+let stories: Story[] = [];
+let panels: Narr[] = [];
 
 // Every paragraph's Spanish clip rides on it as data-clip, and its clip in
 // another language, once recorded, as data-clip-{lang} (lib/narration):
@@ -295,12 +316,103 @@ const activeVideoPara = (): HTMLElement | null => {
   return idx >= 0 ? (b.paras[idx] ?? null) : null;
 };
 
+/** Next paragraph in the narration flow after `(block, para)`, for standby preloading. */
+const nextParaAfter = (
+  block: Narr,
+  para: number,
+): { block: Narr; para: number } | null => {
+  const inFocus = block.el.hasAttribute('data-focused');
+  if (inFocus && block.el.hasAttribute('data-focus-lone')) return null;
+  const next = firstVoiced(block, para + 1);
+  if (next >= 0) return { block, para: next };
+  if (inFocus) return null;
+  const story = block.story;
+  if (block.panel) {
+    const nextPanel = panels[panels.indexOf(block) + 1];
+    if (!nextPanel) return null;
+    const p = startOf(nextPanel);
+    return p >= 0 ? { block: nextPanel, para: p } : null;
+  }
+  if (!story) {
+    const firstStoryBlock = stories[0]?.blocks[0];
+    if (firstStoryBlock) {
+      const p = startOf(firstStoryBlock);
+      if (p >= 0) return { block: firstStoryBlock, para: p };
+    }
+    const firstPanel = panels[0];
+    if (firstPanel) {
+      const p = startOf(firstPanel);
+      if (p >= 0) return { block: firstPanel, para: p };
+    }
+    return null;
+  }
+  if (block.step + 1 < story.steps.length) {
+    const nextStepBlock = story.blocks[block.step + 1];
+    if (nextStepBlock) {
+      const p = startOf(nextStepBlock);
+      if (p >= 0) return { block: nextStepBlock, para: p };
+    }
+  }
+  const nextStory = stories[stories.indexOf(story) + 1];
+  if (nextStory?.blocks[0]) {
+    const p = startOf(nextStory.blocks[0]);
+    if (p >= 0) return { block: nextStory.blocks[0], para: p };
+  }
+  if (panels[0]) {
+    const p = startOf(panels[0]);
+    if (p >= 0) return { block: panels[0], para: p };
+  }
+  return null;
+};
+
+/** Pre-load and decode frame 0 of the upcoming video on the hidden standby layer. */
+const preloadStandbyVideo = (src: string | null | undefined) => {
+  if (!src || videoCollapsed || narVideoLayers.length < 2) return;
+  const standbyIdx = (activeLayerIdx + 1) % narVideoLayers.length;
+  const standbyEl = narVideoLayers[standbyIdx];
+  if (!standbyEl || standbyEl === activeVideoEl()) return;
+  if (standbyEl.classList.contains('is-active')) return;
+  if (standbyEl.getAttribute('src') === src) return;
+  standbyEl.pause();
+  standbyEl.preload = 'auto';
+  standbyEl.src = src;
+  standbyEl.load();
+  const primeFrame = () => {
+    if (
+      standbyEl.getAttribute('src') !== src ||
+      standbyEl === activeVideoEl() ||
+      standbyEl.classList.contains('is-active')
+    )
+      return;
+    try {
+      standbyEl.currentTime = 0.001;
+    } catch {}
+  };
+  if (standbyEl.readyState >= 1) primeFrame();
+  else
+    standbyEl.addEventListener('loadedmetadata', primeFrame, {
+      once: true,
+    });
+};
+
+const preloadNext = () => {
+  if (!session) return;
+  const next = nextParaAfter(session.block, session.para);
+  if (!next) return;
+  const p = next.block.paras[next.para];
+  if (!p) return;
+  warmAudio(clipOf(p));
+  preloadStandbyVideo(videoOf(p));
+};
+
 const syncVideo = () => {
   if (!narVideo || !narVideoLayers.length) return;
   const p = activeVideoPara();
   const src = p ? videoOf(p) : undefined;
   const dismissed = !running || !src || videoCollapsed;
   if (dismissed) {
+    clearTimeout(voiceStartGateTimer);
+    waitingForVideo = false;
     narVideo.classList.add('is-dismissed');
     narVideo.classList.remove('is-playing');
     document.documentElement.classList.remove('has-narr-video');
@@ -320,10 +432,7 @@ const syncVideo = () => {
       Number.isFinite(voice.currentTime) &&
       voice.currentTime > 0
     ) {
-      const targetTime =
-        Number.isFinite(v.duration) && v.duration > 0
-          ? voice.currentTime % v.duration
-          : voice.currentTime;
+      const targetTime = clampVideoTime(v, voice.currentTime);
       if (Math.abs(v.currentTime - targetTime) > 0.18) {
         try {
           v.currentTime = targetTime;
@@ -347,68 +456,90 @@ const syncVideo = () => {
   document.documentElement.classList.add('has-narr-video');
 
   if (currentVideoSrc !== src) {
-    const prevEl = narVideoLayers[activeLayerIdx];
-    const nextIdx = currentVideoSrc
-      ? (activeLayerIdx + 1) % narVideoLayers.length
-      : activeLayerIdx;
+    clearTimeout(settleTimer);
+    clearTimeout(voiceStartGateTimer);
+    const matchingIdx = narVideoLayers.findIndex(
+      v => v.getAttribute('src') === src,
+    );
+    const nextIdx =
+      matchingIdx >= 0
+        ? matchingIdx
+        : currentVideoSrc
+          ? (activeLayerIdx + 1) % narVideoLayers.length
+          : activeLayerIdx;
+    const prevEl =
+      activeLayerIdx !== nextIdx ? narVideoLayers[activeLayerIdx] : null;
     const nextEl = narVideoLayers[nextIdx];
     currentVideoSrc = src;
     activeLayerIdx = nextIdx;
-    if (prevEl && prevEl !== nextEl && !prevEl.paused) prevEl.pause();
     nextEl.preload = 'auto';
-    nextEl.src = src;
+    if (nextEl.getAttribute('src') !== src) {
+      nextEl.src = src;
+    } else if (nextEl.currentTime > 0.05) {
+      try {
+        nextEl.currentTime = 0;
+      } catch {}
+    }
     applyVideoRate(nextEl, playbackRate);
     videoSpinUpUntil = performance.now() + 700;
+
+    let revealed = false;
     const reveal = () => {
-      if (currentVideoSrc !== src) return;
+      if (revealed || currentVideoSrc !== src) return;
+      revealed = true;
       nextEl.classList.add('is-active');
       if (prevEl && prevEl !== nextEl) {
+        if (!prevEl.paused) prevEl.pause();
         prevEl.classList.remove('is-active');
-        setTimeout(() => {
-          if (activeLayerIdx !== narVideoLayers.indexOf(prevEl))
-            unloadVideoEl(prevEl);
+        settleTimer = setTimeout(() => {
+          if (activeLayerIdx !== narVideoLayers.indexOf(prevEl)) {
+            if (session) preloadNext();
+            else unloadVideoEl(prevEl);
+          }
         }, dur('settle'));
+      } else {
+        preloadNext();
       }
     };
-    if (nextEl.readyState >= 2) reveal();
-    else nextEl.addEventListener('loadeddata', reveal, { once: true });
 
-    const startOffset = Number.isFinite(voice.currentTime)
-      ? voice.currentTime
-      : 0;
+    if (nextEl.readyState >= 2) {
+      waitingForVideo = false;
+      reveal();
+    } else {
+      waitingForVideo = true;
+      nextEl.addEventListener(
+        'loadeddata',
+        () => {
+          if (currentVideoSrc !== src) return;
+          reveal();
+        },
+        { once: true },
+      );
+    }
+
     nextEl.addEventListener(
       'playing',
       () => {
         if (currentVideoSrc !== src || !running) return;
         applyVideoRate(nextEl, playbackRate);
         videoSpinUpUntil = performance.now() + 600;
-        if (startOffset > 0.25) {
-          const targetTime =
-            Number.isFinite(nextEl.duration) && nextEl.duration > 0
-              ? voice.currentTime % nextEl.duration
-              : voice.currentTime;
-          if (Math.abs(nextEl.currentTime - targetTime) > 0.12) {
+        if (
+          !voice.paused &&
+          Number.isFinite(voice.currentTime) &&
+          voice.currentTime > 0.08
+        ) {
+          const targetTime = clampVideoTime(nextEl, voice.currentTime);
+          if (Math.abs(nextEl.currentTime - targetTime) > 0.1) {
             try {
               nextEl.currentTime = targetTime;
             } catch {}
           }
-          return;
-        }
-        if (
-          !voice.paused &&
-          !voice.seeking &&
-          Math.abs(voice.currentTime - nextEl.currentTime) > 0.08 &&
-          voice.currentTime < 1.5
-        ) {
-          try {
-            voice.currentTime = nextEl.currentTime;
-          } catch {}
         }
       },
       { once: true },
     );
 
-    if (running) {
+    if (running && !waitingForVideo) {
       nextEl.play().catch(() => {});
     }
   } else {
@@ -421,17 +552,14 @@ const syncVideo = () => {
           !v.seeking &&
           Number.isFinite(voice.currentTime)
         ) {
-          const targetTime =
-            Number.isFinite(v.duration) && v.duration > 0
-              ? voice.currentTime % v.duration
-              : voice.currentTime;
+          const targetTime = clampVideoTime(v, voice.currentTime);
           if (Math.abs(v.currentTime - targetTime) > 0.18) {
             try {
               v.currentTime = targetTime;
             } catch {}
           }
         }
-        if (v.paused) {
+        if (v.paused && !waitingForVideo) {
           videoSpinUpUntil = performance.now() + 600;
           v.play().catch(() => {});
         }
@@ -443,22 +571,23 @@ const syncVideo = () => {
 };
 
 const tickVideoSync = (now: number) => {
-  if (!running || voice.paused || videoCollapsed) return;
+  if (!running || voice.paused || videoCollapsed || waitingForVideo) return;
   const v = activeVideoEl();
   if (!v || !currentVideoSrc) return;
   if (v.playbackRate !== playbackRate) applyVideoRate(v, playbackRate);
   if (now <= videoSpinUpUntil) return;
   if (v.paused) {
-    if (v.readyState >= 2 && !v.seeking) {
+    if (
+      v.readyState >= 2 &&
+      !v.seeking &&
+      (!Number.isFinite(v.duration) || v.currentTime < v.duration - 0.08)
+    ) {
       v.play().catch(() => {});
     }
     return;
   }
   if (v.seeking || v.readyState < 2) return;
-  const targetTime =
-    Number.isFinite(v.duration) && v.duration > 0
-      ? voice.currentTime % v.duration
-      : voice.currentTime;
+  const targetTime = clampVideoTime(v, voice.currentTime);
   const drift = targetTime - v.currentTime;
   if (
     Math.abs(drift) > Math.max(0.3, 0.22 * playbackRate) &&
@@ -557,7 +686,13 @@ let peak = 0.35;
  *  page plays (lib/listening). */
 const voiceBands = (half: number, from = analyser) => {
   const out = new Array(half).fill(0);
-  if (isSafari && from === analyser && running && !voice.paused && !demoPlaying()) {
+  if (
+    isSafari &&
+    from === analyser &&
+    running &&
+    !voice.paused &&
+    !demoPlaying()
+  ) {
     const t = voice.currentTime * 6.5;
     for (let k = 0; k < half; k++) {
       const env = Math.max(0, 1 - (k / half) * 0.72);
@@ -690,8 +825,7 @@ const drawField = (now: number) => {
   if (!field || !narrator || narrator.hidden || reduceMotion) return;
   const dt = lastFrame ? Math.min(now - lastFrame, 64) : 16;
   lastFrame = now;
-  const talking =
-    (running && !voice.paused) || demoPlaying() || !!otherSound();
+  const talking = (running && !voice.paused) || demoPlaying() || !!otherSound();
   hostField();
 
   // Quick enough to follow the voice, eased enough not to twitch.
@@ -883,14 +1017,24 @@ const hold = (box: HTMLElement | null) => {
 };
 const held = (box: HTMLElement) => Number(box.dataset.heldUntil) > Date.now();
 for (const type of ['wheel', 'touchmove'] as const)
-  document.addEventListener(type, e => hold(scrollBoxOf(e.target)), {
-    passive: true,
-    capture: true,
-  });
+  document.addEventListener(
+    type,
+    e => {
+      autoScrollBlock = null;
+      hold(scrollBoxOf(e.target));
+    },
+    {
+      passive: true,
+      capture: true,
+    },
+  );
 document.addEventListener(
   'keydown',
   e => {
-    if (SCROLL_KEYS.has(e.key)) hold(scrollBoxOf(e.target));
+    if (SCROLL_KEYS.has(e.key)) {
+      autoScrollBlock = null;
+      hold(scrollBoxOf(e.target));
+    }
   },
   { capture: true },
 );
@@ -1169,6 +1313,10 @@ const animateNarrator = (now: number) => {
 
 // ----- the session -----
 const stop = () => {
+  clearTimeout(voiceStartGateTimer);
+  clearTimeout(settleTimer);
+  waitingForVideo = false;
+  autoScrollBlock = null;
   voice.pause();
   session = null;
   running = false;
@@ -1188,6 +1336,7 @@ const start = (block: Narr, para: number) => {
     stop();
     return;
   }
+  clearTimeout(voiceStartGateTimer);
   ensureGraph();
   ctx?.resume();
   voice.muted = devSilent;
@@ -1198,7 +1347,63 @@ const start = (block: Narr, para: number) => {
   relang = false;
   claimSession();
   paint();
-  voice.play().catch(() => stop());
+  if (!waitingForVideo) {
+    voiceUnlocked = true;
+    voice.play().catch(() => stop());
+  } else {
+    if (!voiceUnlocked) {
+      voiceUnlocked = true;
+      voice
+        .play()
+        .then(() => {
+          if (
+            waitingForVideo &&
+            session?.block === block &&
+            session?.para === para
+          ) {
+            voice.pause();
+            voice.currentTime = 0;
+          }
+        })
+        .catch(() => {});
+    } else {
+      voice.load();
+    }
+    let launched = false;
+    const launchTogether = () => {
+      if (
+        launched ||
+        !running ||
+        session?.block !== block ||
+        session?.para !== para
+      )
+        return;
+      launched = true;
+      clearTimeout(voiceStartGateTimer);
+      waitingForVideo = false;
+      const v = activeVideoEl();
+      if (v && !videoCollapsed) {
+        v.classList.add('is-active');
+        for (const other of narVideoLayers) {
+          if (other !== v) {
+            if (!other.paused) other.pause();
+            other.classList.remove('is-active');
+          }
+        }
+        applyVideoRate(v, playbackRate);
+        v.play().catch(() => {});
+        settleTimer = setTimeout(() => {
+          if (session) preloadNext();
+        }, dur('settle'));
+      }
+      applyAudioRate(voice, playbackRate);
+      voice.play().catch(() => stop());
+    };
+    activeVideoEl()?.addEventListener('loadeddata', launchTogether, {
+      once: true,
+    });
+    voiceStartGateTimer = setTimeout(launchTogether, 320);
+  }
   document.dispatchEvent(new CustomEvent('narr:voice'));
   // Whatever shows this paragraph can follow the voice to it (a deck
   // turns to the card being told).
@@ -1206,6 +1411,9 @@ const start = (block: Narr, para: number) => {
 };
 
 const pause = () => {
+  clearTimeout(voiceStartGateTimer);
+  waitingForVideo = false;
+  autoScrollBlock = null;
   running = false;
   voice.pause();
   paint();
@@ -1284,13 +1492,12 @@ const scrollToStep = (story: Story, index: number) => {
 
 // A paragraph ends: the next one in the block, or the page turns and
 // the render loop picks the voice up wherever it lands (`follow`).
-voice.addEventListener('ended', () => {
+const onParagraphEnded = () => {
   if (!session || !running) return;
-  // The paragraph introduces a demo (its own song line, or the pitch's
-  // close, `data-song-after`): it plays now, and the voice carries on
-  // past the paragraph once it ends.
+  // The paragraph introduces a demo (its own song line): it plays now,
+  // and the voice carries on past the paragraph once it ends.
   const p = session.block.paras[session.para];
-  const song = p.dataset.songAfter ?? cueOf(p)?.dataset.songKey;
+  const song = cueOf(p)?.dataset.songKey;
   if (song) {
     running = false;
     paint();
@@ -1301,7 +1508,35 @@ voice.addEventListener('ended', () => {
     return;
   }
   carryOn();
-});
+};
+
+voice.addEventListener('ended', onParagraphEnded);
+for (const v of narVideoLayers) {
+  v.addEventListener('ended', () => {
+    if (v !== activeVideoEl() || !session || !running || videoCollapsed) return;
+    if (
+      Number.isFinite(voice.duration) &&
+      voice.duration > 0 &&
+      voice.duration - voice.currentTime <= 0.4 * playbackRate
+    ) {
+      voice.pause();
+      onParagraphEnded();
+    }
+  });
+}
+
+const advanceToBlock = (nextBlock: Narr | undefined, scrollFn: () => void) => {
+  if (!nextBlock) {
+    stop();
+    return;
+  }
+  const p = startOf(nextBlock);
+  autoScrollBlock = nextBlock;
+  autoScrollUntil = performance.now() + 900;
+  scrollFn();
+  if (p >= 0) start(nextBlock, p);
+  else stop();
+};
 
 const carryOn = () => {
   if (!session || !running) return;
@@ -1326,21 +1561,26 @@ const carryOn = () => {
   if (block.panel) {
     // A panel hands over to the next panel, if there is one.
     const next = panels[panels.indexOf(block) + 1];
-    if (next) scrollToPanel(next);
+    if (next) advanceToBlock(next, () => scrollToPanel(next));
     else stop();
   } else if (!story) {
     // The hero hands over to the first story's opener.
-    if (stories[0]) scrollToStep(stories[0], 0);
-    else if (panels[0]) scrollToPanel(panels[0]);
+    if (stories[0])
+      advanceToBlock(stories[0].blocks[0], () => scrollToStep(stories[0], 0));
+    else if (panels[0])
+      advanceToBlock(panels[0], () => scrollToPanel(panels[0]));
     else stop();
   } else if (block.step + 1 < story.steps.length) {
-    scrollToStep(story, block.step + 1);
+    advanceToBlock(story.blocks[block.step + 1], () =>
+      scrollToStep(story, block.step + 1),
+    );
   } else {
     // A story's last slide hands over to the next story's opener, and
     // the last story to the first panel — the pitch runs to the foot.
     const next = stories[stories.indexOf(story) + 1];
-    if (next) scrollToStep(next, 0);
-    else if (panels[0]) scrollToPanel(panels[0]);
+    if (next) advanceToBlock(next.blocks[0], () => scrollToStep(next, 0));
+    else if (panels[0])
+      advanceToBlock(panels[0], () => scrollToPanel(panels[0]));
     else stop();
   }
 };
@@ -1412,6 +1652,34 @@ document.addEventListener('arcade:start', () => {
 // A language switch changes only which paragraph paints: the voice is the
 // same Spanish take in every language, so it plays on (the read-along
 // reads the page's language each frame).
+
+// Pre-warm the active block's first take when the visitor reaches for the
+// narrator button so the first click starts with frame 0 already decoded.
+const warmInitial = () => {
+  if (session) return;
+  const p = activeVideoPara();
+  if (!p) return;
+  warmAudio(clipOf(p));
+  const vSrc = videoOf(p);
+  const el = narVideoLayers[activeLayerIdx];
+  if (vSrc && el && el.getAttribute('src') !== vSrc) {
+    el.preload = 'auto';
+    el.src = vSrc;
+    el.load();
+    const prime = () => {
+      if (!session && el.getAttribute('src') === vSrc) {
+        try {
+          el.currentTime = 0.001;
+        } catch {}
+      }
+    };
+    if (el.readyState >= 1) prime();
+    else el.addEventListener('loadedmetadata', prime, { once: true });
+  }
+};
+narrator?.addEventListener('pointerenter', warmInitial, { passive: true });
+narrator?.addEventListener('pointerdown', warmInitial, { passive: true });
+narrator?.addEventListener('touchstart', warmInitial, { passive: true });
 
 // One control. Pressed on the block being told, it pauses or resumes;
 // anywhere else, it starts telling what the page is showing.
@@ -1623,7 +1891,7 @@ const collect = (
 const heroEl = document.querySelector<HTMLElement>('[data-narr-block="hero"]');
 const heroNarr = heroEl ? collect(heroEl, null, -1) : undefined;
 
-const stories: Story[] = (
+stories = (
   phone ? [] : [...document.querySelectorAll<HTMLElement>('[data-story]')]
 ).map(root => {
   const story: Story = {
@@ -1698,7 +1966,7 @@ const stories: Story[] = (
 
 // Only the panels this layout draws: the phone's story panels are not
 // drawn on desktop, and must not join its hand-over chain.
-const panels = [...document.querySelectorAll<HTMLElement>('[data-narr-panel]')]
+panels = [...document.querySelectorAll<HTMLElement>('[data-narr-panel]')]
   .filter(el => el.getClientRects().length > 0)
   .map(el => collect(el, null, -1, true));
 
@@ -1728,7 +1996,18 @@ const render = (force = false) => {
       dock.style.visibility = mine ? 'visible' : 'hidden';
       dock.style.pointerEvents = mine ? '' : 'none';
     }
-    if (session && running && showing !== session.block) follow(showing);
+    if (session && running && showing !== session.block) {
+      if (
+        autoScrollBlock &&
+        performance.now() < autoScrollUntil &&
+        session.block === autoScrollBlock
+      ) {
+        if (showing === autoScrollBlock) autoScrollBlock = null;
+      } else {
+        autoScrollBlock = null;
+        follow(showing);
+      }
+    }
     placeNarrator();
     return;
   }
@@ -1863,7 +2142,18 @@ const render = (force = false) => {
     dock.style.pointerEvents = o < 0.6 ? 'none' : '';
   }
 
-  if (session && running && showing !== session.block) follow(showing);
+  if (session && running && showing !== session.block) {
+    if (
+      autoScrollBlock &&
+      performance.now() < autoScrollUntil &&
+      session.block === autoScrollBlock
+    ) {
+      if (showing === autoScrollBlock) autoScrollBlock = null;
+    } else {
+      autoScrollBlock = null;
+      follow(showing);
+    }
+  }
 
   placeNarrator();
 };
