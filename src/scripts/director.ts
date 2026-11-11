@@ -173,7 +173,7 @@ let activeLayerIdx = 0;
 let videoCollapsed = false;
 let currentVideoSrc = '';
 let playbackRate = 1;
-let videoRateState: -1 | 0 | 1 = 0;
+let videoRateState: -2 | -1 | 0 | 1 | 2 = 0;
 let videoSpinUpUntil = 0;
 let videoLastSeekAt = 0;
 let settleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -185,6 +185,7 @@ let preloadedForToken = -1;
 let autoScrollUntil = 0;
 let autoScrollBlock: Narr | null = null;
 let narrPlacementDirty = true;
+let ctx: AudioContext | null = null;
 
 const preloadAudio = new Audio();
 preloadAudio.preload = 'auto';
@@ -200,6 +201,8 @@ const warmAudio = (src: string | null | undefined) => {
 const activeVideoEl = (): HTMLVideoElement | null =>
   narVideoLayers[activeLayerIdx] ?? null;
 
+const heardVoiceTime = () => Math.max(0, voice.currentTime || 0);
+
 const clampVideoTime = (v: HTMLVideoElement, t: number) =>
   Number.isFinite(v.duration) && v.duration > 0
     ? Math.min(Math.max(0, t), Math.max(0, v.duration - 0.04))
@@ -208,7 +211,8 @@ const clampVideoTime = (v: HTMLVideoElement, t: number) =>
 const isTimeBuffered = (v: HTMLVideoElement, t: number) => {
   const b = v.buffered;
   for (let i = 0; i < b.length; i++) {
-    if (t >= b.start(i) && t <= b.end(i) - 0.12) return true;
+    if (t >= b.start(i) && t <= Math.max(b.start(i), b.end(i) - 0.05))
+      return true;
   }
   return false;
 };
@@ -229,7 +233,16 @@ const applyAudioRate = (el: HTMLAudioElement, rate: number) => {
 };
 
 const effectiveVideoRate = () => {
-  const factor = videoRateState === 1 ? 1.08 : videoRateState === -1 ? 0.92 : 1;
+  const factor =
+    videoRateState === 2
+      ? 1.14
+      : videoRateState === 1
+        ? 1.06
+        : videoRateState === -1
+          ? 0.94
+          : videoRateState === -2
+            ? 0.86
+            : 1;
   return +(playbackRate * factor).toFixed(3);
 };
 
@@ -256,9 +269,9 @@ const setPlaybackRate = (rate: number) => {
     !v.seeking &&
     Number.isFinite(voice.currentTime)
   ) {
-    const targetTime = clampVideoTime(v, voice.currentTime);
+    const targetTime = clampVideoTime(v, heardVoiceTime());
     if (
-      Math.abs(v.currentTime - targetTime) > 1.0 &&
+      Math.abs(v.currentTime - targetTime) > 0.12 * rate &&
       isTimeBuffered(v, targetTime)
     ) {
       try {
@@ -266,7 +279,7 @@ const setPlaybackRate = (rate: number) => {
       } catch {}
     }
   }
-  videoSpinUpUntil = performance.now() + 700;
+  videoSpinUpUntil = performance.now() + 260;
   for (const btn of narRateBtns) {
     const active = Number(btn.dataset.narrRate) === rate;
     btn.classList.toggle('is-active', active);
@@ -449,7 +462,9 @@ const preloadNext = () => {
 };
 
 /** Starts `activeVideoEl()` only AFTER `voice` is audibly playing (`!voiceBuffering`),
- *  preventing `v` from running ahead through the first second and rewinding to 0. */
+ *  preventing `v` from running ahead through the first second and rewinding to 0,
+ *  and snaps `v` in RAM the moment `v` enters `playing` if `voice` advanced while
+ *  `v` was still buffering over the network. */
 const maybeLaunchVideo = () => {
   if (videoLaunched || !running || videoCollapsed || !currentVideoSrc) return;
   if (voice.paused || voiceBuffering) return;
@@ -457,7 +472,7 @@ const maybeLaunchVideo = () => {
   if (!v) return;
 
   const myToken = videoToken;
-  const desiredStart = voice.currentTime || 0;
+  const desiredStart = heardVoiceTime();
 
   const commitLaunch = () => {
     if (
@@ -472,7 +487,7 @@ const maybeLaunchVideo = () => {
     videoRateState = 0;
     v.preload = 'auto';
     applyVideoRate(v, playbackRate);
-    videoSpinUpUntil = performance.now() + 950;
+    videoSpinUpUntil = performance.now() + 360;
     videoLastSeekAt = performance.now();
     v.classList.add('is-active');
     for (const other of narVideoLayers) {
@@ -488,22 +503,50 @@ const maybeLaunchVideo = () => {
         );
       }
     }
+    v.addEventListener(
+      'playing',
+      () => {
+        if (
+          myToken !== videoToken ||
+          !running ||
+          videoCollapsed ||
+          v !== activeVideoEl() ||
+          voice.paused ||
+          voiceBuffering
+        )
+          return;
+        applyVideoRate(v, effectiveVideoRate());
+        const liveTarget = clampVideoTime(v, heardVoiceTime());
+        if (
+          Math.abs(v.currentTime - liveTarget) > 0.075 * playbackRate &&
+          isTimeBuffered(v, liveTarget)
+        ) {
+          videoLastSeekAt = performance.now();
+          videoSpinUpUntil = performance.now() + 260;
+          try {
+            v.currentTime = liveTarget;
+          } catch {}
+        } else {
+          videoSpinUpUntil = performance.now() + 180;
+        }
+      },
+      { once: true },
+    );
     v.play().catch(() => {});
   };
 
-  // Normal start near 0:00 — play straight from frame 0 with ZERO seek so the
-  // video never jumps back or repeats its opening second.
-  if (desiredStart <= 0.45 * playbackRate && v.currentTime <= 0.45) {
+  // Start near 0:00 — play straight from frame 0 with zero pre-seek; if `v`
+  // buffers slower than `voice`, the `playing` listener above snaps it in RAM.
+  if (desiredStart <= 0.12 * playbackRate && v.currentTime <= 0.12) {
     commitLaunch();
     return;
   }
 
-  // Slow mobile connection where audio advanced while video was connecting:
-  // seek once while paused before starting playback.
+  // Audio already advanced before video metadata arrived: seek once while paused.
   const seekAndLaunch = () => {
     if (myToken !== videoToken || videoLaunched) return;
-    const target = clampVideoTime(v, voice.currentTime || 0);
-    if (Math.abs(v.currentTime - target) > 0.35) {
+    const target = clampVideoTime(v, heardVoiceTime());
+    if (Math.abs(v.currentTime - target) > 0.08 * playbackRate) {
       try {
         v.currentTime = target;
       } catch {}
@@ -588,11 +631,9 @@ const syncVideo = () => {
     }
     applyVideoRate(v, effectiveVideoRate());
     if (v.readyState >= 2 && !v.seeking && Number.isFinite(voice.currentTime)) {
-      const targetTime = clampVideoTime(v, voice.currentTime);
-      // Only hard-seek on resume if video drifted far (> 1.2s, e.g. reopened
-      // after closing `×`) and targetTime is buffered.
+      const targetTime = clampVideoTime(v, heardVoiceTime());
       if (
-        Math.abs(v.currentTime - targetTime) > 1.2 &&
+        Math.abs(v.currentTime - targetTime) > 0.09 * playbackRate &&
         isTimeBuffered(v, targetTime)
       ) {
         try {
@@ -601,7 +642,7 @@ const syncVideo = () => {
       }
     }
     if (v.paused && !voiceBuffering) {
-      videoSpinUpUntil = performance.now() + 600;
+      videoSpinUpUntil = performance.now() + 240;
       v.play().catch(() => {});
     }
   }
@@ -625,24 +666,26 @@ const tickVideoSync = (now: number) => {
     ) {
       videoRateState = 0;
       applyVideoRate(v, playbackRate);
-      videoSpinUpUntil = now + 500;
+      videoSpinUpUntil = now + 350;
       v.play().catch(() => {});
     }
     return;
   }
   if (v.seeking || v.readyState < 3) return;
-  const targetTime = clampVideoTime(v, voice.currentTime);
+  const targetTime = clampVideoTime(v, heardVoiceTime());
   const drift = targetTime - v.currentTime;
+  const realDrift = drift / playbackRate;
 
-  // Hard-seek ONLY on extreme drift (> 2.8s) AND when `targetTime` is already
-  // buffered in RAM — never aborting an active mobile HTTP stream.
+  // Hard-seek in RAM when drift exceeds 0.45s wall-clock (e.g. decoder/tab
+  // stall or audio route change) AND `targetTime` is already buffered — never
+  // aborting an active mobile HTTP stream.
   if (
-    Math.abs(drift) > Math.max(2.8, 1.8 * playbackRate) &&
-    now - videoLastSeekAt > 5000 &&
+    Math.abs(realDrift) > 0.45 &&
+    now - videoLastSeekAt > 1800 &&
     isTimeBuffered(v, targetTime)
   ) {
     videoLastSeekAt = now;
-    videoSpinUpUntil = now + 800;
+    videoSpinUpUntil = now + 280;
     videoRateState = 0;
     applyVideoRate(v, playbackRate);
     try {
@@ -651,20 +694,25 @@ const tickVideoSync = (now: number) => {
     return;
   }
 
-  // Smooth 3-state hysteresis rate nudge (`0.92×` / `1.00×` / `1.08×` in wall-
-  // clock seconds, invariant across 1× / 2× / 3×): keeps sequential hardware
-  // decode untouched and updates `AVPlayer.rate` only on state transitions.
-  const realDrift = drift / playbackRate;
-  let nextState: -1 | 0 | 1 = videoRateState;
-  if (videoRateState === 0) {
-    if (realDrift > 0.16) nextState = 1;
-    else if (realDrift < -0.16) nextState = -1;
-  } else if (videoRateState === 1) {
-    if (realDrift <= 0.04) nextState = 0;
-    else if (realDrift < -0.2) nextState = -1;
+  // Tight hysteresis rate nudge in wall-clock seconds (invariant across 1×/2×/3×):
+  // engages at ±55ms (inside human lip-sync fusion threshold) and releases at
+  // ±18ms (~half a 30fps frame), using ±6% gentle trim for small drift and ±14%
+  // fast trim for larger unbuffered catch-up — updating AVPlayer.rate only on
+  // state transitions.
+  let nextState: -2 | -1 | 0 | 1 | 2 = videoRateState;
+  const absDrift = Math.abs(realDrift);
+  if (absDrift <= 0.018) {
+    nextState = 0;
+  } else if (realDrift > 0) {
+    if (realDrift > 0.16) nextState = 2;
+    else if (videoRateState === 2 && realDrift > 0.075) nextState = 2;
+    else if (realDrift > 0.055 || videoRateState > 0) nextState = 1;
+    else nextState = 0;
   } else {
-    if (realDrift >= -0.04) nextState = 0;
-    else if (realDrift > 0.2) nextState = 1;
+    if (realDrift < -0.16) nextState = -2;
+    else if (videoRateState === -2 && realDrift < -0.075) nextState = -2;
+    else if (realDrift < -0.055 || videoRateState < 0) nextState = -1;
+    else nextState = 0;
   }
   if (nextState !== videoRateState) {
     videoRateState = nextState;
@@ -712,7 +760,6 @@ const paint = () => {
 // sits. Nothing is drawn here: the field along the foot of the screen
 // is what shows it (the pill is only play and pause).
 
-let ctx: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let output: GainNode | null = null;
 let freq: Uint8Array<ArrayBuffer> | null = null;
@@ -1194,7 +1241,7 @@ const updateRead = () => {
     box.classList.add('is-read-along');
   }
   p.classList.toggle('is-live', running);
-  const t = voice.currentTime || 0;
+  const t = heardVoiceTime();
   let upTo = 0;
   while (upTo < words.times.length && words.times[upTo] <= t) upTo++;
   if (upTo === reading.upTo) return;
