@@ -37,6 +37,14 @@ export const LEGAL_APPS: {
     publisher: 'Grostify LLC',
     web: 'soundshaper.juanevillam.com',
   },
+  {
+    slug: 'book-highlighter',
+    name: 'Book Highlighter',
+    content: 'books',
+    contentEs: 'libros',
+    contentZh: '书籍',
+    web: 'bookhighlighter.juanevillam.com',
+  },
 ];
 
 export type LegalApp = (typeof LEGAL_APPS)[number];
