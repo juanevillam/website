@@ -150,7 +150,7 @@ const isIOS =
 // EdgiOS, in-app WebViews) plus macOS Safari uses Apple's WebKit + AVPlayer.
 // Routing `<audio>` through WebAudio's `createMediaElementSource` attaches
 // `MTAudioProcessingTap`, which delays startup, stalls streaming buffers mid-
-// clip, and drifts clock sync at 1.5× / 2× — so WebKit always plays straight
+// clip, and drifts clock sync at 2× / 3× — so WebKit always plays straight
 // on hardware AVPlayer.
 const isWebKit =
   isIOS ||
@@ -179,14 +179,11 @@ let videoLastSeekAt = 0;
 let settleTimer: ReturnType<typeof setTimeout> | undefined;
 let videoToken = 0;
 let videoLaunched = false;
-let pendingLaunchSeek = 0;
 let voiceBuffering = false;
 let sessionToken = 0;
 let preloadedForToken = -1;
 let autoScrollUntil = 0;
 let autoScrollBlock: Narr | null = null;
-let pendingVideoStart: number | null = null;
-let partScrollLockUntil = 0;
 let narrPlacementDirty = true;
 
 const preloadAudio = new Audio();
@@ -487,7 +484,7 @@ const maybeLaunchVideo = () => {
   if (!v) return;
 
   const myToken = videoToken;
-  const desiredStart = Math.max(pendingLaunchSeek, voice.currentTime || 0);
+  const desiredStart = voice.currentTime || 0;
 
   const commitLaunch = () => {
     if (
@@ -499,7 +496,6 @@ const maybeLaunchVideo = () => {
     )
       return;
     videoLaunched = true;
-    pendingLaunchSeek = 0;
     videoRateState = 0;
     v.preload = 'auto';
     applyVideoRate(v, playbackRate);
@@ -524,19 +520,16 @@ const maybeLaunchVideo = () => {
 
   // Normal start near 0:00 — play straight from frame 0 with ZERO seek so the
   // video never jumps back or repeats its opening second.
-  if (desiredStart <= 0.45 && v.currentTime <= 0.45) {
+  if (desiredStart <= 0.45 * playbackRate && v.currentTime <= 0.45) {
     commitLaunch();
     return;
   }
 
-  // Starting mid-clip (section pill jump, or slow mobile connection where
-  // audio advanced while video was still connecting): seek while paused first.
+  // Slow mobile connection where audio advanced while video was connecting:
+  // seek once while paused before starting playback.
   const seekAndLaunch = () => {
     if (myToken !== videoToken || videoLaunched) return;
-    const target = clampVideoTime(
-      v,
-      Math.max(pendingLaunchSeek, voice.currentTime || 0),
-    );
+    const target = clampVideoTime(v, voice.currentTime || 0);
     if (Math.abs(v.currentTime - target) > 0.35) {
       try {
         v.currentTime = target;
@@ -600,8 +593,6 @@ const syncVideo = () => {
     if (!nextEl.paused) nextEl.pause();
     currentVideoSrc = src;
     activeLayerIdx = nextIdx;
-    pendingLaunchSeek = pendingVideoStart ?? 0;
-    pendingVideoStart = null;
     // Give `voice.m4a` exclusive network priority on mobile until `voice`
     // enters `playing`; `maybeLaunchVideo()` promotes preload to `'auto'`.
     if (nextEl.getAttribute('src') !== src) {
@@ -687,19 +678,20 @@ const tickVideoSync = (now: number) => {
     return;
   }
 
-  // Smooth 3-state hysteresis rate nudge (`0.92×` / `1.00×` / `1.08×`):
-  // keeps sequential hardware decode untouched and updates `AVPlayer.rate`
-  // only on state transitions.
+  // Smooth 3-state hysteresis rate nudge (`0.92×` / `1.00×` / `1.08×` in wall-
+  // clock seconds, invariant across 1× / 2× / 3×): keeps sequential hardware
+  // decode untouched and updates `AVPlayer.rate` only on state transitions.
+  const realDrift = drift / playbackRate;
   let nextState: -1 | 0 | 1 = videoRateState;
   if (videoRateState === 0) {
-    if (drift > 0.18) nextState = 1;
-    else if (drift < -0.18) nextState = -1;
+    if (realDrift > 0.16) nextState = 1;
+    else if (realDrift < -0.16) nextState = -1;
   } else if (videoRateState === 1) {
-    if (drift <= 0.04) nextState = 0;
-    else if (drift < -0.22) nextState = -1;
+    if (realDrift <= 0.04) nextState = 0;
+    else if (realDrift < -0.2) nextState = -1;
   } else {
-    if (drift >= -0.04) nextState = 0;
-    else if (drift > 0.22) nextState = 1;
+    if (realDrift >= -0.04) nextState = 0;
+    else if (realDrift > 0.2) nextState = 1;
   }
   if (nextState !== videoRateState) {
     videoRateState = nextState;
@@ -757,7 +749,7 @@ let freq: Uint8Array<ArrayBuffer> | null = null;
 // (macOS Safari + ALL iOS browsers including Chrome CriOS), routing
 // `<audio>` through `createMediaElementSource` attaches WebKit's
 // `MTAudioProcessingTap`, which stalls streaming buffers and breaks clock
-// sync at 1.5× / 2×; so WebKit skips the WebAudio graph completely and
+// sync at 2× / 3×; so WebKit skips the WebAudio graph completely and
 // plays straight on hardware AVPlayer while synthesizing the horizon wave.
 const ensureGraph = () => {
   if (isWebKit || ctx) return;
@@ -1031,69 +1023,6 @@ const drawField = (now: number) => {
 // heard: the pill never carries words and never changes size.
 const readable = (p: HTMLElement) => !p.hidden;
 
-const partsNavOf = (p: HTMLElement) =>
-  p.parentElement?.querySelector<HTMLElement>('[data-narr-parts]') ?? null;
-
-const partTimesOf = (p: HTMLElement, lang: string): number[] => {
-  const raw =
-    p.dataset[`parts${lang[0].toUpperCase()}${lang.slice(1)}`] ??
-    p.dataset.partsEs;
-  return raw ? JSON.parse(raw) : [];
-};
-
-const fmtPartClock = (sec: number) => {
-  const s = Math.max(0, Math.round(sec));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-};
-
-const syncPartLabels = (p: HTMLElement) => {
-  const nav = partsNavOf(p);
-  if (!nav) return;
-  const lang = document.documentElement.dataset.lang ?? 'en';
-  const pts = partTimesOf(p, lang);
-  for (const btn of nav.querySelectorAll<HTMLButtonElement>(
-    '[data-narr-part-btn]',
-  )) {
-    const idx = Number(btn.dataset.narrPartBtn);
-    const sec = pts[idx];
-    if (sec === undefined) continue;
-    const clock = fmtPartClock(sec);
-    btn.title = clock;
-    btn.setAttribute('aria-label', `${idx + 1} (${clock})`);
-  }
-};
-
-const updateIdlePartFromScroll = (p: HTMLElement) => {
-  const nav = partsNavOf(p);
-  if (!nav) return;
-  const lang = document.documentElement.dataset.lang ?? 'en';
-  const partEls = [
-    ...p.querySelectorAll<HTMLElement>(
-      `:scope > .tb[lang="${lang}"] [data-part]`,
-    ),
-  ];
-  if (!partEls.length) return;
-  const cs = getComputedStyle(p);
-  const padTop = parseFloat(cs.paddingTop) || 0;
-  const lh = parseFloat(cs.lineHeight) || 24;
-  let here = 0;
-  for (let k = 1; k < partEls.length; k++) {
-    if (partEls[k].offsetTop - padTop <= p.scrollTop + lh * 1.35) here = k;
-    else break;
-  }
-  if (p.scrollTop + p.clientHeight >= p.scrollHeight - 4) {
-    here = partEls.length - 1;
-  }
-  for (const btn of nav.querySelectorAll<HTMLButtonElement>(
-    '[data-narr-part-btn]',
-  )) {
-    btn.classList.toggle(
-      'is-reading-here',
-      Number(btn.dataset.narrPartBtn) === here,
-    );
-  }
-};
-
 type ReadWords = { spans: HTMLElement[]; times: number[] };
 const readCache = new WeakMap<HTMLElement, ReadWords>();
 
@@ -1105,45 +1034,33 @@ const wordsOf = (
 ): ReadWords => {
   const cached = readCache.get(root);
   if (cached) return cached;
+  const texts: Text[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode())
+    texts.push(n as Text);
   const spans: HTMLElement[] = [];
   const offsets: number[] = [];
   let at = 0;
-  const wrapContainer = (container: HTMLElement) => {
-    const texts: Text[] = [];
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode())
-      texts.push(n as Text);
-    for (const node of texts) {
-      const data = node.data;
-      const tokens = readTokens(data);
-      if (tokens.length) {
-        const frag = document.createDocumentFragment();
-        let last = 0;
-        for (const tk of tokens) {
-          if (tk.at > last) frag.append(data.slice(last, tk.at));
-          const span = document.createElement('span');
-          span.className = 'rw';
-          span.textContent = tk.text;
-          frag.append(span);
-          spans.push(span);
-          offsets.push(at + tk.at);
-          last = tk.at + tk.text.length;
-        }
-        if (last < data.length) frag.append(data.slice(last));
-        node.replaceWith(frag);
+  for (const node of texts) {
+    const data = node.data;
+    const tokens = readTokens(data);
+    if (tokens.length) {
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      for (const tk of tokens) {
+        if (tk.at > last) frag.append(data.slice(last, tk.at));
+        const span = document.createElement('span');
+        span.className = 'rw';
+        span.textContent = tk.text;
+        frag.append(span);
+        spans.push(span);
+        offsets.push(at + tk.at);
+        last = tk.at + tk.text.length;
       }
-      at += data.length;
+      if (last < data.length) frag.append(data.slice(last));
+      node.replaceWith(frag);
     }
-  };
-  const partEls = [...root.querySelectorAll<HTMLElement>('[data-part]')];
-  if (partEls.length) {
-    partEls.forEach((partEl, idx) => {
-      // Matches the `\n\n` (length 2) separating sections in `ui.ts` `plainText`.
-      if (idx > 0) at += 2;
-      wrapContainer(partEl);
-    });
-  } else {
-    wrapContainer(root);
+    at += data.length;
   }
   const raw = p.dataset[`read${lang[0].toUpperCase()}${lang.slice(1)}`];
   const marks: ReadMark[] = raw ? JSON.parse(raw) : [];
@@ -1165,27 +1082,15 @@ let reading: {
    *  two inks only — what is still to come, and what has been said. */
   box: HTMLElement;
   upTo: number;
-  partIdx: number;
 } | null = null;
 
 const endReading = () => {
   if (!reading) return;
-  const prevP = reading.p;
-  prevP.classList.remove('is-reading', 'is-live');
+  reading.p.classList.remove('is-reading', 'is-live');
   reading.box.classList.remove('is-read-along');
-  const nav = partsNavOf(prevP);
-  if (nav) {
-    for (const btn of nav.querySelectorAll<HTMLButtonElement>(
-      '[data-narr-part-btn]',
-    )) {
-      btn.classList.remove('is-active');
-      btn.setAttribute('aria-pressed', 'false');
-    }
-  }
   for (const s of readCache.get(reading.root)?.spans ?? [])
     s.classList.remove('is-read');
   reading = null;
-  updateIdlePartFromScroll(prevP);
 };
 
 /** A box the visitor scrolls by hand is theirs: the voice stops pulling it
@@ -1249,7 +1154,6 @@ document.addEventListener(
  *  at a time as the voice goes on. Not while the visitor holds the box —
  *  until the word comes back into view on its own. */
 const keepInView = (span: HTMLElement) => {
-  if (performance.now() < partScrollLockUntil) return;
   const own = span.closest<HTMLElement>('[data-narr-caption], [data-cap]');
   if (own && held(own)) {
     const b = own.getBoundingClientRect();
@@ -1305,41 +1209,19 @@ const updateRead = () => {
     return;
   }
   const lang = document.documentElement.dataset.lang ?? 'en';
-  const root =
-    p.querySelector<HTMLElement>(
-      `:scope > .t[lang="${lang}"], :scope > .tb[lang="${lang}"]`,
-    ) ?? p;
+  const root = p.querySelector<HTMLElement>(`:scope > .t[lang="${lang}"]`) ?? p;
   if (reading && (reading.p !== p || reading.root !== root)) endReading();
   const words = wordsOf(p, root, lang);
   if (!reading) {
     const box = p.matches('[data-narr-caption]')
       ? p
       : (p.closest<HTMLElement>('[data-cap]') ?? p.parentElement ?? p);
-    reading = { p, root, box, upTo: 0, partIdx: -1 };
+    reading = { p, root, box, upTo: 0 };
     p.classList.add('is-reading');
     box.classList.add('is-read-along');
   }
   p.classList.toggle('is-live', running);
   const t = voice.currentTime || 0;
-  const nav = partsNavOf(p);
-  if (nav) {
-    const pts = partTimesOf(p, lang);
-    let activePart = 0;
-    for (let k = 1; k < pts.length; k++) {
-      if (t + 0.08 >= pts[k]) activePart = k;
-      else break;
-    }
-    if (activePart !== reading.partIdx) {
-      reading.partIdx = activePart;
-      for (const btn of nav.querySelectorAll<HTMLButtonElement>(
-        '[data-narr-part-btn]',
-      )) {
-        const on = Number(btn.dataset.narrPartBtn) === activePart;
-        btn.classList.toggle('is-active', on);
-        btn.setAttribute('aria-pressed', String(on));
-      }
-    }
-  }
   let upTo = 0;
   while (upTo < words.times.length && words.times[upTo] <= t) upTo++;
   if (upTo === reading.upTo) return;
@@ -1556,8 +1438,6 @@ const stop = () => {
   videoToken++;
   videoLaunched = false;
   voiceBuffering = false;
-  pendingLaunchSeek = 0;
-  pendingVideoStart = null;
   autoScrollBlock = null;
   voice.pause();
   session = null;
@@ -1571,7 +1451,7 @@ const stop = () => {
   }, dur('settle'));
 };
 
-const start = (block: Narr, para: number, startTime = 0) => {
+const start = (block: Narr, para: number) => {
   const p = block.paras[para];
   const src = p && clipOf(p);
   if (!src) {
@@ -1588,7 +1468,6 @@ const start = (block: Narr, para: number, startTime = 0) => {
     preloadAudio.load();
     preloadedAudioSrc = '';
   }
-  pendingVideoStart = startTime > 0 ? startTime : null;
   voiceBuffering = true;
   ensureGraph();
   ctx?.resume();
@@ -1599,17 +1478,6 @@ const start = (block: Narr, para: number, startTime = 0) => {
   running = true;
   relang = false;
   const mySessionToken = sessionToken;
-  if (startTime > 0) {
-    const applyVoiceStart = () => {
-      if (mySessionToken !== sessionToken || !running) return;
-      try {
-        voice.currentTime = startTime;
-      } catch {}
-    };
-    if (voice.readyState >= 1) applyVoiceStart();
-    else
-      voice.addEventListener('loadedmetadata', applyVoiceStart, { once: true });
-  }
   claimSession();
   paint();
   voice.play().catch(() => {
@@ -1619,82 +1487,6 @@ const start = (block: Narr, para: number, startTime = 0) => {
   // Whatever shows this paragraph can follow the voice to it (a deck
   // turns to the card being told).
   document.dispatchEvent(new CustomEvent('narr:para', { detail: p }));
-};
-
-const scrollPartIntoCap = (p: HTMLElement, partIdx: number) => {
-  const box = p.closest<HTMLElement>('[data-cap]') ?? p;
-  delete box.dataset.heldUntil;
-  partScrollLockUntil = performance.now() + 420;
-  const lang = document.documentElement.dataset.lang ?? 'en';
-  const partEl = p.querySelector<HTMLElement>(
-    `:scope > .tb[lang="${lang}"] [data-part="${partIdx}"]`,
-  );
-  if (!partEl) return;
-  const padTop = parseFloat(getComputedStyle(box).paddingTop) || 0;
-  const top = partIdx === 0 ? 0 : Math.max(0, partEl.offsetTop - padTop);
-  box.scrollTo({
-    top,
-    behavior: reduceMotion ? 'auto' : 'smooth',
-  });
-};
-
-const jumpToPart = (block: Narr, para: number, partIdx: number) => {
-  const p = block.paras[para];
-  if (!p || !clipOf(p)) return;
-  const lang = document.documentElement.dataset.lang ?? 'en';
-  const pts = partTimesOf(p, lang);
-  const rawStart = pts[partIdx] ?? 0;
-  const seekTime = partIdx > 0 ? Math.max(0, rawStart - 0.04) : 0;
-  if (!running) videoCollapsed = false;
-  if (block.panel && showing !== block && !focusOpen()) {
-    autoScrollBlock = block;
-    autoScrollUntil = performance.now() + 900;
-    scrollToPanel(block);
-  }
-  scrollPartIntoCap(p, partIdx);
-  if (session?.block === block && session.para === para && !relang) {
-    videoRateState = 0;
-    videoSpinUpUntil = performance.now() + 1000;
-    videoLastSeekAt = performance.now();
-    const seekVoice = () => {
-      if (session?.block !== block || session?.para !== para) return;
-      try {
-        voice.currentTime = seekTime;
-      } catch {}
-    };
-    if (voice.readyState >= 1) seekVoice();
-    else voice.addEventListener('loadedmetadata', seekVoice, { once: true });
-
-    const vSrc = videoOf(p);
-    const v = activeVideoEl();
-    if (v && vSrc && currentVideoSrc === vSrc) {
-      applyVideoRate(v, playbackRate);
-      const seekVid = () => {
-        if (currentVideoSrc !== vSrc) return;
-        try {
-          v.currentTime = clampVideoTime(v, seekTime);
-        } catch {}
-      };
-      if (v.readyState >= 1) seekVid();
-      else v.addEventListener('loadedmetadata', seekVid, { once: true });
-    } else {
-      pendingVideoStart = seekTime > 0 ? seekTime : null;
-    }
-    if (!running) {
-      running = true;
-      claimSession();
-      ensureGraph();
-      ctx?.resume();
-      voice.muted = devSilent;
-      applyAudioRate(voice, playbackRate);
-      paint();
-      voice.play().catch(() => stop());
-      document.dispatchEvent(new CustomEvent('narr:voice'));
-    }
-    updateRead();
-    return;
-  }
-  start(block, para, seekTime);
 };
 
 const pause = () => {
@@ -1710,12 +1502,6 @@ const pause = () => {
 // playing on if it was playing, from its start when next resumed.
 let relang = false;
 new MutationObserver(() => {
-  for (const n of narrs) {
-    for (const p of n.paras) {
-      syncPartLabels(p);
-      updateIdlePartFromScroll(p);
-    }
-  }
   if (!session) return;
   const p = session.block.paras[session.para];
   const src = p && clipOf(p);
@@ -2169,43 +1955,15 @@ const collect = (
     step,
     panel,
   };
-  // While a block is being told, its paragraphs (and section pills, even
-  // when idle) jump straight to that section of the take.
-  n.paras.forEach((p, i) => {
-    const nav = partsNavOf(p);
-    if (nav) {
-      syncPartLabels(p);
-      for (const btn of nav.querySelectorAll<HTMLButtonElement>(
-        '[data-narr-part-btn]',
-      )) {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          const partIdx = Number(btn.dataset.narrPartBtn);
-          if (Number.isInteger(partIdx) && partIdx >= 0) {
-            jumpToPart(n, i, partIdx);
-          }
-        });
-      }
-      p.addEventListener('scroll', () => updateIdlePartFromScroll(p), {
-        passive: true,
-      });
-    }
+  // While a block is being told, its other paragraphs can be tapped to
+  // jump straight to them (a link inside one still navigates).
+  n.paras.forEach((p, i) =>
     p.addEventListener('click', e => {
-      const target = e.target as Element | null;
-      if (target?.closest('a[href], button')) return;
+      if ((e.target as Element | null)?.closest('a[href]')) return;
       if (window.getSelection()?.toString()) return;
-      if (session?.block !== n || !clipOf(p)) return;
-      const partEl = target?.closest<HTMLElement>('[data-part]');
-      if (partEl && p.contains(partEl)) {
-        const partIdx = Number(partEl.dataset.part);
-        if (Number.isInteger(partIdx) && partIdx >= 0) {
-          jumpToPart(n, i, partIdx);
-        }
-        return;
-      }
-      if (session.para !== i) start(n, i);
-    });
-  });
+      if (session?.block === n && session.para !== i && clipOf(p)) start(n, i);
+    }),
+  );
   narrs.push(n);
   return n;
 };

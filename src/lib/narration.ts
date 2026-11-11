@@ -247,41 +247,6 @@ export const readTimings = (
   return out;
 };
 
-/** Start times (s) of each `\n\n`-separated section of a clip's copy, when
- *  divided into 2+ sections (Juan, 2026-11-10). */
-export const partStartsByLocale = (
-  key: string,
-  textKey: string = key,
-  timings = readTimings(key, textKey),
-): Record<Locale, number[]> | undefined => {
-  if (
-    !timings ||
-    !(textKey in ui.es) ||
-    !ui.es[textKey as UIKey].includes('\n\n')
-  )
-    return undefined;
-  const out = {} as Record<Locale, number[]>;
-  for (const l of locales) {
-    const plain = plainText(ui[l][textKey as UIKey]);
-    const cuts = [0];
-    for (const m of plain.matchAll(/\n\n+/g))
-      cuts.push((m.index ?? 0) + m[0].length);
-    const marks = timings[l];
-    out[l] = cuts.map((ch, idx) => {
-      if (idx === 0) return 0;
-      const hit = marks.find(([at]) => at >= ch);
-      return hit ? round(Math.max(0, hit[1])) : 0;
-    });
-  }
-  return out;
-};
-
-/** Spanish section start times (for building the 1 · 2 · 3 selector). */
-export const partStartsFor = (
-  key: string,
-  textKey: string = key,
-): number[] | undefined => partStartsByLocale(key, textKey)?.es;
-
 /** A narrated paragraph's data attributes — its clip, and when each of its
  *  words is said in every language, for the director (scripts/director.ts). */
 export const voiceAttrs = (key: string, textKey: string = key) => {
@@ -295,11 +260,8 @@ export const voiceAttrs = (key: string, textKey: string = key) => {
       attrs[`data-video-${l}`] = videoFor(key, l) ?? undefined;
     }
   const timings = readTimings(key, textKey);
-  const parts = partStartsByLocale(key, textKey, timings);
-  for (const l of locales) {
+  for (const l of locales)
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;
-    attrs[`data-parts-${l}`] = parts ? JSON.stringify(parts[l]) : undefined;
-  }
   return attrs;
 };
 

@@ -256,7 +256,7 @@ const url = new URL(path, Astro.site);
       };
       const capTo = (box: HTMLElement) => {
         const ref =
-          box.tagName === 'P' || box.classList.contains('body')
+          box.tagName === 'P'
             ? box
             : [...box.querySelectorAll<HTMLElement>(':scope > p')].find(c => c.getClientRects().length);
         if (!ref) return;

@@ -103,18 +103,18 @@ import T from './T.astro';
     <button
       type="button"
       class="nar-rate"
-      data-narr-rate="1.5"
-      aria-pressed="false"
-    >
-      1.5×
-    </button>
-    <button
-      type="button"
-      class="nar-rate"
       data-narr-rate="2"
       aria-pressed="false"
     >
       2×
+    </button>
+    <button
+      type="button"
+      class="nar-rate"
+      data-narr-rate="3"
+      aria-pressed="false"
+    >
+      3×
     </button>
   </div>
 </div>
@@ -416,7 +416,7 @@ import T from './T.astro';
     pointer-events: none;
   }
 
-  /* Speed switcher (1x / 1.5x / 2x with preservePitch), shown on hover. */
+  /* Speed switcher (1x / 2x / 3x with preservePitch), shown on hover. */
   .nar-video-rates {
     position: absolute;
     left: 50%;

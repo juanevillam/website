@@ -52,11 +52,7 @@ const plain = (body: Rich): string => {
   return en[body.before] + en[body.link] + en[body.after];
 };
 
-const unmark = (text: string) =>
-  text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/\s+/g, ' ')
-    .trim();
+const unmark = (text: string) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
 /** The short version a phone shows (`….m`) when there is one: a preview
  *  card has room for a couple of lines, not a paragraph. */

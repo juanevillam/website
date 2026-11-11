@@ -27,7 +27,7 @@ const name = (c: DeckItem) => (typeof c.name === 'string' ? c.name : ui.en[c.nam
 // A card's words as one plain sentence, its links unmarked.
 const plain = (c: DeckItem) => {
   const key = typeof c.body === 'string' ? c.body : 'k' in c.body ? c.body.k : c.body.before;
-  return ui.en[key].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\s+/g, ' ').trim();
+  return ui.en[key].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 };
 ---
 

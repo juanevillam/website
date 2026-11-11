@@ -8,17 +8,9 @@ import { locales, ui, type UIKey } from '../i18n/ui';
  */
 type Props = {
   k: UIKey;
-  paragraphs?: boolean;
 };
 
-const { k, paragraphs = false } = Astro.props;
-const hasSections = paragraphs && ui.es[k].includes('\n\n');
+const { k } = Astro.props;
 ---
 
-{
-  hasSections
-    ? locales.map(l => (
-        <div class="tb" lang={l}>{ui[l][k].split('\n\n').map((sec, idx) => <p class="body-part" data-part={idx}>{sec}</p>)}</div>
-      ))
-    : locales.map(l => <span class="t" lang={l}>{ui[l][k]}</span>)
-}
+{locales.map(l => <span class="t" lang={l}>{ui[l][k]}</span>)}
