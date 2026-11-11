@@ -39,7 +39,7 @@ const LINKS = {
   squareone: 'https://www.linkedin.com/company/squareonecap',
   enrique: 'https://www.linkedin.com/in/enriquerivasz',
   sebastian: 'https://www.linkedin.com/in/sebastianalcala/',
-  tridi: 'https://tridi-alpha.vercel.app/',
+  tridi: 'https://trytridi.com/',
   summit: 'https://www.startupvenezuelasummit.com/',
   platanus: 'https://hack.platan.us/26-ve',
   fina: 'https://www.finapartner.com/',
