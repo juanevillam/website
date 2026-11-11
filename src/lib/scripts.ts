@@ -1,36 +1,16 @@
 /**
- * THE NARRATION SCRIPTS — what each clip has to SAY, one entry per clip
- * key (see lib/narration). Read only by the dev teleprompter (pages/dev);
+ * THE NARRATION SCRIPTS — what each Spanish clip covers, one entry per clip
+ * key (see lib/narration). Read only by the dev teleprompter (pages/dev),
+ * `/dev/todos`, `scripts/narration-status.mjs`, and `scripts/backup-media.mjs`;
  * nothing on the public page imports this file.
  *
- * ONE CONTINUOUS PARAGRAPH PER TAKE (Juan, 2026-11-06): each clip shows
- * as a single complete paragraph in the teleprompter so Juan can narrate
- * at his own natural pace from start to finish without clicking through
- * "next idea" buttons.
+ * SPANISH ONLY (Juan, 2026-11-11): audio and 9:16 video are recorded once in
+ * Spanish (`public/media/narration/es/`); English and Chinese on the public
+ * site are translations in `src/i18n/ui.ts` that read along on the Spanish
+ * voice clock. Add an entry here whenever a new app, project, or event
+ * section needs a full take recorded in `/dev/teleprompter`.
  */
-import fs from 'node:fs';
-import path from 'node:path';
 import { ui } from '../i18n/ui.ts';
-
-const latestTranslatedEn = (key: string): string | null => {
-  try {
-    const p = path.join(
-      process.cwd(),
-      'narration-takes/es',
-      `${key}.latest.json`,
-    );
-    if (!fs.existsSync(p)) return null;
-    const data = JSON.parse(fs.readFileSync(p, 'utf8'));
-    return typeof data?.en === 'string' && data.en.trim()
-      ? data.en.trim()
-      : null;
-  } catch {
-    return null;
-  }
-};
-
-export type ScriptLang = 'es' | 'en' | 'zh';
-export const SCRIPT_LANGS: ScriptLang[] = ['es', 'en', 'zh'];
 
 export type ScriptClip = {
   key: string;
@@ -38,9 +18,9 @@ export type ScriptClip = {
   where: string;
   /** What a visitor sees while it plays, when that is a screenshot. */
   shot?: string;
-  /** The full paragraph to narrate (single element array for recorder compatibility). */
+  /** The full paragraph/idea prompt to narrate in Spanish. */
   ideas: string[];
-  /** Why this script is not ready to record from yet, when it is not. */
+  /** Why this script is pending recording or re-recording, when it is. */
   draft?: string;
 };
 
@@ -54,7 +34,7 @@ const clean = (text: string) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 const textKey = (key: string) =>
   (key === 'hero' || key === 'footer'
     ? `${key}.caption`
-    : key) as keyof typeof ui.en;
+    : key) as keyof typeof ui.es;
 
 const CLIPS: Array<{
   key: string;
@@ -136,30 +116,8 @@ export const SCRIPTS_ES: ScriptClip[] = CLIPS.map(
     where,
     shot,
     draft,
-    ideas: [clean(ui.es[textKey(key)])],
+    ideas: [clean(ui.es[textKey(key)] ?? '')].filter(Boolean),
   }),
 );
 
-export const SCRIPTS_EN: ScriptClip[] = CLIPS.map(
-  ({ key, where, shot, draft }) => ({
-    key,
-    where,
-    shot,
-    draft,
-    ideas: [latestTranslatedEn(key) ?? clean(ui.en[textKey(key)])],
-  }),
-);
-
-export const SCRIPTS_ZH: ScriptClip[] = CLIPS.map(
-  ({ key, where, shot, draft }) => ({
-    key,
-    where,
-    shot,
-    draft,
-    ideas: [clean(ui.zh[textKey(key)])],
-  }),
-);
-
-/** Every clip's script in one language. */
-export const scriptsFor = (lang: ScriptLang): ScriptClip[] =>
-  lang === 'en' ? SCRIPTS_EN : lang === 'zh' ? SCRIPTS_ZH : SCRIPTS_ES;
+export const scriptsFor = (): ScriptClip[] => SCRIPTS_ES;

@@ -100,14 +100,14 @@ see the portfolio's `AGENTS.md` → "Release tags".
   `/events/{slug}-{yyyy-mm}` — the whole landing with that one thing open as a
   modal from the first paint, with its own preview card. The link glyph beside
   each name copies it. `/work` and `/events` open the landing at their section.
-- **Narration is Juan's voice, Spanish first** (`lib/narration.ts`): every
-  paragraph has a clip in `public/media/narration/es/`. Since 2026-10-29 he
-  records English too (Chinese may follow): a paragraph with a clip in
-  `public/media/narration/{lang}/` plays it when the page is in that
-  language, read along word by word on its own clock
-  (`src/data/narration/{key}.{lang}.words.json`); one without plays the
-  Spanish, as before. The "coming soon" notice goes once every clip on the
-  page has the language's voice.
+- **Narration is Juan's voice and video, Spanish only** (`lib/narration.ts`,
+  Juan 2026-11-11): every narrated paragraph has one audio clip and one `9:16`
+  video in `public/media/narration/es/`. There are **no** English or Chinese
+  audio/video recordings and no "coming soon" notice: visitors in English or
+  Chinese watch and hear the Spanish take while the page's translated text
+  (`src/i18n/ui.ts`) reads along sentence by sentence on the Spanish clock, like
+  a subtitled film. Existing Spanish recordings stay as recorded (no lip-sync
+  ADR re-dubbing).
   - Takes are kept **exactly as recorded** — only re-wrapped as AAC. No trim,
     levelling, filters or breath softening, ever. Cuts Juan asks for are made
     without re-encoding (`ffmpeg -c copy`). They PLAY at the speed they were
@@ -142,14 +142,13 @@ see the portfolio's `AGENTS.md` → "Release tags".
     no controls of its own. A speed control and ten-second skips folded out
     of it for a day (2026-10-17) and were removed (Juan): the circle plays
     and pauses, and that is all.
-  - English is READ, not said from ideas: the teleprompter's English tab
-    shows the page's own English paragraph in blocks of a few sentences,
-    so the words heard are the words on the page.
-  - Juan records Spanish from IDEAS (`lib/scripts.ts`), not a script; the teleprompter
-    (`/dev/teleprompter`, dev only) transcribes each take locally with
-    whisper.cpp and now writes its `.words.json` too. After a re-record,
-    re-tidy that paragraph from the new transcript in all three languages,
-    keeping the sentence counts equal.
+  - `/dev/teleprompter` (`pages/dev/[tool].astro` + `scripts/narration-recorder.mjs`,
+    dev only) is strictly for recording full Spanish camera (`9:16`) + audio
+    takes (`lib/scripts.ts`) when new sections (apps, events, projects) are
+    added. It transcribes each take locally with `whisper-cli` into
+    `src/data/narration/{key}.words.json`; afterwards, write the tidied Spanish
+    copy and its English and Chinese translations in `src/i18n/ui.ts` keeping
+    sentence counts aligned.
 
 ## Songs
 
@@ -217,7 +216,7 @@ runbook in the portfolio's `AGENTS.md`, which lists these two files.
     gliding to `left: calc(var(--narrator-w) + 1.25rem)` when the video is collapsed)
     so the video never covers the footer's live read-along text. It shows ONLY while
     narration audio is actively playing (`running === true`, hiding with `.is-dismissed`
-    on pause or stop so no paused frame is ever shown), reveals `×` and `1× / 1.5× / 2×`
+    on pause or stop so no paused frame is ever shown), reveals `×` and `1× / 2× / 3×`
     (`preservesPitch = true`) on hover, keeps raw `.webm` takes untouched in
     `narration-takes/`, and never applies audio filters, EQ, denoiser or volume
     boost to the voice.
