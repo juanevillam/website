@@ -122,11 +122,10 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
     // few seconds after the walk has gone, the jumping jacks — while the
     // card is still in front and the page is free.
     nowAndThen(
+      'robot:platanus',
       section,
       [1500, 2500],
-      [20000, 30000],
       async () => {
-        if (!stand()) return;
         const robot = await import('../lib/robot');
         if (reduceMotion.matches) return robot.stand(band, link, 'walk');
         // On a phone it keeps clear of the eyebrow at the left and the
@@ -143,7 +142,7 @@ const tridi = body && typeof body === 'object' && 'links' in body ? body.links.t
         if (!front() || busy() || !stand()) return;
         await robot.mirror(band, link, { alive: front });
       },
-      front,
+      () => front() && stand(),
     );
   }
 </script>

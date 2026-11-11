@@ -127,16 +127,21 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       const panel = egg.closest<HTMLElement>(hero ? 'section' : 'footer');
       if (!panel) continue;
       toCard(link, 'more-work', 'space-explorer');
-      // Soon after the panel settles, so a visit finds it — once a visit.
-      nowAndThen(panel, hero ? [2500, 4000] : [1500, 2500], [30000, 45000], async () => {
-        const ship = await import('../lib/ship');
-        const scene = hero ? ship.heroFight : ship.destroyer;
-        // The foot's words step back while it plays (SiteFooter).
-        if (!hero) panel.classList.add('is-show');
-        if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 3.6 : 7);
-        else await ship.play(band, link, scene);
-        panel.classList.remove('is-show');
-      });
+      // Soon after the panel settles, so a first visit finds it — once per 24h.
+      nowAndThen(
+        hero ? 'ship:hero' : 'ship:foot',
+        panel,
+        hero ? [2500, 4000] : [1500, 2500],
+        async () => {
+          const ship = await import('../lib/ship');
+          const scene = hero ? ship.heroFight : ship.destroyer;
+          // The foot's words step back while it plays (SiteFooter).
+          if (!hero) panel.classList.add('is-show');
+          if (reduceMotion.matches) await ship.stand(band, link, scene, hero ? 3.6 : 7);
+          else await ship.play(band, link, scene);
+          panel.classList.remove('is-show');
+        },
+      );
       continue;
     }
 
@@ -170,16 +175,15 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       return true;
     };
     nowAndThen(
+      'ship:card',
       section,
       [1200, 2000],
-      [25000, 40000],
       async () => {
-        if (!stand()) return;
         const ship = await import('../lib/ship');
         if (reduceMotion.matches) await ship.stand(band, null, ship.chase, 2.8);
         else await ship.play(band, null, ship.chase, front);
       },
-      front,
+      () => front() && stand(),
     );
   }
 </script>

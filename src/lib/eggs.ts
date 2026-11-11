@@ -29,18 +29,44 @@ export const covered = () =>
 export const busy = () =>
   covered() || !!document.querySelector('[data-narrator].is-playing');
 
-/** Calls `show` ONCE A VISIT (Juan, 2026-10-29): `first` ms (a range)
+/** Calls `show` at most ONCE EVERY 24 HOURS per egg (`localStorage` cooldown,
+ *  bypassed in dev with `?eggs=1`; Juan, 2026-11-10): `first` ms (a range)
  *  after `panel` comes to hold the screen while the page is free (and
- *  `ready`, when given, says yes). It played again every time the panel
- *  came back and every half minute while it stayed, which read as
- *  repetitive; a reload brings it back. `then` is kept for callers. */
+ *  `ready`, when given, says yes). First-time visitors discover them, while
+ *  reloading or navigating back and forth never replays them until the next
+ *  day. */
+const EGG_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const forceEggs =
+  typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).get('eggs') === '1';
+
+const recentlyShown = (id: string): boolean => {
+  if (forceEggs) return false;
+  try {
+    const prev = Number(localStorage.getItem(`egg:${id}`));
+    return (
+      Number.isFinite(prev) && prev > 0 && Date.now() - prev < EGG_COOLDOWN_MS
+    );
+  } catch {
+    return false;
+  }
+};
+
+const markShown = (id: string) => {
+  if (forceEggs) return;
+  try {
+    localStorage.setItem(`egg:${id}`, String(Date.now()));
+  } catch {}
+};
+
 export const nowAndThen = (
+  id: string,
   panel: HTMLElement,
   first: [number, number],
-  _then: [number, number],
-  show: () => Promise<void>,
+  show: () => Promise<boolean | void>,
   ready: () => boolean = () => true,
 ) => {
+  if (recentlyShown(id)) return;
   const wait = ([a, b]: [number, number]) => a + Math.random() * (b - a);
   let held = false;
   let showing = false;
@@ -51,24 +77,27 @@ export const nowAndThen = (
     timer = window.setTimeout(tick, ms);
   };
   const tick = async () => {
-    if (!held || showing || shown) return;
+    if (!held || showing || shown || recentlyShown(id)) return;
     if (busy() || !ready()) return arm(1000);
     showing = true;
     shown = true;
+    markShown(id);
+    observer.disconnect();
     try {
       await show();
     } finally {
       showing = false;
     }
   };
-  new IntersectionObserver(
+  const observer = new IntersectionObserver(
     ([entry]) => {
       held = entry.intersectionRatio >= 0.6;
       if (held && !showing && !shown) arm(wait(first));
       else clearTimeout(timer);
     },
     { threshold: [0, 0.6] },
-  ).observe(panel);
+  );
+  observer.observe(panel);
 };
 
 /** A frame loop: `frame(dt)` until it returns false or something covers
@@ -112,9 +141,15 @@ export const toCard = (link: HTMLAnchorElement, deck: string, card: string) =>
     const section = document.getElementById(deck);
     if (!section) return;
     e.preventDefault();
-    document.dispatchEvent(new CustomEvent('deck:show', { detail: { deck, card } }));
-    section.scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth' });
-    section.querySelector<HTMLElement>('[data-panel-deck]')?.focus({ preventScroll: true });
+    document.dispatchEvent(
+      new CustomEvent('deck:show', { detail: { deck, card } }),
+    );
+    section.scrollIntoView({
+      behavior: reduceMotion.matches ? 'auto' : 'smooth',
+    });
+    section
+      .querySelector<HTMLElement>('[data-panel-deck]')
+      ?.focus({ preventScroll: true });
   });
 
 /** Hovered or focused, the egg holds still so it can be clicked: the
