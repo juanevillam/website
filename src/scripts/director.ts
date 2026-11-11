@@ -332,39 +332,12 @@ const narrs: Narr[] = [];
 let stories: Story[] = [];
 let panels: Narr[] = [];
 
-// Every paragraph's Spanish clip rides on it as data-clip, and its clip in
-// another language, once recorded, as data-clip-{lang} (lib/narration):
-// the page's language plays its own when there is one, while Chinese falls
-// back to English once recorded and to Spanish until then.
-const clipOf = (p: HTMLElement) => {
-  const lang = document.documentElement.dataset.lang;
-  if (lang === 'zh') {
-    return (
-      p.getAttribute('data-clip-zh') ||
-      p.getAttribute('data-clip-en') ||
-      p.dataset.clip
-    );
-  }
-  return (
-    (lang && lang !== 'es' && p.getAttribute(`data-clip-${lang}`)) ||
-    p.dataset.clip
-  );
-};
+// Every paragraph's Spanish voice clip and 9:16 video ride on it as
+// `data-clip` and `data-video` (lib/narration); English and Chinese read
+// along on the same Spanish clock via `data-read-{lang}`.
+const clipOf = (p: HTMLElement) => p.dataset.clip;
 
-const videoOf = (p: HTMLElement) => {
-  const lang = document.documentElement.dataset.lang;
-  if (lang === 'zh') {
-    return (
-      p.getAttribute('data-video-zh') ||
-      p.getAttribute('data-video-en') ||
-      p.dataset.video
-    );
-  }
-  return (
-    (lang && lang !== 'es' && p.getAttribute(`data-video-${lang}`)) ||
-    p.dataset.video
-  );
-};
+const videoOf = (p: HTMLElement) => p.dataset.video;
 
 const unloadVideoEl = (el: HTMLVideoElement) => {
   el.pause();

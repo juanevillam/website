@@ -32,9 +32,6 @@ const en = {
   visit: 'visit',
   listen: 'Listen',
   pause: 'Pause',
-  'soon.narration':
-    "I'm currently recording the English videos. For now you'll see and hear me in Spanish with English subtitles.",
-  'soon.narration.zhAfterEn': "I'm currently recording the Chinese videos.",
   'soon.close': 'Dismiss',
   // The hero's greeting over the wordmark — the one word that shows at a
   // glance which language the page is in (as the GitHub profile's
@@ -260,9 +257,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: 'visitar',
     listen: 'Escuchar',
     pause: 'Pausar',
-    'soon.narration':
-      'Muy pronto, mis videos en inglés y en chino. Por ahora me ves y me escuchas en español.',
-    'soon.narration.zhAfterEn': 'Ahorita estoy grabando los videos en chino.',
     'soon.close': 'Cerrar',
     'hero.hi': 'Hola',
     'store.soon': 'Próximamente',
@@ -468,10 +462,6 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     visit: '访问',
     listen: '收听',
     pause: '暂停',
-    'soon.narration':
-      '我需要先录完英文视频，之后再录中文视频。目前你会看到并听到我的西班牙语视频，并配有中文字幕。',
-    'soon.narration.zhAfterEn':
-      '我正在录制中文视频。目前你会看到并听到我的英语视频，并配有中文字幕。',
     'soon.close': '关闭',
     'hero.hi': '你好',
     'store.soon': '即将推出',
