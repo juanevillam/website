@@ -72,6 +72,7 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   - **Minor (`1.2.0`)**: a major new section or product surface on the site (e.g., launching More of Me with the Songs player and 3D easter eggs).
   - **Patch (`1.1.3`)**: a consolidated milestone bundling substantial improvements (e.g., full 9:16 companion video narration + DJ Juan modes) — never a single small fix or link change.
 - **When cutting a release:** bump `version` in a `chore(release): vX.Y.Z` commit, tag THAT commit (`git tag -m "vX.Y.Z" vX.Y.Z`), push `main` and the tag together, and create a GitHub Release with concise user-facing notes (`/release-notes`).
+- **Format — identical to Sound Shaper (Juan, 2026-11-13):** tag name `vX.Y.Z` (always the `v`); tag message just `vX.Y.Z`, nothing more — the story lives in the Release; Release title exactly `vX.Y.Z` (`gh release create vX.Y.Z --title vX.Y.Z`); body is `•` bullets in visitor language. The site has one channel, so its body carries no channel line.
 
 ## What the site is
 
