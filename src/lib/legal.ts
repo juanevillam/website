@@ -26,6 +26,8 @@ export const LEGAL_APPS: {
   publisher?: string;
   /** The app's web version, when it has one (its host, no scheme). */
   web?: string;
+  /** Whether the app's legal links are listed as a column in SiteFooter (defaults to true). */
+  footer?: boolean;
 }[] = [
   {
     slug: 'sound-shaper',
@@ -44,8 +46,11 @@ export const LEGAL_APPS: {
     contentEs: 'libros',
     contentZh: '书籍',
     web: 'bookhighlighter.juanevillam.com',
+    footer: false,
   },
 ];
+
+export const FOOTER_APPS = LEGAL_APPS.filter(app => app.footer !== false);
 
 export type LegalApp = (typeof LEGAL_APPS)[number];
 

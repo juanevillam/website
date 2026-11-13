@@ -1,16 +1,26 @@
 ---
 import T from './T.astro';
+import { FOOTER_APPS } from '../lib/legal';
 import { LIKES } from '../lib/likes';
 import { likesShown } from '../lib/release';
+import type { UIKey } from '../i18n/ui';
 import { captionAttrs, clipFor, voiceAttrs } from '../lib/narration';
 import { NAME_SCENE } from '../lib/scene';
 import ShipEgg from './ShipEgg.astro';
 
 /**
- * The page's foot: the name and where to find Juan elsewhere. The apps'
- * legal and help pages still exist (the stores and the apps' Settings link
- * to them), but the foot no longer lists them (Juan, 2026-11-12).
+ * The page's foot: Sound Shaper's legal and help pages, More of Me, and
+ * where to find Juan elsewhere. The stores ask for these URLs in their own
+ * consoles, and the apps link to them from Settings — this is where a PERSON
+ * finds them on the site.
  */
+const PAGES: { key: UIKey; page: string }[] = [
+  { key: 'legal.terms', page: 'terms-and-conditions' },
+  { key: 'legal.privacy', page: 'privacy-policy' },
+  { key: 'legal.support', page: 'support' },
+  { key: 'legal.delete', page: 'delete-account' },
+];
+
 type Props = {
   /** The landing's last panel: snapped like every section above it, and
    *  narrated. Everywhere else the foot is the SAME composition — the
@@ -74,6 +84,22 @@ const SOCIAL = [
       )}
     </div>
     <nav class="columns" aria-label="Footer">
+      {
+        FOOTER_APPS.map(app => (
+          <div class="column app-links">
+            <span class="label">{app.name}</span>
+            <ul>
+              {PAGES.map(({ key, page }) => (
+                <li>
+                  <a href={`/${app.slug}/${page}`}>
+                    <T k={key} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
       {/* Juan outside of work: one page per set (pages/things-i-like),
           a column like an app's pages, so the landing never loads their
           pictures — while More of Me is released (lib/release). */}
