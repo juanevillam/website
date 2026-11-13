@@ -65,24 +65,13 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 
 ## Versions
 
-**Every push a visitor can see gets a tag and a GitHub Release** (Juan,
-2026-10-18). `package.json`'s `version` is the site's; it went `1.0.0` at the
-public launch (`v1.0.0`, 2026-10-17).
+**Tags and GitHub Releases mark real product milestones — NEVER every push** (Juan, 2026-11-13). `package.json`'s `version` is the site's; it went `1.0.0` at the public launch (`v1.0.0`, 2026-10-17) and follows the same disciplined cadence as Sound Shaper (`v1.0.0` → `v1.0.1` → `v1.1.0` → `v1.1.1` → `v1.1.2` → `v1.1.3`).
 
-- **Bump by what a visitor notices.** Minor (`1.1.0`) for something new or gone
-  — a section, a demo, a project added or removed, a redesign. Patch
-  (`1.1.1`) for fixes, copy, performance. Docs- and tooling-only pushes take
-  no version and no tag.
-- **One tag per push, not per commit.** Bump `version` in a last
-  `chore(release): vX.Y.Z` commit and tag THAT commit — it is the one
-  Cloudflare deploys — then push the commits and the tag together.
-- **Every tag becomes a GitHub Release** the same day, notes from
-  `/release-notes` (what changed for a visitor, Apple voice, no engineering
-  detail).
-
-The apps follow the same idea with one difference: a store build waits for
-review, so its tag is made at submit and its Release when a store approves —
-see the portfolio's `AGENTS.md` → "Release tags".
+- **Day-to-day pushes take NO version bump and NO tag.** Push normal fixes, copy tweaks, layout adjustments, and small features directly to `main`; Cloudflare Pages deploys them continuously.
+- **Cut a release only at a true milestone or when Juan explicitly asks.**
+  - **Minor (`1.2.0`)**: a major new section or product surface on the site (e.g., launching More of Me with the Songs player and 3D easter eggs).
+  - **Patch (`1.1.3`)**: a consolidated milestone bundling substantial improvements (e.g., full 9:16 companion video narration + DJ Juan modes) — never a single small fix or link change.
+- **When cutting a release:** bump `version` in a `chore(release): vX.Y.Z` commit, tag THAT commit (`git tag -m "vX.Y.Z" vX.Y.Z`), push `main` and the tag together, and create a GitHub Release with concise user-facing notes (`/release-notes`).
 
 ## What the site is
 
