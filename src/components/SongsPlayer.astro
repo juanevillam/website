@@ -1031,6 +1031,8 @@ const groups = [
   }
 
   .dock-cell {
+    position: relative;
+    isolation: isolate;
     display: flex;
     flex: 1;
     align-items: center;
@@ -1041,12 +1043,23 @@ const groups = [
     background: none;
     text-align: left;
     cursor: pointer;
-    transition: background-color var(--hover);
+  }
+
+  .dock-cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgb(255 255 255 / 0.06);
+    opacity: 0;
+    will-change: opacity;
+    transition: opacity var(--hover);
+    pointer-events: none;
   }
 
   @media (hover: hover) {
-    .dock-cell:hover {
-      background: rgb(255 255 255 / 0.06);
+    .dock-cell:hover::after {
+      opacity: 1;
     }
   }
 
