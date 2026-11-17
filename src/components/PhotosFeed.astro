@@ -1,0 +1,1922 @@
+---
+import T from './T.astro';
+import { PHOTO_POSTS, posterOf } from '../lib/photos';
+import { sceneAttr, sceneOf } from '../lib/scene';
+
+/**
+ * THE PHOTOS CARD'S SCREEN (MoreOfMe) — Juan's personal Instagram feed inside
+ * juanevillam.com (/more-of-me/photos).
+ *
+ * Shares the same two-column PanelDeck layout as Cosmos and Songs (title,
+ * subtitle, scrollable text, and narrator on the left; this interactive 3:2
+ * screen on the right).
+ *
+ * Every image in every post computes its own ambient scene palette (`scenes`)
+ * at build time so stepping through a post's carousel updates the room light
+ * ("el blob") to match the exact photo on screen.
+ */
+const isDev = import.meta.env.DEV;
+const posts = await Promise.all(
+  PHOTO_POSTS.map(async post => {
+    const cover = posterOf(post.media[0]);
+    const scenes = await Promise.all(
+      post.media.map(async m => sceneAttr(await sceneOf(posterOf(m)))),
+    );
+    return {
+      ...post,
+      cover,
+      scene: scenes[0],
+      scenes,
+    };
+  }),
+);
+
+const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
+---
+
+<div
+  class:list={['photos', !isDev && 'is-locked']}
+  data-photos
+  data-dev={isDev ? 'true' : undefined}
+  data-posts={JSON.stringify(posts)}
+>
+  <!-- Profile header -->
+  <header class="ig-head">
+    <div class="ig-ident">
+      <div class="ig-avatar" aria-hidden="true">
+        <span>jv</span>
+      </div>
+      <div class="ig-handle-row">
+        <span class="ig-handle">juanevillam</span>
+        <span class="ig-stats">
+          <strong data-total-posts>{posts.length}</strong>
+          <T k="photos.posts" />
+          <span class="ig-dot">·</span>
+          <strong data-total-likes>{totalInitialLikes}</strong>
+          <T k="photos.likes" />
+        </span>
+      </div>
+    </div>
+
+    <div class="ig-actions">
+      <div class="view-switch" role="group" aria-label="View mode">
+        <button
+          type="button"
+          class="circle-btn is-active"
+          data-view-btn="grid"
+          aria-pressed="true"
+        >
+          <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true">
+            <rect x="2" y="2" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <rect x="10.5" y="2" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <rect x="2" y="10.5" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          <span class="sr"><T k="photos.grid" /></span>
+        </button>
+        <button
+          type="button"
+          class="circle-btn"
+          data-view-btn="detail"
+          aria-pressed="false"
+        >
+          <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="13" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <path d="M2.5 14.5h13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <span class="sr"><T k="photos.feed" /></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="ig-body">
+    <!-- 3-column Instagram grid -->
+    <div class="ig-grid-wrap" data-panel-view="grid">
+      <div class="ig-grid">
+        {
+          posts.map((post, idx) => {
+            const hasVideo = post.media.some(m => m.endsWith('.mp4'));
+            const isMulti = post.media.length > 1;
+            return (
+              <button
+                type="button"
+                class="ig-tile"
+                data-open-post={idx}
+                aria-label={post.location}
+              >
+                <img
+                  src={post.cover}
+                  alt={post.location}
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
+                {(isMulti || hasVideo) && (
+                  <span class="tile-badge" aria-hidden="true">
+                    {hasVideo ? (
+                      <svg viewBox="0 0 20 20" width="18" height="18">
+                        <path
+                          d="M5.5 3.8v12.4a1 1 0 0 0 1.53.85l9.7-6.2a1 1 0 0 0 0-1.7l-9.7-6.2A1 1 0 0 0 5.5 3.8Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    ) : (
+                      /* Instagram-style filled stacked squares icon */
+                      <svg viewBox="0 0 22 22" width="18" height="18">
+                        <rect
+                          x="2"
+                          y="5.5"
+                          width="13.5"
+                          height="13.5"
+                          rx="2.6"
+                          fill="currentColor"
+                        />
+                        <path
+                          d="M7.5 2h9.4A3.1 3.1 0 0 1 20 5.1v9.4a1 1 0 0 1-2 0V5.3a1.3 1.3 0 0 0-1.3-1.3H7.5a1 1 0 0 1 0-2Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                )}
+                <span class="tile-hover" aria-hidden="true">
+                  <span class="tile-stat">
+                    <svg viewBox="0 0 20 20" width="18" height="18">
+                      <path
+                        d="M10 17.2s-6.8-4.2-6.8-8.9A4 4 0 0 1 10 5.5a4 4 0 0 1 6.8 2.8c0 4.7-6.8 8.9-6.8 8.9Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span data-tile-likes={post.id}>{post.initialLikes}</span>
+                  </span>
+                  <span class="tile-stat">
+                    <svg viewBox="0 0 20 20" width="18" height="18">
+                      <path
+                        d="M10 2.5a7.3 7.3 0 0 0-6.2 11.1L2.8 17.5l3.9-1A7.3 7.3 0 1 0 10 2.5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span data-tile-comments={post.id}>
+                      {post.initialComments.length}
+                    </span>
+                  </span>
+                </span>
+              </button>
+            );
+          })
+        }
+      </div>
+    </div>
+
+    <!-- Single post detail view -->
+    <div class="ig-detail is-hidden" data-panel-view="detail">
+      <div class="post-stage">
+        <div class="post-media" data-post-media>
+          <img
+            class="media-fill"
+            data-media-fill
+            alt=""
+            decoding="async"
+            draggable="false"
+          />
+          <img
+            class="media-main"
+            data-media-img
+            alt=""
+            decoding="async"
+            draggable="false"
+          />
+          <video
+            class="media-main is-hidden"
+            data-media-video
+            playsinline
+            loop
+            preload="metadata"
+          ></video>
+
+          <!-- Floating hearts container (spawns where user clicks/taps) -->
+          <div class="hearts-layer" data-hearts-layer aria-hidden="true"></div>
+
+          <span class="slide-count" data-slide-count>1 / 1</span>
+
+          <button
+            type="button"
+            class="media-step prev"
+            data-media-step="-1"
+            aria-label="Previous photo"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+              <path
+                d="M10 3 L5 8 L10 13"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="media-step next"
+            data-media-step="1"
+            aria-label="Next photo"
+          >
+            <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+              <path
+                d="M6 3 L11 8 L6 13"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="circle-btn media-mute is-unmuted is-hidden"
+            data-media-mute
+          >
+            <svg
+              class="icon-muted"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.2 0 3.6 3.6m0-3.6-3.6 3.6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <svg
+              class="icon-unmuted"
+              viewBox="0 0 16 16"
+              width="13"
+              height="13"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.3-.7a3.6 3.6 0 0 1 0 5m1.8-6.8a6 6 0 0 1 0 8.6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="sr"><T k="photos.mute" /></span>
+          </button>
+        </div>
+
+        <!-- Post right column: location + post switcher, comments, single bottom bar -->
+        <div class="post-side">
+          <div class="post-head">
+            <span class="post-loc" data-post-location></span>
+            <div class="post-nav-pills">
+              <button
+                type="button"
+                class="circle-btn"
+                data-post-step="-1"
+                aria-label="Previous post"
+              >
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                  <path
+                    d="M10 3.2 5.2 8l4.8 4.8"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="circle-btn"
+                data-post-step="1"
+                aria-label="Next post"
+              >
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                  <path
+                    d="M6 3.2 10.8 8 6 12.8"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="post-scroll" data-post-scroll>
+            <ul class="comments-list" data-comments-list></ul>
+            <p class="no-comments" data-no-comments>
+              <T k="photos.noComments" />
+            </p>
+          </div>
+
+          <!-- Single compact row: [♥ count] [💬 count] [Add a comment… (↑)] -->
+          <div class="post-foot">
+            <button
+              type="button"
+              class="action-stat like-btn"
+              data-like-btn
+              aria-pressed="false"
+            >
+              <span class="circle-glyph">
+                <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+                  <path
+                    d="M10 17.2s-6.8-4.2-6.8-8.9A4 4 0 0 1 10 5.5a4 4 0 0 1 6.8 2.8c0 4.7-6.8 8.9-6.8 8.9Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.65"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="stat-num" data-post-likes>0</span>
+              <span class="sr"><T k="photos.like" /></span>
+            </button>
+
+            <button
+              type="button"
+              class="action-stat comment-focus-btn"
+              data-comment-focus
+            >
+              <span class="circle-glyph">
+                <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+                  <path
+                    d="M10 2.8a7.2 7.2 0 0 0-6.1 11L2.9 17.4l3.7-1A7.2 7.2 0 1 0 10 2.8Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.65"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="stat-num" data-post-comments-count>0</span>
+              <span class="sr"><T k="photos.comment" /></span>
+            </button>
+
+            <form class="comment-form" data-comment-form novalidate>
+              <input
+                type="text"
+                class="comment-input"
+                data-comment-input
+                maxlength="300"
+                placeholder="Add a comment…"
+                required
+              />
+              <button
+                type="submit"
+                class="comment-send"
+                data-comment-send
+                aria-label="Post comment"
+              >
+                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                  <path
+                    d="M8 12.5V3.5M4.2 7.2 8 3.4l3.8 3.8"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tonal Liquid Glass Gate (Name + Email, production only) -->
+    <div class="ig-gate" data-gate>
+      <form class="gate-card" data-gate-form novalidate>
+        <div class="gate-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <rect
+              x="4.5"
+              y="10.5"
+              width="15"
+              height="10"
+              rx="2.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+            />
+            <path
+              d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <h4 class="gate-title"><T k="photos.gateTitle" /></h4>
+        <p class="gate-desc"><T k="photos.gateBody" /></p>
+
+        <!-- Honeypot anti-bot field -->
+        <input
+          type="text"
+          name="website"
+          class="sr"
+          tabindex="-1"
+          autocomplete="off"
+        />
+
+        <div class="gate-fields">
+          <input
+            type="text"
+            name="name"
+            class="gate-input"
+            data-gate-name
+            placeholder="Name"
+            autocomplete="name"
+            maxlength="80"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            class="gate-input"
+            data-gate-email
+            placeholder="you@email.com"
+            autocomplete="email"
+            maxlength="160"
+            required
+          />
+        </div>
+
+        <p class="gate-error is-hidden" data-gate-error>
+          <T k="photos.gateError" />
+        </p>
+
+        <button type="submit" class="pill-btn gate-submit">
+          <T k="photos.gateContinue" />
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .photos {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--ground);
+    color: var(--ink);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ---------- header ---------- */
+  .ig-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+    z-index: 3;
+  }
+
+  .ig-ident {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+
+  .ig-avatar {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    box-shadow: inset 0 0.75px 0 rgb(255 255 255 / 0.16);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 0.8125rem;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+  }
+
+  .ig-handle-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+  }
+
+  .ig-handle {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .ig-stats {
+    font-size: 0.75rem;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .ig-stats strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .ig-dot {
+    margin: 0 0.25rem;
+    color: var(--ink-3);
+  }
+
+  .ig-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .view-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* Lone glyph controls: circle (50%) + scale(0.90) active squash */
+  .circle-btn {
+    width: 1.875rem;
+    height: 1.875rem;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition:
+      color var(--hover),
+      border-color var(--hover),
+      background-color var(--hover),
+      transform var(--dur-micro) var(--ease),
+      opacity var(--dur-quick) var(--ease);
+  }
+
+  .circle-btn:hover,
+  .circle-btn.is-active {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .circle-btn.is-active {
+    background: color-mix(in srgb, var(--ink) 14%, var(--surface));
+  }
+
+  .circle-btn:active {
+    transform: scale(0.9);
+  }
+
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2rem;
+    padding: 0 0.875rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    backdrop-filter: blur(14px) saturate(1.8);
+    -webkit-backdrop-filter: blur(14px) saturate(1.8);
+    box-shadow: inset 0 0.75px 0 rgb(255 255 255 / 0.16);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      border-color var(--hover),
+      background-color var(--hover),
+      transform var(--dur-micro) var(--ease),
+      opacity var(--dur-quick) var(--ease);
+  }
+
+  .pill-btn:hover {
+    border-color: var(--ink-3);
+  }
+
+  .pill-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* ---------- body & 3-column grid ---------- */
+  .ig-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: grid;
+  }
+
+  .ig-grid-wrap,
+  .ig-detail {
+    grid-area: 1 / 1;
+    min-height: 0;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .ig-grid-wrap.is-hidden,
+  .ig-detail.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .ig-grid-wrap {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 2px;
+  }
+
+  .ig-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .ig-tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    border: 0;
+    background: var(--surface);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--dur-micro) var(--ease);
+  }
+
+  .ig-tile:active {
+    transform: scale(0.98);
+  }
+
+  .ig-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition:
+      transform var(--dur-turn) var(--ease),
+      filter var(--dur-turn) var(--ease);
+  }
+
+  .photos.is-locked .ig-tile img {
+    filter: blur(10px) brightness(0.65);
+    transform: scale(1.08);
+  }
+
+  .ig-tile:hover img {
+    transform: scale(1.03);
+  }
+
+  .tile-badge {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    color: #fff;
+    filter: drop-shadow(0 1px 4px rgb(0 0 0 / 0.72));
+    pointer-events: none;
+  }
+
+  .tile-hover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    background: rgb(0 0 0 / 0.52);
+    color: var(--ink);
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    transition: opacity var(--hover);
+  }
+
+  .ig-tile:hover .tile-hover,
+  .ig-tile:focus-visible .tile-hover {
+    opacity: 1;
+  }
+
+  .tile-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  /* ---------- post detail view ---------- */
+  .ig-detail {
+    display: flex;
+    min-height: 0;
+  }
+
+  .post-stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1.22fr 1fr;
+    background: var(--ground);
+  }
+
+  .post-media {
+    position: relative;
+    background: var(--ground);
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    border-right: 1px solid var(--hairline);
+  }
+
+  .media-fill,
+  .media-main {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .media-fill {
+    object-fit: cover;
+    transform: scale(1.18);
+    filter: blur(26px) brightness(0.48);
+  }
+
+  .media-main {
+    object-fit: contain;
+    transition: opacity var(--dur-settle) linear;
+  }
+
+  .media-main.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .slide-count {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+    z-index: 2;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+
+  /* Same muted arrow recipe as Events / PanelDeck `.photo-step`:
+     0.3 at rest, 0.7 when hovering the photo frame, 1 on the arrow itself. */
+  .media-step {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0.3;
+    transform: translateY(-50%);
+    transition:
+      opacity var(--hover),
+      border-color var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .post-media:hover .media-step {
+    opacity: 0.7;
+  }
+
+  .post-media .media-step:hover,
+  .media-step:focus-visible {
+    opacity: 1;
+    border-color: var(--ink-3);
+  }
+
+  .media-step:active {
+    transform: translateY(-50%) scale(0.9);
+  }
+
+  .media-step.prev {
+    left: 0.625rem;
+  }
+
+  .media-step.next {
+    right: 0.625rem;
+  }
+
+  .media-step.is-hidden,
+  .slide-count.is-hidden,
+  .media-mute.is-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .media-mute {
+    position: absolute;
+    bottom: 0.625rem;
+    right: 0.625rem;
+    z-index: 2;
+  }
+
+  .media-mute:not(.is-unmuted) .icon-unmuted,
+  .media-mute.is-unmuted .icon-muted {
+    display: none;
+  }
+
+  /* Floating monochrome hearts spawned where the user taps/clicks */
+  .hearts-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .hearts-layer :global(.pop-heart) {
+    position: absolute;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-left: -1.625rem;
+    margin-top: -1.625rem;
+    color: var(--ink);
+    filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.65));
+    animation: heart-float 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes heart-float {
+    0% {
+      opacity: 0;
+      transform: translate(0, 6px) scale(0.25) rotate(var(--rot, 0deg));
+    }
+    28% {
+      opacity: 1;
+      transform: translate(0, -4px) scale(1.18) rotate(var(--rot, 0deg));
+    }
+    55% {
+      opacity: 1;
+      transform: translate(var(--dx, 0px), -18px) scale(0.98) rotate(var(--rot, 0deg));
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--dx, 0px), -42px) scale(0.82) rotate(var(--rot, 0deg));
+    }
+  }
+
+  /* ---------- post right column ---------- */
+  .post-side {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--surface);
+  }
+
+  .post-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .post-loc {
+    font-size: 0.84375rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .post-nav-pills {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .post-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 0.625rem 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    user-select: text;
+  }
+
+  .comments-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .comments-list :global(li) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.78125rem;
+    line-height: 1.42;
+    color: var(--ink-body);
+  }
+
+  .comments-list :global(.c-body) {
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .comments-list :global(strong) {
+    color: var(--ink);
+    font-weight: 700;
+    margin-right: 0.375rem;
+  }
+
+  .comments-list :global(.c-meta) {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .comments-list :global(.c-date) {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .comments-list :global(.c-del) {
+    width: 1.125rem;
+    height: 1.125rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-3);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    opacity: 0.55;
+    transition:
+      opacity var(--hover),
+      color var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .comments-list :global(.c-del:hover) {
+    opacity: 1;
+    color: var(--ink);
+  }
+
+  .comments-list :global(.c-del:active) {
+    transform: scale(0.88);
+  }
+
+  .no-comments {
+    margin: auto 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+  }
+
+  .no-comments.is-hidden {
+    display: none;
+  }
+
+  /* Single compact row at the foot: [♥ count] [💬 count] [input + inline send] */
+  .post-foot {
+    flex: none;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface);
+  }
+
+  .action-stat {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .circle-glyph {
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--ground);
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    transition:
+      transform var(--dur-micro) var(--ease),
+      border-color var(--hover),
+      color var(--hover),
+      background-color var(--hover);
+  }
+
+  .action-stat:hover .circle-glyph {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .action-stat:active .circle-glyph {
+    transform: scale(0.9);
+  }
+
+  /* Monochrome white active like state */
+  .like-btn.is-liked .circle-glyph {
+    color: var(--ink);
+    border-color: var(--ink-2);
+    background: color-mix(in srgb, var(--ink) 14%, var(--ground));
+  }
+
+  .like-btn.is-liked svg path {
+    fill: currentColor;
+  }
+
+  .stat-num {
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    min-width: 0.875rem;
+    text-align: left;
+    color: var(--ink-2);
+  }
+
+  .like-btn.is-liked .stat-num {
+    color: var(--ink);
+  }
+
+  .comment-form {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .comment-input {
+    width: 100%;
+    height: 1.9375rem;
+    padding: 0 2rem 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: var(--ground);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.75rem;
+    outline: none;
+    transition: border-color var(--hover);
+  }
+
+  .comment-input:focus {
+    border-color: var(--ink-3);
+  }
+
+  /* Circular send icon button inside the input — hidden until text is typed */
+  .comment-send {
+    position: absolute;
+    right: 0.2rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border-radius: 50%;
+    border: 0;
+    background: var(--ink);
+    color: var(--ground);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.65);
+    pointer-events: none;
+    transition:
+      opacity var(--dur-micro) var(--ease),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .comment-form.has-text .comment-send {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+
+  .comment-form.has-text .comment-send:active {
+    transform: scale(0.9);
+  }
+
+  /* ---------- Tonal Liquid Glass Gate ---------- */
+  .ig-gate {
+    grid-area: 1 / 1;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background: color-mix(in srgb, var(--ground) 52%, transparent);
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      visibility 0s linear 0s;
+  }
+
+  .photos:not(.is-locked) .ig-gate {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-turn) var(--ease),
+      visibility 0s linear var(--dur-turn);
+  }
+
+  .gate-card {
+    width: min(21.5rem, 100%);
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(18px) saturate(1.8);
+    -webkit-backdrop-filter: blur(18px) saturate(1.8);
+    box-shadow:
+      inset 0 0.75px 0 rgb(255 255 255 / 0.18),
+      0 1.5rem 3rem rgb(0 0 0 / 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.625rem;
+    transform: scale(1);
+    transition: transform var(--dur-turn) var(--ease);
+  }
+
+  .photos:not(.is-locked) .gate-card {
+    transform: scale(0.96);
+  }
+
+  .gate-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--ground);
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+  }
+
+  .gate-title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .gate-desc {
+    margin: 0;
+    font-size: 0.78125rem;
+    line-height: 1.45;
+    color: var(--ink-body);
+    max-width: 34ch;
+  }
+
+  .gate-fields {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .gate-input {
+    width: 100%;
+    height: 2.25rem;
+    padding: 0 0.75rem;
+    border-radius: 0.625rem;
+    border: 1px solid var(--hairline);
+    background: var(--ground);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8125rem;
+    outline: none;
+    transition: border-color var(--hover);
+  }
+
+  .gate-input:focus {
+    border-color: var(--ink-3);
+  }
+
+  .gate-error {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #ff453a;
+  }
+
+  .gate-error.is-hidden {
+    display: none;
+  }
+
+  .gate-submit {
+    width: 100%;
+    height: 2.25rem;
+    margin-top: 0.25rem;
+    background: var(--ink);
+    color: var(--ground);
+    border-color: var(--ink);
+    font-weight: 700;
+  }
+
+  .gate-submit:hover {
+    opacity: 0.92;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 48rem) {
+    :global(.screen.is-own:has(> [data-photos]) > .screen-caption) {
+      display: none;
+    }
+
+    .ig-head {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .post-stage {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1.2fr 1fr;
+    }
+
+    .post-media {
+      border-right: 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .post-head {
+      padding: 0.4rem 0.75rem;
+    }
+
+    .post-scroll {
+      padding: 0.45rem 0.75rem;
+    }
+
+    .post-foot {
+      padding: 0.45rem 0.625rem;
+    }
+  }
+</style>
+
+<script>
+  import type { PhotoComment, PhotoPost } from '../lib/photos';
+
+  type EnrichedComment = PhotoComment & { canDelete?: boolean };
+  type EnrichedPost = PhotoPost & {
+    cover: string;
+    scene?: string;
+    scenes?: string[];
+  };
+  type Visitor = { name: string; email: string; token: string };
+
+  const VISITOR_KEY = 'jv:photos:visitor';
+  const LOCAL_STATE_KEY = 'jv:photos:state';
+
+  const makeToken = () =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+  // Compact Instagram-style relative timestamp (`now`, `2m`, `3h`, `4d`, `17 Nov`)
+  const formatRelativeTime = (iso: string) => {
+    const time = Date.parse(iso);
+    if (Number.isNaN(time)) return '';
+    const diffSec = Math.max(0, Math.floor((Date.now() - time) / 1000));
+    if (diffSec < 45) return 'now';
+    const min = Math.floor(diffSec / 60);
+    if (min < 60) return `${min}m`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h`;
+    const days = Math.floor(hr / 24);
+    if (days < 14) return `${days}d`;
+    const lang = document.documentElement.dataset.lang || 'en';
+    return new Intl.DateTimeFormat(lang, {
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(time));
+  };
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-photos]')) {
+    const posts: EnrichedPost[] = JSON.parse(root.dataset.posts ?? '[]');
+    if (!posts.length) continue;
+
+    const isDev = root.dataset.dev === 'true';
+    const cardEl = root.closest<HTMLElement>('.deck-card');
+    const gridWrap = root.querySelector<HTMLElement>('[data-panel-view="grid"]')!;
+    const detailWrap = root.querySelector<HTMLElement>('[data-panel-view="detail"]')!;
+    const viewBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-view-btn]')];
+    const totalLikesEl = root.querySelector<HTMLElement>('[data-total-likes]')!;
+
+    const gateForm = root.querySelector<HTMLFormElement>('[data-gate-form]')!;
+    const gateName = root.querySelector<HTMLInputElement>('[data-gate-name]')!;
+    const gateEmail = root.querySelector<HTMLInputElement>('[data-gate-email]')!;
+    const gateError = root.querySelector<HTMLElement>('[data-gate-error]')!;
+
+    const mediaStage = root.querySelector<HTMLElement>('[data-post-media]')!;
+    const mediaFill = root.querySelector<HTMLImageElement>('[data-media-fill]')!;
+    const mediaImg = root.querySelector<HTMLImageElement>('[data-media-img]')!;
+    const mediaVideo = root.querySelector<HTMLVideoElement>('[data-media-video]')!;
+    const mediaMuteBtn = root.querySelector<HTMLButtonElement>('[data-media-mute]')!;
+    const slideCountEl = root.querySelector<HTMLElement>('[data-slide-count]')!;
+    const stepBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-media-step]')];
+    const postStepBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-post-step]')];
+    const heartsLayer = root.querySelector<HTMLElement>('[data-hearts-layer]')!;
+
+    const locEl = root.querySelector<HTMLElement>('[data-post-location]')!;
+    const commentsListEl = root.querySelector<HTMLUListElement>('[data-comments-list]')!;
+    const noCommentsEl = root.querySelector<HTMLElement>('[data-no-comments]')!;
+    const likeBtn = root.querySelector<HTMLButtonElement>('[data-like-btn]')!;
+    const postLikesEl = root.querySelector<HTMLElement>('[data-post-likes]')!;
+    const postCommentsCountEl = root.querySelector<HTMLElement>('[data-post-comments-count]')!;
+    const commentFocusBtn = root.querySelector<HTMLButtonElement>('[data-comment-focus]')!;
+    const commentForm = root.querySelector<HTMLFormElement>('[data-comment-form]')!;
+    const commentInput = root.querySelector<HTMLInputElement>('[data-comment-input]')!;
+
+    let visitor: Visitor | null = isDev
+      ? {
+          name: 'Juan Villa',
+          email: 'juanesvillamendoza@gmail.com',
+          token: 'dev-owner-token',
+        }
+      : null;
+    try {
+      const saved = localStorage.getItem(VISITOR_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.name && parsed?.email) {
+          visitor = {
+            name: parsed.name,
+            email: parsed.email,
+            token: parsed.token || makeToken(),
+          };
+          localStorage.setItem(VISITOR_KEY, JSON.stringify(visitor));
+        }
+      }
+    } catch {}
+
+    const likeCounts: Record<string, number> = {};
+    const likedByMe: Record<string, boolean> = {};
+    const commentsByPost: Record<string, EnrichedComment[]> = {};
+    for (const p of posts) {
+      likeCounts[p.id] = p.initialLikes;
+      likedByMe[p.id] = false;
+      commentsByPost[p.id] = [...p.initialComments];
+    }
+
+    try {
+      const cached = JSON.parse(localStorage.getItem(LOCAL_STATE_KEY) ?? '{}');
+      for (const [id, count] of Object.entries(cached.likeCounts ?? {})) {
+        if (typeof count === 'number') likeCounts[id] = count;
+      }
+      for (const [id, liked] of Object.entries(cached.likedByMe ?? {})) {
+        likedByMe[id] = Boolean(liked);
+      }
+      for (const [id, list] of Object.entries(cached.comments ?? {})) {
+        if (Array.isArray(list) && posts.some(p => p.id === id)) {
+          commentsByPost[id] = list as EnrichedComment[];
+        }
+      }
+    } catch {}
+
+    const saveLocalState = () => {
+      try {
+        localStorage.setItem(
+          LOCAL_STATE_KEY,
+          JSON.stringify({
+            likeCounts,
+            likedByMe,
+            comments: commentsByPost,
+          }),
+        );
+      } catch {}
+    };
+
+    let activePostIdx = 0;
+    let activeMediaIdx = 0;
+    let videoMuted = false;
+
+    const syncTotalsAndTiles = () => {
+      let total = 0;
+      for (const p of posts) {
+        const c = likeCounts[p.id] ?? p.initialLikes;
+        total += c;
+        const tileLikes = root.querySelector<HTMLElement>(
+          `[data-tile-likes="${p.id}"]`,
+        );
+        if (tileLikes) tileLikes.textContent = String(c);
+        const tileComments = root.querySelector<HTMLElement>(
+          `[data-tile-comments="${p.id}"]`,
+        );
+        if (tileComments)
+          tileComments.textContent = String(commentsByPost[p.id]?.length ?? 0);
+      }
+      totalLikesEl.textContent = String(total);
+    };
+
+    const syncVisitorUI = () => {
+      const unlocked = Boolean(visitor?.name && visitor?.email);
+      root.classList.toggle('is-locked', !unlocked);
+      if (!unlocked) {
+        mediaVideo.pause();
+      }
+    };
+
+    const posterFor = (src: string) =>
+      src.endsWith('.mp4') ? src.replace(/\.mp4$/, '.jpg') : src;
+
+    // Update the card's ambient scene light ("el blob") for the active image
+    const syncSceneLight = () => {
+      if (!cardEl) return;
+      const post = posts[activePostIdx];
+      const scene = post.scenes?.[activeMediaIdx] ?? post.scene;
+      if (scene) cardEl.setAttribute('data-scene', scene);
+    };
+
+    const renderMedia = () => {
+      const post = posts[activePostIdx];
+      const src = post.media[activeMediaIdx];
+      const isVid = src.endsWith('.mp4');
+      const poster = posterFor(src);
+
+      syncSceneLight();
+      mediaFill.src = poster;
+      if (isVid) {
+        mediaImg.classList.add('is-hidden');
+        mediaVideo.classList.remove('is-hidden');
+        if (mediaVideo.getAttribute('src') !== src) {
+          mediaVideo.src = src;
+        }
+        mediaVideo.muted = videoMuted;
+        mediaMuteBtn.classList.remove('is-hidden');
+        mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
+        mediaVideo.play().catch(() => {
+          mediaVideo.muted = true;
+          mediaMuteBtn.classList.remove('is-unmuted');
+          mediaVideo.play().catch(() => {});
+        });
+      } else {
+        mediaVideo.pause();
+        mediaVideo.classList.add('is-hidden');
+        mediaMuteBtn.classList.add('is-hidden');
+        mediaImg.src = src;
+        mediaImg.alt = `${post.location} (${activeMediaIdx + 1}/${post.media.length})`;
+        mediaImg.classList.remove('is-hidden');
+      }
+
+      const many = post.media.length > 1;
+      slideCountEl.textContent = `${activeMediaIdx + 1} / ${post.media.length}`;
+      slideCountEl.classList.toggle('is-hidden', !many);
+      for (const btn of stepBtns) btn.classList.toggle('is-hidden', !many);
+    };
+
+    const deleteComment = (post: EnrichedPost, commentId: string) => {
+      commentsByPost[post.id] = (commentsByPost[post.id] ?? []).filter(
+        c => c.id !== commentId,
+      );
+      saveLocalState();
+      renderComments(post);
+      syncTotalsAndTiles();
+
+      fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deleteComment',
+          postId: post.id,
+          commentId,
+          email: visitor?.email ?? '',
+          token: visitor?.token ?? '',
+        }),
+      }).catch(() => {});
+    };
+
+    const renderComments = (post: EnrichedPost) => {
+      const list = commentsByPost[post.id] ?? [];
+      commentsListEl.innerHTML = '';
+      for (const c of list) {
+        const li = document.createElement('li');
+        const body = document.createElement('span');
+        body.className = 'c-body';
+        const author = document.createElement('strong');
+        author.textContent = c.author;
+        const text = document.createElement('span');
+        text.textContent = c.text;
+        body.append(author, text);
+
+        const meta = document.createElement('span');
+        meta.className = 'c-meta';
+        const date = document.createElement('span');
+        date.className = 'c-date';
+        date.textContent = formatRelativeTime(c.createdAt);
+        meta.append(date);
+
+        if (isDev || c.canDelete) {
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'c-del';
+          del.setAttribute('aria-label', 'Delete comment');
+          del.innerHTML = `<svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+          del.addEventListener('click', () => deleteComment(post, c.id));
+          meta.append(del);
+        }
+
+        li.append(body, meta);
+        commentsListEl.append(li);
+      }
+      noCommentsEl.classList.toggle('is-hidden', list.length > 0);
+      postCommentsCountEl.textContent = String(list.length);
+    };
+
+    const renderPost = (idx: number) => {
+      activePostIdx = ((idx % posts.length) + posts.length) % posts.length;
+      activeMediaIdx = 0;
+      const post = posts[activePostIdx];
+
+      locEl.textContent = post.location;
+
+      const liked = Boolean(likedByMe[post.id]);
+      likeBtn.classList.toggle('is-liked', liked);
+      likeBtn.setAttribute('aria-pressed', String(liked));
+      postLikesEl.textContent = String(likeCounts[post.id] ?? post.initialLikes);
+
+      renderComments(post);
+      renderMedia();
+    };
+
+    const setView = (view: 'grid' | 'detail') => {
+      const isGrid = view === 'grid';
+      gridWrap.classList.toggle('is-hidden', !isGrid);
+      detailWrap.classList.toggle('is-hidden', isGrid);
+      for (const btn of viewBtns) {
+        const on = btn.dataset.viewBtn === view;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', String(on));
+      }
+      if (isGrid) {
+        mediaVideo.pause();
+        if (cardEl && posts[0]?.scene) {
+          cardEl.setAttribute('data-scene', posts[0].scene);
+        }
+      } else {
+        renderPost(activePostIdx);
+      }
+    };
+
+    const hydrateFromServer = () => {
+      const params = new URLSearchParams();
+      if (visitor?.email) params.set('email', visitor.email);
+      if (visitor?.token) params.set('token', visitor.token);
+      fetch(`/api/photos?${params.toString()}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data?.ok) return;
+          for (const p of posts) {
+            const serverLikes = Number(data.likeCounts?.[p.id] ?? 0);
+            likeCounts[p.id] = p.initialLikes + serverLikes;
+            likedByMe[p.id] = Boolean(data.likedByMe?.[p.id]);
+            if (Array.isArray(data.comments?.[p.id])) {
+              commentsByPost[p.id] = data.comments[p.id];
+            }
+          }
+          saveLocalState();
+          syncTotalsAndTiles();
+          if (!detailWrap.classList.contains('is-hidden')) {
+            renderPost(activePostIdx);
+          }
+        })
+        .catch(() => {});
+    };
+
+    hydrateFromServer();
+
+    // Spawn a floating monochrome heart at (clientX, clientY) inside mediaStage
+    const spawnHeartAt = (clientX?: number, clientY?: number) => {
+      const rect = mediaStage.getBoundingClientRect();
+      const x =
+        clientX !== undefined ? clientX - rect.left : rect.width / 2;
+      const y =
+        clientY !== undefined ? clientY - rect.top : rect.height - 36;
+      const rot = (Math.random() * 32 - 16).toFixed(1);
+      const dx = (Math.random() * 28 - 14).toFixed(1);
+
+      const el = document.createElement('div');
+      el.className = 'pop-heart';
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.setProperty('--rot', `${rot}deg`);
+      el.style.setProperty('--dx', `${dx}px`);
+      el.innerHTML = `<svg viewBox="0 0 24 24" width="52" height="52"><path d="M12 20.5s-8.2-5.1-8.2-10.8A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.2 3.3c0 5.7-8.2 10.8-8.2 10.8Z" fill="currentColor"/></svg>`;
+      heartsLayer.append(el);
+      el.addEventListener('animationend', () => el.remove(), { once: true });
+    };
+
+    // Gate unlock submit
+    gateForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const fd = new FormData(gateForm);
+      const website = String(fd.get('website') ?? '').trim();
+      const name = gateName.value.trim();
+      const email = gateEmail.value.trim().toLowerCase();
+      const valid =
+        name.length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+
+      if (!valid) {
+        gateError.classList.remove('is-hidden');
+        return;
+      }
+      gateError.classList.add('is-hidden');
+      visitor = { name, email, token: visitor?.token || makeToken() };
+      try {
+        localStorage.setItem(VISITOR_KEY, JSON.stringify(visitor));
+      } catch {}
+      syncVisitorUI();
+
+      fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'unlock',
+          name,
+          email,
+          token: visitor.token,
+          website,
+        }),
+      })
+        .then(() => hydrateFromServer())
+        .catch(() => {});
+    });
+
+    for (const btn of viewBtns) {
+      btn.addEventListener('click', () => {
+        if (!visitor) return;
+        setView(btn.dataset.viewBtn as 'grid' | 'detail');
+      });
+    }
+
+    for (const tile of root.querySelectorAll<HTMLButtonElement>('[data-open-post]')) {
+      tile.addEventListener('click', () => {
+        if (!visitor) {
+          gateName.focus();
+          return;
+        }
+        activePostIdx = Number(tile.dataset.openPost ?? 0);
+        setView('detail');
+      });
+    }
+
+    for (const btn of stepBtns) {
+      btn.addEventListener('click', () => {
+        const post = posts[activePostIdx];
+        const delta = Number(btn.dataset.mediaStep ?? 1);
+        activeMediaIdx =
+          ((activeMediaIdx + delta) % post.media.length + post.media.length) %
+          post.media.length;
+        renderMedia();
+      });
+    }
+
+    // Touch swipe inside post media steps the post's carousel without turning
+    // the outer PanelDeck.
+    let touchStartX: number | null = null;
+    mediaStage.addEventListener(
+      'touchstart',
+      e => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          e.stopPropagation();
+        }
+      },
+      { passive: true },
+    );
+    mediaStage.addEventListener(
+      'touchend',
+      e => {
+        e.stopPropagation();
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        touchStartX = null;
+        const post = posts[activePostIdx];
+        if (Math.abs(dx) > 36 && post.media.length > 1) {
+          const delta = dx < 0 ? 1 : -1;
+          activeMediaIdx =
+            ((activeMediaIdx + delta) % post.media.length + post.media.length) %
+            post.media.length;
+          renderMedia();
+        }
+      },
+      { passive: true },
+    );
+
+    for (const btn of postStepBtns) {
+      btn.addEventListener('click', () => {
+        const delta = Number(btn.dataset.postStep ?? 1);
+        renderPost(activePostIdx + delta);
+      });
+    }
+
+    mediaMuteBtn.addEventListener('click', () => {
+      videoMuted = !videoMuted;
+      mediaVideo.muted = videoMuted;
+      mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
+    });
+
+    const triggerLike = (
+      forceLike?: boolean,
+      clientX?: number,
+      clientY?: number,
+    ) => {
+      if (!visitor) {
+        gateName.focus();
+        return;
+      }
+      const post = posts[activePostIdx];
+      const currentlyLiked = Boolean(likedByMe[post.id]);
+      const nextLiked = forceLike !== undefined ? forceLike : !currentlyLiked;
+
+      if (nextLiked && !currentlyLiked) {
+        likeCounts[post.id] = (likeCounts[post.id] ?? post.initialLikes) + 1;
+      } else if (!nextLiked && currentlyLiked) {
+        likeCounts[post.id] = Math.max(
+          0,
+          (likeCounts[post.id] ?? post.initialLikes) - 1,
+        );
+      }
+      likedByMe[post.id] = nextLiked;
+
+      likeBtn.classList.toggle('is-liked', nextLiked);
+      likeBtn.setAttribute('aria-pressed', String(nextLiked));
+      postLikesEl.textContent = String(likeCounts[post.id]);
+      saveLocalState();
+      syncTotalsAndTiles();
+
+      if (nextLiked) {
+        spawnHeartAt(clientX, clientY);
+      }
+
+      fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'like',
+          postId: post.id,
+          liked: nextLiked,
+          name: visitor.name,
+          email: visitor.email,
+          token: visitor.token,
+        }),
+      }).catch(() => {});
+    };
+
+    likeBtn.addEventListener('click', () => {
+      const r = mediaStage.getBoundingClientRect();
+      triggerLike(
+        undefined,
+        r.left + r.width * (0.35 + Math.random() * 0.3),
+        r.top + r.height * (0.45 + Math.random() * 0.25),
+      );
+    });
+
+    mediaStage.addEventListener('dblclick', e => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      triggerLike(true, e.clientX, e.clientY);
+    });
+
+    commentFocusBtn.addEventListener('click', () => commentInput.focus());
+
+    commentInput.addEventListener('input', () => {
+      commentForm.classList.toggle(
+        'has-text',
+        commentInput.value.trim().length > 0,
+      );
+    });
+
+    commentForm.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!visitor) {
+        gateName.focus();
+        return;
+      }
+      const text = commentInput.value.trim();
+      if (!text) return;
+      const post = posts[activePostIdx];
+      const tempComment: EnrichedComment = {
+        id: `c-${Date.now().toString(36)}`,
+        author: visitor.name,
+        text,
+        createdAt: new Date().toISOString(),
+        canDelete: true,
+      };
+      (commentsByPost[post.id] ??= []).push(tempComment);
+      commentInput.value = '';
+      commentForm.classList.remove('has-text');
+      saveLocalState();
+      renderComments(post);
+      syncTotalsAndTiles();
+
+      fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'comment',
+          postId: post.id,
+          text,
+          name: visitor.name,
+          email: visitor.email,
+          token: visitor.token,
+        }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data?.ok && data.comment) {
+            const list = commentsByPost[post.id] ?? [];
+            const idx = list.findIndex(c => c.id === tempComment.id);
+            if (idx !== -1) list[idx] = data.comment;
+            saveLocalState();
+            renderComments(post);
+          }
+        })
+        .catch(() => {});
+    });
+
+    syncTotalsAndTiles();
+    syncVisitorUI();
+  }
+</script>

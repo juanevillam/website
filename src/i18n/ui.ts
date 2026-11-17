@@ -69,7 +69,7 @@ const en = {
   'shaper.problem':
     'Look, I used to listen to a lot of music on YouTube Music, but ads kept popping up all the time. And many times I liked listening to a song in four versions—slow, very slow, normal, fast and very fast—well, five versions. And many other times what I really wanted was to listen to the 30 seconds right in the middle, the best part of the song. And I played it again, and again, and again.',
   'shaper.solution':
-    "And that's why I built Sound Shaper: it's a personal MP3 player that's free, ad-free, open source and packed with interesting features, like sound presets, a manual equalizer if you know more about music and want to dial it in to the exact point, live playback speed control and other really cool filters. It has Auto DJ—DJ Juan, that's me as the DJ—and it works just the way I wanted. You can create clips of the specific parts you like best and loop those specific clips with any shape you want, so if you want to hear all the clips of a song sped up, you can do right that. The song keeps playing when your phone is locked too, and well, that's it.",
+    "And that's why I built [Sound Shaper](github): it's a personal MP3 player that's free, ad-free, open source and packed with interesting features, like sound presets, a manual equalizer if you know more about music and want to dial it in to the exact point, live playback speed control and other really cool filters. It has Auto DJ—DJ Juan, that's me as the DJ—and it works just the way I wanted. You can create clips of the specific parts you like best and loop those specific clips with any shape you want, so if you want to hear all the clips of a song sped up, you can do right that. The song keeps playing when your phone is locked too, and well, that's it.",
   'shaper.s1.p1':
     "This is your library. The app doesn't download music: you upload your own MP3s, and here you can drag them around to organize your library however you like.",
   'shaper.s1.p2':
@@ -107,7 +107,7 @@ const en = {
   'arcade.c.start': 'Start and pause',
   // One sentence around a link: before it, the link's words, after it.
   'arcade.p1':
-    "Space Explorer started as an easter egg for my apps, in this case Sound Shaper: you were going to enter a specific part of the app, tap a few secret spots there and it would switch into game mode, unfolding a level or two of Sound Shaper with a full narrative story that would connect with the rest of the apps I released. But that overcomplicated the product way too much and was really hard for anyone to find because it was super hidden and literally only I knew about it, so to simplify things and let Sound Shaper just be Sound Shaper, I removed it. Right around that time, by a twist of fate, we applied to a [Platanus](platanus) hackathon here in Venezuela, in Caracas, and one of the side challenges was to build an arcade game. Since I already had the concept worked out, I said: look, let's build Space Explorer, but as an arcade game. It was a really interesting challenge because the game had to weigh at most 50 kilobytes—50 KB—and I managed to make it a 3D space shooter with a really cool map and a clean minimalist style because, rather than pixel art, I preferred building something more technical that looked even cooler. In fact it even has a black hole and runs super well, with lots of features in how the ship handles. You can play it right here on this page or on [Platanus Hack's official website](arcade), and I hope you like it. At the hackathon there were very few 3D games—obviously there were many cool entries—and it turned out great. As it shipped, so it stays: I'm not going to add anything else to it because the idea is that how it stayed for the hackathon is how it stays forever, and if I make another game it'll be a different game, no longer Space Explorer.",
+    "[Space Explorer](github) started as an easter egg for my apps, in this case Sound Shaper: you were going to enter a specific part of the app, tap a few secret spots there and it would switch into game mode, unfolding a level or two of Sound Shaper with a full narrative story that would connect with the rest of the apps I released. But that overcomplicated the product way too much and was really hard for anyone to find because it was super hidden and literally only I knew about it, so to simplify things and let Sound Shaper just be Sound Shaper, I removed it. Right around that time, by a twist of fate, we applied to a [Platanus](platanus) hackathon here in Venezuela, in Caracas, and one of the side challenges was to build an arcade game. Since I already had the concept worked out, I said: look, let's build Space Explorer, but as an arcade game. It was a really interesting challenge because the game had to weigh at most 50 kilobytes—50 KB—and I managed to make it a 3D space shooter with a really cool map and a clean minimalist style because, rather than pixel art, I preferred building something more technical that looked even cooler. In fact it even has a black hole and runs super well, with lots of features in how the ship handles. You can play it right here on this page or on [Platanus Hack's official website](arcade), and I hope you like it. At the hackathon there were very few 3D games—obviously there were many cool entries—and it turned out great. As it shipped, so it stays: I'm not going to add anything else to it because the idea is that how it stayed for the hackathon is how it stays forever, and if I make another game it'll be a different game, no longer Space Explorer.",
 
   // More Work — the secondary projects carousel, after the game. Job
   // titles and project names stay as they are in every locale.
@@ -131,7 +131,7 @@ const en = {
   'shaper.problem.m':
     'I listened to music on YouTube Music between ads, kept each song in three versions — normal, slowed, sped up — and mostly wanted just my favorite 30 seconds, on loop.',
   'shaper.solution.m':
-    'So I built Sound Shaper: add your own MP3s, change the speed live, shape the sound with an equalizer and effects, and save the parts you love as clips. All of it works offline.',
+    'So I built [Sound Shaper](github): add your own MP3s, change the speed live, shape the sound with an equalizer and effects, and save the parts you love as clips. All of it works offline.',
   'shaper.s1.m':
     'Add your MP3s and build your own library. It works offline, with widgets and Lock Screen controls.',
   'shaper.s2.m':
@@ -243,6 +243,30 @@ const en = {
   'shape.autoDjMode.off': 'Off',
   'shape.autoDjMode.sound': 'This Song',
   'shape.autoDjMode.all': 'All Songs',
+  'likes.photos.name': 'Photos',
+  'likes.photos.meta': 'Personal Archive',
+  'likes.photos.body':
+    'I stopped posting on Instagram to keep my photos and travel memories here in my own place, in my own style. Each post holds the moments, places and stories I want to share — without algorithms or compressed feeds. Unlock the archive with your name and email to browse the posts, leave a like or write a comment.',
+  'photos.posts': 'posts',
+  'photos.likes': 'likes',
+  'photos.comments': 'comments',
+  'photos.grid': 'Grid',
+  'photos.feed': 'Feed',
+  'photos.back': 'Grid',
+  'photos.like': 'Like',
+  'photos.comment': 'Comment',
+  'photos.commentPlaceholder': 'Add a comment…',
+  'photos.post': 'Post',
+  'photos.noComments': 'No comments yet.',
+  'photos.gateTitle': 'Personal Archive',
+  'photos.gateBody':
+    'Enter your name and email to view my personal photos, like posts, and leave comments.',
+  'photos.gateName': 'Your name',
+  'photos.gateEmail': 'your@email.com',
+  'photos.gateContinue': 'Unlock Photos',
+  'photos.gateError': 'Enter a valid name and email.',
+  'photos.lock': 'Lock',
+  'photos.mute': 'Mute or unmute video',
 };
 
 export type UIKey = keyof typeof en;
@@ -287,7 +311,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem':
       'Mira, yo escuchaba mucha música en YouTube Music, pero me salían anuncios a cada rato. Y muchas veces a mí me gustaba escuchar una canción en cuatro versiones —que si lenta, muy lenta, normal, rápida y muy rápida—, bueno, cinco versiones. Y muchas otras veces lo que me gustaba era escuchar tipo los 30 segundos de en medio, los mejores de la canción. Y bueno, la repetía, la repetía y la repetía.',
     'shaper.solution':
-      'Y por eso hice Sound Shaper: es un reproductor MP3 personal que es gratis, sin anuncios, de código abierto y tiene muchas funcionalidades interesantes, básicamente como presets de sonido, ecualizador manual por si sabes más de música y quieres personalizarla muy al punto, te permite cambiar el playback speed de la canción y agregarle otros filtros bastante cool. Tiene auto DJ —DJ Juan, soy yo pues el DJ—, además de que funciona tal cual como yo quería. Puedes crear clips de las partes específicas que más te gustan y puedes poner en loop esos clips específicos con el shape que tú quieras, entonces si quieres escuchar todos los clips de esta canción en speed up, pues lo puedes hacer. La canción sigue cuando el teléfono está bloqueado también, y bueno, eso sería.',
+      'Y por eso hice [Sound Shaper](github): es un reproductor MP3 personal que es gratis, sin anuncios, de código abierto y tiene muchas funcionalidades interesantes, básicamente como presets de sonido, ecualizador manual por si sabes más de música y quieres personalizarla muy al punto, te permite cambiar el playback speed de la canción y agregarle otros filtros bastante cool. Tiene auto DJ —DJ Juan, soy yo pues el DJ—, además de que funciona tal cual como yo quería. Puedes crear clips de las partes específicas que más te gustan y puedes poner en loop esos clips específicos con el shape que tú quieras, entonces si quieres escuchar todos los clips de esta canción en speed up, pues lo puedes hacer. La canción sigue cuando el teléfono está bloqueado también, y bueno, eso sería.',
     'shaper.s1.p1':
       'Esta es tu librería. La app no descarga la música: tú mismo subes tus MP3 y por acá puedes arrastrarlos para ordenar la biblioteca de la manera en que más te guste.',
     'shaper.s1.p2':
@@ -321,7 +345,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.c.start': 'Empezar y pausar',
     // One sentence around a link: before it, the link's words, after it.
     'arcade.p1':
-      'Space Explorer inició como un easter egg para mis aplicaciones, en este caso Sound Shaper: ibas a entrar a una parte específica de la aplicación, darle unos taps ahí secretos en ciertos lugares e iba a entrar como en modo juego, desplegando un nivel o dos niveles de Sound Shaper con una historia narrativa completa que se iba a unir con el resto de aplicaciones que fuese a sacar. Pero eso sobrecomplicaba mucho el producto y era muy difícil que lo encontraran porque estaba súper oculto y literalmente solo lo sabía yo, entonces para simplificarlo y dejar Sound Shaper como Sound Shaper, pues lo removí. Pero justo por obras del destino, en tiempos muy cercanos, aplicamos a una hackathon de [Platanus](platanus) aquí en Venezuela, en Caracas, y uno de los retos que había como minijuego o actividad secundaria era hacer un juego de arcade. Como ya yo tenía la idea trabajada, dije: mira, vamos a hacer Space Explorer, pero como si fuese un juego de arcade. Era un reto bastante interesante porque el juego tenía que pesar máximo 50 kilobytes —o sea, 50 KB— y logré hacer que fuese un shooter 3D espacial donde el mapa está bastante cool y el estilo es muy simple porque, más que hacerlo artístico o de pixel art, prefería hacer algo más técnico que quedara más chulo incluso. De hecho tiene un agujero negro también y funciona bastante, bastante cool, con muchas funcionalidades en cómo se maneja la nave, muy interesante. Lo puedes jugar aquí en esta página o en la [página web oficial de Platanus Hack](arcade), y bueno, espero les guste. Como tal, en la hackathon había muy pocos juegos que eran 3D —obvio había muchos que eran muy chulos—, pero quedó bastante cool. Este sí, como ya quedó, quedó: ya no le voy a meter más porque la idea es que como quedó para la hackathon se queda para siempre, y si hago otro juego pues es otro juego, ya no es Space Explorer.',
+      '[Space Explorer](github) inició como un easter egg para mis aplicaciones, en este caso Sound Shaper: ibas a entrar a una parte específica de la aplicación, darle unos taps ahí secretos en ciertos lugares e iba a entrar como en modo juego, desplegando un nivel o dos niveles de Sound Shaper con una historia narrativa completa que se iba a unir con el resto de aplicaciones que fuese a sacar. Pero eso sobrecomplicaba mucho el producto y era muy difícil que lo encontraran porque estaba súper oculto y literalmente solo lo sabía yo, entonces para simplificarlo y dejar Sound Shaper como Sound Shaper, pues lo removí. Pero justo por obras del destino, en tiempos muy cercanos, aplicamos a una hackathon de [Platanus](platanus) aquí en Venezuela, en Caracas, y uno de los retos que había como minijuego o actividad secundaria era hacer un juego de arcade. Como ya yo tenía la idea trabajada, dije: mira, vamos a hacer Space Explorer, pero como si fuese un juego de arcade. Era un reto bastante interesante porque el juego tenía que pesar máximo 50 kilobytes —o sea, 50 KB— y logré hacer que fuese un shooter 3D espacial donde el mapa está bastante cool y el estilo es muy simple porque, más que hacerlo artístico o de pixel art, prefería hacer algo más técnico que quedara más chulo incluso. De hecho tiene un agujero negro también y funciona bastante, bastante cool, con muchas funcionalidades en cómo se maneja la nave, muy interesante. Lo puedes jugar aquí en esta página o en la [página web oficial de Platanus Hack](arcade), y bueno, espero les guste. Como tal, en la hackathon había muy pocos juegos que eran 3D —obvio había muchos que eran muy chulos—, pero quedó bastante cool. Este sí, como ya quedó, quedó: ya no le voy a meter más porque la idea es que como quedó para la hackathon se queda para siempre, y si hago otro juego pues es otro juego, ya no es Space Explorer.',
 
     // More Work — the secondary projects carousel.
     'work.title': 'Más proyectos',
@@ -343,7 +367,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem.m':
       'Escuchaba música en YouTube Music entre anuncios, guardaba cada canción en tres versiones — normal, slowed, sped up — y casi siempre solo quería mis 30 segundos favoritos, en loop.',
     'shaper.solution.m':
-      'Así que hice Sound Shaper: subes tus propios MP3, cambias la velocidad en vivo, moldeas el sonido con ecualizador y efectos, y guardas tus partes favoritas como clips. Todo funciona sin internet.',
+      'Así que hice [Sound Shaper](github): subes tus propios MP3, cambias la velocidad en vivo, moldeas el sonido con ecualizador y efectos, y guardas tus partes favoritas como clips. Todo funciona sin internet.',
     'shaper.s1.m':
       'Sube tus MP3 y arma tu propia biblioteca. Funciona sin conexión, con widgets y controles en la pantalla de bloqueo.',
     'shaper.s2.m':
@@ -454,6 +478,30 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.autoDjMode.off': 'No',
     'shape.autoDjMode.sound': 'Esta canción',
     'shape.autoDjMode.all': 'Todas',
+    'likes.photos.name': 'Fotos',
+    'likes.photos.meta': 'Archivo personal',
+    'likes.photos.body':
+      'Dejé de publicar en Instagram para guardar mis fotos y recuerdos de viajes aquí en mi propio sitio y a mi estilo. Cada publicación reúne los momentos, lugares e historias que quiero compartir, sin algoritmos ni feeds comprimidos. Desbloquea el archivo con tu nombre y correo para ver los posts, dar like o dejar un comentario.',
+    'photos.posts': 'publicaciones',
+    'photos.likes': 'me gusta',
+    'photos.comments': 'comentarios',
+    'photos.grid': 'Cuadrícula',
+    'photos.feed': 'Feed',
+    'photos.back': 'Cuadrícula',
+    'photos.like': 'Me gusta',
+    'photos.comment': 'Comentar',
+    'photos.commentPlaceholder': 'Añade un comentario…',
+    'photos.post': 'Publicar',
+    'photos.noComments': 'Aún no hay comentarios.',
+    'photos.gateTitle': 'Archivo personal',
+    'photos.gateBody':
+      'Ingresa tu nombre y correo para ver mis fotos personales, dar like y dejar comentarios.',
+    'photos.gateName': 'Tu nombre',
+    'photos.gateEmail': 'tu@correo.com',
+    'photos.gateContinue': 'Ver fotos',
+    'photos.gateError': 'Ingresa un nombre y correo válidos.',
+    'photos.lock': 'Bloquear',
+    'photos.mute': 'Silenciar o activar audio',
   },
   zh: {
     'meta.title': 'juanevillam',
@@ -493,7 +541,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem':
       '我以前经常在 YouTube Music 听歌，但广告总是接连不断地弹出来。很多时候我喜欢把一首歌听四个版本——慢速、超慢、原速、快速和超快——好吧，是五个版本。还有很多时候，我真正想听的只是歌曲中间最精彩的那 30 秒。然后我就一遍、一遍又一遍地循环听。',
     'shaper.solution':
-      '所以我做了 Sound Shaper：它是一个免费、无广告且开源的个人 MP3 播放器，有很多有趣的功能，比如声音预设、适合懂音乐的你精细调节的手动均衡器、调节歌曲播放速度，还能加上其他很酷的滤镜。它还有自动 DJ——DJ Juan，也就是我本人当 DJ——而且完全按照我想要的方式运行。你可以把自己最喜欢的特定部分做成片段，并用任意塑形效果循环播放这些片段，所以如果你想把这首歌的所有片段加速连播，完全可以做到。手机锁屏时歌曲也会继续播放，大概就是这样。',
+      '所以我做了 [Sound Shaper](github)：它是一个免费、无广告且开源的个人 MP3 播放器，有很多有趣的功能，比如声音预设、适合懂音乐的你精细调节的手动均衡器、调节歌曲播放速度，还能加上其他很酷的滤镜。它还有自动 DJ——DJ Juan，也就是我本人当 DJ——而且完全按照我想要的方式运行。你可以把自己最喜欢的特定部分做成片段，并用任意塑形效果循环播放这些片段，所以如果你想把这首歌的所有片段加速连播，完全可以做到。手机锁屏时歌曲也会继续播放，大概就是这样。',
     'shaper.s1.p1':
       '这是你的资料库。这个应用本身不下载音乐：你自己上传自己的 MP3，在这里按住拖动就能按你最喜欢的方式整理曲库。',
     'shaper.s1.p2':
@@ -526,7 +574,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'arcade.c.start': '开始与暂停',
     // One sentence around a link: before it, the link's words, after it.
     'arcade.p1':
-      'Space Explorer 最初是为我的应用准备的彩蛋，具体来说就是 Sound Shaper：你进入应用里的某个特定位置，在几个秘密地方连点几下就会进入游戏模式，展开一两个 Sound Shaper 关卡，并用一段完整的故事线与我未来发布的其他应用串联起来。但这会让产品变得过于复杂，而且藏得太深、只有我自己知道，别人根本很难发现，所以为了精简产品、让 Sound Shaper 纯粹做 Sound Shaper，我就把它移除了。结果巧合的是，几乎同一时间我们报名了在委内瑞拉加拉加斯举办的 [Platanus](platanus) 黑客松，其中一个附加小游戏挑战就是做一款街机游戏。因为我已经把这个点子打磨过了，我就说：干脆把 Space Explorer 做成街机游戏吧。这个挑战很有意思，因为游戏体积上限是 50 千字节——也就是 50 KB——而我成功把它做成了一款 3D 太空射击游戏，地图很酷，风格非常简洁，因为比起像素美术，我更想做出技术含量更高、效果也更酷的东西。实际上它里面甚至还有一个黑洞，运行起来非常流畅，飞船的操控也有很多有趣的功能。你可以直接在这个页面上玩，也可以在 [Platanus Hack 的官方网站](arcade)上玩，希望你们喜欢。那场黑客松里 3D 游戏很少——当然有很多很棒的作品——最终效果非常酷。这款游戏提交时是什么样就保持什么样：我不会再往里面加新东西了，因为我的想法就是让它永远保持黑客松结束时的样子，如果以后再做新游戏，那就会是另一款游戏，而不是 Space Explorer 了。',
+      '[Space Explorer](github) 最初是为我的应用准备的彩蛋，具体来说就是 Sound Shaper：你进入应用里的某个特定位置，在几个秘密地方连点几下就会进入游戏模式，展开一两个 Sound Shaper 关卡，并用一段完整的故事线与我未来发布的其他应用串联起来。但这会让产品变得过于复杂，而且藏得太深、只有我自己知道，别人根本很难发现，所以为了精简产品、让 Sound Shaper 纯粹做 Sound Shaper，我就把它移除了。结果巧合的是，几乎同一时间我们报名了在委内瑞拉加拉加斯举办的 [Platanus](platanus) 黑客松，其中一个附加小游戏挑战就是做一款街机游戏。因为我已经把这个点子打磨过了，我就说：干脆把 Space Explorer 做成街机游戏吧。这个挑战很有意思，因为游戏体积上限是 50 千字节——也就是 50 KB——而我成功把它做成了一款 3D 太空射击游戏，地图很酷，风格非常简洁，因为比起像素美术，我更想做出技术含量更高、效果也更酷的东西。实际上它里面甚至还有一个黑洞，运行起来非常流畅，飞船的操控也有很多有趣的功能。你可以直接在这个页面上玩，也可以在 [Platanus Hack 的官方网站](arcade)上玩，希望你们喜欢。那场黑客松里 3D 游戏很少——当然有很多很棒的作品——最终效果非常酷。这款游戏提交时是什么样就保持什么样：我不会再往里面加新东西了，因为我的想法就是让它永远保持黑客松结束时的样子，如果以后再做新游戏，那就会是另一款游戏，而不是 Space Explorer 了。',
 
     // More Work — the secondary projects carousel.
     'work.title': '更多作品',
@@ -548,7 +596,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.problem.m':
       '我在 YouTube Music 听歌总被广告打断，每首歌都存了三个版本——原速、slowed、sped up——而大多数时候我只想循环最爱的那 30 秒。',
     'shaper.solution.m':
-      '于是我做了 Sound Shaper：导入你自己的 MP3，实时调速，用均衡器和音效塑造声音，再把最爱的部分存成片段。全部离线可用。',
+      '于是我做了 [Sound Shaper](github)：导入你自己的 MP3，实时调速，用均衡器和音效塑造声音，再把最爱的部分存成片段。全部离线可用。',
     'shaper.s1.m':
       '导入你的 MP3，建立自己的资料库。离线可用，支持小组件和锁定屏幕控制。',
     'shaper.s2.m':
@@ -654,5 +702,29 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.autoDjMode.off': '关闭',
     'shape.autoDjMode.sound': '当前歌曲',
     'shape.autoDjMode.all': '所有歌曲',
+    'likes.photos.name': '照片',
+    'likes.photos.meta': '个人相册',
+    'likes.photos.body':
+      '我不再在 Instagram 上发帖，而是把我的照片和旅行记忆留在这里——我自己的网站、我自己的风格。每条动态都记录着我想分享的时刻、地点与故事，没有算法，也没有画质压缩。输入你的姓名和邮箱即可解锁相册，浏览动态、点赞或发表评论。',
+    'photos.posts': '帖子',
+    'photos.likes': '赞',
+    'photos.comments': '评论',
+    'photos.grid': '网格',
+    'photos.feed': '动态',
+    'photos.back': '网格',
+    'photos.like': '赞',
+    'photos.comment': '评论',
+    'photos.commentPlaceholder': '添加评论…',
+    'photos.post': '发布',
+    'photos.noComments': '暂无评论。',
+    'photos.gateTitle': '个人相册',
+    'photos.gateBody':
+      '输入你的姓名和邮箱即可浏览我的个人照片、点赞或发表评论。',
+    'photos.gateName': '你的姓名',
+    'photos.gateEmail': 'your@email.com',
+    'photos.gateContinue': '解锁照片',
+    'photos.gateError': '请输入有效的姓名和邮箱。',
+    'photos.lock': '锁定',
+    'photos.mute': '静音或取消静音',
   },
 };

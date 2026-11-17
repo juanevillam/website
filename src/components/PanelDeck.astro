@@ -183,6 +183,8 @@ for (const p of items)
             aria-roledescription="slide"
             aria-label={`${i + 1} / ${items.length}`}
             data-card={p.id}
+            data-card-path={pathOf(p)}
+            data-card-title={`${plainName(p)} — ${title ? `${ui.en[title]} — ` : ''}juanevillam`}
             data-scene={scenes[i]}
           >
             <div class="words">
@@ -1205,6 +1207,14 @@ for (const p of items)
           const para = paras[current];
           if (para)
             document.dispatchEvent(new CustomEvent('narr:select', { detail: para }));
+          if (ready && (section.id === 'likes' || section.hasAttribute('data-focused'))) {
+            const nextPath = cards[current]?.dataset.cardPath;
+            const nextTitle = cards[current]?.dataset.cardTitle;
+            if (nextPath && location.pathname !== nextPath) {
+              history.replaceState(null, '', `${nextPath}${location.search}`);
+            }
+            if (nextTitle) document.title = nextTitle;
+          }
         }
       },
     });

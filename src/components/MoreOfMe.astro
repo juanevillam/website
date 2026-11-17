@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import PanelDeck from './PanelDeck.astro';
 import PhotoViewer from './PhotoViewer.astro';
 import SongsPlayer from './SongsPlayer.astro';
+import PhotosFeed from './PhotosFeed.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
 import SiteFooter from './SiteFooter.astro';
 import { LIKES } from '../lib/likes';
@@ -42,6 +43,7 @@ const plain = (c: DeckItem) => {
 >
   <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id}>
     {LIKES.some(c => c.id === 'songs') && <SongsPlayer slot="songs" />}
+    {LIKES.some(c => c.id === 'photos') && <PhotosFeed slot="photos" />}
   </PanelDeck>
   <SiteFooter panel />
   <NarrationPlayer />

@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import { narrationRecorder } from './scripts/narration-recorder.mjs';
 import { likesRanker } from './scripts/likes-ranker.mjs';
 import { devTodos } from './scripts/dev-todos.mjs';
+import { photosApi } from './scripts/photos-api.mjs';
 
 // juanevillam.com — static output, near-zero JS. Deployed on Cloudflare Pages
 // from this repository's root: build command `npm run build`, output `dist`,
@@ -14,7 +15,10 @@ import { devTodos } from './scripts/dev-todos.mjs';
 // it out of a production build, and this drops its media from the deploy,
 // so not even its files can be reached by address.
 const unreleased = JSON.parse(
-  fs.readFileSync(new URL('./src/data/unreleased.json', import.meta.url), 'utf8')
+  fs.readFileSync(
+    new URL('./src/data/unreleased.json', import.meta.url),
+    'utf8',
+  ),
 );
 const dropUnreleased = {
   name: 'drop-unreleased',
@@ -47,7 +51,7 @@ export default defineConfig({
   // (pages/dev).
   // `apply: 'serve'` keeps them out of the build.
   vite: {
-    plugins: [narrationRecorder(), likesRanker(), devTodos()],
+    plugins: [narrationRecorder(), likesRanker(), devTodos(), photosApi()],
     // Vite 8 minifies CSS with Lightning CSS, which folds
     // `backdrop-filter` + `-webkit-backdrop-filter` into the prefixed one
     // alone — Chrome then draws no frost behind a modal. esbuild is the
