@@ -14,7 +14,7 @@ const preview = import.meta.env.DEV;
 export const eventShown = (id: string) =>
   preview || !(UNRELEASED.events as string[]).includes(id);
 
-/** Whether More of Me (pages/things-i-like) is on the site. */
+/** Whether More of Me (pages/more-of-me) is on the site. */
 export const likesShown = preview || !UNRELEASED.likes;
 
 /** Whether More of Me's Songs card (lib/likes) is on the site: held back

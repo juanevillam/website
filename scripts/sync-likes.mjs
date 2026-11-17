@@ -1,4 +1,4 @@
-// Makes the pictures of "Things I Like" (lib/likes) from Juan's own folders:
+// Makes the pictures of "More of Me" (lib/likes) from Juan's own folders:
 // the space photos he loves (Webb's and Hubble's, TIFFs of up to 520 MB and
 // 10,000 px a side). The masters never
 // enter the repo — a Cloudflare build never sees them — so the copies are
@@ -10,7 +10,7 @@
 // 1000 px on its long side) for the gallery's grid, lazy, and the full
 // picture (2000 px, a desk's screen at 2x) that loads only when it is
 // opened. The landing loads none of them: the gallery is a page of its
-// own (pages/things-i-like).
+// own (pages/more-of-me).
 import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';

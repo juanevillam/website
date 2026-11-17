@@ -100,7 +100,7 @@ const SOCIAL = [
           </div>
         ))
       }
-      {/* Juan outside of work: one page per set (pages/things-i-like),
+      {/* Juan outside of work: one page per set (pages/more-of-me),
           a column like an app's pages, so the landing never loads their
           pictures — while More of Me is released (lib/release). */}
       {likesShown && (
@@ -109,7 +109,7 @@ const SOCIAL = [
         <ul>
           {LIKES.map(card => (
             <li>
-              <a href={`/things-i-like/${card.slug}`}>
+              <a href={`/more-of-me/${card.slug}`}>
                 {typeof card.name === 'string' ? card.name : <T k={card.name.k} />}
               </a>
             </li>

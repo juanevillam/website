@@ -3,9 +3,9 @@ import { songsShown } from './release';
 import ENCODED from '../data/songs.json';
 
 /**
- * THINGS I LIKE — what Juan loves outside of work, so a visitor knows him
+ * MORE OF ME — what Juan loves outside of work, so a visitor knows him
  * a little more: the space photos he loves and his songs. A gallery on a page of
- * its own (pages/things-i-like), reached from the footer, so the landing never loads a picture of it.
+ * its own (pages/more-of-me), reached from the footer, so the landing never loads a picture of it.
  *
  * The pictures are made from Juan's own folders by `npm run likes`
  * (scripts/sync-likes.mjs): WebP, 2000 px on the long side. A new space
@@ -117,7 +117,7 @@ export const coverSrc = (s: Song) =>
 
 /**
  * THE GALLERY'S CARDS — a panel deck like More Work and Events
- * (PanelDeck), on a page of its own (pages/things-i-like). Cosmos is ONE frame that turns through its pictures, in a new
+ * (PanelDeck), on a page of its own (pages/more-of-me). Cosmos is ONE frame that turns through its pictures, in a new
  * random order every visit — THUMBNAILS (~80 KB, 1000 px), only the one
  * showing and the next loaded — with arrows to go through them by hand;
  * a click opens the full picture (PhotoViewer).
@@ -145,7 +145,7 @@ export const LIKES: DeckItem[] = [
     links: [],
   },
   // A screen of its own: the player (SongsPlayer, the `songs` slot in
-  // ThingsILike). Not on the site till Juan records it (lib/release), and
+  // MoreOfMe). Not on the site till Juan records it (lib/release), and
   // never with no songs made.
   ...(songsShown && SONGS.length
     ? [

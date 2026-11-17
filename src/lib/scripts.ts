@@ -102,7 +102,7 @@ const CLIPS: Array<{
   { key: 'work.crol.body', where: 'Más proyectos · Crol ERP Móvil' },
   { key: 'work.maktub.body', where: 'Más proyectos · Maktub Art Fund' },
 
-  // More of Me (pages/things-i-like)
+  // More of Me (pages/more-of-me)
   { key: 'likes.cosmos.body', where: 'Más de mí · Cosmos' },
   { key: 'likes.songs.body', where: 'Más de mí · Canciones' },
 
