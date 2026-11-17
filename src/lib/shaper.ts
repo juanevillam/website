@@ -172,6 +172,67 @@ export const headroomTrimDb = (gains: number[], sampleRate: number) => {
   return -(Math.max(0, 20 * Math.log10(peak)) + 1.5);
 };
 
+// ---------- Auto DJ's leveller (autoDj/loudness.ts) ----------
+
+export const DJ_TARGET_DB = -9.5;
+const LOUD_SAMPLE_RATE = 48000;
+const LOUD_POINTS = 160;
+const kWeight = (hz: number): number => {
+  const r = Math.pow(hz / 60, 4);
+  const highPass = Math.sqrt(r / (1 + r));
+  const lift = Math.pow(10, 4 / 20);
+  const shelf =
+    hz >= 2000 ? lift : 1 + (lift - 1) * Math.max(0, (hz - 500) / 1500);
+  return highPass * shelf;
+};
+const LOUD_SWEEP = Array.from(
+  { length: LOUD_POINTS },
+  (_, i) => 20 * Math.pow(1000, i / (LOUD_POINTS - 1)),
+);
+const LOUD_WEIGHTS = LOUD_SWEEP.map(hz => kWeight(hz) ** 2);
+const LOUD_WEIGHT_SUM = LOUD_WEIGHTS.reduce((a, b) => a + b, 0);
+const loudCache = new Map<string, number>();
+
+export const djLevelDb = (
+  state: Pick<Shape, 'gains' | 'nextRoom' | 'echo'>,
+): number => {
+  const key = `${state.gains.join(',')}|${state.nextRoom}|${state.echo}`;
+  let db = loudCache.get(key);
+  if (db === undefined) {
+    const nyquist = LOUD_SAMPLE_RATE / 2;
+    const filters: C[] = BANDS.map((b, i) =>
+      coefficients(
+        b.type,
+        b.hz / nyquist,
+        state.gains[i] ?? 0,
+        'q' in b ? b.q : 1,
+      ),
+    );
+    let trimDb = headroomTrimDb(state.gains, LOUD_SAMPLE_RATE);
+    if (state.nextRoom !== 'off') {
+      const wall = WALL[state.nextRoom];
+      for (const hz of WALL_HZ) {
+        filters.push(coefficients('highshelf', hz / nyquist, wall.depthDb));
+      }
+      trimDb += wall.trimDb;
+    }
+    if (state.echo !== 'off') {
+      const { feedback, trimDb: echoTrim } = ECHO[state.echo];
+      trimDb += echoTrim + 10 * Math.log10(1 / (1 - feedback * feedback));
+    }
+    let power = 0;
+    LOUD_SWEEP.forEach((hz, i) => {
+      let m = 1;
+      for (const c of filters) m *= magnitude(c, hz / nyquist);
+      power += LOUD_WEIGHTS[i] * m * m;
+    });
+    db = 10 * Math.log10(power / LOUD_WEIGHT_SUM) + trimDb;
+    if (loudCache.size > 500) loudCache.clear();
+    loudCache.set(key, db);
+  }
+  return Math.min(0, DJ_TARGET_DB - db);
+};
+
 // ---------- the engine (audioEngine.ts) ----------
 
 export type Shape = {
@@ -212,6 +273,8 @@ const echoImpulse = (ctx: AudioContext, feedback: number) => {
  */
 export const createShaper = (audio: HTMLAudioElement) => {
   const shape = flatShape();
+  let outputLevel = 1;
+  let fadeUntil = 0;
   let g: {
     ctx: AudioContext;
     trim: GainNode;
@@ -323,7 +386,12 @@ export const createShaper = (audio: HTMLAudioElement) => {
     const echoTrim = ctx.createGain();
     // Unity, except while Auto DJ eases the next sound in (`fadeIn`).
     const fade = ctx.createGain();
-    node.connect(wallTrim).connect(echoTrim).connect(fade).connect(ctx.destination);
+    fade.gain.setValueAtTime(outputLevel, ctx.currentTime);
+    node
+      .connect(wallTrim)
+      .connect(echoTrim)
+      .connect(fade)
+      .connect(ctx.destination);
     // The waves along the screen's foot draw the song as it is heard,
     // shaped (lib/listening). Read the way the voice's analyser is.
     const analyser = ctx.createAnalyser();
@@ -381,11 +449,27 @@ export const createShaper = (audio: HTMLAudioElement) => {
         const now = ctx.currentTime;
         fade.gain.cancelScheduledValues(now);
         fade.gain.setValueAtTime(0, now);
-        fade.gain.linearRampToValueAtTime(1, now + Math.max(0.01, seconds));
+        const dur = Math.max(0.01, seconds);
+        fade.gain.linearRampToValueAtTime(outputLevel, now + dur);
+        fadeUntil = now + dur;
       };
       audio.addEventListener('playing', rise);
       audio.addEventListener('seeked', rise);
       const timer = setTimeout(rise, 1000);
+    },
+    setLevelDb(db: number, seconds: number) {
+      outputLevel = dbToLinear(Math.min(0, db));
+      if (!g) return;
+      const { ctx, fade } = g;
+      const now = ctx.currentTime;
+      const dur = Math.max(0.01, seconds);
+      if (now < fadeUntil) {
+        fade.gain.linearRampToValueAtTime(outputLevel, fadeUntil + dur);
+        return;
+      }
+      fade.gain.cancelScheduledValues(now);
+      fade.gain.setValueAtTime(fade.gain.value, now);
+      fade.gain.linearRampToValueAtTime(outputLevel, now + dur);
     },
     /** The speed and pitch again: a new source resets them in some browsers. */
     reapplyRate() {

@@ -40,7 +40,7 @@ import {
   type Segment,
   type TransitionFx,
 } from './set';
-import type { Shape } from '../shaper';
+import { djLevelDb, type Shape } from '../shaper';
 
 export type DjStatus = {
   on: boolean;
@@ -64,6 +64,7 @@ export type DjHost = {
   /** Rewind the current song to `atS` and ensure it plays. */
   rewind(atS: number): void;
   fadeIn(seconds: number): void;
+  setLevelDb(db: number, seconds: number): void;
   context(): AudioContext | null;
   /** On, off, focus changed, or more of the songs read. */
   changed(status: DjStatus): void;
@@ -189,7 +190,9 @@ const getSongMap = (src: string): Promise<SongMap | null> => {
 const LOOKAHEAD_S = 0.35;
 const JUMP_S = 1;
 const CUE_LEAD_S = 0.12;
-const FOCUS_HOLD_MS = 2000;
+const FOCUS_HOLD_MS = 3200;
+const LEVEL_RAMP_S = 0.35;
+const LEVEL_ENTER_S = 1.5;
 
 type Snapshot = Pick<
   Shape,
@@ -202,6 +205,7 @@ export const createAutoDj = (host: DjHost) => {
   let snapshot: Snapshot | null = null;
   let stopDirecting: (() => void) | null = null;
   let lastFocusAt = 0;
+  let levelRampS = LEVEL_ENTER_S;
   let status: DjStatus = {
     on: false,
     mode: 'off',
@@ -251,6 +255,16 @@ export const createAutoDj = (host: DjHost) => {
         lastFocusAt = nowMs;
       }
     }
+    const after = host.shape();
+    host.setLevelDb(
+      djLevelDb({
+        gains: after.gains,
+        nextRoom: after.nextRoom,
+        echo: after.echo,
+      }),
+      levelRampS,
+    );
+    levelRampS = LEVEL_RAMP_S;
   };
 
   const direct = (activeMode: 'sound' | 'all'): (() => void) => {
@@ -658,6 +672,10 @@ export const createAutoDj = (host: DjHost) => {
       clearInterval(clock);
       clearTimers();
       stopFx();
+      if (!on) {
+        host.setLevelDb(0, LEVEL_ENTER_S);
+        levelRampS = LEVEL_ENTER_S;
+      }
       publish({ ready: 0, total: 0 });
     };
   };
