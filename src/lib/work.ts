@@ -23,6 +23,7 @@ export const PROJECTS: DeckItem[] = [
     body: {
       k: 'arcade.p1',
       links: {
+        github: 'https://github.com/juanevillam/space-explorer',
         platanus: 'https://hack.platan.us/26-ve',
         arcade: 'https://hack.platan.us/26/arcade/space-explorer',
       },
@@ -30,12 +31,7 @@ export const PROJECTS: DeckItem[] = [
     clip: 'arcade.p1',
     image: { slot: 'arcade' },
     scene: '/media/arcade/cover.webp',
-    links: [
-      {
-        label: 'GitHub',
-        href: 'https://github.com/juanevillam/space-explorer',
-      },
-    ],
+    links: [],
   },
   {
     id: 'salvalo',

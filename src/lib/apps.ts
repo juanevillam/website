@@ -32,6 +32,7 @@ export type AppStory = {
   name: string;
   pitch: UIKey[];
   slides: AppSlide[];
+  github?: string;
 };
 
 const shots = (
@@ -53,6 +54,7 @@ export const APPS: AppStory[] = [
     id: 'shaper',
     name: 'Sound Shaper',
     pitch: ['shaper.problem', 'shaper.solution'],
+    github: 'https://github.com/juanevillam/sound-shaper',
     slides: shots('shaper', [
       ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
       ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],

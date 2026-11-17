@@ -3,6 +3,7 @@ import AppTile from './AppTile.astro';
 import DeckControls from './DeckControls.astro';
 import StoreBadges from './StoreBadges.astro';
 import T from './T.astro';
+import TL from './TL.astro';
 import type { UIKey } from '../i18n/ui';
 import type { AppStory } from '../lib/apps';
 import { clipFor, SONGS, voiceAttrs } from '../lib/narration';
@@ -211,7 +212,7 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                         data-app={a}
                         {...voiceAttrs(k)}
                       >
-                        <T k={k} />
+                        {app.github ? <TL k={k} links={{ github: app.github }} /> : <T k={k} />}
                       </p>
                       {SONGS[k] && (
                         // The song the take introduces, as a line of its
@@ -286,7 +287,8 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
                       <img
                         class="shot"
                         data-shot-at={c - 1}
-                        data-src={card.src}
+                        src={a === 0 ? card.src : undefined}
+                        data-src={a === 0 ? undefined : card.src}
                         alt={`${app.name} — ${card.title}`}
                         width={card.width}
                         height={card.height}
@@ -640,6 +642,20 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
   }
 
   /* Under the words' fade (global.css `[data-cap]`), a step of air. */
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-top: 1.25rem;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+
+  .links a {
+    color: var(--ink);
+  }
+
   .store-row :global(.stores) {
     margin-top: 1.25rem;
   }
@@ -660,8 +676,6 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     display: flex;
     justify-content: center;
     margin-top: calc(var(--shot-top) - var(--stage-top));
-    translate: 0 0;
-    transition: translate var(--dur-turn) var(--ease);
   }
 
   /* Its corner is the iPhone screen's, 14% of the phone's OWN width
@@ -865,6 +879,10 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
     .narr-slot,
     .narr-static {
       display: none;
+    }
+
+    .links {
+      margin-top: 1rem;
     }
 
     .store-row :global(.stores) {

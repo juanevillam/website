@@ -17,29 +17,25 @@
  * release work — signing, the Firebase SHA fingerprints, the store listings
  * — is tracked in docs/phase-c-release.md, not here.
  */
-export type Store = 'app-store' | 'web' | 'github';
+export type Store = 'app-store' | 'web';
 export type ReleasedApp = 'shaper' | 'topper' | 'booker';
 
 /**
  * NO GOOGLE PLAY (Juan, 2026-11-04): the portfolio ships on iOS and the
  * web only, so the second badge is the WEB APP — Sound Shaper reaches
- * Android and the desktop through the browser, at its own subdomain — and
- * the third is its public GitHub repository.
+ * Android and the desktop through the browser, at its own subdomain.
  */
 export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
   shaper: {
     'app-store': 'https://apps.apple.com/app/id6823850995',
     web: 'https://soundshaper.juanevillam.com',
-    github: 'https://github.com/juanevillam/sound-shaper',
   },
   topper: {
     'app-store': null,
     web: null,
-    github: null,
   },
   booker: {
     'app-store': null,
     web: null,
-    github: null,
   },
 };
