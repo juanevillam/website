@@ -44,6 +44,7 @@ const en = {
   'launch.shaper': 'Sound Shaper is now on the web.',
   'launch.get': 'Open It',
   'store.web': 'Open on the',
+  'store.github': 'Source on',
   'hero.caption':
     "Hi, I'm Juan Villa and I love making software. I always say I like making software the way I like playing video games, and that's going for the platinum. I also think it's one of the closest things to magic in this simulation, because basically if you can imagine something and figure out how to build it, you can create some really, really cool things. And if you then pair that software you built with hardware, you can create things that are even cooler. As a fun fact about this page, I built it with a single challenge, and that was to make it as personal as possible. I didn't look at a single reference and, beyond giving it my own branding, I said: look, I'll record myself and that's it. So the page is like a movie: it's in video, it's in audio and it's subtitled too. And it makes me laugh because it's like a mini Horcrux of mine living here. It's designed to be as timeless as possible as the months and years go by, and whenever I see it I laugh thinking back to when I recorded it, because I'm not going to keep re-recording it all the time. On this page I'll show you what I'm up to, the things I like and that's it. Welcome.",
   'footer.caption':
@@ -264,6 +265,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'launch.shaper': 'Sound Shaper ya está en la web.',
     'launch.get': 'Ábrela',
     'store.web': 'Ábrela en la',
+    'store.github': 'Código en',
     'hero.caption':
       'Hola, yo soy Juan Villa y me encanta hacer software. Siempre digo que me gusta hacer software como me gusta jugar videojuegos, y eso es yendo por el platino. Además yo creo que es de las cosas más cercanas que hay a la magia en esta simulación, porque básicamente si te imaginas algo y encuentras la manera de hacerlo, puedes crear cosas bastante, bastante cool. Y si después ese software que hiciste lo unes con un hardware, puedes crear cosas incluso más cool. Y bueno, como dato curioso de esta página, la hice con un solo reto, y era que fuese lo más personal posible. No me vi ni una sola referencia y, aparte de que tenía que tener un branding muy mío, dije: mira, me grabo y listo. Entonces la página está como si fuese una película: está en video, está en audio y está subtitulada también. Y me da mucha risa porque es como si fuese un mini Horrocrux mío viviendo aquí. Entonces está diseñada para que sea lo más timeless posible a medida que pasan los meses y pasan los años, y cuando la veo me da risa de cuando la grabé, porque no la voy a estar grabando a cada rato. Y bueno, en esta página les voy a mostrar en qué ando metido, cosas que me gustan y listo. Entonces, bienvenidos.',
     'footer.caption':
@@ -469,6 +471,7 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'launch.shaper': 'Sound Shaper 现已推出网页版。',
     'launch.get': '打开',
     'store.web': '打开',
+    'store.github': '查看源码',
     'hero.caption':
       '嗨，我是 Juan Villa，我热爱做软件。我常说我喜欢像打电子游戏那样做软件，也就是冲着白金奖杯去。而且我觉得它是这个模拟世界里最接近魔法的东西，因为只要你能想象出来并找到实现的方法，就能创造出非常酷的事物。要是之后再把做出来的软件和硬件结合起来，还能创造出更酷的东西。关于这个网页有个有趣的小细节，我做它时只给自己定了一个挑战，就是尽可能做出最真实的个人风格。我一眼参考模板都没看，除了赋予它完全属于我的品牌风格之外，我对自己说：干脆把自己录下来吧。所以整个页面就像一部电影：有视频、有音频，还配了字幕。每次想到这都觉得很好笑，因为它就像我留在这里生活的一个小小魂器。它的设计尽可能经得起岁月考验，随着岁月流逝，每次看到它我都会想起录制时的有趣场景，毕竟我不会隔三差五重新录一遍。在这个页面里，我会向大家展示我正在忙什么、我喜欢的事物，仅此而已。欢迎你。',
     'footer.caption':

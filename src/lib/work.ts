@@ -30,7 +30,12 @@ export const PROJECTS: DeckItem[] = [
     clip: 'arcade.p1',
     image: { slot: 'arcade' },
     scene: '/media/arcade/cover.webp',
-    links: [],
+    links: [
+      {
+        label: 'GitHub',
+        href: 'https://github.com/juanevillam/space-explorer',
+      },
+    ],
   },
   {
     id: 'salvalo',

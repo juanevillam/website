@@ -5,7 +5,7 @@ own voice. Astro, static output, deployed on Cloudflare Pages. Its own repo
 since 2026-10-17 (`juanevillam/website`), extracted with its history from the
 private `juanevillam/portfolio` monorepo, where it was `apps/web`. It is
 cloned inside that monorepo's folder (gitignored there, pushed by its
-pre-push hook), next to `sound-shaper/` and `games/`.
+pre-push hook), next to `sound-shaper/` and `space-explorer/`.
 
 **LIVE SINCE 2026-10-17** at https://juanevillam.com — Cloudflare Pages
 project `juanevillam`, built from `main` on every push (`npm run build` →
@@ -21,7 +21,7 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   if `ssh-add -l` is empty — never `--no-gpg-sign`). Don't push unless asked.
 - `npm run dev` (dev server + the teleprompter's recorder), `npm run build`,
   `npm run typecheck` (`astro check`), `npm run narration` (the recording
-  checklist), `npm run arcade` (refresh Space Explorer from `../games/`),
+  checklist), `npm run arcade` (refresh Space Explorer from `../space-explorer/`),
   `npm run tridi` (refresh the Tridi robot's two motions — the walk and the jumping jacks — from `../../tridi/`, or
   `TRIDI_DIR`).
 - Easter eggs (`lib/eggs`, 2026-10-28). Space Explorer's ship is the

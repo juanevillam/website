@@ -6,7 +6,7 @@ import { fit, holdable, release, run } from './eggs';
  * DESTROYER across the foot — that PLAY the game rather than imitate it.
  *
  * Each scene runs a small copy of the game's own simulation
- * (../games/platanus-hack-26-venezuela-arcade/game.js), with its numbers
+ * (../space-explorer/game.js), with its numbers
  * and rules: the player's ship flies at the game's cruise speed, turns
  * with its eased yaw and pitch rates on a locked horizon, banks only as a
  * visual of its turn, and makes the game's own moves (the dash's

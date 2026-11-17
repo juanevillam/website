@@ -40,7 +40,7 @@ npm run build
 
 `npm run build` writes the static site to `dist/`. When upstream sibling repos
 change, `npm run arcade` refreshes the embedded Space Explorer cabinet from
-`../games/platanus-hack-26-venezuela-arcade/` and `npm run tridi` refreshes the
+`../space-explorer/` and `npm run tridi` refreshes the
 Unitree G1 motion data from `../../tridi/`.
 
 ## Narration and synced surfaces

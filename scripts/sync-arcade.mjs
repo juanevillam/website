@@ -1,7 +1,7 @@
 // Copies Space Explorer's SHIPPED build into the site: the game.js the
 // Platanus cabinet runs, and its cover. The game lives in its own repo
-// (juanevillam/platanus-hack-26-venezuela-arcade, cloned beside this one at
-// ../games/ in Juan's portfolio folder), which a Cloudflare build never sees
+// (juanevillam/space-explorer, cloned beside this one at
+// ../space-explorer/ in Juan's portfolio folder), which a Cloudflare build never sees
 // — so the copies are committed, and this script is how they are refreshed
 // after a new game release: npm run arcade (ARCADE_DIR points elsewhere).
 //
@@ -13,19 +13,22 @@
 // Phaser is vendored once beside it (public/arcade/phaser.min.js, 3.87.0 —
 // the version the cabinet loads from its CDN). Bump it only together with
 // the game.
-import { copyFileSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { transform } from 'esbuild';
+import sharp from 'sharp';
 
 const game = process.env.ARCADE_DIR
   ? new URL(`file://${process.env.ARCADE_DIR.replace(/\/?$/, '/')}`)
-  : new URL('../../games/platanus-hack-26-venezuela-arcade/', import.meta.url);
+  : new URL('../../space-explorer/', import.meta.url);
 const pub = new URL('../public/', import.meta.url);
 
 const source = readFileSync(new URL('game.js', game), 'utf8');
 const { code } = await transform(source, { minify: true, legalComments: 'none' });
 writeFileSync(new URL('arcade/game.js', pub), code);
 
-copyFileSync(new URL('cover.png', game), new URL('media/arcade/cover.png', pub));
+await sharp(new URL('cover.png', game).pathname)
+  .webp({ quality: 82 })
+  .toFile(new URL('media/arcade/cover.webp', pub).pathname);
 
-for (const to of ['arcade/game.js', 'media/arcade/cover.png'])
+for (const to of ['arcade/game.js', 'media/arcade/cover.webp'])
   console.log(to, statSync(new URL(to, pub)).size, 'bytes');
