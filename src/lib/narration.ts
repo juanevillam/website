@@ -258,7 +258,7 @@ export const SONGS: Record<
     title: 'DÁKITI',
     by: 'Bad Bunny, Jhayco',
     video: '/media/shaper/demo.mp4',
-    poster: '/media/shaper/demo-poster.jpg',
+    poster: '/media/shaper/demo.jpg',
     width: 590,
     height: 1278,
   },

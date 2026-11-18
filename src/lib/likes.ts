@@ -19,67 +19,46 @@ export type SpacePhoto = { id: string; name: string };
 
 /** Every space photo, in the order of the files. */
 const SPACE: SpacePhoto[] = [
-  {
-    id: 'a-poster-size-image-of-the-beautiful-barred-spiral-galaxy-ngc-1300',
-    name: 'NGC 1300',
-  },
-  { id: 'abell-1703-', name: 'Abell 1703' },
-  {
-    id: 'carina-nebula-jets-nir-cam-narrowband-filters',
-    name: 'Carina Nebula Jets',
-  },
-  { id: 'cas-a-nir-cam-image', name: 'Cassiopeia A' },
-  { id: 'ceers-crop-nir-cam-image', name: 'CEERS' },
+  { id: 'ngc-1300', name: 'NGC 1300' },
+  { id: 'abell-1703', name: 'Abell 1703' },
+  { id: 'carina-nebula-jets', name: 'Carina Nebula Jets' },
+  { id: 'cassiopeia-a', name: 'Cassiopeia A' },
+  { id: 'ceers', name: 'CEERS' },
   { id: 'cosmic-seahorse', name: 'Cosmic Seahorse' },
   { id: 'different-generations', name: 'Different Generations' },
-  {
-    id: 'extreme-star-cluster-bursts-into-life-in-new-hubble-image',
-    name: 'NGC 3603',
-  },
+  { id: 'ngc-3603', name: 'NGC 3603' },
   { id: 'galactic-gathering', name: 'Galactic Gathering' },
-  { id: 'galactic-wreckage-in-stephans-quintet', name: "Stephan's Quintet" },
-  { id: 'hubble-sees-galaxies-galore', name: 'Galaxies Galore' },
-  {
-    id: 'largest-ever-galaxy-portrait-stunning-hd-image-of-pinwheel-galaxy',
-    name: 'Pinwheel Galaxy',
-  },
+  { id: 'stephans-quintet', name: "Stephan's Quintet" },
+  { id: 'galaxies-galore', name: 'Galaxies Galore' },
+  { id: 'pinwheel-galaxy', name: 'Pinwheel Galaxy' },
   {
     id: 'new-stars-shed-light-on-the-past',
     name: 'New Stars Shed Light on the Past',
   },
   { id: 'ngc-1512-and-ngc-1510', name: 'NGC 1512 & NGC 1510' },
-  { id: 'nir-cams-view-of-ngc-6822', name: 'NGC 6822' },
-  {
-    id: 'out-of-this-whirl-the-whirlpool-galaxy-m51-and-companion-galaxy',
-    name: 'Whirlpool Galaxy',
-  },
-  {
-    id: 'pillars-of-creation-nir-cam-and-miri-composite-image',
-    name: 'Pillars of Creation',
-  },
-  { id: 'quasar-j0100-2802-nir-cam-image', name: 'Quasar J0100+2802' },
-  { id: 'revisiting-the-veil-nebula', name: 'Veil Nebula' },
-  { id: 'rho-ophiuchi-cloud-complex', name: 'Rho Ophiuchi' },
+  { id: 'ngc-6822', name: 'NGC 6822' },
+  { id: 'whirlpool-galaxy', name: 'Whirlpool Galaxy' },
+  { id: 'pillars-of-creation', name: 'Pillars of Creation' },
+  { id: 'quasar-j0100-2802', name: 'Quasar J0100+2802' },
+  { id: 'veil-nebula', name: 'Veil Nebula' },
+  { id: 'rho-ophiuchi', name: 'Rho Ophiuchi' },
   { id: 'seeing-triple', name: 'Seeing Triple' },
-  { id: 'spectacular-hubble-view-of-centaurus-a', name: 'Centaurus A' },
+  { id: 'centaurus-a', name: 'Centaurus A' },
   { id: 'spiral-elliptical-irregular', name: 'Spiral, Elliptical, Irregular' },
   { id: 'star-studded-cluster', name: 'Star-Studded Cluster' },
   {
     id: 'tapestry-of-blazing-starbirth',
     name: 'Tapestry of Blazing Starbirth',
   },
-  { id: 'the-crab-nebula', name: 'Crab Nebula' },
-  { id: 'the-exotic-stellar-population-of-westerlund-1', name: 'Westerlund 1' },
+  { id: 'crab-nebula', name: 'Crab Nebula' },
+  { id: 'westerlund-1', name: 'Westerlund 1' },
   {
-    id: 'webb-takes-a-stunning-star-filled-portrait-of-the-pillars-of-creation-full-view',
+    id: 'pillars-of-creation-full-view',
     name: 'Pillars of Creation, Full View',
   },
-  { id: 'westerlund-2-hubbles-25th-anniversary-image', name: 'Westerlund 2' },
-  {
-    id: 'young-stars-sculpt-gas-with-powerful-outflows',
-    name: 'Young Stars Sculpt Gas',
-  },
-  { id: 'zs7-environment-nic-cam-image', name: 'ZS7' },
+  { id: 'westerlund-2', name: 'Westerlund 2' },
+  { id: 'young-stars-sculpt-gas', name: 'Young Stars Sculpt Gas' },
+  { id: 'zs7', name: 'ZS7' },
 ];
 
 export const cosmosSrc = (p: SpacePhoto) => `/media/likes/cosmos/${p.id}.webp`;
@@ -128,7 +107,7 @@ export const LIKES: DeckItem[] = [
     id: 'cosmos',
     slug: 'cosmos',
     name: 'Cosmos',
-    meta: [['James Webb – Hubble']],
+    meta: [['James Webb'], ['Hubble']],
     // The photos are ESA's and NASA's: the telescopes' names take you to
     // their galleries, where every one of them is.
     body: {
@@ -169,7 +148,7 @@ export const LIKES: DeckItem[] = [
     id: 'photos',
     slug: 'photos',
     name: { k: 'likes.photos.name' },
-    meta: [[{ k: 'likes.photos.meta' }], ['@juanevillam']],
+    meta: [[{ k: 'likes.photos.meta' }], [{ k: 'likes.photos.meta2' }]],
     body: 'likes.photos.body',
     clip: 'likes.photos.body',
     image: { slot: 'photos' },

@@ -103,7 +103,7 @@ const ALL_EVENTS: DeckItem[] = [
       '/media/events/platanus-hack-caracas/team-mentor.jpg',
       // The team: it opens the left frame, ahead of the dinner (Juan,
       // 2026-10-27).
-      '/media/events/platanus-hack-caracas/team-selfie-2.jpg',
+      '/media/events/platanus-hack-caracas/team-selfie.jpg',
       // Saturday's dinner in Yummy's dining room: pabellón criollo.
       '/media/events/platanus-hack-caracas/dinner.jpg',
       '/media/events/platanus-hack-caracas/tridi-sketch.jpg',
@@ -191,8 +191,8 @@ const ALL_EVENTS: DeckItem[] = [
     clip: 'events.radio.body',
     // The interview on air first, then the goodbye photo.
     image: [
-      '/media/events/ok101-radio/on-air.mp4',
-      '/media/events/ok101-radio/good-bye.jpg',
+      '/media/events/ok-101-5-fm/on-air.mp4',
+      '/media/events/ok-101-5-fm/goodbye.jpg',
     ],
     links: [],
   },
@@ -232,15 +232,15 @@ const ALL_EVENTS: DeckItem[] = [
     // the photos with Juan in them, dealt across the two frames.
     image: [
       // Juan filming the team.
-      '/media/events/vibe-coding-hackathon/team-record.mp4',
+      '/media/events/alegria-hackathon/team-record.mp4',
       // The founder call with Pedro Vallenilla (Cashea).
-      '/media/events/vibe-coding-hackathon/founder-call.mp4',
+      '/media/events/alegria-hackathon/founder-call.mp4',
       // Juan at the photo stand in Yummy's offices, the purple motorcycle.
-      '/media/events/vibe-coding-hackathon/yummy-hq.jpg',
-      '/media/events/vibe-coding-hackathon/team-selfie.jpg',
-      '/media/events/vibe-coding-hackathon/team-coding.jpg',
+      '/media/events/alegria-hackathon/yummy-hq.jpg',
+      '/media/events/alegria-hackathon/team-selfie.jpg',
+      '/media/events/alegria-hackathon/team-coding.jpg',
       // Víctor Cárdenas's founder talk (Slash).
-      '/media/events/vibe-coding-hackathon/talk.jpg',
+      '/media/events/alegria-hackathon/talk.jpg',
     ],
     links: [],
   },

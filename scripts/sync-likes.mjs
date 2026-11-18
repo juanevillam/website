@@ -23,12 +23,43 @@ const pub = new URL('../public/media/likes/', import.meta.url).pathname;
 
 sharp.cache(false);
 const THUMB = 1000;
+const COSMOS_SLUGS = {
+  'a-poster-size-image-of-the-beautiful-barred-spiral-galaxy-ngc-1300':
+    'ngc-1300',
+  'abell-1703-': 'abell-1703',
+  'carina-nebula-jets-nir-cam-narrowband-filters': 'carina-nebula-jets',
+  'cas-a-nir-cam-image': 'cassiopeia-a',
+  'ceers-crop-nir-cam-image': 'ceers',
+  'extreme-star-cluster-bursts-into-life-in-new-hubble-image': 'ngc-3603',
+  'galactic-wreckage-in-stephans-quintet': 'stephans-quintet',
+  'hubble-sees-galaxies-galore': 'galaxies-galore',
+  'largest-ever-galaxy-portrait-stunning-hd-image-of-pinwheel-galaxy':
+    'pinwheel-galaxy',
+  'nir-cams-view-of-ngc-6822': 'ngc-6822',
+  'out-of-this-whirl-the-whirlpool-galaxy-m51-and-companion-galaxy':
+    'whirlpool-galaxy',
+  'pillars-of-creation-nir-cam-and-miri-composite-image': 'pillars-of-creation',
+  'quasar-j0100-2802-nir-cam-image': 'quasar-j0100-2802',
+  'revisiting-the-veil-nebula': 'veil-nebula',
+  'rho-ophiuchi-cloud-complex': 'rho-ophiuchi',
+  'spectacular-hubble-view-of-centaurus-a': 'centaurus-a',
+  'the-crab-nebula': 'crab-nebula',
+  'the-exotic-stellar-population-of-westerlund-1': 'westerlund-1',
+  'webb-takes-a-stunning-star-filled-portrait-of-the-pillars-of-creation-full-view':
+    'pillars-of-creation-full-view',
+  'westerlund-2-hubbles-25th-anniversary-image': 'westerlund-2',
+  'young-stars-sculpt-gas-with-powerful-outflows': 'young-stars-sculpt-gas',
+  'zs7-environment-nic-cam-image': 'zs7',
+};
+
 const SETS = [
-  // The file's name, less its folder's prefix, is the picture's id in
-  // lib/likes ("cosmos-the-crab-nebula.tif" → the-crab-nebula).
+  // The file's name, mapped to its canonical kebab-case slug in lib/likes.
   {
     dir: 'cosmos',
-    name: f => f.replace(/^cosmos-/, '').replace(/\.tiff?$/, ''),
+    name: f => {
+      const raw = f.replace(/^cosmos-/, '').replace(/\.tiff?$/, '');
+      return COSMOS_SLUGS[raw] ?? raw;
+    },
   },
 ];
 
