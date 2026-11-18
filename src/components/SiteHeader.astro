@@ -275,36 +275,38 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
   // the way — decks resetting, the narrator gliding past, the stories
   // walking backwards. Drops any #section the URL picked up. Anywhere
   // else it is a plain link; a modified click (new tab) is left alone.
-  document.querySelector('.mark-link')?.addEventListener('click', event => {
-    const e = event as MouseEvent;
-    if (location.pathname !== '/' || e.metaKey || e.ctrlKey || e.shiftKey || e.button)
-      return;
-    e.preventDefault();
-    if (location.hash) history.replaceState(null, '', '/');
-    const root = document.documentElement;
-    const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
-    root.classList.add('is-jumping');
-    const dip = dur('micro');
-    // The hero's own entrance, wound back while the page is dark, so the
-    // wordmark ARRIVES the way it did on the first load rather than
-    // simply being there.
-    const hero = [...document.querySelectorAll<HTMLElement>('#top [data-reveal]')];
-    setTimeout(() => {
-      hero.forEach(el => {
-        el.style.transition = 'none';
-        el.classList.remove('is-in');
-      });
-      jump();
-      void document.body.offsetWidth;
-      hero.forEach(el => (el.style.transition = ''));
-      // A timer, not a frame: a page that stops drawing (a hidden tab)
-      // must never be left dipped.
+  document.querySelectorAll('.mark-link, .footer-home-link').forEach(link => {
+    link.addEventListener('click', event => {
+      const e = event as MouseEvent;
+      if (location.pathname !== '/' || e.metaKey || e.ctrlKey || e.shiftKey || e.button)
+        return;
+      e.preventDefault();
+      if (location.hash) history.replaceState(null, '', '/');
+      const root = document.documentElement;
+      const jump = () => window.scrollTo({ top: 0, behavior: 'instant' });
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return jump();
+      root.classList.add('is-jumping');
+      const dip = dur('micro');
+      // The hero's own entrance, wound back while the page is dark, so the
+      // wordmark ARRIVES the way it did on the first load rather than
+      // simply being there.
+      const hero = [...document.querySelectorAll<HTMLElement>('#top [data-reveal]')];
       setTimeout(() => {
-        root.classList.remove('is-jumping');
-        hero.forEach(el => el.classList.add('is-in'));
-      }, 16);
-    }, dip);
+        hero.forEach(el => {
+          el.style.transition = 'none';
+          el.classList.remove('is-in');
+        });
+        jump();
+        void document.body.offsetWidth;
+        hero.forEach(el => (el.style.transition = ''));
+        // A timer, not a frame: a page that stops drawing (a hidden tab)
+        // must never be left dipped.
+        setTimeout(() => {
+          root.classList.remove('is-jumping');
+          hero.forEach(el => el.classList.add('is-in'));
+        }, 16);
+      }, dip);
+    });
   });
 
   // The Konami code — ↑ ↑ ↓ ↓ ← → ← → B A — from any page, the old way

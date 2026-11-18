@@ -244,7 +244,8 @@ const en = {
   'shape.autoDjMode.sound': 'This Song',
   'shape.autoDjMode.all': 'All Songs',
   'likes.photos.name': 'Photos',
-  'likes.photos.meta': 'Personal Archive',
+  'likes.photos.meta': 'Life',
+  'likes.photos.meta2': 'Travels',
   'likes.photos.body':
     'I stopped posting on Instagram to keep my photos and travel memories here in my own place, in my own style. Each post holds the moments, places and stories I want to share — without algorithms or compressed feeds. Unlock the archive with your name and email to browse the posts, leave a like or write a comment.',
   'photos.posts': 'posts',
@@ -479,7 +480,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.autoDjMode.sound': 'Esta canción',
     'shape.autoDjMode.all': 'Todas',
     'likes.photos.name': 'Fotos',
-    'likes.photos.meta': 'Archivo personal',
+    'likes.photos.meta': 'Vida',
+    'likes.photos.meta2': 'Viajes',
     'likes.photos.body':
       'Dejé de publicar en Instagram para guardar mis fotos y recuerdos de viajes aquí en mi propio sitio y a mi estilo. Cada publicación reúne los momentos, lugares e historias que quiero compartir, sin algoritmos ni feeds comprimidos. Desbloquea el archivo con tu nombre y correo para ver los posts, dar like o dejar un comentario.',
     'photos.posts': 'publicaciones',
@@ -703,7 +705,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shape.autoDjMode.sound': '当前歌曲',
     'shape.autoDjMode.all': '所有歌曲',
     'likes.photos.name': '照片',
-    'likes.photos.meta': '个人相册',
+    'likes.photos.meta': '生活',
+    'likes.photos.meta2': '旅行',
     'likes.photos.body':
       '我不再在 Instagram 上发帖，而是把我的照片和旅行记忆留在这里——我自己的网站、我自己的风格。每条动态都记录着我想分享的时刻、地点与故事，没有算法，也没有画质压缩。输入你的姓名和邮箱即可解锁相册，浏览动态、点赞或发表评论。',
     'photos.posts': '帖子',

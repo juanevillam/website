@@ -513,7 +513,7 @@ const groups = [
     object-fit: cover;
     filter: blur(48px) saturate(0.9) brightness(0.45);
     opacity: 0;
-    transition: opacity var(--dur-settle) var(--ease);
+    transition: opacity var(--dur-quick) var(--ease);
   }
 
   /* A tint, not a colour: the list's ground barely changes with a song. */
@@ -571,7 +571,7 @@ const groups = [
     display: block;
     object-fit: contain;
     opacity: 0;
-    transition: opacity var(--dur-settle) var(--ease);
+    transition: opacity var(--dur-quick) var(--ease);
   }
 
   /* Its own stacking context, so the front wash's z-index stays under
@@ -591,7 +591,7 @@ const groups = [
     inset: 0;
     opacity: 0;
     filter: brightness(0.55);
-    transition: opacity 420ms ease-in-out 420ms;
+    transition: opacity 280ms ease-in-out 280ms;
   }
 
   .wash.is-on {
@@ -608,7 +608,7 @@ const groups = [
     display: block;
     object-fit: cover;
     transform: scale(1.2);
-    filter: blur(28px);
+    filter: blur(28px) saturate(1.22);
   }
 
   /* A turning copy: a square big enough to cover the column at every
@@ -641,7 +641,7 @@ const groups = [
     height: 100%;
     display: block;
     object-fit: cover;
-    filter: blur(calc(var(--side) * 0.047));
+    filter: blur(calc(var(--side) * 0.047)) saturate(1.3);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -2193,11 +2193,11 @@ const groups = [
   }
 
   /* In and out on one fade, the dark behind it with it; the room settles in
-     from a touch smaller, matching PhotoViewer's 450ms transition. */
+     from a touch smaller, matching PhotoViewer's `--dur-turn` transition. */
   .songs-full,
   .songs-full::backdrop {
     opacity: 0;
-    transition: opacity 450ms var(--ease);
+    transition: opacity var(--dur-turn) var(--ease);
   }
 
   .songs-full.is-shown,
@@ -2207,7 +2207,7 @@ const groups = [
 
   .songs-full .full-room {
     scale: 0.96;
-    transition: scale 450ms var(--ease);
+    transition: scale var(--dur-turn) var(--ease);
   }
 
   .songs-full.is-shown .full-room {
@@ -3098,7 +3098,7 @@ const groups = [
       move();
       if (was && audio.paused) audio.play().catch(() => {});
     };
-    const FADE_FULL = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450;
+    const FADE_FULL = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 340;
     let shuttingFull = 0;
     let cardStandIn: HTMLElement | null = null;
     const openFull = (from: HTMLButtonElement) => {

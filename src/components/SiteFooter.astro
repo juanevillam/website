@@ -59,7 +59,7 @@ const SOCIAL = [
         Juan in the words' column, More of Me where a section puts its
         screen. */}
     <div class="lead" data-scene-at="0.2">
-      <h2 class="title">juanevillam</h2>
+      <h2 class="title"><a href="/" class="footer-home-link">juanevillam</a></h2>
       <ul class="social">
         {SOCIAL.map(({ name, href }) => (
           <li>
@@ -200,6 +200,18 @@ const SOCIAL = [
 
   .social a {
     color: var(--ink);
+  }
+
+  .title .footer-home-link {
+    font: inherit;
+    color: var(--ink);
+    text-decoration: none;
+    transition: opacity var(--hover);
+  }
+
+  .title .footer-home-link:hover {
+    color: var(--ink);
+    opacity: 0.72;
   }
 
   /* The narrator closes the name's block, one step under Instagram,

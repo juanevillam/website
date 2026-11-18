@@ -1133,12 +1133,11 @@ const voiced = decks.flat().some(c => c.paras.some(k => clipFor(k)));
         ghost.style.borderRadius = unscaled(goal.borderRadius, scale);
         ghost.style.boxShadow = 'none';
         // The last card's phone lands on the welcome's, a DIFFERENT
-        // screen: that hand-over is a cross-fade, so it takes `quick`.
-        const same = a.getAttribute('src') === b.getAttribute('src');
+        // screen: that hand-over is a quick dissolve, so it takes `micro`.
         ghost
           .animate(
             { opacity: [1, 0] },
-            { duration: dur(same ? 'micro' : 'quick'), easing: 'linear' }
+            { duration: dur('micro'), easing: 'linear' }
           )
           .finished.finally(() => ghost.remove());
       };

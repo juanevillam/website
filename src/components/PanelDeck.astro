@@ -191,23 +191,25 @@ for (const p of items)
               <h3 class="name" data-deck-part="text" style="--i: 1">
                 {typeof p.name === 'string' ? p.name : <T k={p.name.k} />}<CopyLink path={pathOf(p)} />
               </h3>
-              <p class="label meta" data-deck-part="text" style="--i: 2">
-                {p.meta.map((group, g) => (
-                  <>
-                    {g > 0 && ' · '}
-                    {group.map((part, n) => (
-                      <>
-                        {n > 0 && ' – '}
-                        {typeof part === 'string' ? part : <T k={part.k} />}
-                      </>
-                    ))}
-                  </>
-                ))}
-              </p>
+              {p.meta.length > 0 && (
+                <p class="label meta" data-deck-part="text" style="--i: 2">
+                  {p.meta.map((group, g) => (
+                    <>
+                      {g > 0 && ' · '}
+                      {group.map((part, n) => (
+                        <>
+                          {n > 0 && ' – '}
+                          {typeof part === 'string' ? part : <T k={part.k} />}
+                        </>
+                      ))}
+                    </>
+                  ))}
+                </p>
+              )}
               <p
                 class="body"
                 data-deck-part="text"
-                style="--i: 3"
+                style={`--i: ${p.meta.length > 0 ? 3 : 2}`}
                 data-cap
                 data-cap-phone="3"
                 data-narr-para
@@ -828,8 +830,8 @@ for (const p of items)
   }
 
   /* Each picture is a layer: whole, centred, over a still blur of
-     itself. The layer showing is `.is-on`; the hand-over is a cross-fade
-     at the ladder's `settle` (2026-10-13 — two beats read as slow).
+     itself. The layer showing is `.is-on`; the hand-over is a crisp
+     iOS-paced cross-fade at the ladder's `quick` (220ms).
      Layers that have finished fading out go `visibility: hidden` so the
      compositor never blurs or composites 17 hidden `.fill` backdrops behind
      the active one. */
@@ -839,15 +841,15 @@ for (const p of items)
     opacity: 0;
     visibility: hidden;
     transition:
-      opacity var(--dur-settle) linear,
-      visibility 0s linear var(--dur-settle);
+      opacity var(--dur-quick) linear,
+      visibility 0s linear var(--dur-quick);
   }
 
   .layer.is-on {
     opacity: 1;
     visibility: visible;
     transition:
-      opacity var(--dur-settle) linear,
+      opacity var(--dur-quick) linear,
       visibility 0s linear 0s;
   }
 
@@ -1247,7 +1249,7 @@ for (const p of items)
     // right frame turns a beat after the left. A video alone in its frame
     // loops. With reduced motion the first picture stands still — a video
     // as its poster.
-    const BEAT = dur('settle');
+    const BEAT = 600;
     const still = matchMedia('(prefers-reduced-motion: reduce)');
     const isPhone = matchMedia('(max-width: 48rem)').matches;
     let seen = false;

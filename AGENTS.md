@@ -177,11 +177,10 @@ runbook in the portfolio's `AGENTS.md`, which lists these two files.
   `.is-dismissed` / `.is-open`) that transitions `opacity` (and `scale` where
   appropriate) on `--dur-quick` or `--dur-turn` (`var(--ease)`).
 - **Every media frame uses the site's `rem` tokens (invariant under browser zoom).** Corner radius is always in `rem` (`--media-radius: 2.5rem` / `--media-radius-flat: 1.25rem` on desktop, `2rem` / `1rem` on mobile `<= 48rem` for screens and cards; `--nar-video-r: 0.75rem` on desktop and `0.625rem` on mobile for the compact `9:16` narration video companion, matching the Songs player's tighter web borders rather than an iOS screen bezel; never `svh`/`vw`, which invert under browser zoom) — paired with `border: 1px solid var(--hairline)`, `background: var(--surface)` and the two-layer shadow (`0 2rem 4rem rgba(0, 0, 0, 0.55), 0 0.5rem 1.25rem rgba(0, 0, 0, 0.4)`).
-- **Media hand-overs cross-fade linearly on `--dur-settle`.** Whether switching
-  photos in `PanelDeck` or switching `.mp4` clips in `NarrationPlayer`, the
-  leaving and arriving layers use `transition: opacity var(--dur-settle) linear`
-  (triggered on `requestAnimationFrame` after the frame is decoded) so the two
-  always add up to 1 and never flash or glitch.
+- **Media hand-overs cross-fade linearly on `--dur-quick`.** Whether switching
+  photos in `PanelDeck`, `PhotosFeed` or `PhotoViewer`, the leaving and arriving
+  layers use `transition: opacity var(--dur-quick) linear` (`220ms`, matching
+  iOS's `duration.base`) so the two always add up to 1 and never lag or flash.
 - **Scroll-driven floating elements never carry a CSS `transform` transition on
   desktop.** `[data-narrator]` and `[data-narr-video]` are positioned every
   frame by `requestAnimationFrame`; a CSS `transform` transition fights the

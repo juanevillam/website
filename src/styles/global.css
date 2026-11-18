@@ -10,22 +10,22 @@
 @property --dur-micro {
   syntax: '<time>';
   inherits: true;
-  initial-value: 150ms;
+  initial-value: 140ms;
 }
 @property --dur-quick {
   syntax: '<time>';
   inherits: true;
-  initial-value: 300ms;
+  initial-value: 220ms;
 }
 @property --dur-turn {
   syntax: '<time>';
   inherits: true;
-  initial-value: 450ms;
+  initial-value: 340ms;
 }
 @property --dur-settle {
   syntax: '<time>';
   inherits: true;
-  initial-value: 600ms;
+  initial-value: 450ms;
 }
 
 :root {
@@ -63,25 +63,22 @@
      fresh fraction of the beat — CSS takes the token, a script reads it
      (lib/motion.ts), so the two can't drift apart:
 
-       micro   150ms  words fading in or out, a ghost's dissolve
-       hover   300ms  a hover or a state's colour (`--hover`): the quick
+       micro   140ms  words fading in or out, a ghost's dissolve, press squash
+       hover   220ms  a hover or a state's colour (`--hover`): the quick
                       rung on a gentle curve, since `--ease` lands most of
-                      its change in the first frames and a 150ms colour
-                      change on it read as no transition at all (Juan,
-                      2026-11-04, "like focus does")
-       quick   300ms  anything LEAVING; a deck switching apps; small UI
-       turn    450ms  a picture ARRIVING; a phone flying; the light moving
-       settle  600ms  a picture's last drift into place; a photo's
-                      cross-fade; a pill growing
-       ambient 1.2s   the room's colour changing — felt, not watched
+                      its change in the first frames
+       quick   220ms  a photo or card cross-fading; anything LEAVING; small UI
+       turn    340ms  a modal or sheet arriving; a phone flying; the light moving
+       settle  450ms  a scroll entrance (`[data-reveal]`); a pill growing
+       ambient 900ms  the room's colour changing — felt, not watched
 
      Leaving is always quicker than arriving, so the stage clears before
      the next thing lands. One curve for every motion: `--ease`. */
-  --beat: 600ms;
+  --beat: 450ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-micro: calc(var(--beat) / 4);
-  --dur-quick: calc(var(--beat) / 2);
-  --dur-turn: calc(var(--beat) * 0.75);
+  --dur-micro: 140ms;
+  --dur-quick: 220ms;
+  --dur-turn: 340ms;
   --dur-settle: var(--beat);
   --dur-ambient: calc(var(--beat) * 2);
   /* A hover is a fade, not a motion: the quick rung on CSS's own `ease`. */
@@ -210,10 +207,7 @@
        (the screen's width less its 1.25rem gutters), which is what More
        Work stood at on every phone before. */
     --screen-ratio-m: 4 / 5;
-    --screen-max-m: max(
-      9rem,
-      calc(100svh - var(--media-top-m) - 22.5rem)
-    );
+    --screen-max-m: max(9rem, calc(100svh - var(--media-top-m) - 22.5rem));
   }
 }
 

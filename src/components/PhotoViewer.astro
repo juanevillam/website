@@ -128,7 +128,7 @@ import T from './T.astro';
       front = 1 - front;
       setTimeout(() => {
         if (mine === turn) clear(was);
-      }, 700);
+      }, 260);
     };
     if (item.video || (back.img.complete && back.img.naturalWidth)) {
       back.img.classList.add('is-loaded');
@@ -175,7 +175,7 @@ import T from './T.astro';
     dialog.classList.remove('is-shown');
     shutting = window.setTimeout(() => dialog.close(), FADE);
   };
-  const FADE = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450;
+  const FADE = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 340;
   // Esc fades it too.
   dialog.addEventListener('cancel', e => {
     e.preventDefault();
@@ -245,11 +245,11 @@ import T from './T.astro';
   }
 
   /* In and out on one fade, the dark behind it with it; the picture
-     settles in from a touch smaller (the script's 450 ms). */
+     settles in from a touch smaller (the ladder's `--dur-turn`). */
   .viewer,
   .viewer::backdrop {
     opacity: 0;
-    transition: opacity 450ms var(--ease);
+    transition: opacity var(--dur-turn) var(--ease);
   }
 
   .viewer.is-shown,
@@ -259,7 +259,7 @@ import T from './T.astro';
 
   .viewer .room {
     scale: 0.96;
-    transition: scale 450ms var(--ease);
+    transition: scale var(--dur-turn) var(--ease);
   }
 
   .viewer.is-shown .room {
@@ -311,7 +311,7 @@ import T from './T.astro';
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity var(--dur-settle) linear;
+    transition: opacity var(--dur-quick) linear;
   }
 
   .layer.is-on {
@@ -341,7 +341,7 @@ import T from './T.astro';
 
   /* A picture that arrives after its turn fades in rather than popping. */
   img.full {
-    transition: opacity var(--dur-settle) linear;
+    transition: opacity var(--dur-quick) linear;
   }
 
   img.full:not(.is-loaded) {

@@ -44,7 +44,14 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
   <header class="ig-head">
     <div class="ig-ident">
       <div class="ig-avatar" aria-hidden="true">
-        <span>jv</span>
+        <img
+          src="/media/likes/photos/profile.webp"
+          alt=""
+          width="80"
+          height="80"
+          decoding="async"
+          draggable="false"
+        />
       </div>
       <div class="ig-handle-row">
         <span class="ig-handle">juanevillam</span>
@@ -173,32 +180,38 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     <div class="ig-detail is-hidden" data-panel-view="detail">
       <div class="post-stage">
         <div class="post-media" data-post-media>
-          <img
-            class="media-fill"
-            data-media-fill
-            alt=""
-            decoding="async"
-            draggable="false"
-          />
-          <img
-            class="media-main"
-            data-media-img
-            alt=""
-            decoding="async"
-            draggable="false"
-          />
-          <video
-            class="media-main is-hidden"
-            data-media-video
-            playsinline
-            loop
-            preload="metadata"
-          ></video>
+          {
+            [0, 1].map(() => (
+              <div class="media-layer" data-media-layer>
+                <img
+                  class="media-fill"
+                  data-media-fill
+                  alt=""
+                  decoding="async"
+                  draggable="false"
+                />
+                <img
+                  class="media-main"
+                  data-media-img
+                  alt=""
+                  decoding="async"
+                  draggable="false"
+                />
+                <video
+                  class="media-main is-hidden"
+                  data-media-video
+                  playsinline
+                  loop
+                  preload="metadata"
+                />
+              </div>
+            ))
+          }
 
           <!-- Floating hearts container (spawns where user clicks/taps) -->
           <div class="hearts-layer" data-hearts-layer aria-hidden="true"></div>
 
-          <span class="slide-count" data-slide-count>1 / 1</span>
+          <span class="slide-count" data-slide-count>1/1</span>
 
           <button
             type="button"
@@ -514,12 +527,16 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     border: 1px solid var(--hairline);
     background: var(--surface);
     box-shadow: inset 0 0.75px 0 rgb(255 255 255 / 0.16);
+    overflow: hidden;
     display: grid;
     place-items: center;
-    font-weight: 800;
-    font-size: 0.8125rem;
-    letter-spacing: -0.04em;
-    color: var(--ink);
+  }
+
+  .ig-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .ig-handle-row {
@@ -703,6 +720,11 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     transform: scale(1.03);
   }
 
+  .ig-tile:hover .tile-hover,
+  .ig-tile:focus-visible .tile-hover {
+    opacity: 1;
+  }
+
   .tile-badge {
     position: absolute;
     top: 0.55rem;
@@ -725,12 +747,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     opacity: 0;
+    pointer-events: none;
     transition: opacity var(--hover);
-  }
-
-  .ig-tile:hover .tile-hover,
-  .ig-tile:focus-visible .tile-hover {
-    opacity: 1;
   }
 
   .tile-stat {
@@ -763,6 +781,26 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     border-right: 1px solid var(--hairline);
   }
 
+  .media-layer {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-quick) linear,
+      visibility 0s linear var(--dur-quick);
+  }
+
+  .ig-detail:not(.is-hidden) .media-layer.is-on {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity var(--dur-quick) linear,
+      visibility 0s linear 0s;
+  }
+
   .media-fill,
   .media-main {
     position: absolute;
@@ -779,7 +817,6 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 
   .media-main {
     object-fit: contain;
-    transition: opacity var(--dur-settle) linear;
   }
 
   .media-main.is-hidden {
@@ -792,17 +829,25 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     top: 0.625rem;
     right: 0.625rem;
     z-index: 2;
-    padding: 0.25rem 0.625rem;
+    padding: 0.1875rem 0.5rem;
     border-radius: 999px;
     border: 1px solid var(--hairline);
     background: color-mix(in srgb, var(--surface) 82%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: 0.65rem;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
     white-space: nowrap;
     color: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .slide-count.is-shown {
+    opacity: 1;
   }
 
   /* Same muted arrow recipe as Events / PanelDeck `.photo-step`:
@@ -886,26 +931,52 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     margin-left: -1.625rem;
     margin-top: -1.625rem;
     color: var(--ink);
+    rotate: var(--rot, 0deg);
+    will-change: translate, scale, opacity;
     filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.65));
-    animation: heart-float 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation:
+      heart-rise 820ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+      heart-scale 820ms forwards,
+      heart-fade 820ms forwards;
   }
 
-  @keyframes heart-float {
+  @keyframes heart-rise {
+    0% {
+      translate: 0 6px;
+    }
+    100% {
+      translate: var(--dx, 0px) -58px;
+    }
+  }
+
+  @keyframes heart-scale {
+    0% {
+      scale: 0.28;
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    24% {
+      scale: 1.1;
+      animation-timing-function: cubic-bezier(0.33, 0, 0.67, 1);
+    }
+    100% {
+      scale: 0.86;
+    }
+  }
+
+  @keyframes heart-fade {
     0% {
       opacity: 0;
-      transform: translate(0, 6px) scale(0.25) rotate(var(--rot, 0deg));
+      animation-timing-function: ease-out;
     }
-    28% {
+    14% {
       opacity: 1;
-      transform: translate(0, -4px) scale(1.18) rotate(var(--rot, 0deg));
     }
-    55% {
+    58% {
       opacity: 1;
-      transform: translate(var(--dx, 0px), -18px) scale(0.98) rotate(var(--rot, 0deg));
+      animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
     }
     100% {
       opacity: 0;
-      transform: translate(var(--dx, 0px), -42px) scale(0.82) rotate(var(--rot, 0deg));
     }
   }
 
@@ -1391,9 +1462,12 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     const gateError = root.querySelector<HTMLElement>('[data-gate-error]')!;
 
     const mediaStage = root.querySelector<HTMLElement>('[data-post-media]')!;
-    const mediaFill = root.querySelector<HTMLImageElement>('[data-media-fill]')!;
-    const mediaImg = root.querySelector<HTMLImageElement>('[data-media-img]')!;
-    const mediaVideo = root.querySelector<HTMLVideoElement>('[data-media-video]')!;
+    const mediaLayers = [...root.querySelectorAll<HTMLElement>('[data-media-layer]')].map(el => ({
+      el,
+      fill: el.querySelector<HTMLImageElement>('[data-media-fill]')!,
+      img: el.querySelector<HTMLImageElement>('[data-media-img]')!,
+      video: el.querySelector<HTMLVideoElement>('[data-media-video]')!,
+    }));
     const mediaMuteBtn = root.querySelector<HTMLButtonElement>('[data-media-mute]')!;
     const slideCountEl = root.querySelector<HTMLElement>('[data-slide-count]')!;
     const stepBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-media-step]')];
@@ -1471,7 +1545,28 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 
     let activePostIdx = 0;
     let activeMediaIdx = 0;
+    let frontLayer = 0;
+    let mediaTurn = 0;
+    let slideCountTimer = 0;
     let videoMuted = false;
+
+    const pauseAllVideos = () => {
+      for (const l of mediaLayers) l.video.pause();
+    };
+
+    const flashSlideCount = () => {
+      const post = posts[activePostIdx];
+      if (!post || post.media.length <= 1) {
+        clearTimeout(slideCountTimer);
+        slideCountEl.classList.remove('is-shown');
+        return;
+      }
+      slideCountEl.classList.add('is-shown');
+      clearTimeout(slideCountTimer);
+      slideCountTimer = window.setTimeout(() => {
+        slideCountEl.classList.remove('is-shown');
+      }, 1600);
+    };
 
     const syncTotalsAndTiles = () => {
       let total = 0;
@@ -1495,7 +1590,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       const unlocked = Boolean(visitor?.name && visitor?.email);
       root.classList.toggle('is-locked', !unlocked);
       if (!unlocked) {
-        mediaVideo.pause();
+        pauseAllVideos();
       }
     };
 
@@ -1510,40 +1605,71 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       if (scene) cardEl.setAttribute('data-scene', scene);
     };
 
-    const renderMedia = () => {
+    const renderMedia = (showCounter = false) => {
       const post = posts[activePostIdx];
       const src = post.media[activeMediaIdx];
       const isVid = src.endsWith('.mp4');
       const poster = posterFor(src);
 
       syncSceneLight();
-      mediaFill.src = poster;
+
+      const mine = ++mediaTurn;
+      const back = mediaLayers[1 - frontLayer];
+      const was = mediaLayers[frontLayer];
+
+      back.fill.src = poster;
       if (isVid) {
-        mediaImg.classList.add('is-hidden');
-        mediaVideo.classList.remove('is-hidden');
-        if (mediaVideo.getAttribute('src') !== src) {
-          mediaVideo.src = src;
+        back.img.classList.add('is-hidden');
+        back.video.classList.remove('is-hidden');
+        if (back.video.getAttribute('src') !== src) {
+          back.video.src = src;
         }
-        mediaVideo.muted = videoMuted;
+        back.video.muted = videoMuted;
         mediaMuteBtn.classList.remove('is-hidden');
         mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
-        mediaVideo.play().catch(() => {
-          mediaVideo.muted = true;
+        back.video.play().catch(() => {
+          back.video.muted = true;
           mediaMuteBtn.classList.remove('is-unmuted');
-          mediaVideo.play().catch(() => {});
+          back.video.play().catch(() => {});
         });
       } else {
-        mediaVideo.pause();
-        mediaVideo.classList.add('is-hidden');
+        back.video.pause();
+        back.video.classList.add('is-hidden');
         mediaMuteBtn.classList.add('is-hidden');
-        mediaImg.src = src;
-        mediaImg.alt = `${post.location} (${activeMediaIdx + 1}/${post.media.length})`;
-        mediaImg.classList.remove('is-hidden');
+        back.img.onload = null;
+        back.img.src = src;
+        back.img.alt = `${post.location} (${activeMediaIdx + 1}/${post.media.length})`;
+        back.img.classList.remove('is-hidden');
+      }
+
+      let revealed = false;
+      const reveal = () => {
+        if (mine !== mediaTurn || revealed) return;
+        revealed = true;
+        was.el.classList.remove('is-on');
+        back.el.classList.add('is-on');
+        frontLayer = 1 - frontLayer;
+        setTimeout(() => {
+          if (mine === mediaTurn) was.video.pause();
+        }, 250);
+      };
+
+      if (isVid || (back.img.complete && back.img.naturalWidth)) {
+        reveal();
+      } else {
+        back.img.onload = () => reveal();
+        setTimeout(reveal, 1200);
       }
 
       const many = post.media.length > 1;
-      slideCountEl.textContent = `${activeMediaIdx + 1} / ${post.media.length}`;
+      slideCountEl.textContent = `${activeMediaIdx + 1}/${post.media.length}`;
       slideCountEl.classList.toggle('is-hidden', !many);
+      if (showCounter) {
+        flashSlideCount();
+      } else {
+        clearTimeout(slideCountTimer);
+        slideCountEl.classList.remove('is-shown');
+      }
       for (const btn of stepBtns) btn.classList.toggle('is-hidden', !many);
     };
 
@@ -1631,7 +1757,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
         btn.setAttribute('aria-pressed', String(on));
       }
       if (isGrid) {
-        mediaVideo.pause();
+        pauseAllVideos();
         if (cardEl && posts[0]?.scene) {
           cardEl.setAttribute('data-scene', posts[0].scene);
         }
@@ -1749,7 +1875,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
         activeMediaIdx =
           ((activeMediaIdx + delta) % post.media.length + post.media.length) %
           post.media.length;
-        renderMedia();
+        renderMedia(true);
       });
     }
 
@@ -1779,7 +1905,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
           activeMediaIdx =
             ((activeMediaIdx + delta) % post.media.length + post.media.length) %
             post.media.length;
-          renderMedia();
+          renderMedia(true);
         }
       },
       { passive: true },
@@ -1794,7 +1920,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 
     mediaMuteBtn.addEventListener('click', () => {
       videoMuted = !videoMuted;
-      mediaVideo.muted = videoMuted;
+      for (const l of mediaLayers) l.video.muted = videoMuted;
       mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
     });
 
