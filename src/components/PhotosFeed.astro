@@ -676,7 +676,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 
   .ig-grid-wrap {
     overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
     padding: 2px;
   }
 
@@ -759,6 +761,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
   }
 
   /* ---------- post detail view ---------- */
+  /* Shares and hairline divider match SongsPlayer, Sound Shaper Web, and
+     Book Highlighter: media leads at 5fr, side column takes 4fr, meeting at
+     a sharp 1px var(--hairline) border on the trailing column. */
   .ig-detail {
     display: flex;
     min-height: 0;
@@ -768,17 +773,19 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 1.22fr 1fr;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+    grid-template-rows: minmax(0, 1fr);
     background: var(--ground);
   }
 
   .post-media {
     position: relative;
+    min-width: 0;
+    min-height: 0;
     background: var(--ground);
     overflow: hidden;
     display: grid;
     place-items: center;
-    border-right: 1px solid var(--hairline);
   }
 
   .media-layer {
@@ -812,7 +819,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
   .media-fill {
     object-fit: cover;
     transform: scale(1.18);
-    filter: blur(26px) brightness(0.48);
+    filter: blur(28px) saturate(1.22) brightness(0.55);
   }
 
   .media-main {
@@ -984,8 +991,11 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
   .post-side {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     min-height: 0;
+    border-left: 1px solid var(--hairline);
     background: var(--surface);
+    container-type: inline-size;
   }
 
   .post-head {
@@ -996,6 +1006,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     gap: 0.5rem;
     padding: 0.5rem 0.875rem;
     border-bottom: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .post-loc {
@@ -1017,7 +1030,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
     padding: 0.625rem 0.875rem;
     display: flex;
     flex-direction: column;
@@ -1384,13 +1399,13 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     }
 
     .post-stage {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1.2fr 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 5fr) minmax(0, 4fr);
     }
 
-    .post-media {
-      border-right: 0;
-      border-bottom: 1px solid var(--hairline);
+    .post-side {
+      border-left: 0;
+      border-top: 1px solid var(--hairline);
     }
 
     .post-head {
