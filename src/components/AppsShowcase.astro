@@ -525,39 +525,6 @@ const focusPath =
     max-width: none;
   }
 
-  /* Song cue pill (DÁKITI in Sound Shaper) */
-  .song-cue {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    align-self: flex-start;
-    height: var(--float-h);
-    margin-top: 1rem;
-    padding: 0 1rem 0 0.875rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    color: var(--ink);
-    font: inherit;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition:
-      border-color var(--hover),
-      background-color var(--hover);
-  }
-
-  .song-cue:hover {
-    border-color: var(--ink-3);
-  }
-
-  .song-title {
-    font-weight: 600;
-  }
-
-  .song-by {
-    color: var(--ink-2);
-  }
-
   .store-row :global(.stores) {
     margin-top: 1.25rem;
   }

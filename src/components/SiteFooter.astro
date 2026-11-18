@@ -84,39 +84,70 @@ const SOCIAL = [
       )}
     </div>
     <nav class="columns" aria-label="Footer">
-      {
-        FOOTER_APPS.map(app => (
-          <div class="column app-links">
-            <span class="label">{app.name}</span>
-            <ul>
-              {PAGES.map(({ key, page }) => (
-                <li>
-                  <a href={`/${app.slug}/${page}`}>
-                    <T k={key} />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
-      }
       {/* Juan outside of work: one page per set (pages/more-of-me),
-          a column like an app's pages, so the landing never loads their
-          pictures — while More of Me is released (lib/release). */}
+          standing open in the first column (or at the top on mobile),
+          with the apps' legal/support accordions stacked in a single
+          column (to the right on desktop, below on mobile, growing up
+          into reserved space so nothing around them shifts). */}
       {likesShown && (
-      <div class="column app-links">
-        <span class="label"><T k="likes.title" /></span>
-        <ul>
-          {LIKES.map(card => (
-            <li>
-              <a href={`/more-of-me/${card.slug}`}>
-                {typeof card.name === 'string' ? card.name : <T k={card.name.k} />}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
+        <div class="column app-links">
+          <span class="label"><T k="likes.title" /></span>
+          <ul>
+            {LIKES.map(card => (
+              <li>
+                <a href={`/more-of-me/${card.slug}`}>
+                  {typeof card.name === 'string' ? card.name : <T k={card.name.k} />}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
+      <div class="column apps-group">
+        {
+          FOOTER_APPS.map(app => (
+            <div class="app-pages" data-app-accordion>
+              <button
+                type="button"
+                class="label app-toggle"
+                aria-expanded="false"
+                data-app-toggle
+              >
+                <span>{app.name}</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 12 12"
+                  width="10"
+                  height="10"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.5 4.5 L6 8 L9.5 4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div class="app-drawer" aria-hidden="true" inert>
+                <div class="app-drawer-inner">
+                  <ul>
+                    {PAGES.map(({ key, page }) => (
+                      <li>
+                        <a href={`/${app.slug}/${page}`}>
+                          <T k={key} />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
     </nav>
 
     <p class="label legal-name">© 2026 Juan Esteban Villa Mendoza</p>
@@ -125,6 +156,53 @@ const SOCIAL = [
       the foot's words. */}
   {panel && <ShipEgg place="foot" />}
 </footer>
+
+<script>
+  const groups = document.querySelectorAll<HTMLElement>('.site-footer .apps-group');
+  for (const group of groups) {
+    const items = [...group.querySelectorAll<HTMLElement>('[data-app-accordion]')];
+    const setOpen = (target: HTMLElement, open: boolean) => {
+      target.classList.toggle('is-open', open);
+      const btn = target.querySelector<HTMLButtonElement>('[data-app-toggle]');
+      const drawer = target.querySelector<HTMLElement>('.app-drawer');
+      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (drawer) {
+        drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+        drawer.toggleAttribute('inert', !open);
+      }
+    };
+
+    items.forEach(item => {
+      const btn = item.querySelector<HTMLButtonElement>('[data-app-toggle]');
+      btn?.addEventListener('click', () => {
+        const nextOpen = !item.classList.contains('is-open');
+        items.forEach(other => {
+          if (other !== item) setOpen(other, false);
+        });
+        setOpen(item, nextOpen);
+      });
+    });
+  }
+
+  const reserve = () => {
+    for (const group of document.querySelectorAll<HTMLElement>('.site-footer .apps-group')) {
+      const items = [...group.querySelectorAll<HTMLElement>('[data-app-accordion]')];
+      if (items.length === 0) continue;
+      let closedH = 0;
+      let tallestDrawerH = 0;
+      for (const item of items) {
+        const btn = item.querySelector<HTMLElement>('[data-app-toggle]');
+        const list = item.querySelector<HTMLElement>('.app-drawer ul');
+        closedH += (btn?.offsetHeight ?? 42) + 1;
+        tallestDrawerH = Math.max(tallestDrawerH, list?.offsetHeight ?? 0);
+      }
+      group.style.minHeight = `${closedH + tallestDrawerH + 2}px`;
+    }
+  };
+  reserve();
+  document.fonts?.ready.then(reserve);
+  addEventListener('resize', reserve);
+</script>
 
 <style>
   /* A panel like every section: the stories' own inset at the top, the
@@ -292,12 +370,13 @@ const SOCIAL = [
     }
   }
 
-  /* Sound Shaper's pages, then More of Me, side by side. */
+  /* Desktop: More of Me on the left, the apps' accordion column on the right. */
   .columns {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: max-content;
-    column-gap: var(--space-4);
+    column-gap: var(--space-9);
+    align-items: start;
     translate: 0 0;
     transition:
       opacity var(--dur-settle) var(--ease),
@@ -338,6 +417,96 @@ const SOCIAL = [
     margin-top: var(--space-4);
     text-transform: none;
     letter-spacing: 0;
+  }
+
+  /* Single column of app legal disclosures (to the right of More of Me on
+     desktop, below More of Me on mobile). Reserves the exact height of all
+     rows closed + 1 open drawer (12.25rem) so opening/closing an app never
+     causes CLS in the footer or copyright line. */
+  .apps-group {
+    display: flex;
+    flex-direction: column;
+    width: 12.5rem;
+    min-height: 12.25rem;
+  }
+
+  .app-pages {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .app-pages:first-child {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .app-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    min-height: 2.625rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    user-select: none;
+    text-align: start;
+    transition: color var(--hover);
+  }
+
+  .app-toggle:hover,
+  .app-pages.is-open .app-toggle {
+    color: var(--ink);
+  }
+
+  .chevron {
+    flex: none;
+    transition: transform var(--dur-quick) var(--ease);
+  }
+
+  .app-pages.is-open .chevron {
+    transform: rotate(180deg);
+  }
+
+  .app-drawer {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows var(--dur-quick) var(--ease),
+      opacity var(--dur-micro) var(--ease);
+  }
+
+  .app-pages.is-open .app-drawer {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition:
+      grid-template-rows var(--dur-turn) var(--ease),
+      opacity var(--dur-quick) var(--ease);
+  }
+
+  .app-drawer-inner {
+    overflow: hidden;
+  }
+
+  .app-drawer ul {
+    margin-top: 0;
+    padding-top: 0.25rem;
+    padding-bottom: 0.875rem;
+  }
+
+  @media (max-width: 48rem) {
+    .columns {
+      grid-auto-flow: row;
+      grid-auto-columns: 1fr;
+      row-gap: var(--space-4);
+      width: 100%;
+    }
+
+    .apps-group {
+      width: 100%;
+      justify-content: flex-start;
+    }
   }
 
 </style>

@@ -641,7 +641,7 @@ html.is-jumping body {
   opacity: 0;
   transition:
     opacity var(--dur-quick) linear,
-    color var(--dur-quick) var(--ease);
+    color var(--hover);
 }
 
 .deck-card.is-current [data-deck-part] {
@@ -651,13 +651,13 @@ html.is-jumping body {
 .deck-card [data-deck-part='text'] {
   transition:
     opacity var(--dur-micro) linear,
-    color var(--dur-quick) var(--ease);
+    color var(--hover);
 }
 
 .deck-card.is-current [data-deck-part='text'] {
   transition:
     opacity var(--dur-micro) linear var(--dur-micro),
-    color var(--dur-quick) var(--ease);
+    color var(--hover);
 }
 
 .deck-card.is-arriving [data-deck-part] {
