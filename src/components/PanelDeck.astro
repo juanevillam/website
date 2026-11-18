@@ -451,6 +451,9 @@ for (const p of items)
                     <button type="button" class="photo-open" data-photo-open>
                       <span class="sr"><T k="photo.open" /></span>
                     </button>
+                    {share === 'events' && layers.length > 1 && (
+                      <span class="slide-count" data-slide-count>{`1/${layers.length}`}</span>
+                    )}
                     {layers.length > 1 && (
                       <>
                         <button type="button" class="photo-step prev" data-photo-step="-1">
@@ -786,6 +789,33 @@ for (const p of items)
     right: 0.75rem;
   }
 
+  /* Same multi-photo slide counter pill as PhotosFeed's individual view */
+  .slide-count {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+    z-index: 2;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    color: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-quick) var(--ease);
+  }
+
+  .slide-count.is-shown {
+    opacity: 1;
+  }
+
   /* A picture's own caption (its name), at the top of the frame — the
      header's pill recipe, in the label's type; a phone's card caption
      takes the foot. */
@@ -918,7 +948,7 @@ for (const p of items)
        its own fade's depth of air (global.css `[data-cap]`), so words
        scrolled up never fade onto the picture. */
     .card {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       align-content: start;
       gap: 0.25rem;
     }
@@ -1258,12 +1288,23 @@ for (const p of items)
         cell,
         col: Number(cell.dataset.col),
         layers: [...cell.querySelectorAll<HTMLElement>('.layer')],
+        countEl: cell.querySelector<HTMLElement>('[data-slide-count]'),
+        countTimer: 0,
         i: 0,
         timer: 0,
         running: false,
       }))
     );
     type Frame = (typeof frames)[number][number];
+    const flashCount = (f: Frame) => {
+      if (!f.countEl || f.layers.length <= 1) return;
+      f.countEl.textContent = `${f.i + 1}/${f.layers.length}`;
+      f.countEl.classList.add('is-shown');
+      clearTimeout(f.countTimer);
+      f.countTimer = window.setTimeout(() => {
+        f.countEl?.classList.remove('is-shown');
+      }, 1600);
+    };
     const videoOf = (f: Frame) => f.layers[f.i].querySelector('video');
     const hold = (f: Frame, wait: number) => {
       clearTimeout(f.timer);
@@ -1302,6 +1343,7 @@ for (const p of items)
         if (done || f.layers[f.i] !== next) return;
         done = true;
         for (const layer of f.layers) layer.classList.toggle('is-on', layer === next);
+        flashCount(f);
       };
       const waiting = [...next.querySelectorAll('img')].filter(
         img => img.src && !(img.complete && img.naturalWidth),
@@ -1362,6 +1404,11 @@ for (const p of items)
             f.layers[f.i].classList.remove('is-on');
             f.i = 0;
             f.layers[0].classList.add('is-on');
+            if (f.countEl) {
+              clearTimeout(f.countTimer);
+              f.countEl.textContent = `1/${f.layers.length}`;
+              f.countEl.classList.remove('is-shown');
+            }
             const v = videoOf(f);
             if (v) {
               // A VIDEO WAITS ITS TURN (Juan, 2026-10-13): it stands on its
