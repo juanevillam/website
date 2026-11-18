@@ -297,7 +297,7 @@ const groups = [
     </div>
     <div class="form" data-scroll-edge>
       <div class="section" data-dj-section="presets">
-        <label class="cell picker">
+        <label class="cell picker" data-preset-row>
           <span class="cell-name"><T k="shape.presets" /></span>
           <span class="picker-value">
             <select data-preset>
@@ -312,8 +312,12 @@ const groups = [
       </div>
 
       <section class="section" data-dj-section="eq" aria-labelledby="songs-eq">
-        <h5 class="section-head" id="songs-eq"><T k="eq.title" /></h5>
+        <h5 class="section-head split" id="songs-eq">
+          <span><T k="eq.title" /></span>
+          <span class="head-value" data-eq-db hidden aria-hidden="true"></span>
+        </h5>
         <div class="card">
+          <div class="scope scope-eq" data-scope="eq" aria-hidden="true"></div>
           {
             BANDS.map((b, i) => (
               <div class="cell band">
@@ -387,11 +391,17 @@ const groups = [
         (['echo', 'nextRoom'] as const).map(fx => (
           <section class="section" data-dj-section={fx}>
             <div class="card">
-              <label class="cell picker">
+              <div
+                class:list={['scope', fx === 'echo' ? 'scope-echo' : 'scope-room']}
+                data-scope={fx}
+                aria-hidden="true"
+              />
+              <label class="cell picker" data-level-row={fx}>
                 <span class="cell-name">
                   <T k={`shape.${fx}` as UIKey} />
                 </span>
                 <span class="picker-value">
+                  <span class="picker-meta" data-level-db={fx} hidden aria-hidden="true" />
                   <select data-level={fx} aria-describedby={`songs-${fx}-foot`}>
                     {LEVELS.map(l => (
                       <option value={l} data-k={`shape.levels.${l}`}>{l}</option>
@@ -471,6 +481,9 @@ const groups = [
     --edge-bg: rgb(8 8 8 / 0.95);
     --edge-line: rgb(255 255 255 / 0.16);
     --spring: cubic-bezier(0.22, 1, 0.36, 1);
+    --ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
+    --phosphor-ink: var(--ink);
+    --phosphor-drop: drop-shadow(0 0 3.5px rgb(184 220 255 / 0.24));
   }
 
   .songs {
@@ -979,7 +992,7 @@ const groups = [
   }
 
   .powered:hover {
-    color: var(--ink-2);
+    color: var(--ink);
   }
 
   /* On a desk the mark heads the list and scrolls away with it; on a
@@ -1428,9 +1441,14 @@ const groups = [
   /* The player under a sheet steps back, as iOS's does. */
   .now,
   .dock,
-  .powered,
   .side {
     transition: opacity var(--dur-turn) var(--ease);
+  }
+
+  .powered {
+    transition:
+      color var(--hover),
+      opacity var(--dur-turn) var(--ease);
   }
 
   .songs[data-sheet] .frame > :not(.side, .foot-bar),
@@ -1545,8 +1563,18 @@ const groups = [
   }
 
   .head-value {
-    color: var(--ink);
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transition: color var(--dur-quick) var(--ease);
+  }
+
+  .head-value.is-active {
+    color: var(--ink);
+  }
+
+  .head-value[hidden] {
+    display: none;
   }
 
   .card,
@@ -1676,6 +1704,191 @@ const groups = [
     outline: none;
   }
 
+  .picker.is-active select {
+    color: var(--ink);
+  }
+
+  .picker-meta {
+    flex: none;
+    margin-right: 0.125rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .picker-meta[hidden] {
+    display: none;
+  }
+
+  /* Studio parameter scopes (Equalizer, Echo, Next Room) — standardized 38px
+     height, 1:1 with Sound Shaper Web (`Scopes.tsx`). */
+  .scope {
+    position: relative;
+    height: 2.375rem;
+    overflow: hidden;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  .scope :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .scope :global(.scope-spectrum) {
+    fill: rgb(255 255 255 / 0.08);
+    stroke: rgb(255 255 255 / 0.17);
+    stroke-width: 0.75;
+  }
+
+  .scope :global(.scope-grid) {
+    stroke: var(--separator);
+    stroke-width: 0.75;
+    stroke-dasharray: 1.5 2;
+  }
+
+  .scope :global(.scope-zero) {
+    stroke: var(--separator);
+    stroke-width: 0.9;
+  }
+
+  .scope :global(.scope-fill-edge) {
+    stop-color: var(--phosphor-ink);
+    stop-opacity: 0.14;
+  }
+
+  .scope :global(.scope-fill-mid) {
+    stop-color: var(--phosphor-ink);
+    stop-opacity: 0.015;
+  }
+
+  .scope :global(.scope-area) {
+    opacity: 0.24;
+    transition: opacity var(--dur-settle) var(--ios-curve);
+  }
+
+  .scope.is-active :global(.scope-area) {
+    opacity: 0.56;
+  }
+
+  .scope.is-playing :global(.scope-area) {
+    opacity: 0.52;
+    transition-duration: var(--dur-turn);
+  }
+
+  .scope.is-live :global(.scope-area) {
+    opacity: 1;
+    transition-duration: var(--dur-turn);
+  }
+
+  .scope :global(.scope-line) {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.45;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.36;
+    transition:
+      opacity var(--dur-settle) var(--ios-curve),
+      filter var(--dur-settle) var(--ios-curve);
+  }
+
+  .scope.is-active :global(.scope-line) {
+    opacity: 0.68;
+  }
+
+  .scope.is-playing :global(.scope-line) {
+    opacity: 0.72;
+    transition-duration: var(--dur-turn);
+  }
+
+  .scope.is-live :global(.scope-line) {
+    opacity: 1;
+    filter: var(--phosphor-drop);
+    transition-duration: var(--dur-turn);
+  }
+
+  .scope :global(.scope-node) {
+    fill: var(--muted);
+    opacity: 0.65;
+    transition:
+      fill var(--dur-settle) var(--ios-curve),
+      opacity var(--dur-settle) var(--ios-curve),
+      filter var(--dur-settle) var(--ios-curve);
+  }
+
+  .scope.is-playing :global(.scope-node) {
+    opacity: 0.9;
+  }
+
+  .scope :global(.scope-node.is-active) {
+    fill: var(--ink);
+    opacity: 0.85;
+  }
+
+  .scope.is-live :global(.scope-node.is-active) {
+    fill: var(--ink);
+    opacity: 1;
+    filter: var(--phosphor-drop);
+    transition-duration: var(--dur-quick);
+  }
+
+  .scope[data-ink-state='drawing'] :global(.scope-line) {
+    stroke-dasharray: 1.04;
+    stroke-dashoffset: 1.04;
+    animation: scope-ink-draw 560ms cubic-bezier(0.22, 0.88, 0.32, 1) both;
+  }
+
+  .scope[data-ink-state='drawing'] :global(.scope-area) {
+    animation: scope-wash-reveal 560ms 90ms cubic-bezier(0.22, 0.88, 0.32, 1) both;
+  }
+
+  .scope[data-ink-state='drawing'] :global(.scope-node) {
+    animation: scope-node-in 360ms calc(140ms + var(--node-i, 0) * 45ms) var(--ios-curve) both;
+  }
+
+  @keyframes scope-ink-draw {
+    0% {
+      stroke-dashoffset: 1.04;
+      opacity: 0;
+    }
+    8% {
+      opacity: 0.85;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes scope-wash-reveal {
+    0% {
+      clip-path: inset(0 100% 0 0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.65;
+    }
+    100% {
+      clip-path: inset(0 0% 0 0%);
+    }
+  }
+
+  @keyframes scope-node-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scope :global(.scope-area),
+    .scope :global(.scope-line),
+    .scope :global(.scope-node) {
+      transition: none;
+      animation: none;
+    }
+  }
+
   .band {
     display: grid;
     grid-template-columns: 1.75rem 1fr 1.75rem;
@@ -1692,6 +1905,11 @@ const groups = [
 
   .band-db {
     text-align: right;
+    transition: color var(--dur-quick) var(--ease);
+  }
+
+  .band-db.is-active {
+    color: var(--ink);
   }
 
   /* iOS's slider: a thin track, the played part filled, a big white
@@ -2379,6 +2597,11 @@ const groups = [
 
   .powered-name {
     color: var(--ink-2);
+    transition: color var(--hover);
+  }
+
+  .powered:hover .powered-name {
+    color: var(--ink);
   }
 
   /* On a phone's bar it stands at the far right, after the same thin
@@ -2416,6 +2639,7 @@ const groups = [
 
 <script>
   import { createShaper, presetOf, PRESETS, rateToStop, stopToRate, type Level } from '../lib/shaper';
+  import { echoTapDb, eqExtremeDb, formatSignedDb, mountShapeScopes, nextRoom1kDb } from '../lib/scopes';
   import { meantToClose } from '../lib/dismiss';
   import { createAutoDj, type DjStatus } from '../lib/autoDj/director';
   import { isAutoDjMode, type DjFocus } from '../lib/autoDj/plan';
@@ -2789,11 +3013,24 @@ const groups = [
       setSheet(null);
     });
 
+    // ----- the Shape sheet -----
+    const scopes = mountShapeScopes({
+      eqHost: sheet.querySelector<HTMLElement>('[data-scope="eq"]')!,
+      echoHost: sheet.querySelector<HTMLElement>('[data-scope="echo"]')!,
+      roomHost: sheet.querySelector<HTMLElement>('[data-scope="nextRoom"]')!,
+      getAnalyser: () => shaper.analyser(),
+      isPlaying: () => !audio.paused,
+      isVisible: () => wide() || root.dataset.sheet === 'shape',
+    });
+    audio.addEventListener('play', () => scopes.notifyPlayback());
+    audio.addEventListener('pause', () => scopes.notifyPlayback());
+
     const setSheet = (name: Sheet) => {
       if (name) root.dataset.sheet = name;
       else delete root.dataset.sheet;
       showShape(name === 'shape');
       sync(name);
+      requestAnimationFrame(() => scopes.notifyVisibility());
       if (name) {
         opener = openers.find(o => o.dataset.open === name) ?? null;
         $(name === 'shape' ? '#shape-title' : '#songs-list-name').focus({ preventScroll: true });
@@ -2819,7 +3056,11 @@ const groups = [
         sheet.classList.remove('is-floating', 'is-open');
         sheet.removeAttribute('style');
         frame.append(sheet);
-      } else if (sheet.parentElement === frame) root.append(sheet);
+        requestAnimationFrame(() => scopes.notifyVisibility());
+      } else if (sheet.parentElement === frame) {
+        root.append(sheet);
+        requestAnimationFrame(() => scopes.notifyVisibility());
+      }
     };
     // A phone turned sideways can widen it: the list's part is resettled.
     new ResizeObserver(() => {
@@ -2827,7 +3068,10 @@ const groups = [
       sync((root.dataset.sheet as Sheet) ?? null);
     }).observe(root);
 
-    // ----- the Shape sheet -----
+    const presetRow = $<HTMLElement>('[data-preset-row]');
+    const eqDbEl = $<HTMLElement>('[data-eq-db]');
+    const rateLabelEl = $<HTMLElement>('[data-rate-label]');
+
     const summary = () => {
       const { gains, rate, keepPitch, echo, nextRoom } = shaper.shape;
       const preset = presetOf(gains);
@@ -2870,14 +3114,22 @@ const groups = [
         input.value = String(gains[i]);
         fill(input);
         const db = gains[i] > 0 ? `+${gains[i]}` : `${gains[i]}`;
-        $(`[data-band-db="${i}"]`).textContent = db;
+        const bandDb = $(`[data-band-db="${i}"]`);
+        bandDb.textContent = db;
+        bandDb.classList.toggle('is-active', gains[i] !== 0);
         input.setAttribute('aria-valuetext', `${db} dB`);
       });
+      const eqActive = gains.some(g => g !== 0);
+      eqDbEl.hidden = !eqActive;
+      eqDbEl.classList.toggle('is-active', eqActive);
+      if (eqActive) eqDbEl.textContent = formatSignedDb(eqExtremeDb(gains), lang());
       const preset = presetOf(gains);
+      presetRow.classList.toggle('is-active', preset !== 'flat');
       const custom = presetSelect.querySelector<HTMLOptionElement>('option[value="custom"]')!;
       custom.hidden = preset !== null;
       presetSelect.value = preset ?? 'custom';
       sizeSelect(presetSelect);
+      scopes.update(shaper.shape);
       summary();
     };
     presetSelect.addEventListener('change', () => {
@@ -2899,7 +3151,8 @@ const groups = [
 
     const showRate = () => {
       const label = rateText(shaper.shape.rate);
-      $('[data-rate-label]').textContent = label;
+      rateLabelEl.textContent = label;
+      rateLabelEl.classList.toggle('is-active', shaper.shape.rate !== 1);
       rateInput.setAttribute('aria-valuetext', label);
       fill(rateInput);
       summary();
@@ -2921,16 +3174,27 @@ const groups = [
     const showLevels = () => {
       for (const s of levelSelects) {
         const fx = s.dataset.level as 'echo' | 'nextRoom';
-        s.value = shaper.shape[fx];
+        const level = shaper.shape[fx];
+        s.value = level;
         sizeSelect(s);
+        const rowEl = $(`[data-level-row="${fx}"]`);
+        const metaEl = $(`[data-level-db="${fx}"]`);
+        const active = level !== 'off';
+        rowEl.classList.toggle('is-active', active);
+        metaEl.hidden = !active;
+        if (active) {
+          const db = fx === 'echo' ? echoTapDb(level) : nextRoom1kDb(level);
+          metaEl.textContent = formatSignedDb(db, lang());
+        }
       }
+      scopes.update(shaper.shape);
     };
     for (const s of levelSelects) {
       s.addEventListener('change', () => {
         const fx = s.dataset.level as 'echo' | 'nextRoom';
         dj.byHand();
         shaper.set({ [fx]: s.value as Level });
-        sizeSelect(s);
+        showLevels();
         summary();
       });
     }
@@ -3158,6 +3422,7 @@ const groups = [
         cardStandIn.setAttribute('aria-hidden', 'true');
         cardStandIn.style.pointerEvents = 'none';
         cardStandIn.querySelector('audio')?.remove();
+        cardStandIn.querySelector('[data-sheet]')?.remove();
         full.before(cardStandIn);
         keepPlaying(() => room.append(root));
         root.setAttribute('data-full', '');

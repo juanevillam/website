@@ -792,11 +792,11 @@ const ensureGraph = () => {
   }
 };
 
-// How finely the voice is split — the horizon's resolution.
-const BANDS = 16;
-// The voice's range, first band to last.
-const LOW_HZ = 90;
-const HIGH_HZ = 5000;
+// How finely the voice/music spectrum is split — the studio horizon's resolution.
+const BANDS = 24;
+// Full speech + music range, low body (65 Hz) to air/hi-hats (10.5 kHz).
+const LOW_HZ = 65;
+const HIGH_HZ = 10500;
 
 let peak = 0.35;
 
@@ -813,16 +813,21 @@ const voiceBands = (half: number, from = analyser) => {
     const clock = demoPlaying()
       ? (demo?.video.currentTime ?? 0)
       : voice.currentTime;
-    const t = clock * 6.5;
+    const t = clock * 6.2;
+    const syllable = Math.max(
+      0.14,
+      0.55 + 0.32 * Math.sin(t * 0.78) + 0.22 * Math.cos(t * 1.47 + 0.8),
+    );
     for (let k = 0; k < half; k++) {
-      const env = Math.max(0, 1 - (k / half) * 0.72);
-      const wave =
-        0.48 +
-        0.28 * Math.sin(t * (1.1 + k * 0.17) + k * 0.9) +
-        0.24 * Math.cos(t * (2.3 - k * 0.09) - k * 0.6);
-      out[k] = Math.min(1, Math.max(0.05, wave * env)) ** 1.4;
+      const u = k / Math.max(1, half - 1);
+      const tilt = Math.exp(-u * 1.35) * 0.82 + 0.18;
+      const formant =
+        0.5 +
+        0.28 * Math.sin(t * (1.05 + k * 0.14) + k * 0.85) +
+        0.22 * Math.cos(t * (2.15 - k * 0.07) - k * 0.55);
+      out[k] = Math.min(1, Math.max(0.03, formant * tilt * syllable)) ** 1.35;
     }
-    brightness = 0.32 + 0.08 * Math.sin(t * 0.7);
+    brightness = 0.32 + 0.1 * Math.sin(t * 0.65);
     return out;
   }
   if (!from) return out;
@@ -836,11 +841,17 @@ const voiceBands = (half: number, from = analyser) => {
     const a = Math.max(1, Math.floor(lo / binHz));
     const b = Math.max(a + 1, Math.ceil(hi / binHz));
     let sum = 0;
-    for (let i = a; i < b; i++) sum += freq[i];
-    out[k] = sum / (b - a) / 255;
+    let hiBin = 0;
+    for (let i = a; i < b; i++) {
+      const v = freq[i];
+      sum += v;
+      if (v > hiBin) hiBin = v;
+    }
+    const mean = sum / (b - a);
+    out[k] = (hiBin * 0.6 + mean * 0.4) / 255;
   }
   // Where the voice's energy sits, 0 (low) – 1 (high): the spectral
-  // centroid across the same range, for the field's wavelength.
+  // centroid across the same range.
   let wsum = 0;
   let msum = 0;
   const lowBin = Math.floor(LOW_HZ / binHz);
@@ -854,7 +865,7 @@ const voiceBands = (half: number, from = analyser) => {
   // A slow automatic gain so a quiet take still moves the field —
   // floored, so the room's hiss never passes for a voice.
   peak = Math.max(peak * 0.998, ...out, 0.35);
-  return out.map(v => Math.min(1, v / peak) ** 1.6);
+  return out.map(v => Math.min(1, v / peak) ** 1.45);
 };
 
 /** Another sound the page plays (a song in the Songs card), when the
@@ -907,38 +918,81 @@ let brightness = 0.3;
 let heard: number[] = [];
 let tone = 0.3;
 let presence = 0;
+let fieldGlow = 0;
 let travel = 0;
 let lastFrame = 0;
 let fieldDirty = false;
+
 // Where the horizon sits: low on the screen, clear of the content.
 const HORIZON = 0.86;
 // Three strands: wavelength, speed, how far along the spectrum each
 // one reads (so each leans on different bands), weight and ink.
 const STRANDS = [
-  { k: 1, speed: 1, shift: 0, gain: 1, alpha: 1 },
-  { k: 1.6, speed: -0.75, shift: 0.22, gain: 0.7, alpha: 0.6 },
-  { k: 0.65, speed: 0.5, shift: -0.18, gain: 0.85, alpha: 0.45 },
-];
+  { k: 1, speed: 1, shift: 0, gain: 1, alpha: 1, width: 1.05 },
+  { k: 1.6, speed: -0.75, shift: 0.22, gain: 0.72, alpha: 0.6, width: 0.9 },
+  { k: 0.65, speed: 0.5, shift: -0.18, gain: 0.85, alpha: 0.45, width: 0.85 },
+] as const;
+
+const WAVE_NODES = 73;
+const waveXs = new Float32Array(WAVE_NODES);
+const waveYs = new Float32Array(WAVE_NODES);
+
 // The field's ink: the page's own --ink, only ever at a whisper.
-const INK = (() => {
+const INK_RGB = (() => {
   const hex = getComputedStyle(document.documentElement)
     .getPropertyValue('--ink')
     .trim()
     .replace('#', '');
   const n = parseInt(hex.length === 3 ? hex.replace(/./g, '$&$&') : hex, 16);
   return Number.isFinite(n)
-    ? `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`
-    : '245, 245, 245';
+    ? [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    : [245, 245, 245];
 })();
 
-/** The heard level at a point along the spectrum, 0 centre – 1 edge. */
-const levelAt = (u: number) => {
+/** Smooth 3-tap band lookup along `[0, 1]` (0 centre – 1 edge). */
+const smoothLevelAt = (u: number) => {
   const n = heard.length;
   if (!n) return 0;
-  const f = Math.min(n - 1, Math.max(0, u * (n - 1)));
-  const i = Math.floor(f);
-  const t = f - i;
-  return (heard[i] ?? 0) * (1 - t) + (heard[i + 1] ?? heard[i] ?? 0) * t;
+  const read = (pos: number) => {
+    const f = Math.min(n - 1, Math.max(0, pos * (n - 1)));
+    const i = Math.floor(f);
+    const t = f - i;
+    return (heard[i] ?? 0) * (1 - t) + (heard[i + 1] ?? heard[i] ?? 0) * t;
+  };
+  return read(u - 0.045) * 0.25 + read(u) * 0.5 + read(u + 0.045) * 0.25;
+};
+
+/** Draws a smooth Catmull-Rom cubic spline through `(xs[0..n-1], ys[0..n-1])`. */
+const traceSpline = (
+  g: CanvasRenderingContext2D,
+  xs: Float32Array,
+  ys: Float32Array,
+  n: number,
+) => {
+  g.moveTo(xs[0], ys[0]);
+  for (let i = 0; i < n - 1; i++) {
+    const i0 = i > 0 ? i - 1 : 0;
+    const i1 = i;
+    const i2 = i + 1;
+    const i3 = i + 2 < n ? i + 2 : n - 1;
+    const cp1x = xs[i1] + (xs[i2] - xs[i0]) / 6;
+    const cp1y = ys[i1] + (ys[i2] - ys[i0]) / 6;
+    const cp2x = xs[i2] - (xs[i3] - xs[i1]) / 6;
+    const cp2y = ys[i2] - (ys[i3] - ys[i1]) / 6;
+    g.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, xs[i2], ys[i2]);
+  }
+};
+
+const stepBallistic = (
+  cur: number,
+  goal: number,
+  dtMs: number,
+  attackMs: number,
+  releaseMs: number,
+) => {
+  const tau = goal > cur ? attackMs : releaseMs;
+  const alpha = 1 - Math.exp(-Math.max(1, dtMs) / tau);
+  return cur + (goal - cur) * alpha;
 };
 
 const drawField = (now: number) => {
@@ -949,23 +1003,27 @@ const drawField = (now: number) => {
   const talking = (running && !voice.paused) || demoPlaying() || !!otherSound();
   hostField();
 
-  // Quick enough to follow the voice, eased enough not to twitch.
-  if (heard.length !== spectrum.length && spectrum.length)
-    heard = new Array(spectrum.length).fill(0);
-  for (let i = 0; i < heard.length; i++) {
+  const targetBands = spectrum.length || BANDS;
+  if (heard.length !== targetBands) heard = new Array(targetBands).fill(0);
+
+  let peakBand = 0;
+  for (let i = 0; i < targetBands; i++) {
     const target = talking ? (spectrum[i] ?? 0) : 0;
-    const d = target - heard[i];
-    heard[i] += d * (d > 0 ? 0.3 : 0.12);
+    heard[i] = stepBallistic(heard[i], target, dt, 58, talking ? 185 : 150);
+    if (heard[i] > peakBand) peakBand = heard[i];
   }
-  tone += (brightness - tone) * 0.08;
-  presence +=
-    (((session && running) || demo || otherSound() ? 1 : 0) - presence) * 0.04;
-  // They travel only on voice — a pause holds them where they are.
-  travel += dt * 0.0024 * (0.1 + loudness);
+
+  tone = stepBallistic(tone, brightness, dt, 180, 260);
+  const activeSession = Boolean((session && running) || demo || otherSound());
+  presence = stepBallistic(presence, activeSession ? 1 : 0, dt, 220, 360);
+  const glowGoal = talking ? Math.min(1, 0.3 + loudness * 1.25) : 0;
+  fieldGlow = stepBallistic(fieldGlow, glowGoal, dt, 140, 340);
+  // Advance wave phase smoothly while sounding, easing to a gentle glide on pause.
+  travel += dt * 0.0024 * (talking ? 0.12 + loudness * 0.95 : 0.04 * presence);
 
   const g = field.getContext('2d');
   if (!g) return;
-  if (presence < 0.004) {
+  if (presence < 0.004 && peakBand < 0.003) {
     if (fieldDirty) {
       g.clearRect(0, 0, field.width, field.height);
       fieldDirty = false;
@@ -995,24 +1053,31 @@ const drawField = (now: number) => {
   const wavelength = 480 - 330 * Math.min(1, Math.max(0, tone));
   const reach = Math.min(h * 0.16, 140);
 
-  g.lineWidth = 1;
-  for (const strand of STRANDS) {
-    // Secondary to the words on screen: at full voice it peaked at 23%
-    // of the ink and pulled the eye off the page (Juan, 2026-10-05) —
-    // it now peaks at 13%, still plainly moving with the voice.
-    g.strokeStyle = `rgba(${INK}, ${(presence * strand.alpha * (0.04 + 0.09 * loudness)).toFixed(4)})`;
-    g.beginPath();
-    for (let x = 0; x <= w; x += 5) {
-      const u = x / w;
-      // Mirrored from the centre: body in the middle,
-      // air towards both sides — read at this strand's own shift.
+  // Subtle cold phosphor shift on the ink RGB while actively sounding,
+  // while keeping alpha strictly at a background whisper (~4%..13% max,
+  // Juan, 2026-10-05) so the waves never pull the eye off the words.
+  const coolMix = 0.22 * fieldGlow;
+  const rInk = Math.round(INK_RGB[0] * (1 - coolMix) + 204 * coolMix);
+  const gInk = Math.round(INK_RGB[1] * (1 - coolMix) + 230 * coolMix);
+  const bInk = Math.round(INK_RGB[2] * (1 - coolMix) + 255 * coolMix);
+
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+
+  for (let sIdx = STRANDS.length - 1; sIdx >= 0; sIdx--) {
+    const strand = STRANDS[sIdx];
+    const isLead = sIdx === 0;
+    const leadGlow = isLead ? presence * fieldGlow : 0;
+    const alpha = presence * strand.alpha * (0.038 + 0.092 * loudness);
+
+    for (let i = 0; i < WAVE_NODES; i++) {
+      const u = i / (WAVE_NODES - 1);
+      const x = u * w;
       const along = Math.min(
         1,
         Math.max(0, Math.abs(u - 0.5) * 2 + strand.shift),
       );
-      const level = levelAt(along);
-      // Flat at the screen's very edges, so the lines fade out rather
-      // than being cut off.
+      const level = smoothLevelAt(along);
       const edge = Math.sin(Math.PI * u);
       const y =
         base +
@@ -1024,10 +1089,23 @@ const drawField = (now: number) => {
           level *
           strand.gain *
           edge;
-      if (x) g.lineTo(x, y);
-      else g.moveTo(x, y);
+      waveXs[i] = x;
+      waveYs[i] = y;
     }
+
+    g.lineWidth = strand.width;
+    g.strokeStyle = `rgba(${rInk}, ${gInk}, ${bInk}, ${alpha.toFixed(4)})`;
+    if (leadGlow > 0.02) {
+      g.shadowColor = `rgba(184, 220, 255, ${(0.12 * leadGlow).toFixed(4)})`;
+      g.shadowBlur = 3 * ratio * leadGlow;
+    }
+    g.beginPath();
+    traceSpline(g, waveXs, waveYs, WAVE_NODES);
     g.stroke();
+    if (leadGlow > 0.02) {
+      g.shadowBlur = 0;
+      g.shadowColor = 'transparent';
+    }
   }
 };
 

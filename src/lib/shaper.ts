@@ -60,8 +60,8 @@ export const rateToStop = (rate: number) =>
   Math.round((rate - RATE_MIN) / RATE_STEP);
 
 /** Next Room: three high shelves whose stacked cuts make a wall's tilt. */
-const WALL_HZ = [500, 1500, 4000];
-const WALL: Record<
+export const WALL_HZ = [500, 1500, 4000];
+export const WALL: Record<
   Exclude<Level, 'off'>,
   { depthDb: number; trimDb: number }
 > = {
@@ -73,7 +73,7 @@ const WALL_SWEEP = 0.2;
 
 /** Echo: repeats 28 ms apart, under the ear's fusion threshold. */
 const ECHO_DELAY = 0.028;
-const ECHO: Record<
+export const ECHO: Record<
   Exclude<Level, 'off'>,
   { feedback: number; trimDb: number }
 > = {
@@ -92,7 +92,14 @@ const RAMP = 0.012;
 // The curve's own peak, swept 20 Hz–20 kHz through the same RBJ biquads
 // the browser runs, plus 1.5 dB: a boost never clips.
 
-type C = { b0: number; b1: number; b2: number; a1: number; a2: number };
+export type BiquadCoeffs = {
+  b0: number;
+  b1: number;
+  b2: number;
+  a1: number;
+  a2: number;
+};
+type C = BiquadCoeffs;
 const norm = (
   b0: number,
   b1: number,
@@ -107,7 +114,12 @@ const norm = (
   a1: a1 / a0,
   a2: a2 / a0,
 });
-const coefficients = (type: string, f: number, gain: number, q = 1): C => {
+export const coefficients = (
+  type: string,
+  f: number,
+  gain: number,
+  q = 1,
+): C => {
   const a = Math.pow(10, gain / 40);
   const w0 = Math.PI * f;
   const cos = Math.cos(w0);
@@ -141,7 +153,7 @@ const coefficients = (type: string, f: number, gain: number, q = 1): C => {
         a + 1 - (a - 1) * cos - g,
       );
 };
-const magnitude = (c: C, f: number) => {
+export const magnitude = (c: C, f: number) => {
   const w = -Math.PI * f;
   const zr = Math.cos(w);
   const zi = Math.sin(w);
@@ -277,6 +289,7 @@ export const createShaper = (audio: HTMLAudioElement) => {
   let fadeUntil = 0;
   let g: {
     ctx: AudioContext;
+    analyser: AnalyserNode;
     trim: GainNode;
     bands: BiquadFilterNode[];
     walls: BiquadFilterNode[];
@@ -403,6 +416,7 @@ export const createShaper = (audio: HTMLAudioElement) => {
     addSound({ analyser, playing: () => !audio.paused });
     g = {
       ctx,
+      analyser,
       trim,
       bands,
       walls,
@@ -428,6 +442,8 @@ export const createShaper = (audio: HTMLAudioElement) => {
     },
     /** The graph's context, once built — Auto DJ plays its flourishes on it. */
     context: () => g?.ctx ?? null,
+    /** Post-Shape read-only analyser tap for live parameter scopes. */
+    analyser: () => g?.analyser ?? null,
     /** Current output gain (1 at rest; djLevelDb's linear value while Auto DJ mixes). */
     levelLinear: () => outputLevel,
     /**
