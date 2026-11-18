@@ -1191,6 +1191,8 @@ html.is-desk-safari .switcher {
 .song-cue {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  width: fit-content;
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding: 0;
