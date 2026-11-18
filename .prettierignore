@@ -1,5 +1,6 @@
 dist/
 .astro/
+.claude/
 node_modules/
 public/
 package-lock.json

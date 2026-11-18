@@ -468,6 +468,8 @@ const groups = [
     --faint: rgb(235 235 245 / 0.3);
     --track: rgb(120 120 128 / 0.36);
     --switch-on: #30d158;
+    --edge-bg: rgb(8 8 8 / 0.95);
+    --edge-line: rgb(255 255 255 / 0.16);
     --spring: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -511,14 +513,14 @@ const groups = [
     width: 120%;
     height: 120%;
     object-fit: cover;
-    filter: blur(48px) saturate(0.9) brightness(0.45);
+    filter: blur(64px) saturate(1.1) brightness(0.55);
     opacity: 0;
     transition: opacity var(--dur-quick) var(--ease);
   }
 
   /* A tint, not a colour: the list's ground barely changes with a song. */
   .backdrop img.is-on {
-    opacity: 0.22;
+    opacity: 0.32;
   }
 
   /* ---------- the frame: the artwork, the list beside it ---------- */
@@ -542,7 +544,7 @@ const groups = [
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    background: var(--surface);
+    background: var(--ground);
   }
 
   /* THE COVER IS SHOWN WHOLE (Juan, 2026-11-03): filling the column, a
@@ -590,13 +592,12 @@ const groups = [
     position: absolute;
     inset: 0;
     opacity: 0;
-    filter: brightness(0.55);
     transition: opacity 280ms ease-in-out 280ms;
   }
 
   .wash.is-on {
     z-index: 1;
-    opacity: 1;
+    opacity: 0.75;
     transition-delay: 0ms;
   }
 
@@ -1125,6 +1126,14 @@ const groups = [
     container-type: inline-size;
   }
 
+  /* THE COLUMNS MEET AT A HAIRLINE (Juan, 2026-11-05): sharp, square, one
+     1px line in the site's own --hairline, matching Sound Shaper Web and
+     Book Highlighter across both the 2-column card and the 3-column full
+     player. */
+  .songs:not([data-narrow]) .side {
+    border-left: 1px solid var(--hairline);
+  }
+
   .songs:not([data-narrow]) .list-bar {
     display: none;
   }
@@ -1448,8 +1457,10 @@ const groups = [
   }
 
   [data-edge] > .bar {
-    background: rgb(14 14 14 / 0.96);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.14);
+    background: var(--edge-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 -1px 0 var(--edge-line);
   }
 
   .grabber {
@@ -2341,7 +2352,7 @@ const groups = [
 
   .songs[data-full]:not([data-narrow]) .side,
   .songs[data-full]:not([data-narrow]) .sheet {
-    border-left: 1px solid var(--separator);
+    border-left: 1px solid var(--hairline);
   }
 
   .songs[data-full]:not([data-narrow]) .list-bar {
@@ -2927,11 +2938,33 @@ const groups = [
     // ----- Auto DJ (lib/autoDj/director) -----
     // A control moved by hand stops it and the move stands; its own menu
     // picker Off gives the listener's shape back. Nothing is fetched until on.
+    const listEl = $('[data-list]');
     const djReading = $('[data-dj-reading]');
     const PROGRESS_DELAY_MS = 400;
     let djStatus: DjStatus = { on: false, mode: 'off', focus: null, ready: 0, total: 0 };
     let lastScrolledFocus: DjFocus | null = null;
+    let lastDjScrolledAt = -1;
     let readingTimer = 0;
+
+    // In DJ Juan "All Songs" mode, smoothly scroll the songs list to the
+    // active song row whenever the DJ switches tracks (without closing the
+    // Shape sheet), matching Sound Shaper Web & iOS (`ab33a4d`).
+    const scrollToSongRow = (i: number) => {
+      const rowEl = rows[i];
+      if (!rowEl || !listEl || listEl.clientHeight <= 0) return;
+      const listRect = listEl.getBoundingClientRect();
+      const rowRect = rowEl.getBoundingClientRect();
+      const offsetInList = rowRect.top - listRect.top + listEl.scrollTop;
+      const maxScroll = Math.max(0, listEl.scrollHeight - listEl.clientHeight);
+      const targetTop = Math.min(
+        Math.max(0, offsetInList - (listEl.clientHeight - rowRect.height) * 0.42),
+        maxScroll,
+      );
+      if (Math.abs(listEl.scrollTop - targetTop) > 4) {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        listEl.scrollTo({ top: targetTop, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    };
 
     const scrollToFocus = (focus: DjFocus) => {
       const maxScroll = Math.max(0, form.scrollHeight - form.clientHeight);
@@ -2974,6 +3007,12 @@ const groups = [
           djReading.hidden = !(djStatus.mode === 'all' && djStatus.total > 0 && djStatus.ready < djStatus.total);
           if (sheet.classList.contains('is-floating')) replace();
         }, PROGRESS_DELAY_MS);
+      if (on && mode === 'all' && at !== lastDjScrolledAt) {
+        lastDjScrolledAt = at;
+        scrollToSongRow(at);
+      } else if (!on || mode !== 'all') {
+        lastDjScrolledAt = -1;
+      }
       if (on && focus && focus !== lastScrolledFocus) {
         lastScrolledFocus = focus;
         scrollToFocus(focus);
@@ -3000,6 +3039,10 @@ const groups = [
       },
       cue: (i, startS) => {
         show(i);
+        if (djStatus.on && djStatus.mode === 'all' && i !== lastDjScrolledAt) {
+          lastDjScrolledAt = i;
+          scrollToSongRow(i);
+        }
         if (loaded !== i) {
           audio.src = items[i].src;
           loaded = i;
@@ -3018,6 +3061,7 @@ const groups = [
       },
       fadeIn: seconds => shaper.fadeIn(seconds),
       setLevelDb: (db, seconds) => shaper.setLevelDb(db, seconds),
+      levelLinear: () => shaper.levelLinear(),
       context: () => shaper.context(),
       changed: status => {
         djStatus = status;

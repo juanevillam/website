@@ -428,6 +428,8 @@ export const createShaper = (audio: HTMLAudioElement) => {
     },
     /** The graph's context, once built — Auto DJ plays its flourishes on it. */
     context: () => g?.ctx ?? null,
+    /** Current output gain (1 at rest; djLevelDb's linear value while Auto DJ mixes). */
+    levelLinear: () => outputLevel,
     /**
      * Auto DJ's cut: silent now, then up over `seconds` once the next sound
      * plays — the app's audioEngine.fadeInNextLoad. A jump within the song

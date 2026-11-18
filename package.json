@@ -7,14 +7,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "typecheck": "astro check",
+    "typecheck": "node ../scripts/sync-shaper-website.mjs --check && astro check",
     "arcade": "node scripts/sync-arcade.mjs",
     "tridi": "node scripts/sync-tridi.mjs",
     "likes": "node scripts/sync-likes.mjs",
     "backup": "node scripts/backup-media.mjs",
     "narration": "node scripts/narration-status.mjs",
     "format": "prettier --write .",
-    "songs": "node scripts/sync-songs.mjs"
+    "songs": "node ../scripts/sync-shaper-website.mjs && node scripts/sync-songs.mjs",
+    "shaper": "node ../scripts/sync-shaper-website.mjs",
+    "check:shaper": "node ../scripts/sync-shaper-website.mjs --check"
   },
   "dependencies": {
     "astro": "^7.4.1",
@@ -23,7 +25,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.11",
     "esbuild": "^0.28.2",
-    "prettier": "3.9.10"
+    "prettier": "3.8.3"
   },
   "engines": {
     "node": ">=22.22.0"

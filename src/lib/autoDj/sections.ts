@@ -1,4 +1,4 @@
-// COPIED from sound-shaper src/lib/autoDj/sections.ts at 6bea301 — do not edit here;
+// COPIED from sound-shaper src/lib/autoDj/sections.ts — do not edit here;
 // change the app, then copy it again (website AGENTS.md → Songs).
 
 // ---------------------------------------------------------------------------

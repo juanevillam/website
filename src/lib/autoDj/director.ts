@@ -65,6 +65,7 @@ export type DjHost = {
   rewind(atS: number): void;
   fadeIn(seconds: number): void;
   setLevelDb(db: number, seconds: number): void;
+  levelLinear(): number;
   context(): AudioContext | null;
   /** On, off, focus changed, or more of the songs read. */
   changed(status: DjStatus): void;
@@ -72,11 +73,41 @@ export type DjHost = {
 
 // ── The flourishes (the app's djFx, on the card's context) ─────────────────
 
+const FX_URLS: Record<FxName, string> = {
+  riser: '/media/dj/dj-riser.mp3',
+  reverseCymbal: '/media/dj/dj-reverse-cymbal.mp3',
+  downlifter: '/media/dj/dj-downlifter.mp3',
+  zap: '/media/dj/dj-zap.mp3',
+};
+
+const sampleBuffers: Partial<Record<FxName, AudioBuffer>> = {};
+const decoding: Partial<Record<FxName, Promise<AudioBuffer>>> = {};
+
+const preloadSample = (ctx: AudioContext, name: FxName): void => {
+  if (sampleBuffers[name] || decoding[name]) return;
+  const p = fetch(FX_URLS[name])
+    .then(res => res.arrayBuffer())
+    .then(bytes => ctx.decodeAudioData(bytes))
+    .then(buf => {
+      sampleBuffers[name] = buf;
+      return buf;
+    });
+  decoding[name] = p;
+  p.catch(() => {
+    if (decoding[name] === p) delete decoding[name];
+  });
+};
+
+const preloadFx = (ctx: AudioContext | null): void => {
+  if (!ctx) return;
+  (Object.keys(FX_URLS) as FxName[]).forEach(name => preloadSample(ctx, name));
+};
+
 const TAKES = 3;
 const fxCache = new Map<string, AudioBuffer>();
-const live = new Set<AudioBufferSourceNode>();
+const live = new Set<{ source: AudioBufferSourceNode; level: GainNode }>();
 
-const bufferFor = (
+const fallbackBuffer = (
   ctx: AudioContext,
   name: FxName,
   lengthS?: number,
@@ -96,38 +127,52 @@ const bufferFor = (
 
 const playFx = (
   ctx: AudioContext | null,
+  levelGain: number,
   name: FxName,
   cutInS: number,
   lengthS?: number,
 ) => {
   if (!ctx) return;
   try {
-    const buffer = bufferFor(ctx, name, lengthS);
-    const align =
-      name === 'riser' || name === 'reverseCymbal' ? buffer.duration : 0;
+    preloadFx(ctx);
+    const sampled = sampleBuffers[name];
+    const buffer = sampled ?? fallbackBuffer(ctx, name, lengthS);
+    const isBefore = name === 'riser' || name === 'reverseCymbal';
+    const rate =
+      sampled && isBefore && lengthS && lengthS > 0.15
+        ? Math.max(0.5, Math.min(2.2, buffer.duration / lengthS))
+        : 1;
+    const playDuration = buffer.duration / rate;
+    const align = isBefore ? playDuration : 0;
     const startIn = cutInS - align;
+    if (-startIn >= playDuration) return;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(ctx.destination);
+    if (rate !== 1) source.playbackRate.value = rate;
+    const level = ctx.createGain();
+    level.gain.value = levelGain;
+    source.connect(level);
+    level.connect(ctx.destination);
+    const entry = { source, level };
     source.onended = () => {
-      live.delete(source);
+      live.delete(entry);
       source.disconnect();
+      level.disconnect();
     };
     if (startIn >= 0) source.start(ctx.currentTime + startIn);
-    else if (-startIn < buffer.duration)
-      source.start(ctx.currentTime, -startIn);
-    else return;
-    live.add(source);
+    else source.start(ctx.currentTime, -startIn * rate);
+    live.add(entry);
   } catch {
     // A missing flourish is never worth an error in the music.
   }
 };
 
 const stopFx = () => {
-  for (const source of live) {
+  for (const { source, level } of live) {
     try {
       source.stop();
       source.disconnect();
+      level.disconnect();
     } catch {
       // Already finished.
     }
@@ -283,6 +328,7 @@ export const createAutoDj = (host: DjHost) => {
     // Starting DJ Juan (or switching between This Song and All Songs) rewinds
     // the current song to 0:00 so the mix starts from the beginning.
     host.rewind(0);
+    preloadFx(host.context());
 
     // The set's mood is the DJ's: Club, Slowed or Hyper, one to three
     // segments at a time, Club the home it comes back to most.
@@ -535,7 +581,8 @@ export const createAutoDj = (host: DjHost) => {
       segment = null;
       // The hit lands on the cut and the next song eases in under it.
       const { rate } = host.shape();
-      if (fx?.on) playFx(host.context(), fx.on, CUE_LEAD_S / rate);
+      if (fx?.on)
+        playFx(host.context(), host.levelLinear(), fx.on, CUE_LEAD_S / rate);
       host.fadeIn(fx?.fadeInS ?? 0.03);
       fx = null;
       applyMove(stateAt(target.mix, target.startS));
@@ -612,7 +659,7 @@ export const createAutoDj = (host: DjHost) => {
         const lengthS = Math.round((fx.beforeS / rate) * 20) / 20;
         if (toCut <= lengthS + 0.2 && toCut > 0.05) {
           rose = true;
-          playFx(host.context(), fx.before, toCut, lengthS);
+          playFx(host.context(), host.levelLinear(), fx.before, toCut, lengthS);
         }
       }
       const { moves } = segment.mix;
