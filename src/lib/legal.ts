@@ -46,7 +46,6 @@ export const LEGAL_APPS: {
     contentEs: 'libros',
     contentZh: '书籍',
     web: 'bookhighlighter.juanevillam.com',
-    footer: false,
   },
 ];
 

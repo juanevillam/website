@@ -34,10 +34,12 @@ type Props = { app: ReleasedApp };
 
 const { app } = Astro.props;
 
-const STORES = [
-  { key: 'app-store', name: 'App Store' },
-  { key: 'web', name: 'Web' },
-] as const;
+const STORES = (
+  [
+    { key: 'app-store', name: 'App Store' },
+    { key: 'web', name: 'Web' },
+  ] as const
+).filter(store => store.key in RELEASES[app]);
 ---
 
 <div class="stores" data-reveal>

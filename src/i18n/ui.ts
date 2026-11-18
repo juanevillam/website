@@ -87,6 +87,27 @@ const en = {
   'shaper.s4.p2':
     "You save it as a clip and listen to it again and again. From here you can also open Shape to mold the clips you're making and hear how each one sounds with its own specific shape.",
 
+  'highlighter.problem':
+    'I read a lot—both on Kindle and in physical books—and whenever I read I highlight the passages worth keeping or stick post-its on the pages, then reread lightly to leave only what truly matters. For me, rereading a book means going back to its summary and my highlights, yet Kindle sent me back into the whole book or capped exports to a tiny publisher limit, and with physical books I had to transcribe everything by hand into PDFs that read like plain office documents.',
+  'highlighter.solution':
+    "And that's why I built [Book Highlighter](github): an offline-first web app where each book is its summary and the passages you kept, read like a real book. Instead of typing chapters or highlights by hand, you upload photos of the book's index and of the pages with your sticky notes, and a neural OCR model running right in your browser extracts every chapter, page number and highlight automatically. There is no publisher cap, and you can read your highlights with realistic page curl across five themes or export any book—or your whole library—as a vector PDF.",
+  'highlighter.s1.p1':
+    'This is your shelf, organized just like Kindle and my other apps: every book stands with its cover, sorted by what you opened last, the title, the author or the publication year—including BC dates for ancient classics.',
+  'highlighter.s1.p2':
+    'Books in the same series stack into a single tile with their count and open in reading order. Beside the shelf sits the book page over a blurred wash of its cover, with its summary, genres, dark or light appearance, and PlayStation-style trophies all the way to the platinum.',
+  'highlighter.s2.p1':
+    "In Chapters you see the book's structure at a glance: each chapter shows its printed page range and a pill counting how many highlights you've saved inside it.",
+  'highlighter.s2.p2':
+    'You never have to type the table of contents by hand: upload photos of the book’s index and the app builds the entire chapter list with its page spans automatically—or if a book has no index, upload your highlighted pages straight away.',
+  'highlighter.s3.p1':
+    'This is the photo scanner, which was one of the coolest parts to build. You upload photos of the physical pages where you placed sticky notes, and an on-device neural network running in WebAssembly reads the page right inside your browser without sending your photos anywhere.',
+  'highlighter.s3.p2':
+    'It detects neon, pastel or translucent sticky notes, repairs page numbers, strips footnote superscripts and reconstructs paragraphs automatically. Right on top of the leveled photo you can tap any line to add or remove it before saving, or export your books as a vector PDF in A5, B5, A4 or Letter.',
+  'highlighter.s4.p1':
+    'And this is the Reader: everything you saved is laid out and read like a real book, starting with a typographic title page and an interactive index, turning with realistic 3D page curl, horizontal slide or continuous scroll.',
+  'highlighter.s4.p2':
+    'It has five page themes—Light, Dark, Sepia, Paper and Book, which extracts two colors from the book’s own cover to tint your highlights and draws classic print ornaments in the margins—plus seven text sizes and an anchor that keeps your exact paragraph whenever you resize.',
+
   // Space Explorer — the Platanus arcade entry, playable at the landing's foot.
   // The control keys are the cabinet's own; the action names are Apple-voice
   // labels. The game's own screens are the cabinet's, untranslated.
@@ -140,6 +161,18 @@ const en = {
     'The reason the app exists: presets or a five-band equalizer, live speed, and effects like preserve pitch and echo.',
   'shaper.s4.m':
     'Pick the exact seconds you love and save them as a clip you can loop anytime.',
+  'highlighter.problem.m':
+    'On Kindle and in physical books, rereading my highlights meant going back into the whole book or copying passages by hand into plain PDFs.',
+  'highlighter.solution.m':
+    'So I built [Book Highlighter](github): snap photos of a book’s index and sticky-note pages to extract chapters and highlights on-device, read them like a book, and export vector PDFs with no publisher cap.',
+  'highlighter.s1.m':
+    "A shelf like Kindle's: covers, series stacked into one tile, book summaries, and PlayStation-style trophies up to the platinum.",
+  'highlighter.s2.m':
+    'Upload photos of the printed index to extract every chapter and its page range automatically.',
+  'highlighter.s3.m':
+    'Snap the pages with your sticky notes: on-device neural OCR detects your highlights in the browser, and any book exports as a vector PDF.',
+  'highlighter.s4.m':
+    'Read what you kept like a real book: 3D page curl, slide or scroll, five page themes with cover-matched colors, and seven text sizes.',
   'arcade.m.before': 'A 3D space shooter that fits in 50 KB, made for ',
   'arcade.m.after': ' — and the easter egg I always wanted for this site.',
   'work.crol.m.after':
@@ -329,6 +362,27 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'Para Clips me inspiré mucho en la aplicación de Notas de Voz de Apple, que es la aplicación con la que grabé todas las ideas tanto para esta página como para Sound Shaper. Básicamente escoges la sección que más te gusta para el clip y la guardas — puedes crear todos los clips que quieras, infinitos.',
     'shaper.s4.p2':
       'Lo guardas como clip y lo escuchas una y otra vez. Desde aquí también puedes abrir Shape para moldear los clips que estás haciendo y escuchar cómo suena con ese Shape específico.',
+
+    'highlighter.problem':
+      'Mira, yo leo bastante —tanto en Kindle como en libros físicos— y siempre que leo voy resaltando lo que vale la pena guardar o poniéndole post-its a las páginas, y después releo con calma para dejar solo lo que de verdad importa. Para mí, releer un libro es volver a su resumen y a mis resaltados, pero Kindle me devolvía al libro entero o me limitaba la exportación al diez por ciento que permite la editorial, y con los libros físicos me tocaba transcribir todo a mano en PDFs que se leían como simples documentos.',
+    'highlighter.solution':
+      'Y por eso hice [Book Highlighter](github): una aplicación web offline-first donde cada libro es su resumen y los pasajes que guardaste, leídos como un libro de verdad. En vez de escribir capítulos o resaltados a mano, subes fotos del índice del libro y de las páginas donde pusiste tus sticky notes, y un modelo neuronal de OCR que corre directo en tu navegador detecta cada capítulo, número de página y resaltado automáticamente. No tiene ningún límite de editorial, puedes leer tus resaltados pasando página en 3D con cinco temas distintos y exportar cualquier libro —o toda tu biblioteca— como un PDF vectorial.',
+    'highlighter.s1.p1':
+      'Esta es tu estantería, pensada como la de Kindle y como el resto de mis aplicaciones: cada libro tiene su portada y puedes ordenarlos por lo último que abriste, por título, por autor o por fecha de publicación, incluyendo años antes de Cristo para los clásicos.',
+    'highlighter.s1.p2':
+      'Si varios libros pertenecen a una misma saga o serie, se apilan en un solo mosaico con su contador y se abren en orden. Al lado se abre la página del libro sobre el fondo difuminado de su portada, con su resumen, sus géneros, modo oscuro o claro y trofeos al estilo PlayStation hasta llegar al platino.',
+    'highlighter.s2.p1':
+      'En Capítulos ves toda la estructura del libro de un vistazo: cada capítulo muestra su rango de páginas impresas y una píldora con la cantidad de resaltados que llevas guardados ahí.',
+    'highlighter.s2.p2':
+      'No tienes que escribir el índice a mano: subes fotos del índice impreso del libro y la aplicación extrae todos los capítulos con su numeración de páginas automáticamente —y si el libro no tiene índice, subes directo las páginas con tus sticky notes—.',
+    'highlighter.s3.p1':
+      'Este es el escáner por foto, que fue de las partes más brutales de construir. Subes las fotos de las páginas físicas donde pusiste tus post-its y una red neuronal corriendo en WebAssembly dentro del navegador lee la página sin enviar tus fotos a ningún servidor.',
+    'highlighter.s3.p2':
+      'Detecta sticky notes neón, pastel o traslúcidos, repara los números de página, limpia los superíndices de notas al pie y reconstruye los párrafos solo. Sobre la misma foto nivelada puedes tocar cualquier línea para ajustarla antes de guardar, o exportar tus libros como PDF vectorial en tamaño A5, B5, A4 o Carta.',
+    'highlighter.s4.p1':
+      'Y este es el lector: todo lo que guardaste se diagrama y se lee como un libro físico, empezando por su portada tipográfica y su índice interactivo, pasando página con el doblez 3D estilo Apple Books, deslizando o en scroll continuo.',
+    'highlighter.s4.p2':
+      'Tiene cinco temas de página —Claro, Oscuro, Sepia, Papel y Libro, que extrae dos colores de la propia portada para teñir tus resaltados y dibuja ornamentos clásicos de imprenta en los márgenes—, siete tamaños de letra y un ancla que mantiene el párrafo exacto aunque cambies el tamaño de fuente.',
     'arcade.play': 'Jugar',
     'arcade.fullscreen': 'Pantalla completa',
     'arcade.resume': 'Haz clic en el juego para jugar.',
@@ -377,6 +431,18 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       'La razón de ser de la app: presets o un ecualizador de cinco bandas, velocidad en vivo y efectos como preservar el tono y eco.',
     'shaper.s4.m':
       'Elige los segundos exactos que te encantan y guárdalos como un clip para repetir cuando quieras.',
+    'highlighter.problem.m':
+      'En Kindle y en libros físicos, releer mis resaltados era volver al libro entero o pasar pasajes a mano a PDFs que parecían documentos.',
+    'highlighter.solution.m':
+      'Así que hice [Book Highlighter](github): subes fotos del índice y de tus páginas con sticky notes para extraer capítulos y resaltados en el navegador, leerlos como un libro y exportarlos en PDF vectorial sin límites.',
+    'highlighter.s1.m':
+      'Una estantería como la de Kindle: portadas, sagas apiladas en un mosaico, resumen del libro y trofeos estilo PlayStation hasta el platino.',
+    'highlighter.s2.m':
+      'Sube fotos del índice impreso del libro para extraer todos sus capítulos y rangos de páginas automáticamente.',
+    'highlighter.s3.m':
+      'Fotografía las páginas con tus post-its: el OCR neuronal en el navegador detecta tus resaltados y exporta cualquier libro en PDF vectorial.',
+    'highlighter.s4.m':
+      'Lee lo que guardaste como un libro real: doblez de página 3D, deslizar o scroll, cinco temas con colores de la portada y siete tamaños de letra.',
     'arcade.m.before':
       'Un shooter espacial en 3D que cabe en 50 KB, hecho para el ',
     'arcade.m.after': ' — y el easter egg que siempre quise para esta página.',
@@ -560,6 +626,27 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
       '做 Clips 时我从 Apple 的语音备忘录汲取了很多灵感，我正是用那个应用录下了做这个网页和 Sound Shaper 的所有点子。你只需挑出自己最喜欢的那一段保存成片段——想建多少个片段都可以，没有上限。',
     'shaper.s4.p2':
       '把它保存为片段后，就能一遍又一遍地循环听。在这里你也可以直接打开 Shape，为你正在制作的片段塑形，听听它在特定塑形效果下的声音。',
+
+    'highlighter.problem':
+      '我平时读很多书——既有 Kindle 也有纸质书——阅读时总会划出值得保留的段落，或者在书页上贴便签，之后再轻松重读一遍，只留下真正重要的内容。对我来说，重读一本书就是读它的摘要和我的高亮，可 Kindle 总把我带回整本书，或者受出版商限制只能导出区区十分之一，而纸质书又得手动抄进读起来像普通办公文档的 PDF 里。',
+    'highlighter.solution':
+      '所以我做了 [Book Highlighter](github)：一款离线优先的 Web 应用，让每本书都由它的摘要和你保留的段落组成，读起来就像一本真正的书。你不再需要手动输入章节或高亮，只需拍下书籍目录和贴有便签的书页上传，运行在浏览器本地的神经网络 OCR 模型就会自动提取所有章节、页码与高亮段落。没有任何出版商导出限制，你可以用逼真的 3D 翻页效果在五种主题下阅读，也能随时把单本书或整个书架导出为矢量 PDF。',
+    'highlighter.s1.p1':
+      '这是你的书架，整理方式就像 Kindle 和我的其他应用一样：每本书都带着封面排列，支持按最近打开、书名、作者或出版年份（包括公元前的古典著作）排序。',
+    'highlighter.s1.p2':
+      '同一系列的书籍会叠成一个带数量角标的封面格，点开后按顺序排列。书架旁是融入封面柔光背景的书籍主页，展示摘要、类型、深浅色外观，以及一路解锁到白金的 PlayStation 风格奖杯。',
+    'highlighter.s2.p1':
+      '在“章节”（Chapters）中，整本书的结构一目了然：每个章节都会显示印刷页码范围，以及统计该章已存高亮数量的胶囊标签。',
+    'highlighter.s2.p2':
+      '你完全不需要手动录入目录：上传书籍印刷目录的照片，应用就会自动提取全部章节及其页码范围——如果书没有目录，也可以直接上传贴有便签的书页。',
+    'highlighter.s3.p1':
+      '这是照片扫描器，也是整个项目最酷的部分之一。上传贴有实体便签的书页照片后，基于 WebAssembly 在浏览器本地运行的神经网络会直接识别页面内容，照片无需上传到任何服务器。',
+    'highlighter.s3.p2':
+      '它能识别荧光、柔和或半透明便签，自动修复页码、剔除脚注上标并重建段落。在自动纠偏后的书页照片上，你可以点选任意一行来增删高亮，或将书籍导出为 A5、B5、A4 或 Letter 尺寸的矢量 PDF。',
+    'highlighter.s4.p1':
+      '这是阅读器（Reader）：你保存的所有内容都会像真正的书一样排版呈现，从扉页与交互式目录开始，支持 Apple Books 风格的 3D 卷页、横向滑动或连续滚动。',
+    'highlighter.s4.p2':
+      '提供五种页面主题——浅色、深色、羊皮纸、纸张，以及从书籍封面提取双色高亮并绘制古典印艺边饰的“书本”（Book）主题——配合七档字号与跨缩放锁定段落位置的阅读锚点。',
     'arcade.play': '开始游戏',
     'arcade.fullscreen': '全屏',
     'arcade.resume': '点击游戏即可游玩。',
@@ -606,6 +693,17 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'shaper.s3.m':
       '这个应用存在的理由：预设或五段均衡器、实时变速，以及保持原调、回声等音效。',
     'shaper.s4.m': '选出你最爱的那几秒，存成片段，随时循环。',
+    'highlighter.problem.m':
+      '在 Kindle 和纸质书上重读高亮总得翻回整本书，或把段落手动抄进像普通文档一样的 PDF。',
+    'highlighter.solution.m':
+      '于是我做了 [Book Highlighter](github)：拍下目录和贴有便签的书页，在浏览器本地自动提取章节与高亮，像真正的书一样阅读，并无限制导出矢量 PDF。',
+    'highlighter.s1.m':
+      '像 Kindle 一样的书架：封面排列、同系列叠放、书籍摘要，以及一路解锁到白金的 PlayStation 风格奖杯。',
+    'highlighter.s2.m': '上传书籍印刷目录照片，自动提取全部章节与页码范围。',
+    'highlighter.s3.m':
+      '拍下贴有便签的书页：浏览器本地神经网络 OCR 自动识别高亮，并支持导出四种尺寸的矢量 PDF。',
+    'highlighter.s4.m':
+      '像真正的书一样阅读你留下的精华：3D 翻页、滑动或滚动，五种配封面色彩的主题与七档字号。',
     'arcade.m.before': '一款只有 50 KB 的 3D 太空射击游戏，为 ',
     'arcade.m.after': '而做——也是我一直想给这个网站的彩蛋。',
     'work.crol.m.after':

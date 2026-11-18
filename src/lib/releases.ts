@@ -18,23 +18,26 @@
  * — is tracked in docs/phase-c-release.md, not here.
  */
 export type Store = 'app-store' | 'web';
-export type ReleasedApp = 'shaper' | 'topper' | 'booker';
+export type ReleasedApp = 'shaper' | 'highlighter' | 'topper';
 
 /**
  * NO GOOGLE PLAY (Juan, 2026-11-04): the portfolio ships on iOS and the
  * web only, so the second badge is the WEB APP — Sound Shaper reaches
  * Android and the desktop through the browser, at its own subdomain.
+ * Book Highlighter is 100% Web-only forever, so it lists only `web`.
  */
-export const RELEASES: Record<ReleasedApp, Record<Store, string | null>> = {
+export const RELEASES: Record<
+  ReleasedApp,
+  Partial<Record<Store, string | null>>
+> = {
   shaper: {
     'app-store': 'https://apps.apple.com/app/id6823850995',
     web: 'https://soundshaper.juanevillam.com',
   },
-  topper: {
-    'app-store': null,
-    web: null,
+  highlighter: {
+    web: 'https://bookhighlighter.juanevillam.com',
   },
-  booker: {
+  topper: {
     'app-store': null,
     web: null,
   },

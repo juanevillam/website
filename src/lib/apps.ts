@@ -2,22 +2,17 @@ import type { ReleasedApp } from './releases';
 import type { UIKey } from '../i18n/ui';
 
 /**
- * THE APPS THE LANDING TELLS — one manifest for every layout of the apps
- * section (AppsShowcase), so the story of an app is written once.
+ * THE APPS THE LANDING TELLS — one manifest for every app section on the
+ * landing (AppsShowcase), in vertical scroll order:
+ *
+ *   1. Sound Shaper     — iOS + Web (`format: 'phone'`, 830 × 1800)
+ *   2. Book Highlighter — Web PWA (`format: 'desktop'`, 1440 × 960, 3:2)
  *
  * Each app is a WELCOME (its pitch: the problem, then the answer) and four
  * cards, in the order the story is told. Slide titles are English in every
  * locale — brand nouns. Every paragraph is also the transcript of its
  * narration clip (lib/narration); its phone version is found by convention
  * (`….sN.m`, `….problem.m`).
- *
- * Each manifest states its own pixel size, and it must match the files on
- * disk: it reserves the slot before the image lands. Every app is shot on
- * the same iPhone (393x852pt at 3x).
- *
- * ONLY SOUND SHAPER IS TOLD (2026-10-16): it is the one app shipping.
- * Topper's and Booker's stories wait in apps/web/archive/ with their
- * screenshots and copy; with one app the panel draws no switcher.
  */
 export type AppSlide = {
   src: string;
@@ -29,7 +24,9 @@ export type AppSlide = {
 
 export type AppStory = {
   id: ReleasedApp;
+  slug: string;
   name: string;
+  format: 'phone' | 'desktop';
   pitch: UIKey[];
   slides: AppSlide[];
   github?: string;
@@ -37,14 +34,14 @@ export type AppStory = {
 
 const shots = (
   app: string,
+  width: number,
+  height: number,
   entries: [name: string, title: string, paras: UIKey[]][],
 ): AppSlide[] =>
   entries.map(([name, title, paras]) => ({
-    // WebP at the size the page ever draws (2026-10-17): the 1179 x 2556
-    // PNGs weighed 1.4 MB each and were most of the page's first load.
     src: `/media/${app}/${name}.webp`,
-    width: 830,
-    height: 1800,
+    width,
+    height,
     title,
     paras,
   }));
@@ -52,14 +49,46 @@ const shots = (
 export const APPS: AppStory[] = [
   {
     id: 'shaper',
+    slug: 'sound-shaper',
     name: 'Sound Shaper',
+    format: 'phone',
     pitch: ['shaper.problem', 'shaper.solution'],
     github: 'https://github.com/juanevillam/sound-shaper',
-    slides: shots('shaper', [
+    slides: shots('shaper', 830, 1800, [
       ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
       ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
       ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
       ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
+    ]),
+  },
+  {
+    id: 'highlighter',
+    slug: 'book-highlighter',
+    name: 'Book Highlighter',
+    format: 'desktop',
+    pitch: ['highlighter.problem', 'highlighter.solution'],
+    github: 'https://github.com/juanevillam/book-highlighter',
+    slides: shots('highlighter', 1440, 960, [
+      [
+        'desktop-dark-shelf',
+        'Shelf',
+        ['highlighter.s1.p1', 'highlighter.s1.p2'],
+      ],
+      [
+        'desktop-dark-chapters',
+        'Chapters',
+        ['highlighter.s2.p1', 'highlighter.s2.p2'],
+      ],
+      [
+        'desktop-dark-scanner',
+        'Scanner',
+        ['highlighter.s3.p1', 'highlighter.s3.p2'],
+      ],
+      [
+        'desktop-dark-reader',
+        'Reader',
+        ['highlighter.s4.p1', 'highlighter.s4.p2'],
+      ],
     ]),
   },
 ];

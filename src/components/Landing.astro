@@ -37,8 +37,17 @@ const focus = page?.focus;
 
   <Hero />
 
-  <!-- Juan's apps, the page's main subject: every one in one panel. -->
-  <AppsShowcase apps={APPS} focused={focus?.section === 'apps'} />
+  <!-- Juan's apps, each in its own full-viewport snapped panel: Sound Shaper
+       first (iOS + Web), then Book Highlighter (Web PWA, desktop 3:2 slides). -->
+  {
+    APPS.map((app, i) => (
+      <AppsShowcase
+        id={i === 0 ? 'apps' : app.slug}
+        app={app}
+        focused={focus?.section === 'apps' && focus.app === app.id}
+      />
+    ))
+  }
 
   <!-- Everything else, secondary: one card per project (Space Explorer first). -->
   <WorkCarousel focus={focus?.section === 'work' ? focus.card : undefined} />

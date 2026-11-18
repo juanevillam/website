@@ -88,6 +88,50 @@ const CLIPS: Array<{
     shot: shot('shaper', 'ios-dark-clip'),
   },
 
+  // Book Highlighter
+  { key: 'highlighter.problem', where: 'Book Highlighter · el problema' },
+  { key: 'highlighter.solution', where: 'Book Highlighter · la idea' },
+  {
+    key: 'highlighter.s1.p1',
+    where: 'Book Highlighter · Shelf (1)',
+    shot: shot('highlighter', 'desktop-dark-shelf'),
+  },
+  {
+    key: 'highlighter.s1.p2',
+    where: 'Book Highlighter · Shelf (2)',
+    shot: shot('highlighter', 'desktop-dark-shelf'),
+  },
+  {
+    key: 'highlighter.s2.p1',
+    where: 'Book Highlighter · Chapters (1)',
+    shot: shot('highlighter', 'desktop-dark-chapters'),
+  },
+  {
+    key: 'highlighter.s2.p2',
+    where: 'Book Highlighter · Chapters (2)',
+    shot: shot('highlighter', 'desktop-dark-chapters'),
+  },
+  {
+    key: 'highlighter.s3.p1',
+    where: 'Book Highlighter · Scanner (1)',
+    shot: shot('highlighter', 'desktop-dark-scanner'),
+  },
+  {
+    key: 'highlighter.s3.p2',
+    where: 'Book Highlighter · Scanner (2)',
+    shot: shot('highlighter', 'desktop-dark-scanner'),
+  },
+  {
+    key: 'highlighter.s4.p1',
+    where: 'Book Highlighter · Reader (1)',
+    shot: shot('highlighter', 'desktop-dark-reader'),
+  },
+  {
+    key: 'highlighter.s4.p2',
+    where: 'Book Highlighter · Reader (2)',
+    shot: shot('highlighter', 'desktop-dark-reader'),
+  },
+
   // Events
   { key: 'events.platanus.body', where: 'Eventos · Platanus Hack 26 Caracas' },
   { key: 'events.summit.body', where: 'Eventos · Startup Venezuela Summit' },

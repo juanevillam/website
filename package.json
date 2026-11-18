@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "songs": "node ../scripts/sync-shaper-website.mjs && node scripts/sync-songs.mjs",
     "shaper": "node ../scripts/sync-shaper-website.mjs",
-    "check:shaper": "node ../scripts/sync-shaper-website.mjs --check"
+    "check:shaper": "node ../scripts/sync-shaper-website.mjs --check",
+    "highlighter": "node scripts/sync-highlighter-shots.mjs"
   },
   "dependencies": {
     "astro": "^7.4.1",
