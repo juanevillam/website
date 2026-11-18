@@ -1,14 +1,10 @@
 /**
- * Cloudflare Pages Function (`/api/photos`) — stores visitor Name + Email,
- * post likes, and post comments in Cloudflare D1 (`env.DB`) with zero
- * client-side SDK weight.
+ * Cloudflare Pages Function (`/api/photos`) — stores visitor Name + Email
+ * and post likes in Cloudflare D1 (`env.DB`) with zero client-side SDK weight.
  *
  * Privacy & security:
  * - Visitor emails are never returned by GET `/api/photos` (only per-post
  *   integer like counts and whether the caller's own email liked each post).
- * - Each comment stores a SHA-256 `owner_hash` of `email:token` so the visitor
- *   who wrote it can delete their own comment from their session/device
- *   without exposing anyone's email or secret in the open-source repository.
  */
 type D1Result<T = Record<string, unknown>> = { results?: T[] };
 type D1PreparedStatement = {
@@ -23,7 +19,6 @@ type D1Database = {
 
 type Env = {
   DB?: D1Database;
-  PHOTOS_OWNER_KEY?: string;
 };
 
 const JSON_HEADERS = {
@@ -35,14 +30,6 @@ const isValidEmail = (email: unknown): email is string =>
   typeof email === 'string' &&
   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()) &&
   email.trim().length <= 160;
-
-const sha256Hex = async (input: string) => {
-  const bytes = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-};
 
 const ensureSchema = async (db: D1Database) => {
   await db.batch([
@@ -62,17 +49,6 @@ const ensureSchema = async (db: D1Database) => {
         PRIMARY KEY (post_id, email)
       )`,
     ),
-    db.prepare(
-      `CREATE TABLE IF NOT EXISTS photos_comments (
-        id TEXT PRIMARY KEY,
-        post_id TEXT NOT NULL,
-        author TEXT NOT NULL,
-        email TEXT NOT NULL,
-        owner_hash TEXT NOT NULL DEFAULT '',
-        text TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      )`,
-    ),
   ]);
 };
 
@@ -85,7 +61,7 @@ export const onRequestGet = async ({
 }) => {
   if (!env.DB) {
     return new Response(
-      JSON.stringify({ ok: true, likeCounts: {}, likedByMe: {}, comments: {} }),
+      JSON.stringify({ ok: true, likeCounts: {}, likedByMe: {} }),
       { headers: JSON_HEADERS },
     );
   }
@@ -93,23 +69,10 @@ export const onRequestGet = async ({
     await ensureSchema(env.DB);
     const url = new URL(request.url);
     const email = (url.searchParams.get('email') ?? '').trim().toLowerCase();
-    const token = (url.searchParams.get('token') ?? '').trim();
-    const callerHash =
-      email && token ? await sha256Hex(`${email}:${token}`) : '';
 
     const likeRows = await env.DB.prepare(
       'SELECT post_id, email FROM photos_likes',
     ).all<{ post_id: string; email: string }>();
-    const commentRows = await env.DB.prepare(
-      'SELECT id, post_id, author, owner_hash, text, created_at FROM photos_comments ORDER BY created_at ASC',
-    ).all<{
-      id: string;
-      post_id: string;
-      author: string;
-      owner_hash: string;
-      text: string;
-      created_at: string;
-    }>();
 
     const likeCounts: Record<string, number> = {};
     const likedByMe: Record<string, boolean> = {};
@@ -118,33 +81,12 @@ export const onRequestGet = async ({
       if (email && r.email === email) likedByMe[r.post_id] = true;
     }
 
-    const comments: Record<
-      string,
-      {
-        id: string;
-        author: string;
-        text: string;
-        createdAt: string;
-        canDelete: boolean;
-      }[]
-    > = {};
-    for (const r of commentRows.results ?? []) {
-      (comments[r.post_id] ??= []).push({
-        id: r.id,
-        author: r.author,
-        text: r.text,
-        createdAt: r.created_at,
-        canDelete: Boolean(callerHash && r.owner_hash === callerHash),
-      });
-    }
-
-    return new Response(
-      JSON.stringify({ ok: true, likeCounts, likedByMe, comments }),
-      { headers: JSON_HEADERS },
-    );
+    return new Response(JSON.stringify({ ok: true, likeCounts, likedByMe }), {
+      headers: JSON_HEADERS,
+    });
   } catch {
     return new Response(
-      JSON.stringify({ ok: true, likeCounts: {}, likedByMe: {}, comments: {} }),
+      JSON.stringify({ ok: true, likeCounts: {}, likedByMe: {} }),
       { headers: JSON_HEADERS },
     );
   }
@@ -165,48 +107,12 @@ export const onRequestPost = async ({
       });
     }
 
-    if (body.action === 'deleteComment') {
-      const commentId = String(body.commentId ?? '').trim();
-      const email = String(body.email ?? '')
-        .trim()
-        .toLowerCase();
-      const token = String(body.token ?? '').trim();
-      const ownerKey = String(body.ownerKey ?? '').trim();
-      if (!commentId) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'missing_comment' }),
-          { status: 400, headers: JSON_HEADERS },
-        );
-      }
-      if (env.DB) {
-        await ensureSchema(env.DB);
-        if (env.PHOTOS_OWNER_KEY && ownerKey === env.PHOTOS_OWNER_KEY) {
-          await env.DB.prepare('DELETE FROM photos_comments WHERE id = ?1')
-            .bind(commentId)
-            .run();
-        } else if (email && token) {
-          const callerHash = await sha256Hex(`${email}:${token}`);
-          await env.DB.prepare(
-            'DELETE FROM photos_comments WHERE id = ?1 AND owner_hash = ?2',
-          )
-            .bind(commentId, callerHash)
-            .run();
-        }
-      }
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: JSON_HEADERS,
-      });
-    }
-
     const name = String(body.name ?? '')
       .trim()
       .slice(0, 80);
     const email = String(body.email ?? '')
       .trim()
       .toLowerCase();
-    const token = String(body.token ?? '')
-      .trim()
-      .slice(0, 120);
     if (!name || !isValidEmail(email)) {
       return new Response(
         JSON.stringify({ ok: false, error: 'invalid_identity' }),
@@ -259,37 +165,6 @@ export const onRequestPost = async ({
         }
       }
       return new Response(JSON.stringify({ ok: true, liked }), {
-        headers: JSON_HEADERS,
-      });
-    }
-
-    if (body.action === 'comment') {
-      const text = String(body.text ?? '')
-        .trim()
-        .slice(0, 500);
-      if (!text) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'empty_comment' }),
-          { status: 400, headers: JSON_HEADERS },
-        );
-      }
-      const ownerHash = await sha256Hex(`${email}:${token}`);
-      const comment = {
-        id: `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-        author: name,
-        text,
-        createdAt: now,
-        canDelete: true,
-      };
-      if (env.DB) {
-        await env.DB.prepare(
-          `INSERT INTO photos_comments (id, post_id, author, email, owner_hash, text, created_at)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
-        )
-          .bind(comment.id, postId, name, email, ownerHash, text, now)
-          .run();
-      }
-      return new Response(JSON.stringify({ ok: true, comment }), {
         headers: JSON_HEADERS,
       });
     }
