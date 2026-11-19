@@ -50,10 +50,17 @@ const sounds = app.content === 'sounds';
       <p>
         Before anything is deleted, the app asks you to sign in again to
         confirm it's you. Then the deletion runs right away: your uploaded files, then your
-        data, then the account itself. If you signed in with Apple, {app.name}
-        is also removed from the apps that use Sign in with Apple on your
-        Apple Account; if you signed in with Google, its access to your Google
-        Account is removed.
+        data, then the account itself.{' '}
+        {books ? (
+          <>Its access to your Google Account is removed.</>
+        ) : (
+          <>
+            If you signed in with Apple, {app.name} is also removed from the
+            apps that use Sign in with Apple on your Apple Account; if you
+            signed in with Google, its access to your Google Account is
+            removed.
+          </>
+        )}
         {sounds && (
           <>
             {' '}If your files can't be removed at that moment, nothing is
@@ -86,8 +93,8 @@ const sounds = app.content === 'sounds';
           ) : books ? (
             <>
               <li>
-                Every book you added — including those in Recently Deleted —
-                with its summary, highlights and cover.
+                Every book you added, with its summary, chapters, highlights
+                and cover.
               </li>
               <li>Your trophies.</li>
             </>
@@ -143,10 +150,17 @@ const sounds = app.content === 'sounds';
       <p>
         Antes de borrar nada, la app te pide iniciar sesión de nuevo para
         confirmar que eres tú. Después la eliminación es inmediata: primero los archivos que subiste,
-        luego tus datos y, por último, la cuenta. Si iniciaste sesión con
-        Apple, {app.name} también desaparece de las apps que usan Iniciar
-        sesión con Apple en tu Cuenta de Apple; si iniciaste sesión con Google,
-        se le retira el acceso a tu cuenta de Google.
+        luego tus datos y, por último, la cuenta.{' '}
+        {books ? (
+          <>Se le retira el acceso a tu cuenta de Google.</>
+        ) : (
+          <>
+            Si iniciaste sesión con Apple, {app.name} también desaparece de las
+            apps que usan Iniciar sesión con Apple en tu Cuenta de Apple; si
+            iniciaste sesión con Google, se le retira el acceso a tu cuenta de
+            Google.
+          </>
+        )}
         {sounds && (
           <>
             {' '}Si en ese momento no se pueden borrar tus archivos, no se
@@ -179,8 +193,8 @@ const sounds = app.content === 'sounds';
           ) : books ? (
             <>
               <li>
-                Todos los libros que añadiste, incluidos los de Eliminados
-                recientemente, con su resumen, sus resaltados y su portada.
+                Todos los libros que añadiste, con su resumen, sus capítulos,
+                sus resaltados y su portada.
               </li>
               <li>Tus trofeos.</li>
             </>
@@ -233,7 +247,7 @@ const sounds = app.content === 'sounds';
         <li>轻点<strong>删除账户</strong>并确认。</li>
       </ul>
       <p>
-        删除任何内容之前，应用会要求你重新登录以确认是你本人。随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。如果你使用 Apple 登录，{app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除；如果你使用 Google 登录，它对你 Google 账户的访问权限也会被移除。{sounds && '如果当时无法删除你的文件，则不会删除任何内容，应用会请你重试。'}
+        删除任何内容之前，应用会要求你重新登录以确认是你本人。随后删除会立即执行：先删除你上传的文件，再删除你的数据，最后删除账户本身。{books ? '它对你 Google 账户的访问权限也会被移除。' : `如果你使用 Apple 登录，${app.name} 也会从你 Apple 账户中使用“通过 Apple 登录”的应用列表里移除；如果你使用 Google 登录，它对你 Google 账户的访问权限也会被移除。`}{sounds && '如果当时无法删除你的文件，则不会删除任何内容，应用会请你重试。'}
       </p>
 
       <h2>如果你无法访问应用</h2>
@@ -254,7 +268,7 @@ const sounds = app.content === 'sounds';
             </>
           ) : books ? (
             <>
-              <li>你添加的所有书籍（包括“最近删除”中的），连同其摘要、高亮和封面。</li>
+              <li>你添加的所有书籍，连同其摘要、章节、高亮和封面。</li>
               <li>你的奖杯。</li>
             </>
           ) : (

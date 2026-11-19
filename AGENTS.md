@@ -59,7 +59,7 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   pictures ship at the size the page draws (WebP for screenshots, JPEG q80
   for photos). Re-measure with a production build and a throttled phone
   before adding media.
-- The audits are `.claude/commands/web-*.md`; their order and the ground
+- The audits are `.agents/skills/web-*/SKILL.md`; their order and the ground
   rules they share are in [`docs/audit-playbook.md`](docs/audit-playbook.md).
   `/web-release-audit` runs before every deploy.
 
@@ -76,8 +76,8 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 
 ## What the site is
 
-- **One snapped page**: hero → the apps (`AppsShowcase`, today only Sound
-  Shaper) → More Work (`lib/work.ts`) → Events (`lib/events.ts`, newest
+- **One snapped page**: hero → the apps (`AppsShowcase`, Sound Shaper and
+  Book Highlighter) → More Work (`lib/work.ts`) → Events (`lib/events.ts`, newest
   first) → footer. More Work's screens are silent recordings of each
   site being scrolled (~11 s, `public/media/work/*.mp4`, recorded with
   headless Chromium); only the strongest projects stay — Andreina Aular's
