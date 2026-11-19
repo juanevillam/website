@@ -8,7 +8,7 @@
  * Constants are BrandTile's; when that file retunes, retune this.
  */
 type Props = {
-  app: 'topper' | 'shaper' | 'highlighter';
+  app: 'shaper' | 'highlighter';
   size?: number;
 };
 
@@ -58,7 +58,7 @@ const path = squirclePath(size);
 const glyph = size * 0.94;
 const scale = glyph / 48;
 const gx = pad + (size - glyph) / 2;
-const gy = pad + (size - glyph) / 2 + (app === 'topper' ? 1.25 * scale : 0);
+const gy = pad + (size - glyph) / 2;
 const gradientId = `tile-${app}`;
 const shadowId = `tile-shadow-${app}`;
 ---
@@ -97,12 +97,7 @@ const shadowId = `tile-shadow-${app}`;
     stroke-linejoin="round"
   >
     {
-      app === 'topper' ? (
-        <>
-          <path d="M10 28V15.5l8.5 7L24 11l5.5 11.5 8.5-7V28z" />
-          <path d="M10 34.5h28" />
-        </>
-      ) : app === 'highlighter' ? (
+      app === 'highlighter' ? (
         <>
           <path d="M24 14 Q16 9.5 9 11 V34 Q16 32 24 37.5 Z" />
           <path d="M24 14 Q32 9.5 39 11 V34 Q32 32 24 37.5 Z" />

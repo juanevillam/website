@@ -147,36 +147,11 @@ const en = {
   'work.maktub.body':
     "[Maktub Art Fund](maktub) is a client from Mexico and, well, it's just a landing page, which normally doesn't catch my eye that much—just building a standalone landing page—but this one had a really interesting design I hadn't built before, and it turned out super modern, very fashion-forward, and I really liked the final result.",
 
-  // PHONE copy — the short version each block shows below 48rem. The
-  // full paragraphs (and their narration) are desktop's.
-  'shaper.problem.m':
-    'I listened to music on YouTube Music between ads, kept each song in three versions — normal, slowed, sped up — and mostly wanted just my favorite 30 seconds, on loop.',
+  // Short summary copy (`….m`) used by social preview cards (`lib/links.ts`).
   'shaper.solution.m':
     'So I built [Sound Shaper](github): add your own MP3s, change the speed live, shape the sound with an equalizer and effects, and save the parts you love as clips. All of it works offline.',
-  'shaper.s1.m':
-    'Add your MP3s and build your own library. It works offline, with widgets and Lock Screen controls.',
-  'shaper.s2.m':
-    'A player you already know, with Shape, Clips and Edit one tap away. Your settings carry over from song to song.',
-  'shaper.s3.m':
-    'The reason the app exists: presets or a five-band equalizer, live speed, and effects like preserve pitch and echo.',
-  'shaper.s4.m':
-    'Pick the exact seconds you love and save them as a clip you can loop anytime.',
-  'highlighter.problem.m':
-    'On Kindle and in physical books, rereading my highlights meant going back into the whole book or copying passages by hand into plain PDFs.',
   'highlighter.solution.m':
     'So I built [Book Highlighter](github): snap photos of a book’s index and sticky-note pages to extract chapters and highlights on-device, read them like a book, and export vector PDFs with no publisher cap.',
-  'highlighter.s1.m':
-    "A shelf like Kindle's: covers, series stacked into one tile, book summaries, and PlayStation-style trophies up to the platinum.",
-  'highlighter.s2.m':
-    'Upload photos of the printed index to extract every chapter and its page range automatically.',
-  'highlighter.s3.m':
-    'Snap the pages with your sticky notes: on-device neural OCR detects your highlights in the browser, and any book exports as a vector PDF.',
-  'highlighter.s4.m':
-    'Read what you kept like a real book: 3D page curl, slide or scroll, five page themes with cover-matched colors, and seven text sizes.',
-  'arcade.m.before': 'A 3D space shooter that fits in 50 KB, made for ',
-  'arcade.m.after': ' — and the easter egg I always wanted for this site.',
-  'work.crol.m.after':
-    ', a cloud ERP for businesses in Mexico. I built it from scratch, design included.',
   'work.salvalo.m':
     "Shops turn what they didn't sell into packs; you reserve one nearby and pick it up in store. I redesigned the app and built its website and panels.",
   'work.maktub.m':
@@ -414,36 +389,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.maktub.body':
       '[Maktub Art Fund](maktub) es un cliente de México y, bueno, es una landing page nada más, que normalmente no me llama mucho la atención —o sea, solo hacer la landing page—, pero esta tenía un diseño bastante interesante que no había hecho así en específico, y quedó bastante moderno, bastante fashion, y me gustó mucho el resultado final.',
 
-    // Phone copy (see en).
-    'shaper.problem.m':
-      'Escuchaba música en YouTube Music entre anuncios, guardaba cada canción en tres versiones — normal, slowed, sped up — y casi siempre solo quería mis 30 segundos favoritos, en loop.',
+    // Short summary copy (see en).
     'shaper.solution.m':
       'Así que hice [Sound Shaper](github): subes tus propios MP3, cambias la velocidad en vivo, moldeas el sonido con ecualizador y efectos, y guardas tus partes favoritas como clips. Todo funciona sin internet.',
-    'shaper.s1.m':
-      'Sube tus MP3 y arma tu propia biblioteca. Funciona sin conexión, con widgets y controles en la pantalla de bloqueo.',
-    'shaper.s2.m':
-      'Un reproductor que ya conoces, con Moldear, Clips y Editar a un toque. Tus ajustes pasan de canción en canción.',
-    'shaper.s3.m':
-      'La razón de ser de la app: presets o un ecualizador de cinco bandas, velocidad en vivo y efectos como preservar el tono y eco.',
-    'shaper.s4.m':
-      'Elige los segundos exactos que te encantan y guárdalos como un clip para repetir cuando quieras.',
-    'highlighter.problem.m':
-      'En Kindle y en libros físicos, releer mis resaltados era volver al libro entero o pasar pasajes a mano a PDFs que parecían documentos.',
     'highlighter.solution.m':
       'Así que hice [Book Highlighter](github): subes fotos del índice y de tus páginas con sticky notes para extraer capítulos y resaltados en el navegador, leerlos como un libro y exportarlos en PDF vectorial sin límites.',
-    'highlighter.s1.m':
-      'Una estantería como la de Kindle: portadas, sagas apiladas en un mosaico, resumen del libro y trofeos estilo PlayStation hasta el platino.',
-    'highlighter.s2.m':
-      'Sube fotos del índice impreso del libro para extraer todos sus capítulos y rangos de páginas automáticamente.',
-    'highlighter.s3.m':
-      'Fotografía las páginas con tus post-its: el OCR neuronal en el navegador detecta tus resaltados y exporta cualquier libro en PDF vectorial.',
-    'highlighter.s4.m':
-      'Lee lo que guardaste como un libro real: doblez de página 3D, deslizar o scroll, cinco temas con colores de la portada y siete tamaños de letra.',
-    'arcade.m.before':
-      'Un shooter espacial en 3D que cabe en 50 KB, hecho para el ',
-    'arcade.m.after': ' — y el easter egg que siempre quise para esta página.',
-    'work.crol.m.after':
-      ', un ERP en la nube para empresas en México. La construí desde cero, diseño incluido.',
     'work.salvalo.m':
       'Los comercios convierten lo que no vendieron en packs; tú apartas uno cerca y lo recoges en el local. Rediseñé la app e hice su web y sus paneles.',
     'work.maktub.m':
@@ -673,33 +623,11 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'work.maktub.body':
       '[Maktub Art Fund](maktub) 是一位来自墨西哥的客户，它只是一个独立的落地页，通常来说单纯做落地页不会太吸引我，但这个项目的设计非常独特，是我以前没做过的风格，成品非常现代、很有时尚感，我非常喜欢最终的效果。',
 
-    // Phone copy (see en).
-    'shaper.problem.m':
-      '我在 YouTube Music 听歌总被广告打断，每首歌都存了三个版本——原速、slowed、sped up——而大多数时候我只想循环最爱的那 30 秒。',
+    // Short summary copy (see en).
     'shaper.solution.m':
       '于是我做了 [Sound Shaper](github)：导入你自己的 MP3，实时调速，用均衡器和音效塑造声音，再把最爱的部分存成片段。全部离线可用。',
-    'shaper.s1.m':
-      '导入你的 MP3，建立自己的资料库。离线可用，支持小组件和锁定屏幕控制。',
-    'shaper.s2.m':
-      '一个你早已熟悉的播放器，塑形、片段、编辑一点即达。你的设置会延续到下一首歌。',
-    'shaper.s3.m':
-      '这个应用存在的理由：预设或五段均衡器、实时变速，以及保持原调、回声等音效。',
-    'shaper.s4.m': '选出你最爱的那几秒，存成片段，随时循环。',
-    'highlighter.problem.m':
-      '在 Kindle 和纸质书上重读高亮总得翻回整本书，或把段落手动抄进像普通文档一样的 PDF。',
     'highlighter.solution.m':
       '于是我做了 [Book Highlighter](github)：拍下目录和贴有便签的书页，在浏览器本地自动提取章节与高亮，像真正的书一样阅读，并无限制导出矢量 PDF。',
-    'highlighter.s1.m':
-      '像 Kindle 一样的书架：封面排列、同系列叠放、书籍摘要，以及一路解锁到白金的 PlayStation 风格奖杯。',
-    'highlighter.s2.m': '上传书籍印刷目录照片，自动提取全部章节与页码范围。',
-    'highlighter.s3.m':
-      '拍下贴有便签的书页：浏览器本地神经网络 OCR 自动识别高亮，并支持导出四种尺寸的矢量 PDF。',
-    'highlighter.s4.m':
-      '像真正的书一样阅读你留下的精华：3D 翻页、滑动或滚动，五种配封面色彩的主题与七档字号。',
-    'arcade.m.before': '一款只有 50 KB 的 3D 太空射击游戏，为 ',
-    'arcade.m.after': '而做——也是我一直想给这个网站的彩蛋。',
-    'work.crol.m.after':
-      ' 的移动应用，一款面向墨西哥企业的云端 ERP。我从零打造，包括设计。',
     'work.salvalo.m':
       '商家把没卖完的商品做成套餐，你预订附近的一份、到店自取。我重新设计了应用，并打造了它的网站和后台。',
     'work.maktub.m':

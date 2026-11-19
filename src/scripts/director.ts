@@ -1,14 +1,8 @@
 /**
  * THE PAGE'S DIRECTOR — the narration session, the narrator's glide between
- * anchors, the hero's ride-out, and the scroll-driven walk of any
- * StoryShowcase on the page. It lived inside StoryShowcase until the apps
- * moved to one deck (AppsShowcase, 2026-10-11) and a page could have no
- * story at all; it is the narrator's, so NarrationPlayer loads it. Every
- * part is driven by what the page marks up — `data-narr-block`,
- * `data-narr-panel`, `[data-story]` — so a page without stories simply has
- * none to walk.
+ * anchors, and the hero's ride-out. Every part is driven by what the page
+ * marks up — `data-narr-block`, `data-narr-panel`.
  */
-import { createDeck, watchSlots, type Deck } from '../lib/deck';
 import { type ReadMark, readTokens } from '../lib/readAlong';
 import { dur } from '../lib/motion';
 import { playingSound } from '../lib/listening';
@@ -60,8 +54,6 @@ document.addEventListener('arcade:close', () => {
   relayout = false;
 });
 
-const smooth = (v: number) => v * v * (3 - 2 * v);
-
 // ---------- narration ----------
 // Juan's voice tells the page as a pitch. One clip per paragraph and
 // ONE session across the whole page — the hero's intro, then each
@@ -111,35 +103,13 @@ if (import.meta.env.DEV)
     },
   });
 
-/** A narrated block: the hero's wordmark, a story's opener pitch, one
- *  slide's caption, or a PANEL — a plain full-height section after the
- *  stories (the game), marked `data-narr-panel`. */
+/** A narrated block: the hero's wordmark, or a PANEL — a full-height section
+ *  marked `data-narr-panel`. */
 type Narr = {
   el: HTMLElement;
   paras: HTMLElement[];
   anchor: HTMLElement | null;
-  /** The story it belongs to, and its step there; null = the hero or a
-   *  panel. */
-  story: Story | null;
-  step: number;
   panel: boolean;
-};
-
-type Story = {
-  root: HTMLElement;
-  steps: HTMLElement[];
-  stage: HTMLElement | null;
-  intro: HTMLElement | null;
-  float: HTMLElement | null;
-  deck: Deck | null;
-  lockup: HTMLElement | null;
-  anchorBig: HTMLElement | null;
-  anchorSmall: HTMLElement | null;
-  actions: HTMLElement | null;
-  actionsBig: HTMLElement | null;
-  actionsSmall: HTMLElement | null;
-  /** Narrated blocks by step: the opener's pitch is 0, the deck 1. */
-  blocks: (Narr | undefined)[];
 };
 
 const isIOS =
@@ -342,7 +312,6 @@ let running = false;
 let showing: Narr | undefined;
 
 const narrs: Narr[] = [];
-let stories: Story[] = [];
 let panels: Narr[] = [];
 
 // Every paragraph's Spanish voice clip and 9:16 video ride on it as
@@ -378,43 +347,10 @@ const nextParaAfter = (
   const next = firstVoiced(block, para + 1);
   if (next >= 0) return { block, para: next };
   if (inFocus) return null;
-  const story = block.story;
-  if (block.panel) {
-    const nextPanel = panels[panels.indexOf(block) + 1];
-    if (!nextPanel) return null;
-    const p = startOf(nextPanel);
-    return p >= 0 ? { block: nextPanel, para: p } : null;
-  }
-  if (!story) {
-    const firstStoryBlock = stories[0]?.blocks[0];
-    if (firstStoryBlock) {
-      const p = startOf(firstStoryBlock);
-      if (p >= 0) return { block: firstStoryBlock, para: p };
-    }
-    const firstPanel = panels[0];
-    if (firstPanel) {
-      const p = startOf(firstPanel);
-      if (p >= 0) return { block: firstPanel, para: p };
-    }
-    return null;
-  }
-  if (block.step + 1 < story.steps.length) {
-    const nextStepBlock = story.blocks[block.step + 1];
-    if (nextStepBlock) {
-      const p = startOf(nextStepBlock);
-      if (p >= 0) return { block: nextStepBlock, para: p };
-    }
-  }
-  const nextStory = stories[stories.indexOf(story) + 1];
-  if (nextStory?.blocks[0]) {
-    const p = startOf(nextStory.blocks[0]);
-    if (p >= 0) return { block: nextStory.blocks[0], para: p };
-  }
-  if (panels[0]) {
-    const p = startOf(panels[0]);
-    if (p >= 0) return { block: panels[0], para: p };
-  }
-  return null;
+  const nextPanel = block.panel ? panels[panels.indexOf(block) + 1] : panels[0];
+  if (!nextPanel) return null;
+  const p = startOf(nextPanel);
+  return p >= 0 ? { block: nextPanel, para: p } : null;
 };
 
 /** Pre-load the upcoming video on the hidden standby layer near the end of
@@ -1356,6 +1292,7 @@ window.addEventListener(
     cachedRem =
       parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     narrPlacementDirty = true;
+    wakeNarrator();
   },
   { passive: true },
 );
@@ -1363,6 +1300,7 @@ window.visualViewport?.addEventListener(
   'resize',
   () => {
     narrPlacementDirty = true;
+    wakeNarrator();
   },
   { passive: true },
 );
@@ -1436,10 +1374,12 @@ const setNarrStyle = (op: string, pe: string) => {
   }
 };
 
-// Every frame, not only on scroll: the anchors themselves move with the
-// page's scroll-coupled motion.
+// Only when placement changes (scroll, resize, deck turn, language switch):
+// avoids layout reads (offsetWidth / getBoundingClientRect) at 60–120fps
+// while the page sits still.
 const placeNarrator = () => {
-  if (!narrator || narrator.hidden) return;
+  if (!narrator || narrator.hidden || !narrPlacementDirty) return;
+  narrPlacementDirty = false;
   // A phone's narrator never travels: it stays in its corner, shown
   // only while the screen holds a block it can tell — except on the
   // hero, where it stands centred under the name and fades as the hero
@@ -1447,8 +1387,6 @@ const placeNarrator = () => {
   // from the one place to the other was tried, 2026-10-13, and read as
   // odd on a phone.)
   if (phone) {
-    if (!narrPlacementDirty) return;
-    narrPlacementDirty = false;
     const hero = heroBox?.getBoundingClientRect();
     if (heroAnchor && hero && hero.bottom > innerHeight / 2 && !focusOpen()) {
       const r = heroAnchor.getBoundingClientRect();
@@ -1519,14 +1457,40 @@ const placeNarrator = () => {
   placeVideo(nx, ny, width, height, centerShare);
 };
 
+let narrLoopId = 0;
+
 const animateNarrator = (now: number) => {
+  narrLoopId = 0;
+  if (document.hidden) return;
   updateRead();
   updateCues();
   tickVideoSync(now);
   placeNarrator();
   listen();
   drawField(now);
-  requestAnimationFrame(animateNarrator);
+  const active =
+    Boolean((session && running) || demo || otherSound()) ||
+    presence >= 0.004 ||
+    fieldDirty ||
+    narrPlacementDirty;
+  if (active) {
+    narrLoopId = requestAnimationFrame(animateNarrator);
+  }
+};
+
+function wakeNarrator() {
+  if (narrLoopId || document.hidden || !narrator || narrator.hidden) return;
+  lastFrame = 0;
+  narrLoopId = requestAnimationFrame(animateNarrator);
+}
+
+const markPlacementDirty = () => {
+  narrPlacementDirty = true;
+  wakeNarrator();
+  requestAnimationFrame(() => {
+    narrPlacementDirty = true;
+    wakeNarrator();
+  });
 };
 
 // ----- the session -----
@@ -1541,6 +1505,7 @@ const stop = () => {
   session = null;
   running = false;
   paint();
+  wakeNarrator();
   setTimeout(() => {
     if (!session && !running) {
       currentVideoSrc = '';
@@ -1578,6 +1543,7 @@ const start = (block: Narr, para: number) => {
   const mySessionToken = sessionToken;
   claimSession();
   paint();
+  wakeNarrator();
   voice.play().catch(() => {
     if (mySessionToken === sessionToken) stop();
   });
@@ -1593,6 +1559,7 @@ const pause = () => {
   running = false;
   voice.pause();
   paint();
+  wakeNarrator();
 };
 
 // The language changes under a paragraph: when it has its own voice in
@@ -1600,6 +1567,7 @@ const pause = () => {
 // playing on if it was playing, from its start when next resumed.
 let relang = false;
 new MutationObserver(() => {
+  markPlacementDirty();
   if (!session) return;
   const p = session.block.paras[session.para];
   const src = p && clipOf(p);
@@ -1621,6 +1589,7 @@ const resume = () => {
   voice.muted = devSilent;
   applyAudioRate(voice, playbackRate);
   paint();
+  wakeNarrator();
   voice.play().catch(() => stop());
   document.dispatchEvent(new CustomEvent('narr:voice'));
 };
@@ -1653,18 +1622,8 @@ claimSession();
 // resumes (`narr:voice`).
 document.addEventListener('media:solo', () => {
   if (running) pause();
+  wakeNarrator();
 });
-
-const scrollToStep = (story: Story, index: number) => {
-  const top =
-    story.root.getBoundingClientRect().top +
-    window.scrollY +
-    index * window.innerHeight;
-  window.scrollTo({
-    top,
-    behavior: reduceMotion ? 'auto' : 'smooth',
-  });
-};
 
 // A paragraph ends: the next one in the block, or the page turns and
 // the render loop picks the voice up wherever it lands (`follow`).
@@ -1733,55 +1692,14 @@ const carryOn = () => {
     stop();
     return;
   }
-  const story = block.story;
-  if (block.panel) {
-    // A panel hands over to the next panel, if there is one.
-    const next = panels[panels.indexOf(block) + 1];
-    if (next) advanceToBlock(next, () => scrollToPanel(next));
-    else stop();
-  } else if (!story) {
-    // The hero hands over to the first story's opener.
-    if (stories[0])
-      advanceToBlock(stories[0].blocks[0], () => scrollToStep(stories[0], 0));
-    else if (panels[0])
-      advanceToBlock(panels[0], () => scrollToPanel(panels[0]));
-    else stop();
-  } else if (block.step + 1 < story.steps.length) {
-    advanceToBlock(story.blocks[block.step + 1], () =>
-      scrollToStep(story, block.step + 1),
-    );
-  } else {
-    // A story's last slide hands over to the next story's opener, and
-    // the last story to the first panel — the pitch runs to the foot.
-    const next = stories[stories.indexOf(story) + 1];
-    if (next) advanceToBlock(next.blocks[0], () => scrollToStep(next, 0));
-    else if (panels[0])
-      advanceToBlock(panels[0], () => scrollToPanel(panels[0]));
-    else stop();
-  }
+  const nextPanel = block.panel ? panels[panels.indexOf(block) + 1] : panels[0];
+  if (nextPanel) advanceToBlock(nextPanel, () => scrollToPanel(nextPanel));
+  else stop();
 };
 
-// The box a panel owns on the page. Usually its section; a phone
-// story's two stops share one stuck screen, so each owns its STEP — the
-// screen of scroll its walk takes — while the scroll timeline runs.
-const boxOf = (el: HTMLElement): HTMLElement => {
-  const holder = el.closest<HTMLElement>('[data-m-step]');
-  if (holder) {
-    const step = holder
-      .closest('.m-story')
-      ?.querySelectorAll<HTMLElement>('.m-step')[Number(holder.dataset.mStep)];
-    if (step && step.getClientRects().length) return step;
-    // No scroll timeline: the stops are plain panels, each its own box.
-    return (
-      holder
-        .closest('.m-story')
-        ?.querySelector<HTMLElement>(
-          `.m-panel[data-m-step="${holder.dataset.mStep}"]`,
-        ) ?? holder
-    );
-  }
-  return el.closest<HTMLElement>('section') ?? el;
-};
+// The box a panel owns on the page.
+const boxOf = (el: HTMLElement): HTMLElement =>
+  el.closest<HTMLElement>('section') ?? el;
 
 const scrollToPanel = (panel: Narr) =>
   window.scrollTo({
@@ -1801,6 +1719,7 @@ const follow = (block: Narr | undefined) => {
 // A block turned to another paragraph by hand (a deck): a running voice
 // switches to it; a paused one will start there.
 document.addEventListener('narr:select', e => {
+  markPlacementDirty();
   const p = (e as CustomEvent<HTMLElement>).detail;
   if (!session) return;
   const i = session.block.paras.indexOf(p);
@@ -1817,6 +1736,10 @@ document.addEventListener('narr:select', e => {
     if (src) voice.src = src;
     paint();
   }
+});
+
+document.addEventListener('narr:para', () => {
+  markPlacementDirty();
 });
 
 // The game has its own music: starting it quiets the voice, which
@@ -1873,6 +1796,7 @@ narVideoClose?.addEventListener('click', e => {
   e.stopPropagation();
   videoCollapsed = true;
   syncVideo();
+  narrPlacementDirty = true;
   placeNarrator();
 });
 
@@ -1912,6 +1836,7 @@ let demo: {
   key: string;
   el: HTMLElement;
   video: HTMLVideoElement;
+  opener: HTMLElement | null;
   /** What the voice does once it ends: carry on past the paragraph that
    *  introduced it, pick up where it was paused, or nothing. */
   then: (() => void) | null;
@@ -1922,12 +1847,14 @@ const demoPlaying = () => !!demo && !demo.video.paused;
 
 const closeDemo = () => {
   if (!demo) return;
-  const { el, video, then } = demo;
+  const { el, video, opener, then } = demo;
   demo = null;
   clearTimeout(stilling);
   video.pause();
   el.classList.remove('is-open', 'is-still');
   document.documentElement.classList.remove('is-demo', 'is-demo-still');
+  wakeNarrator();
+  if (opener && opener.isConnected) opener.focus({ preventScroll: true });
   setTimeout(
     () => {
       if (!demo || demo.el !== el) el.hidden = true;
@@ -1945,6 +1872,10 @@ const openDemo = (key: string, then: (() => void) | null) => {
     then?.();
     return;
   }
+  const opener =
+    document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
   if (video.dataset.poster) {
     video.poster = video.dataset.poster;
     video.removeAttribute('data-poster');
@@ -1959,9 +1890,13 @@ const openDemo = (key: string, then: (() => void) | null) => {
       /* heard straight from the element, without the waves */
     }
   }
-  demo = { key, el, video, then };
+  demo = { key, el, video, opener, then };
   el.hidden = false;
   document.documentElement.classList.add('is-demo');
+  el.querySelector<HTMLElement>('[data-song-demo-close]')?.focus({
+    preventScroll: true,
+  });
+  wakeNarrator();
   // Once the frost has come in it goes solid, and once it is solid the
   // page under it stops being drawn (SongDemo.astro, `is-still`).
   const turn = reduceMotion ? 0 : dur('turn');
@@ -2035,22 +1970,11 @@ const updateCues = () => {
   }
 };
 
-const collect = (
-  el: HTMLElement,
-  story: Story | null,
-  step: number,
-  panel = false,
-) => {
+const collect = (el: HTMLElement, panel = false) => {
   const n: Narr = {
     el,
     paras: [...el.querySelectorAll<HTMLElement>('[data-narr-para]')],
-    // A block's anchor is inside it — unless the story placed it
-    // elsewhere by name, as the opener does (in its foot).
-    anchor:
-      story?.root.querySelector<HTMLElement>(`[data-narr-anchor="${step}"]`) ??
-      el.querySelector<HTMLElement>('[data-narr-anchor]'),
-    story,
-    step,
+    anchor: el.querySelector<HTMLElement>('[data-narr-anchor]'),
     panel,
   };
   // While a block is being told, its other paragraphs can be tapped to
@@ -2067,99 +1991,25 @@ const collect = (
 };
 
 const heroEl = document.querySelector<HTMLElement>('[data-narr-block="hero"]');
-const heroNarr = heroEl ? collect(heroEl, null, -1) : undefined;
+const heroNarr = heroEl ? collect(heroEl) : undefined;
 
-stories = (
-  phone ? [] : [...document.querySelectorAll<HTMLElement>('[data-story]')]
-).map(root => {
-  const story: Story = {
-    root,
-    steps: [...root.querySelectorAll<HTMLElement>('.step')],
-    stage: root.querySelector<HTMLElement>('.stage'),
-    intro: root.querySelector<HTMLElement>('.intro-scene'),
-    float: root.querySelector<HTMLElement>('.float'),
-    deck: null,
-    lockup: root.querySelector<HTMLElement>('.lockup'),
-    anchorBig: root.querySelector<HTMLElement>('.lockup-anchor-big'),
-    anchorSmall: root.querySelector<HTMLElement>('.lockup-anchor-small'),
-    actions: root.querySelector<HTMLElement>('.actions'),
-    actionsBig: root.querySelector<HTMLElement>('.actions-anchor-big'),
-    actionsSmall: root.querySelector<HTMLElement>('.actions-anchor-small'),
-    blocks: [],
-  };
-  for (const el of root.querySelectorAll<HTMLElement>('[data-narr-block]')) {
-    const step = Number(el.dataset.narrBlock);
-    story.blocks[step] = collect(el, story, step);
-  }
-
-  // THE DECK. Its block is every card's paragraphs in order; it starts
-  // on the card in front, a running voice switches to it, and a clip
-  // that moves to another card's paragraph turns the deck there.
-  const deckEl = root.querySelector<HTMLElement>('.deck');
-  if (deckEl) {
-    const cards = [...deckEl.querySelectorAll<HTMLElement>('.card')];
-    const paras = [...deckEl.querySelectorAll<HTMLElement>('[data-narr-para]')];
-    const still = deckEl.querySelector<HTMLElement>(
-      '.narr-static .narr-anchor',
-    );
-    // Stand the still anchor on the current card's slot. Only the slot's
-    // HEIGHT is read: the card's sideways slide never moves it.
-    const standAnchor = () => {
-      const slot = cards[story.deck?.current ?? 0].querySelector('.narr-slot');
-      if (!still || !slot) return;
-      const y =
-        slot.getBoundingClientRect().top - deckEl.getBoundingClientRect().top;
-      still.style.setProperty('--slot-y', `${y.toFixed(1)}px`);
-    };
-    story.deck = createDeck({
-      cards,
-      controls: deckEl.querySelector('[data-deck-controls]'),
-      keys: deckEl,
-      // A tablet's finger turns it too.
-      swipe: deckEl.querySelector<HTMLElement>('.deck-stage'),
-      onChange: current => {
-        // A frame later: the first call comes while the deck is still
-        // being made.
-        requestAnimationFrame(standAnchor);
-        const first = paras.find(p => p.dataset.card === String(current));
-        if (!first) return;
-        deckEl.dataset.narrStart = String(paras.indexOf(first));
-        document.dispatchEvent(
-          new CustomEvent('narr:select', { detail: first }),
-        );
-      },
-    });
-    document.addEventListener('narr:para', e => {
-      const p = (e as CustomEvent<HTMLElement>).detail;
-      if (!deckEl.contains(p)) return;
-      const i = Number(p.dataset.card);
-      if (story.deck && i !== story.deck.current) story.deck.go(i);
-    });
-    window.addEventListener('resize', standAnchor, { passive: true });
-    // Late fonts, a language switch: whatever reflows the words.
-    watchSlots(cards, standAnchor);
-  }
-  return story;
-});
-
-// Only the panels this layout draws: the phone's story panels are not
-// drawn on desktop, and must not join its hand-over chain.
+// Only the panels this layout draws.
 panels = [...document.querySelectorAll<HTMLElement>('[data-narr-panel]')]
   .filter(el => el.getClientRects().length > 0)
-  .map(el => collect(el, null, -1, true));
+  .map(el => collect(el, true));
 
 // Nothing recorded anywhere → no narrator at all.
 if (narrator && narrs.length) {
   narrator.hidden = false;
   if (narVideo) narVideo.hidden = false;
-  requestAnimationFrame(animateNarrator);
+  wakeNarrator();
 }
 
 const docks = phone
   ? [...document.querySelectorAll<HTMLElement>('[data-dock]')]
   : [];
 
-const render = (force = false) => {
+const render = () => {
   narrPlacementDirty = true;
   // A shared address's modal (lib/links) owns the narrator outright: it
   // covers the page, so nothing under it is showing.
@@ -2188,6 +2038,7 @@ const render = (force = false) => {
       }
     }
     placeNarrator();
+    wakeNarrator();
     return;
   }
   const vh = window.innerHeight;
@@ -2211,102 +2062,17 @@ const render = (force = false) => {
   }
 
   // A panel owns the narrator in proportion to how much of it is on
-  // screen — the same glide a story hands over with — and owns the
-  // voice once it holds the middle of the screen.
+  // screen and owns the voice once it holds the middle of the screen.
   for (const n of panels) {
     const rect = boxOf(n.el).getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > vh) continue;
-    // In by how far it has come up, out by how far it has gone — the
-    // story rule, so two panels in a row cross-fade it at their seam.
+    // In by how far it has come up, out by how far it has gone — so two
+    // panels in a row cross-fade it at their seam.
     const own =
       step(clamp(1 - rect.top / vh, 0, 1)) *
       step(clamp(rect.bottom / vh, 0, 1));
     if (n.anchor && own > 0) parks.push({ anchor: n.anchor, w: own * hp });
     if (!showing && rect.top < vh * 0.5 && rect.bottom > vh * 0.5) showing = n;
-  }
-
-  for (const s of stories) {
-    const rect = s.root.getBoundingClientRect();
-    // The forced pass places every layer once at load, so nothing is
-    // ever seen unstyled when a story first scrolls in.
-    if (!force && (rect.bottom < 0 || rect.top > vh)) continue;
-
-    const p = step(clamp(-rect.top / vh, 0, 1));
-    const active = Math.round(p);
-
-    // Each stop owns the narrator in a tent around its position. A story
-    // lets go as it scrolls off, so whatever comes up under it — the
-    // next story, the game — takes the narrator over smoothly; and a
-    // story coming up takes it by how far it has come in, so two meeting
-    // cross-fade it (out + in = 1 at the seam), the same glide the hero
-    // hands over with.
-    const out = step(clamp(rect.bottom / vh, 0, 1));
-    const enter = step(clamp(1 - rect.top / vh, 0, 1));
-    for (let k = 0; k < 2; k++) {
-      const own = Math.max(0, 1 - Math.abs(p - k));
-      const block = s.blocks[k];
-      if (own > 0 && block?.anchor)
-        parks.push({ anchor: block.anchor, w: own * enter * out });
-    }
-    if (!showing) showing = s.blocks[active];
-
-    // The opener fades as the deck arrives.
-    if (s.intro) {
-      s.intro.style.opacity = String(clamp(1 - p * 2.2, 0, 1));
-      s.intro.style.pointerEvents = p < 0.5 ? 'auto' : 'none';
-    }
-
-    // The words arrive once the opener is mostly gone; the phone walks
-    // in from its peek across the whole step; the neighbours are dealt
-    // once the deck is the page.
-    if (s.float) {
-      s.float.style.setProperty(
-        '--float-in',
-        reduceMotion
-          ? p >= 0.5
-            ? '1'
-            : '0'
-          : String(clamp((p - 0.35) * 2.4, 0, 1)),
-      );
-      const peek = reduceMotion ? (p < 0.5 ? 1 : 0) : 1 - smooth(p);
-      s.float.style.setProperty('--peek', peek.toFixed(4));
-      s.float.classList.toggle('is-dealt', p > 0.6);
-    }
-
-    // The lockup FLIPs from the opener header to the deck's corner and
-    // parks there — one element, never redrawn.
-    const q = reduceMotion ? (p >= 0.5 ? 1 : 0) : smooth(p);
-    if (s.lockup && s.stage && s.anchorBig && s.anchorSmall) {
-      const stageRect = s.stage.getBoundingClientRect();
-      const big = s.anchorBig.getBoundingClientRect();
-      const small = s.anchorSmall.getBoundingClientRect();
-      const scale = 1 + (small.height / big.height - 1) * q;
-      const x = big.left - stageRect.left + (small.left - big.left) * q;
-      const y = big.top - stageRect.top + (small.top - big.top) * q;
-      s.lockup.style.transform =
-        `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ` +
-        `scale(${scale.toFixed(4)})`;
-    }
-
-    // The action row makes the same trip, toward the deck's foot. It
-    // never scales: both store programs set a minimum badge height, so
-    // the badges keep the size they were measured at. It belongs to the
-    // OPENER and leaves with it.
-    if (s.actions && s.stage && s.actionsBig && s.actionsSmall) {
-      const stageRect = s.stage.getBoundingClientRect();
-      const big = s.actionsBig.getBoundingClientRect();
-      const small = s.actionsSmall.getBoundingClientRect();
-      const x = big.left - stageRect.left + (small.left - big.left) * q;
-      const y = big.top - stageRect.top + (small.top - big.top) * q;
-      s.actions.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-      const rowVis = reduceMotion
-        ? p < 0.5
-          ? 1
-          : 0
-        : clamp(1 - p * 2.2, 0, 1);
-      s.actions.style.opacity = String(rowVis);
-      s.actions.style.pointerEvents = rowVis > 0.5 ? 'auto' : 'none';
-    }
   }
 
   // A phone deck's controls dock beside the corner narrator, and fade
@@ -2335,6 +2101,7 @@ const render = (force = false) => {
   }
 
   placeNarrator();
+  wakeNarrator();
 };
 
 // A boolean "already scheduled" guard DEADLOCKS: if the frame it is
@@ -2349,69 +2116,32 @@ const onScroll = () => {
 };
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) render(true);
+  if (!document.hidden) render();
 });
 
 window.addEventListener('scroll', onScroll, { passive: true });
 window.addEventListener('resize', onScroll, { passive: true });
 
-// The FLIP anchors sit inside `[data-reveal]` blocks, which enter 20px
-// low — measure during that and the row parks 20px off its anchor for
-// good, since nothing re-measures until the next scroll. Re-render
-// when a reveal settles.
+// Re-render when a `[data-reveal]` block settles so anchor positions are exact.
 document.addEventListener(
   'transitionend',
   event => {
     const target = event.target as HTMLElement;
-    if (target?.hasAttribute?.('data-reveal')) render(true);
+    if (target?.hasAttribute?.('data-reveal')) render();
   },
   { passive: true },
 );
 
-render(true);
+render();
 
 // Closing the modal ends what it was telling — the page under it is at
 // its top, and a voice running on would start the hero's — and the page
 // takes the narrator back.
 document.addEventListener('focus:close', stop);
-document.addEventListener('focus:closed', () => render(true));
+document.addEventListener('focus:closed', () => render());
 
 // Transitions switch on only AFTER the first placement, so nothing
 // animates in from nowhere on load.
-// ---------- the phone's decks ----------
-// The same deck as the desktop's, welcome first. The narrator starts the
-// panel on the card in front (data-narr-start = that card's first
-// paragraph), a running voice switches to it, and a clip that moves on
-// to another card's paragraph turns the deck there.
-if (phone)
-  for (const panel of document.querySelectorAll<HTMLElement>('.m-deck')) {
-    const stage = panel.querySelector<HTMLElement>('.m-stage');
-    const paras = [...panel.querySelectorAll<HTMLElement>('[data-narr-para]')];
-    const deck = createDeck({
-      cards: [...panel.querySelectorAll<HTMLElement>('.m-card')],
-      controls:
-        panel
-          .closest('.m-story')
-          ?.querySelector<HTMLElement>('[data-deck-controls]') ?? null,
-      keys: null,
-      swipe: stage,
-      onChange: current => {
-        const first = paras.find(p => p.dataset.card === String(current));
-        if (!first) return;
-        panel.dataset.narrStart = String(paras.indexOf(first));
-        document.dispatchEvent(
-          new CustomEvent('narr:select', { detail: first }),
-        );
-      },
-    });
-    document.addEventListener('narr:para', e => {
-      const p = (e as CustomEvent<HTMLElement>).detail;
-      if (!panel.contains(p)) return;
-      const i = Number(p.dataset.card);
-      if (i !== deck.current) deck.go(i);
-    });
-  }
-
 if (stepped)
   requestAnimationFrame(() =>
     requestAnimationFrame(() =>

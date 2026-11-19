@@ -18,7 +18,7 @@
  * — is tracked in docs/phase-c-release.md, not here.
  */
 export type Store = 'app-store' | 'web';
-export type ReleasedApp = 'shaper' | 'highlighter' | 'topper';
+export type ReleasedApp = 'shaper' | 'highlighter';
 
 /**
  * NO GOOGLE PLAY (Juan, 2026-11-04): the portfolio ships on iOS and the
@@ -36,9 +36,5 @@ export const RELEASES: Record<
   },
   highlighter: {
     web: 'https://bookhighlighter.juanevillam.com',
-  },
-  topper: {
-    'app-store': null,
-    web: null,
   },
 };

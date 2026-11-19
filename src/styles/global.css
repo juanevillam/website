@@ -54,9 +54,9 @@
   --track-heading: -0.03em;
   --track-label: 0.08em;
 
-  /* tempo — the site runs at 100 BPM. One beat = 600ms; every duration on
-     the page is a subdivision or multiple of it, so all motion sits on one
-     clock — quantized, like the synth tracks the timing is stolen from.
+  /* tempo — one beat = 450ms; every duration on the page is a subdivision
+     or multiple of it, so all motion sits on one clock — quantized, like
+     the synth tracks the timing is stolen from.
 
      THE LADDER (Juan, 2026-10-13: "one sense across the whole site"). A
      duration is chosen by WHAT MOVES, never written as a number or a
@@ -671,23 +671,13 @@ html.is-jumping body {
 }
 
 /* ---------- stepped motion (touch screens) ----------
-   On a touch screen the stories' controller moves in whole steps (see
-   StoryShowcase) and these transitions carry each change — run by the
-   GPU, so they don't trail the finger the way per-pixel scroll scrubbing
-   does on iOS. One duration for all of them: three quarters of a beat. */
-html.is-stepped .story .slot,
-html.is-stepped .story .lockup,
-html.is-stepped .story .actions,
+   On a touch screen the controller moves in whole steps and these
+   transitions carry each change — run by the GPU, so they don't trail the
+   finger the way per-pixel scroll scrubbing does on iOS. */
 html.is-stepped [data-hero-inner] {
   transition:
     transform var(--dur-turn) var(--ease),
     opacity var(--dur-turn) var(--ease);
-}
-
-html.is-stepped .story .intro-scene,
-html.is-stepped .story .cap,
-html.is-stepped .story .deck-controls {
-  transition: opacity var(--dur-turn) var(--ease);
 }
 
 /* The narrator glides between anchors the same way. Its own width,
@@ -706,13 +696,7 @@ html.is-stepped.has-narr-video [data-narrator] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.is-stepped .story .slot,
-  html.is-stepped .story .lockup,
-  html.is-stepped .story .actions,
   html.is-stepped [data-hero-inner],
-  html.is-stepped .story .intro-scene,
-  html.is-stepped .story .cap,
-  html.is-stepped .story .deck-controls,
   html.is-stepped [data-narrator],
   html.is-stepped [data-narr-video] {
     transition: none;
@@ -867,33 +851,31 @@ html.is-stepped.has-narr-video [data-narrator] {
 }
 
 /* ---------- desktop Safari ----------
-   The floating controls — the narrator, the header's pills, the apps'
-   switcher — carry a frosted backdrop (blur 12px) and move with the page
-   or over it as it scrolls. Desktop Safari re-blurs every such layer each
-   frame, and the scroll read as dragging there, though not in Chrome
-   (Juan, 2026-10-13). On it they take a near-solid ground instead: the
-   frost is barely visible at 82% anyway. */
+   The floating controls — the narrator and the header's pills — carry a
+   frosted backdrop (blur 12px) and move with the page or over it as it
+   scrolls. Desktop Safari re-blurs every such layer each frame, and the
+   scroll read as dragging there, though not in Chrome (Juan, 2026-10-13).
+   On it they take a near-solid ground instead: the frost is barely visible
+   at 82% anyway. */
 html.is-desk-safari [data-narrator],
-html.is-desk-safari .site-header > *,
-html.is-desk-safari .switcher {
+html.is-desk-safari .site-header > * {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   background: color-mix(in srgb, var(--surface) 95%, transparent) !important;
 }
 
-/* ---------- nine lines ----------
+/* ---------- six lines ----------
    Every card's words — the apps', More Work's, the events' — stand in a
-   box nine of their lines tall at most, with the tenth fading through the
-   bottom padding, and scroll past that (Juan, 2026-11-07; ten before, which
-   showed an eleventh in the fade), so a longer card never stands taller
-   than its neighbours or moves what is under it. The height is set from
-   the words' own line-height (Base.astro); the narrated paragraph is
-   scrolled into it. */
+   box six of their lines tall at most, with the seventh fading through the
+   bottom padding, and scroll past that (Juan, 2026-11-09), so a longer
+   card never stands taller than its neighbours or moves what is under it.
+   The height is set from the words' own line-height (Base.astro); the
+   narrated paragraph is scrolled into it. */
 [data-cap] {
   /* THE FADE LIVES IN PADDING (Juan, 2026-10-13: a fade over the words
      still showed the cut, and dimmed lines meant to be read). The box is
-     nine lines of CONTENT with a fade's depth of padding above and below,
-     so all nine lines stand clear and the tenth fades through the bottom.
+     six lines of CONTENT with a fade's depth of padding above and below,
+     so all six lines stand clear and the seventh fades through the bottom.
      The TOP padding is taken back by the margin, since it shows words only
      once scrolled; the BOTTOM one is not — words fade through it at rest,
      and whatever follows the box (a store row, the links) has to stand

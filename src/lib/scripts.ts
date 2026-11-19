@@ -149,6 +149,7 @@ const CLIPS: Array<{
   // More of Me (pages/more-of-me)
   { key: 'likes.cosmos.body', where: 'Más de mí · Cosmos' },
   { key: 'likes.songs.body', where: 'Más de mí · Canciones' },
+  { key: 'likes.photos.body', where: 'Más de mí · Fotos' },
 
   // Footer
   { key: 'footer', where: 'Despedida' },
