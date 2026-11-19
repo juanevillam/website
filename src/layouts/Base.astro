@@ -28,6 +28,25 @@ const {
   path = '/',
 } = Astro.props;
 const url = new URL(path, Astro.site);
+const ogImageUrl = new URL(image, Astro.site);
+const personLd =
+  path === '/' && !noindex
+    ? JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: 'Juan Esteban Villa Mendoza',
+        alternateName: 'juanevillam',
+        url: 'https://juanevillam.com/',
+        image: 'https://juanevillam.com/og.png',
+        jobTitle: 'Software Engineer',
+        description: ui.en['meta.description'],
+        sameAs: [
+          'https://github.com/juanevillam',
+          'https://www.linkedin.com/in/juanevillam',
+          'https://www.instagram.com/juanevillam',
+        ],
+      })
+    : null;
 ---
 
 <!doctype html>
@@ -44,8 +63,13 @@ const url = new URL(path, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={url} />
-    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:alt" content={title} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    {personLd && <script type="application/ld+json" set:html={personLd} />}
 
     <script is:inline>
       // Language, pre-paint — an in-place preference, no locale URLs. The
@@ -104,19 +128,6 @@ const url = new URL(path, Astro.site);
       const showing = (el: HTMLElement, y: number) => {
         if (el.classList.contains('deck-card') && !el.classList.contains('is-current'))
           return false;
-        const story = el.closest<HTMLElement>('[data-story]');
-        const float = story?.querySelector('.float');
-        // A story's slides light the page once the deck is dealt — the
-        // opener lends no light of its own.
-        if (float && !el.closest('.m-story'))
-          return float.classList.contains('is-dealt') && holds(story!, y);
-        const panel = el.closest<HTMLElement>('.m-panel');
-        if (panel) {
-          const step = panel
-            .closest('.m-story')
-            ?.querySelectorAll<HTMLElement>('.m-step')[Number(panel.dataset.mStep)];
-          return holds(step && step.getClientRects().length ? step : panel, y);
-        }
         return holds(el.closest('section') ?? el, y);
       };
       // A frame of cycling photos (Events) is lit by the photo each column
@@ -166,10 +177,12 @@ const url = new URL(path, Astro.site);
         scene!.style.setProperty('--scene-sy', `${sy.toFixed(1)}px`);
       };
       let last: string | undefined;
+      let activeLit: HTMLElement | undefined;
       const light = () => {
-        if (!scene) return;
+        if (!scene || document.hidden) return;
         const y = innerHeight / 2;
         const now = lit.find(el => el.getClientRects().length && showing(el, y));
+        activeLit = now;
         standLight(now);
         const value = now && photosOf(now);
         // The light's SHAPE is part of what changed: a grey screen and the
@@ -178,7 +191,7 @@ const url = new URL(path, Astro.site);
         const kind =
           now &&
           (now.dataset.sceneKind ??
-            (now.closest('[data-story], [data-phone-scene]') ? 'phone' : 'screen'));
+            (now.closest('[data-phone-scene]') ? 'phone' : 'screen'));
         if (`${value}#${kind}` === last) return;
         last = `${value}#${kind}`;
         // "#a #b|0.8": the hues, then how strongly they light the page. The
@@ -223,7 +236,9 @@ const url = new URL(path, Astro.site);
           turned.observe(el, { attributes: true, attributeFilter: ['class', 'data-scene'] });
         for (const el of document.querySelectorAll('[data-apps-deck]'))
           turned.observe(el, { attributes: true, attributeFilter: ['hidden'] });
-        setInterval(light, 200);
+        setInterval(() => {
+          if (!document.hidden && activeLit?.querySelector('.photo-cell')) light();
+        }, 200);
         light();
       }
 

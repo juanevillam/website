@@ -56,26 +56,28 @@ const unmark = (text: string) => text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
 /** The short version a phone shows (`….m`) when there is one: a preview
  *  card has room for a couple of lines, not a paragraph. */
-const summary = (item: DeckItem) => {
+export const summary = (item: DeckItem) => {
   const key =
     typeof item.body === 'string'
       ? item.body
       : 'k' in item.body
         ? item.body.k
         : null;
-  const short = key && (key.replace(/\.body$/, '.m') as UIKey);
+  const short = key && (`${key.replace(/\.body$/, '')}.m` as UIKey);
   const text = unmark(short && short in en ? en[short] : plain(item.body));
   return text.length > 200 ? `${text.slice(0, 197).trimEnd()}…` : text;
 };
 
 /** The picture a preview shows: a capture or an event's first photo (a
- *  video by its poster), or a screen of its own by its scene picture. */
-const pictureOf = (item: DeckItem) =>
-  typeof item.image === 'string'
-    ? item.image.replace(/\.mp4$/, '.jpg')
+ *  video by its poster, a `.webp` by its `.jpg` social preview), or a
+ *  screen of its own by its scene picture. */
+export const pictureOf = (item: DeckItem) =>
+  (typeof item.image === 'string'
+    ? item.image
     : Array.isArray(item.image)
-      ? item.image[0].replace(/\.mp4$/, '.jpg')
-      : (item.scene ?? '');
+      ? item.image[0]
+      : (item.scene ?? '')
+  ).replace(/\.(mp4|webp)$/, '.jpg');
 
 const deckPage = (item: DeckItem, section: 'work' | 'events'): FocusPage => ({
   path: section === 'work' ? workPath(item) : eventPath(item),
@@ -88,12 +90,16 @@ const deckPage = (item: DeckItem, section: 'work' | 'events'): FocusPage => ({
 export const FOCUS_PAGES: FocusPage[] = [
   ...APPS.map(app => {
     const slug = LEGAL_APPS.find(l => l.name === app.name)?.slug ?? app.id;
+    const short = `${app.pitch[1]}.m` as UIKey;
+    const raw = unmark(short in en ? en[short] : en[app.pitch[1]]);
+    const description =
+      raw.length > 200 ? `${raw.slice(0, 197).trimEnd()}…` : raw;
     return {
       path: `/${slug}`,
       focus: { section: 'apps', app: app.id },
       title: `${app.name} — juanevillam`,
-      description: unmark(en[app.pitch[0]]),
-      image: app.slides[0].src,
+      description,
+      image: app.slides[0].src.replace(/\.webp$/, '.jpg'),
     } satisfies FocusPage;
   }),
   ...EVENTS.map(e => deckPage(e, 'events')),

@@ -30,5 +30,13 @@ await sharp(new URL('cover.png', game).pathname)
   .webp({ quality: 82 })
   .toFile(new URL('media/arcade/cover.webp', pub).pathname);
 
-for (const to of ['arcade/game.js', 'media/arcade/cover.webp'])
+await sharp(new URL('cover.png', game).pathname)
+  .jpeg({ quality: 82, mozjpeg: true })
+  .toFile(new URL('media/arcade/cover.jpg', pub).pathname);
+
+for (const to of [
+  'arcade/game.js',
+  'media/arcade/cover.webp',
+  'media/arcade/cover.jpg',
+])
   console.log(to, statSync(new URL(to, pub)).size, 'bytes');

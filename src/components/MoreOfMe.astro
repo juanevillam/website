@@ -7,6 +7,7 @@ import PhotosFeed from './PhotosFeed.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
 import SiteFooter from './SiteFooter.astro';
 import { LIKES } from '../lib/likes';
+import { pictureOf, summary } from '../lib/links';
 import { ui } from '../i18n/ui';
 import type { DeckItem } from '../lib/deck-items';
 
@@ -24,21 +25,14 @@ type Props = {
   card?: DeckItem;
 };
 const { card } = Astro.props;
+const shownCard = card ?? LIKES[0];
 const name = (c: DeckItem) => (typeof c.name === 'string' ? c.name : ui.en[c.name.k]);
-// A card's words as one plain sentence, its links unmarked.
-const plain = (c: DeckItem) => {
-  const key = typeof c.body === 'string' ? c.body : 'k' in c.body ? c.body.k : c.body.before;
-  return ui.en[key].replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-};
 ---
 
 <Base
   title={`${card ? `${name(card)} — ` : ''}${ui.en['likes.title']} — juanevillam`}
-  description={plain(card ?? LIKES[0])}
-  image={(() => {
-    const shown = (card ?? LIKES[0]).image;
-    return Array.isArray(shown) ? shown[0] : (card ?? LIKES[0]).scene;
-  })()}
+  description={summary(shownCard)}
+  image={pictureOf(shownCard)}
   path={card ? `/more-of-me/${card.slug}` : '/more-of-me'}
 >
   <PanelDeck id="likes" title="likes.title" items={LIKES} share="likes" start={card?.id}>
