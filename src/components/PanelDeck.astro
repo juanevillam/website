@@ -156,7 +156,7 @@ for (const p of items)
 >
   {
     title && (
-      <h2 class="inner label eyebrow">
+      <h2 id={`${id}-title`} class="inner label eyebrow">
         <T k={title} />
       </h2>
     )
@@ -167,7 +167,8 @@ for (const p of items)
     data-panel-deck
     tabindex="0"
     aria-roledescription="carousel"
-    aria-label={id}
+    aria-labelledby={title ? `${id}-title` : undefined}
+    aria-label={title ? undefined : id}
   >
     <!-- Every card in ONE grid cell: the stage is as tall as the tallest
          card. The entrance (data-reveal) is the STAGE's, not the
@@ -769,6 +770,12 @@ for (const p of items)
     transition:
       opacity var(--hover),
       border-color var(--hover);
+  }
+
+  .photo-step::before {
+    content: '';
+    position: absolute;
+    inset: -0.375rem;
   }
 
   .photo-cell:hover .photo-step {

@@ -166,10 +166,29 @@ const focus = page?.focus;
   const focused = document.querySelector<HTMLElement>('[data-focused]');
   if (focused) {
     root.classList.add('is-focus');
+    const closeBtn = document.querySelector<HTMLElement>('[data-focus-close]');
+    const main = focused.closest('main');
+    const inerted: HTMLElement[] = [];
+    for (const el of main?.children ?? []) {
+      if (
+        el instanceof HTMLElement &&
+        el !== focused &&
+        !el.contains(focused) &&
+        el !== closeBtn &&
+        !el.hasAttribute('data-narrator') &&
+        !el.hasAttribute('data-narr-video') &&
+        !el.classList.contains('nar-field')
+      ) {
+        el.inert = true;
+        inerted.push(el);
+      }
+    }
+    closeBtn?.focus({ preventScroll: true });
     let closing = false;
     const close = () => {
       if (closing) return;
       closing = true;
+      for (const el of inerted) el.inert = false;
       focused.classList.add('is-closing');
       root.classList.add('is-unfocusing');
       document.dispatchEvent(new Event('focus:close'));
@@ -184,7 +203,7 @@ const focus = page?.focus;
         document.dispatchEvent(new Event('focus:closed'));
       }, dur('turn'));
     };
-    document.querySelector('[data-focus-close]')?.addEventListener('click', close);
+    closeBtn?.addEventListener('click', close);
     window.addEventListener('keydown', e => {
       // The game's cabinet, open over the modal, takes Escape for itself.
       if (e.key === 'Escape' && root.dataset.arcade !== 'open') close();

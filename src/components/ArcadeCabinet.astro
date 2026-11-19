@@ -670,6 +670,7 @@ const CONTROLS: { keys: string[]; k: UIKey }[] = [
     document.documentElement.style.overflow = '';
     delete document.documentElement.dataset.arcade;
     document.dispatchEvent(new Event('arcade:close'));
+    play.focus({ preventScroll: true });
   };
 
   if (touch) {

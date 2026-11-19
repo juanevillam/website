@@ -67,7 +67,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     </div>
 
     <div class="ig-actions">
-      <div class="view-switch" role="group" aria-label="View mode">
+      <div class="view-switch" role="group" aria-labelledby="photos-view-label">
+        <span id="photos-view-label" class="sr"><T k="photos.grid" /> / <T k="photos.feed" /></span>
         <button
           type="button"
           class="circle-btn is-active"
@@ -256,8 +257,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
             type="button"
             class="media-step prev"
             data-media-step="-1"
-            aria-label="Previous photo"
           >
+            <span class="sr"><T k="deck.prev" /></span>
             <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
               <path
                 d="M10 3 L5 8 L10 13"
@@ -272,8 +273,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
             type="button"
             class="media-step next"
             data-media-step="1"
-            aria-label="Next photo"
           >
+            <span class="sr"><T k="deck.next" /></span>
             <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
               <path
                 d="M6 3 L11 8 L6 13"
@@ -361,8 +362,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
                 type="button"
                 class="circle-btn"
                 data-post-step="-1"
-                aria-label="Previous post"
               >
+                <span class="sr"><T k="deck.prev" /></span>
                 <svg
                   viewBox="0 0 16 16"
                   width="11"
@@ -382,8 +383,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
                 type="button"
                 class="circle-btn"
                 data-post-step="1"
-                aria-label="Next post"
               >
+                <span class="sr"><T k="deck.next" /></span>
                 <svg
                   viewBox="0 0 16 16"
                   width="11"
@@ -440,17 +441,21 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
         />
 
         <div class="gate-fields">
+          <label class="sr" for="photos-gate-name"><T k="photos.gateName" /></label>
           <input
+            id="photos-gate-name"
             type="text"
             name="name"
             class="gate-input"
             data-gate-name
-            placeholder="Name"
+            placeholder="Your name"
             autocomplete="name"
             maxlength="80"
             required
           />
+          <label class="sr" for="photos-gate-email"><T k="photos.gateEmail" /></label>
           <input
+            id="photos-gate-email"
             type="email"
             name="email"
             class="gate-input"
@@ -573,6 +578,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 
   /* Lone glyph controls: circle (50%) + scale(0.90) active squash */
   .circle-btn {
+    position: relative;
     width: 1.875rem;
     height: 1.875rem;
     padding: 0;
@@ -591,6 +597,12 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       background-color var(--hover),
       transform var(--dur-micro) var(--ease),
       opacity var(--dur-quick) var(--ease);
+  }
+
+  .circle-btn::before {
+    content: '';
+    position: absolute;
+    inset: -0.4375rem;
   }
 
   .circle-btn:hover,
@@ -903,6 +915,12 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       opacity var(--hover),
       border-color var(--hover),
       transform var(--dur-micro) var(--ease);
+  }
+
+  .media-step::before {
+    content: '';
+    position: absolute;
+    inset: -0.375rem;
   }
 
   .post-media:hover .media-step {
@@ -1509,6 +1527,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
         back.video.muted = videoMuted;
         mediaMuteBtn.classList.remove('is-hidden');
         mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
+        if (!videoMuted) {
+          document.dispatchEvent(new CustomEvent('media:solo'));
+        }
         back.video.play().catch(() => {
           back.video.muted = true;
           mediaMuteBtn.classList.remove('is-unmuted');
@@ -1598,14 +1619,38 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       }
     };
 
-    // Keep caption synced if language switches in-place
-    new MutationObserver(() => {
+    const GATE_PLACEHOLDERS: Record<Locale, [string, string]> = {
+      en: ['Your name', 'you@email.com'],
+      es: ['Tu nombre', 'tu@correo.com'],
+      zh: ['你的姓名', 'your@email.com'],
+    };
+    const syncLangStrings = () => {
+      const lang = currentLang();
       const post = posts[activePostIdx];
       if (post) captionEl.textContent = captionOf(post);
-    }).observe(document.documentElement, {
+      const [namePh, emailPh] = GATE_PLACEHOLDERS[lang];
+      gateName.placeholder = namePh;
+      gateEmail.placeholder = emailPh;
+    };
+    syncLangStrings();
+
+    // Keep caption & gate placeholders synced if language switches in-place
+    new MutationObserver(syncLangStrings).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-lang'],
     });
+
+    // Pause detail videos when the Photos card leaves the stage, the tab
+    // hides, or narration starts.
+    if (cardEl) {
+      new MutationObserver(() => {
+        if (!cardEl.classList.contains('is-current')) pauseAllVideos();
+      }).observe(cardEl, { attributes: true, attributeFilter: ['class'] });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) pauseAllVideos();
+    });
+    document.addEventListener('narr:voice', pauseAllVideos);
 
     const hydrateFromServer = () => {
       const params = new URLSearchParams();
@@ -1832,6 +1877,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       videoMuted = !videoMuted;
       for (const l of mediaLayers) l.video.muted = videoMuted;
       mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
+      if (!videoMuted) {
+        document.dispatchEvent(new CustomEvent('media:solo'));
+      }
     });
 
     likeBtn.addEventListener('click', () => {

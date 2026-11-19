@@ -192,6 +192,11 @@ const href = RELEASES.shaper.web;
     cursor: pointer;
     transition: color var(--hover);
   }
+  .launch-close::before {
+    content: '';
+    position: absolute;
+    inset: -0.375rem;
+  }
   .launch-close:hover,
   .launch-close:focus-visible {
     color: var(--ink);

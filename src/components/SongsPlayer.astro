@@ -1506,6 +1506,7 @@ const groups = [
 
   /* iOS's close: a round button with an xmark. */
   .close {
+    position: relative;
     grid-column: 3;
     display: grid;
     place-items: center;
@@ -1517,6 +1518,12 @@ const groups = [
     background: rgb(255 255 255 / 0.1);
     cursor: pointer;
     transition: background-color var(--hover);
+  }
+
+  .close::before {
+    content: '';
+    position: absolute;
+    inset: -0.4375rem;
   }
 
   .close svg {
@@ -2362,6 +2369,12 @@ const groups = [
     height: 2rem;
   }
 
+  .songs[data-narrow]:not([data-full]) .expand::before {
+    content: '';
+    position: absolute;
+    inset: -0.375rem;
+  }
+
   /* Both rest with the transport, so they fade as the discs do: by their
      own `--shown`, keeping their glass through the fade. */
   .expand,
@@ -2896,11 +2909,17 @@ const groups = [
     };
     const flow = () => {
       cancelAnimationFrame(flowFrame);
-      if (audio.paused || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (
+        document.hidden ||
+        audio.paused ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches
+      )
+        return;
       flowFrame = requestAnimationFrame(flowTick(performance.now()));
     };
     audio.addEventListener('play', flow);
     audio.addEventListener('pause', flow);
+    document.addEventListener('visibilitychange', flow);
     audio.addEventListener('timeupdate', () => progress(audio.currentTime, length()));
     audio.addEventListener('loadedmetadata', () => {
       shaper.reapplyRate();

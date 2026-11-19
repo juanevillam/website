@@ -67,8 +67,10 @@ export const createDeck = ({
 
   const mark = () => {
     cards.forEach((card, i) => {
-      card.classList.toggle('is-current', i === current);
-      card.setAttribute('aria-hidden', i === current ? 'false' : 'true');
+      const active = i === current;
+      card.classList.toggle('is-current', active);
+      card.setAttribute('aria-hidden', active ? 'false' : 'true');
+      card.inert = !active;
     });
     dots.forEach((dot, i) => dot.classList.toggle('is-current', i === current));
     onChange?.(current);

@@ -44,6 +44,7 @@ const { path, decorative = false } = Astro.props;
      hit box bigger than the glyph, pulled back by its own margin so the
      name keeps its place. */
   .copy-link {
+    position: relative;
     flex: none;
     display: inline-grid;
     vertical-align: middle;
@@ -58,6 +59,12 @@ const { path, decorative = false } = Astro.props;
     color: var(--ink-3);
     cursor: pointer;
     transition: color var(--hover);
+  }
+
+  .copy-link::before {
+    content: '';
+    position: absolute;
+    inset: -0.375rem;
   }
 
   .copy-link:hover,
@@ -113,16 +120,7 @@ const { path, decorative = false } = Astro.props;
       await navigator.clipboard.writeText(text);
       return true;
     } catch {
-      // An older browser, or no clipboard permission: the old way.
-      const area = document.createElement('textarea');
-      area.value = text;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.append(area);
-      area.select();
-      const ok = document.execCommand('copy');
-      area.remove();
-      return ok;
+      return false;
     }
   };
 

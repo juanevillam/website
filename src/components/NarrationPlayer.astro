@@ -79,8 +79,8 @@ import T from './T.astro';
     class="nar-video-close"
     type="button"
     data-narr-video-close
-    aria-label="Close video"
   >
+    <span class="sr-only"><T k="focus.close" /></span>
     <svg viewBox="0 0 16 16" aria-hidden="true">
       <path
         fill="none"
@@ -91,7 +91,8 @@ import T from './T.astro';
       ></path>
     </svg>
   </button>
-  <div class="nar-video-rates" role="group" aria-label="Playback speed">
+  <div class="nar-video-rates" role="group" aria-labelledby="nar-rates-label">
+    <span id="nar-rates-label" class="sr-only"><T k="shape.speed" /></span>
     <button
       type="button"
       class="nar-rate is-active"
