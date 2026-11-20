@@ -5,6 +5,7 @@ import DeckControls from './DeckControls.astro';
 import CopyLink from './CopyLink.astro';
 import { ui, type UIKey } from '../i18n/ui';
 import { clipFor, voiceAttrs } from '../lib/narration';
+import { deriveVersionedMedia, versionedMedia } from '../lib/mediaVersion';
 import { isSideways, sceneAttr, sceneOf } from '../lib/scene';
 import { eventPath, likePath, workPath } from '../lib/links';
 
@@ -68,10 +69,11 @@ const isImmediateCard = (i: number) => (focusCard >= 0 || Boolean(start)) && i =
 // page's language: the English one.
 const plainName = (p: DeckItem) => (typeof p.name === 'string' ? p.name : ui.en[p.name.k]);
 
-const isVideo = (m: Media) => m.endsWith('.mp4');
+const isVideo = (m: Media) => /\.mp4(\?|$)/.test(m);
 // A video lights the page, stands before it plays, and blurs behind
 // itself by its poster.
-const still = (m: Media) => m.replace(/\.mp4$/, '.jpg');
+const still = (m: Media) =>
+  isVideo(m) ? deriveVersionedMedia(m, /\.mp4$/, '.jpg') : versionedMedia(m);
 
 // Which pictures are SIDEWAYS: read off each file at build time (a
 // video by its poster), so a frame can alternate upright and sideways.
@@ -131,7 +133,12 @@ const scenes = await Promise.all(
 const viewerOf = (p: DeckItem) =>
   JSON.stringify(
     (p.image as Media[]).map((m, i) => ({
-      src: m.replace(/-thumb\.webp$/, '.webp').replace(/-clip\.mp4$/, '.mp4'),
+      src: versionedMedia(
+        m
+          .split('?')[0]
+          .replace(/-thumb\.webp$/, '.webp')
+          .replace(/-clip\.mp4$/, '.mp4'),
+      ),
       name: p.captions?.[i] ?? plainName(p),
       video: isVideo(m) || undefined,
     }))
@@ -323,7 +330,7 @@ for (const p of items)
                       // start while its card is in front (the script below).
                       <video
                         class="capture"
-                        src={p.image}
+                        src={versionedMedia(p.image)}
                         poster={isImmediateCard(i) ? still(p.image) : undefined}
                         data-poster={isImmediateCard(i) ? undefined : still(p.image)}
                         width="1440"
@@ -336,8 +343,8 @@ for (const p of items)
                       />
                     ) : (
                       <img
-                        src={isImmediateCard(i) ? p.image : undefined}
-                        data-src={isImmediateCard(i) ? undefined : p.image}
+                        src={isImmediateCard(i) ? versionedMedia(p.image) : undefined}
+                        data-src={isImmediateCard(i) ? undefined : versionedMedia(p.image)}
                         alt=""
                         width="1440"
                         height="960"
@@ -349,8 +356,8 @@ for (const p of items)
                   </a>
                 ) : (
                   <img
-                    src={isImmediateCard(i) ? p.image : undefined}
-                    data-src={isImmediateCard(i) ? undefined : p.image}
+                    src={isImmediateCard(i) ? versionedMedia(p.image) : undefined}
+                    data-src={isImmediateCard(i) ? undefined : versionedMedia(p.image)}
                     alt={plainName(p)}
                     width="1440"
                     height="960"
@@ -424,7 +431,7 @@ for (const p of items)
                             // in front and on screen (the script below).
                             <video
                               class="whole"
-                              src={m}
+                              src={versionedMedia(m)}
                               poster={src}
                               data-poster={later}
                               aria-label={plainName(p)}

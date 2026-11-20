@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { locales, type Locale, ui, type UIKey } from '../i18n/ui';
+import { versionedMedia } from './mediaVersion';
 import { plainText, type ReadMark, readTokens } from './readAlong';
 
 /**
@@ -31,13 +32,13 @@ const PUBLIC = path.join(process.cwd(), 'public');
 /** Spanish voice clip for a narrated paragraph (`public/media/narration/es/{key}.m4a`). */
 export const clipFor = (key: string): string | null => {
   const url = `/media/narration/es/${key}.m4a`;
-  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
+  return fs.existsSync(path.join(PUBLIC, url)) ? versionedMedia(url) : null;
 };
 
 /** Vertical 9:16 video take alongside the Spanish voice clip (`public/media/narration/es/{key}.mp4`). */
 export const videoFor = (key: string): string | null => {
   const url = `/media/narration/es/${key}.mp4`;
-  return fs.existsSync(path.join(PUBLIC, url)) ? url : null;
+  return fs.existsSync(path.join(PUBLIC, url)) ? versionedMedia(url) : null;
 };
 
 /**
@@ -257,8 +258,8 @@ export const SONGS: Record<
   'shaper.s3.p2': {
     title: 'DÁKITI',
     by: 'Bad Bunny, Jhayco',
-    video: '/media/shaper/demo.mp4',
-    poster: '/media/shaper/demo.jpg',
+    video: versionedMedia('/media/shaper/demo.mp4'),
+    poster: versionedMedia('/media/shaper/demo.jpg'),
     width: 590,
     height: 1278,
   },

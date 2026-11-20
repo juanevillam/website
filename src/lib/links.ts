@@ -2,6 +2,7 @@ import { APPS } from './apps';
 import type { DeckItem, Rich } from './deck-items';
 import { EVENTS } from './events';
 import { LEGAL_APPS } from './legal';
+import { deriveVersionedMedia } from './mediaVersion';
 import { PROJECTS } from './work';
 import { ui, type UIKey } from '../i18n/ui';
 
@@ -72,12 +73,15 @@ export const summary = (item: DeckItem) => {
  *  video by its poster, a `.webp` by its `.jpg` social preview), or a
  *  screen of its own by its scene picture. */
 export const pictureOf = (item: DeckItem) =>
-  (typeof item.image === 'string'
-    ? item.image
-    : Array.isArray(item.image)
-      ? item.image[0]
-      : (item.scene ?? '')
-  ).replace(/\.(mp4|webp)$/, '.jpg');
+  deriveVersionedMedia(
+    typeof item.image === 'string'
+      ? item.image
+      : Array.isArray(item.image)
+        ? item.image[0]
+        : (item.scene ?? ''),
+    /\.(mp4|webp)$/,
+    '.jpg',
+  );
 
 const deckPage = (item: DeckItem, section: 'work' | 'events'): FocusPage => ({
   path: section === 'work' ? workPath(item) : eventPath(item),
@@ -99,7 +103,7 @@ export const FOCUS_PAGES: FocusPage[] = [
       focus: { section: 'apps', app: app.id },
       title: `${app.name} — juanevillam`,
       description,
-      image: app.slides[0].src.replace(/\.webp$/, '.jpg'),
+      image: deriveVersionedMedia(app.slides[0].src, /\.webp$/, '.jpg'),
     } satisfies FocusPage;
   }),
   ...EVENTS.map(e => deckPage(e, 'events')),

@@ -134,4 +134,4 @@ export const PHOTO_POSTS: PhotoPost[] = [
 ];
 
 export const posterOf = (src: string) =>
-  src.endsWith('.mp4') ? src.replace(/\.mp4$/, '.jpg') : src;
+  /\.mp4(\?|$)/.test(src) ? src.replace(/\.mp4(?=\?|$)/, '.jpg') : src;

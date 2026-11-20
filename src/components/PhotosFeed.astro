@@ -1,6 +1,7 @@
 ---
 import T from './T.astro';
 import { PHOTO_POSTS, posterOf } from '../lib/photos';
+import { versionedMedia } from '../lib/mediaVersion';
 import { sceneAttr, sceneOf } from '../lib/scene';
 
 /**
@@ -18,12 +19,14 @@ import { sceneAttr, sceneOf } from '../lib/scene';
 const isDev = import.meta.env.DEV;
 const posts = await Promise.all(
   PHOTO_POSTS.map(async post => {
-    const cover = posterOf(post.media[0]);
+    const media = post.media.map(versionedMedia);
+    const cover = versionedMedia(posterOf(post.media[0]));
     const scenes = await Promise.all(
       post.media.map(async m => sceneAttr(await sceneOf(posterOf(m)))),
     );
     return {
       ...post,
+      media,
       cover,
       scene: scenes[0],
       scenes,
@@ -1492,7 +1495,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     };
 
     const posterFor = (src: string) =>
-      src.endsWith('.mp4') ? src.replace(/\.mp4$/, '.jpg') : src;
+      /\.mp4(\?|$)/.test(src) ? src.replace(/\.mp4(?=\?|$)/, '.jpg') : src;
 
     const captionOf = (post: EnrichedPost) =>
       post.caption[currentLang()] || post.caption.en;
@@ -1508,7 +1511,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     const renderMedia = (showCounter = false) => {
       const post = posts[activePostIdx];
       const src = post.media[activeMediaIdx];
-      const isVid = src.endsWith('.mp4');
+      const isVid = /\.mp4(\?|$)/.test(src);
       const poster = posterFor(src);
 
       syncSceneLight();

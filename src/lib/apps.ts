@@ -1,5 +1,6 @@
 import type { ReleasedApp } from './releases';
 import type { UIKey } from '../i18n/ui';
+import { versionedMedia } from './mediaVersion';
 
 /**
  * THE APPS THE LANDING TELLS — one manifest for every app section on the
@@ -39,7 +40,7 @@ const shots = (
   entries: [name: string, title: string, paras: UIKey[]][],
 ): AppSlide[] =>
   entries.map(([name, title, paras]) => ({
-    src: `/media/${app}/${name}.webp`,
+    src: versionedMedia(`/media/${app}/${name}.webp`),
     width,
     height,
     title,

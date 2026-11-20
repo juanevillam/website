@@ -83,7 +83,7 @@ import T from './T.astro';
   let front = 0;
   let turn = 0;
 
-  const poster = (item: Item) => item.src.replace(/\.mp4$/, '.jpg');
+  const poster = (item: Item) => item.src.replace(/\.mp4(?=\?|$)/, '.jpg');
   const warm = (i: number) => {
     const p = items[(i + items.length) % items.length];
     if (p) new Image().src = p.video ? poster(p) : p.src;

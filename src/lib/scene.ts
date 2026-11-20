@@ -121,7 +121,7 @@ export const sceneOf = async (src: string | string[]): Promise<Scene> => {
   let pixels = 0;
   let chromatic = 0;
   for (const s of srcs) {
-    const file = path.join(PUBLIC, s);
+    const file = path.join(PUBLIC, s.split('?')[0]);
     const { data, info } = await sharp(file)
       .resize(64, 64, { fit: 'inside' })
       .removeAlpha()
@@ -207,6 +207,8 @@ export const NAME_SCENE = sceneAttr({
 /** Whether a picture (site-relative, under public/) is wider than tall —
  *  so a frame can alternate upright and sideways (PanelDeck). */
 export const isSideways = async (src: string) => {
-  const { width = 0, height = 0 } = await sharp(path.join(PUBLIC, src)).metadata();
+  const { width = 0, height = 0 } = await sharp(
+    path.join(PUBLIC, src.split('?')[0]),
+  ).metadata();
   return width > height;
 };
