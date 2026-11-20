@@ -10,6 +10,10 @@ import UNRELEASED from '../data/unreleased.json';
  */
 const preview = import.meta.env.DEV;
 
+/** Whether an app story (lib/apps, by its id) is on the landing and in the footer. */
+export const appShown = (id: string) =>
+  preview || !((UNRELEASED as { apps?: string[] }).apps ?? []).includes(id);
+
 /** Whether an event card (lib/events, by its id) is on the site. */
 export const eventShown = (id: string) =>
   preview || !(UNRELEASED.events as string[]).includes(id);
@@ -20,3 +24,7 @@ export const likesShown = preview || !UNRELEASED.likes;
 /** Whether More of Me's Songs card (lib/likes) is on the site: held back
  *  till Juan records its take, its music with it (`media`). */
 export const songsShown = preview || !UNRELEASED.songs;
+
+/** Whether More of Me's Photos card (lib/likes) is on the site. */
+export const photosShown =
+  preview || !(UNRELEASED as { photos?: boolean }).photos;

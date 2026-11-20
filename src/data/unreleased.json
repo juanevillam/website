@@ -1,6 +1,8 @@
 {
+  "apps": ["highlighter"],
   "events": [],
   "likes": false,
   "songs": false,
-  "media": []
+  "photos": true,
+  "media": ["media/highlighter", "media/likes/photos"]
 }

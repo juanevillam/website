@@ -1,6 +1,7 @@
 import type { ReleasedApp } from './releases';
 import type { UIKey } from '../i18n/ui';
 import { versionedMedia } from './mediaVersion';
+import { appShown } from './release';
 
 /**
  * THE APPS THE LANDING TELLS — one manifest for every app section on the
@@ -47,49 +48,51 @@ const shots = (
     paras,
   }));
 
-export const APPS: AppStory[] = [
-  {
-    id: 'shaper',
-    slug: 'sound-shaper',
-    name: 'Sound Shaper',
-    format: 'phone',
-    pitch: ['shaper.problem', 'shaper.solution'],
-    github: 'https://github.com/juanevillam/sound-shaper',
-    slides: shots('shaper', 830, 1800, [
-      ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
-      ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
-      ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
-      ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
-    ]),
-  },
-  {
-    id: 'highlighter',
-    slug: 'book-highlighter',
-    name: 'Book Highlighter',
-    format: 'desktop',
-    pitch: ['highlighter.problem', 'highlighter.solution'],
-    github: 'https://github.com/juanevillam/book-highlighter',
-    slides: shots('highlighter', 1440, 960, [
-      [
-        'desktop-dark-shelf',
-        'Shelf',
-        ['highlighter.s1.p1', 'highlighter.s1.p2'],
-      ],
-      [
-        'desktop-dark-chapters',
-        'Chapters',
-        ['highlighter.s2.p1', 'highlighter.s2.p2'],
-      ],
-      [
-        'desktop-dark-scanner',
-        'Scanner',
-        ['highlighter.s3.p1', 'highlighter.s3.p2'],
-      ],
-      [
-        'desktop-dark-reader',
-        'Reader',
-        ['highlighter.s4.p1', 'highlighter.s4.p2'],
-      ],
-    ]),
-  },
-];
+export const APPS: AppStory[] = (
+  [
+    {
+      id: 'shaper',
+      slug: 'sound-shaper',
+      name: 'Sound Shaper',
+      format: 'phone',
+      pitch: ['shaper.problem', 'shaper.solution'],
+      github: 'https://github.com/juanevillam/sound-shaper',
+      slides: shots('shaper', 830, 1800, [
+        ['ios-dark-home', 'Library', ['shaper.s1.p1', 'shaper.s1.p2']],
+        ['ios-dark-player', 'Player', ['shaper.s2.p1', 'shaper.s2.p2']],
+        ['ios-dark-shape', 'Shape', ['shaper.s3.p1', 'shaper.s3.p2']],
+        ['ios-dark-clip', 'Clips', ['shaper.s4.p1', 'shaper.s4.p2']],
+      ]),
+    },
+    {
+      id: 'highlighter',
+      slug: 'book-highlighter',
+      name: 'Book Highlighter',
+      format: 'desktop',
+      pitch: ['highlighter.problem', 'highlighter.solution'],
+      github: 'https://github.com/juanevillam/book-highlighter',
+      slides: shots('highlighter', 1440, 960, [
+        [
+          'desktop-dark-shelf',
+          'Shelf',
+          ['highlighter.s1.p1', 'highlighter.s1.p2'],
+        ],
+        [
+          'desktop-dark-chapters',
+          'Chapters',
+          ['highlighter.s2.p1', 'highlighter.s2.p2'],
+        ],
+        [
+          'desktop-dark-scanner',
+          'Scanner',
+          ['highlighter.s3.p1', 'highlighter.s3.p2'],
+        ],
+        [
+          'desktop-dark-reader',
+          'Reader',
+          ['highlighter.s4.p1', 'highlighter.s4.p2'],
+        ],
+      ]),
+    },
+  ] satisfies AppStory[]
+).filter(a => appShown(a.id));

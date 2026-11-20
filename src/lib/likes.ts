@@ -1,6 +1,6 @@
 import type { DeckItem } from './deck-items';
 import { PHOTO_POSTS, posterOf } from './photos';
-import { songsShown } from './release';
+import { photosShown, songsShown } from './release';
 import ENCODED from '../data/songs.json';
 
 /**
@@ -144,15 +144,19 @@ export const LIKES: DeckItem[] = [
         } satisfies DeckItem,
       ]
     : []),
-  {
-    id: 'photos',
-    slug: 'photos',
-    name: { k: 'likes.photos.name' },
-    meta: [[{ k: 'likes.photos.meta' }], [{ k: 'likes.photos.meta2' }]],
-    body: 'likes.photos.body',
-    clip: 'likes.photos.body',
-    image: { slot: 'photos' },
-    scene: PHOTO_POSTS[0] ? posterOf(PHOTO_POSTS[0].media[0]) : undefined,
-    links: [],
-  },
+  ...(photosShown
+    ? [
+        {
+          id: 'photos',
+          slug: 'photos',
+          name: { k: 'likes.photos.name' },
+          meta: [[{ k: 'likes.photos.meta' }], [{ k: 'likes.photos.meta2' }]],
+          body: 'likes.photos.body',
+          clip: 'likes.photos.body',
+          image: { slot: 'photos' },
+          scene: PHOTO_POSTS[0] ? posterOf(PHOTO_POSTS[0].media[0]) : undefined,
+          links: [],
+        } satisfies DeckItem,
+      ]
+    : []),
 ];

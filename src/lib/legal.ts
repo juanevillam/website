@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/ui';
+import { appShown } from './release';
 
 /**
  * The apps whose legal pages are published, and the facts those pages
@@ -46,6 +47,7 @@ export const LEGAL_APPS: {
     contentEs: 'libros',
     contentZh: '书籍',
     web: 'bookhighlighter.juanevillam.com',
+    footer: appShown('highlighter'),
   },
 ];
 
@@ -56,7 +58,7 @@ export type LegalApp = (typeof LEGAL_APPS)[number];
 export const legalPaths = () =>
   LEGAL_APPS.map(app => ({ params: { app: app.slug }, props: { app } }));
 
-export const CONTACT_EMAIL = 'juanesvillamendoza@gmail.com';
+export const CONTACT_EMAIL = 'juan@juanevillam.com';
 export const AUTHOR_FULL_NAME = 'Juan Esteban Villa Mendoza';
 /** Apple's standard licence, which App Store apps ship under unless they set their own. */
 export const APPLE_EULA_URL =
