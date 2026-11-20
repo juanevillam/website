@@ -1458,10 +1458,12 @@ const placeNarrator = () => {
 };
 
 let narrLoopId = 0;
+let narrGlideUntil = 0;
 
 const animateNarrator = (now: number) => {
   narrLoopId = 0;
   if (document.hidden) return;
+  if (now <= narrGlideUntil) narrPlacementDirty = true;
   updateRead();
   updateCues();
   tickVideoSync(now);
@@ -1472,7 +1474,8 @@ const animateNarrator = (now: number) => {
     Boolean((session && running) || demo || otherSound()) ||
     presence >= 0.004 ||
     fieldDirty ||
-    narrPlacementDirty;
+    narrPlacementDirty ||
+    now <= narrGlideUntil;
   if (active) {
     narrLoopId = requestAnimationFrame(animateNarrator);
   }
@@ -1486,11 +1489,14 @@ function wakeNarrator() {
 
 const markPlacementDirty = () => {
   narrPlacementDirty = true;
+  // A deck turn moves `.narr-anchor` over `--dur-turn` (340ms) via CSS
+  // transition, so keep sampling `anchor.getBoundingClientRect()` every
+  // frame until the anchor's transition settles.
+  narrGlideUntil = Math.max(
+    narrGlideUntil,
+    performance.now() + dur('turn') + 60,
+  );
   wakeNarrator();
-  requestAnimationFrame(() => {
-    narrPlacementDirty = true;
-    wakeNarrator();
-  });
 };
 
 // ----- the session -----

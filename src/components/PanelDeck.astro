@@ -1245,6 +1245,7 @@ for (const p of items)
         }
         // A frame later: the first call comes while `deck` is still being
         // made.
+        if (ready) standAnchor();
         requestAnimationFrame(standAnchor);
         // The narrator starts this panel on the card in front (its
         // `data-narr-start`), and a running voice switches to it.

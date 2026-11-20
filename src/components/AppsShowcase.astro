@@ -14,14 +14,8 @@ import { sceneAttr, sceneOf } from '../lib/scene';
 /**
  * AN APP SHOWCASE — one full-viewport snapped panel telling one app's whole
  * story: a WELCOME card (the pitch — the problem, then the answer — and the
- * store row) followed by its four feature cards.
- *
- * Supports two media formats (`app.format`):
- * - `'phone'`   (Sound Shaper): upright iPhone screenshots (`830 × 1800`)
- *   with iPhone squircle corners.
- * - `'desktop'` (Book Highlighter): `3:2` desktop screenshots (`1440 × 960`)
- *   in the page's standard `--screen-w` frame (`--media-radius-flat`),
- *   matching More Work and Events on both desktop and phone.
+ * store row) followed by its four feature cards, all in the upright iPhone
+ * frame (`830 × 1800`).
  */
 type Props = {
   id?: string;
@@ -32,7 +26,6 @@ type Props = {
 };
 
 const { id, app, focused = false } = Astro.props;
-const isDesktop = app.format === 'desktop';
 
 type Card =
   | {
@@ -86,12 +79,11 @@ const focusPath =
 ---
 
 <section
-  class:list={['apps', `is-${app.format}`]}
+  class="apps"
   id={id ?? app.slug}
   data-apps
-  data-format={app.format}
   data-narr-panel={voiced ? '' : null}
-  data-phone-scene={isDesktop ? null : ''}
+  data-phone-scene
   data-focused={focused ? '' : null}
 >
   <h2 class="visually-hidden">{app.name}</h2>
@@ -254,112 +246,42 @@ const focusPath =
                 {voiced && <div class="narr-slot" aria-hidden="true" />}
               </div>
 
-              {card.kind === 'welcome' &&
-                (isDesktop ? (
-                  <div
-                    class="slot is-screen-slot"
-                    data-deck-part="picture"
-                    data-peek="side-screen"
-                  >
-                    <div
-                      class="screen shot is-desktop"
-                      data-scene-at
-                      data-shot-at="0"
-                    >
-                      <img
-                        class="fill"
-                        src={card.shots[0].src}
-                        alt=""
-                        aria-hidden="true"
-                        loading="lazy"
-                        decoding="async"
-                        draggable="false"
-                      />
-                      <img
-                        class="whole"
-                        src={card.shots[0].src}
-                        alt={`${app.name} — ${card.shots[0].title}`}
-                        width={card.shots[0].width}
-                        height={card.shots[0].height}
-                        loading="lazy"
-                        decoding="async"
-                        draggable="false"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    class="slot"
-                    data-deck-part="picture"
-                    data-peek="side"
-                  >
-                    <img
-                      class="shot"
-                      data-scene-at
-                      data-shot-at="0"
-                      src={card.shots[0].src}
-                      alt={`${app.name} — ${card.shots[0].title}`}
-                      width={card.shots[0].width}
-                      height={card.shots[0].height}
-                      loading="lazy"
-                      decoding="async"
-                      draggable="false"
-                    />
-                  </div>
-                ))}
-              {card.kind === 'slide' &&
-                (isDesktop ? (
-                  <div class="slot is-screen-slot" data-deck-part="picture">
-                    <div
-                      class="screen shot is-desktop"
-                      data-shot-at={c - 1}
-                    >
-                      <div class="screen-caption" aria-hidden="true">
-                        <span class="cap-name">
-                          {card.title}
-                          <CopyLink path={focusPath} decorative />
-                        </span>
-                        <span class="label cap-meta">{app.name}</span>
-                      </div>
-                      <img
-                        class="fill"
-                        src={c === 1 ? card.src : undefined}
-                        data-src={c === 1 ? undefined : card.src}
-                        alt=""
-                        aria-hidden="true"
-                        loading="lazy"
-                        decoding="async"
-                        draggable="false"
-                      />
-                      <img
-                        class="whole"
-                        src={c === 1 ? card.src : undefined}
-                        data-src={c === 1 ? undefined : card.src}
-                        alt={`${app.name} — ${card.title}`}
-                        width={card.width}
-                        height={card.height}
-                        loading="lazy"
-                        decoding="async"
-                        draggable="false"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div class="slot" data-deck-part="picture">
-                    <img
-                      class="shot"
-                      data-shot-at={c - 1}
-                      src={c === 1 ? card.src : undefined}
-                      data-src={c === 1 ? undefined : card.src}
-                      alt={`${app.name} — ${card.title}`}
-                      width={card.width}
-                      height={card.height}
-                      loading="lazy"
-                      decoding="async"
-                      draggable="false"
-                    />
-                  </div>
-                ))}
+              {card.kind === 'welcome' && (
+                <div
+                  class="slot"
+                  data-deck-part="picture"
+                  data-peek="side"
+                >
+                  <img
+                    class="shot"
+                    data-scene-at
+                    data-shot-at="0"
+                    src={card.shots[0].src}
+                    alt={`${app.name} — ${card.shots[0].title}`}
+                    width={card.shots[0].width}
+                    height={card.shots[0].height}
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                </div>
+              )}
+              {card.kind === 'slide' && (
+                <div class="slot" data-deck-part="picture">
+                  <img
+                    class="shot"
+                    data-shot-at={c - 1}
+                    src={c === 1 ? card.src : undefined}
+                    data-src={c === 1 ? undefined : card.src}
+                    alt={`${app.name} — ${card.title}`}
+                    width={card.width}
+                    height={card.height}
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                </div>
+              )}
             </article>
           ))
         }
@@ -443,10 +365,6 @@ const focusPath =
 
   [data-peek='side'] {
     --peek: translateX(58cqw);
-  }
-
-  [data-peek='side-screen'] {
-    --peek: translateX(38cqw);
   }
 
   .deck-card.is-handoff [data-deck-part='picture'],
@@ -539,14 +457,14 @@ const focusPath =
     margin-top: 3rem;
   }
 
-  /* ---------- Phone screenshots (Sound Shaper) ---------- */
+  /* ---------- Phone screenshots ---------- */
   .slot {
     display: flex;
     justify-content: center;
     margin-top: calc(var(--shot-top) - var(--stage-top));
   }
 
-  .shot:not(.is-desktop) {
+  .shot {
     --shot-r: calc(var(--shot-h) * 0.06458);
     height: var(--shot-h);
     width: auto;
@@ -560,52 +478,7 @@ const focusPath =
     cursor: zoom-in;
   }
 
-  /* ---------- Desktop 3:2 screens (Book Highlighter — PanelDeck standard) ---------- */
-  .slot.is-screen-slot {
-    margin-top: 0;
-  }
-
-  .screen.shot.is-desktop {
-    position: relative;
-    width: var(--screen-w);
-    aspect-ratio: 3 / 2;
-    overflow: hidden;
-    border: 1px solid var(--hairline);
-    border-radius: var(--media-radius-flat);
-    background: var(--ground);
-    box-shadow:
-      0 2rem 4rem rgba(0, 0, 0, 0.55),
-      0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
-    cursor: zoom-in;
-  }
-
-  .screen.shot.is-desktop .fill,
-  .screen.shot.is-desktop .whole {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    display: block;
-  }
-
-  .screen.shot.is-desktop .fill {
-    object-fit: cover;
-    object-position: center;
-    transform: scale(1.2);
-    filter: blur(28px) saturate(1.22) brightness(0.55);
-  }
-
-  .screen.shot.is-desktop .whole {
-    object-fit: contain;
-    object-position: center;
-  }
-
-  .screen-caption {
-    display: none;
-  }
-
-  /* A slide's phone or 3:2 screen leans toward the pointer (lib/tilt). */
+  /* A slide's phone leans toward the pointer (lib/tilt). */
   .is-slide .slot {
     perspective: 1600px;
   }
@@ -703,89 +576,11 @@ const focusPath =
       display: none;
     }
 
-    .shot:not(.is-desktop) {
+    .shot {
       box-shadow:
         var(--media-glow),
         0 2rem 4rem rgba(0, 0, 0, 0.55),
         0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
-    }
-
-    /* Desktop 3:2 screens on a phone adopt the exact PanelDeck 4:5 upright
-       frame with the desktop capture centered whole over its blurred fill
-       and the slide's title + app name overlaid on the bottom fade. */
-    .screen.shot.is-desktop {
-      width: 100%;
-      aspect-ratio: var(--screen-ratio-m);
-      max-height: var(--screen-max-m);
-      box-shadow:
-        var(--media-glow),
-        0 2rem 4rem rgba(0, 0, 0, 0.55),
-        0 0.5rem 1.25rem rgba(0, 0, 0, 0.4);
-    }
-
-    .screen-caption {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      gap: 0.125rem;
-      padding: 2.75rem 0.875rem 0.75rem;
-      background: linear-gradient(
-        to bottom,
-        rgb(0 0 0 / 0) 0%,
-        rgb(0 0 0 / 0.012) 8.1%,
-        rgb(0 0 0 / 0.044) 15.5%,
-        rgb(0 0 0 / 0.094) 22.5%,
-        rgb(0 0 0 / 0.158) 29%,
-        rgb(0 0 0 / 0.233) 35.3%,
-        rgb(0 0 0 / 0.317) 41.2%,
-        rgb(0 0 0 / 0.405) 47.1%,
-        rgb(0 0 0 / 0.495) 52.9%,
-        rgb(0 0 0 / 0.583) 58.8%,
-        rgb(0 0 0 / 0.667) 64.7%,
-        rgb(0 0 0 / 0.742) 71%,
-        rgb(0 0 0 / 0.806) 77.5%,
-        rgb(0 0 0 / 0.856) 84.5%,
-        rgb(0 0 0 / 0.888) 91.9%,
-        rgb(0 0 0 / 0.9) 100%
-      );
-      pointer-events: none;
-    }
-
-    .cap-name {
-      font-size: 1.125rem;
-      font-weight: 800;
-      letter-spacing: var(--track-heading);
-      line-height: 1.1;
-      color: #fff;
-    }
-
-    .cap-name :global(.copy-link) {
-      margin-left: 0.25rem;
-      pointer-events: auto;
-    }
-
-    .cap-meta {
-      font-size: 0.6875rem;
-      color: rgb(255 255 255 / 0.72);
-      text-transform: none;
-      letter-spacing: 0;
-    }
-
-    .apps.is-desktop .is-slide .slide-title {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
-    }
-
-    .apps.is-desktop .is-slide .desc {
-      --cap-gap: 0px;
     }
 
     .lockup.small {
@@ -884,7 +679,6 @@ const focusPath =
   import { dur, EASE } from '../lib/motion';
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-apps]')) {
-    const isDesktop = root.dataset.format === 'desktop';
     const decksEl = root.querySelector<HTMLElement>('[data-decks]')!;
     const paras = [...root.querySelectorAll<HTMLElement>('[data-narr-para]')];
     const still = decksEl.querySelector<HTMLElement>(
@@ -919,6 +713,7 @@ const focusPath =
 
     const select = (card: HTMLElement | undefined) => {
       if (!card) return;
+      standAnchor();
       requestAnimationFrame(standAnchor);
       const first = card.querySelector<HTMLElement>('[data-narr-para]');
       if (!first) return;
@@ -975,7 +770,6 @@ const focusPath =
       const ghost = a.cloneNode(true) as HTMLElement;
       ghost.removeAttribute('class');
       ghost.removeAttribute('style');
-      if (isDesktop) ghost.classList.add('screen', 'shot', 'is-desktop');
       const box = root.getBoundingClientRect();
       Object.assign(ghost.style, {
         position: 'absolute',
@@ -1033,7 +827,7 @@ const focusPath =
       flight.oncancel = land;
     };
 
-    if (!isDesktop && matchMedia('(max-width: 48rem)').matches)
+    if (matchMedia('(max-width: 48rem)').matches)
       for (const card of root.querySelectorAll<HTMLElement>('.is-slide')) {
         const title = card.querySelector<HTMLElement>('.slide-title');
         const desc = card.querySelector<HTMLElement>('.desc');
@@ -1094,7 +888,7 @@ const focusPath =
               detail: {
                 items: JSON.parse(items),
                 at: Number(shot.dataset.shotAt ?? 0),
-                phone: !isDesktop,
+                phone: true,
               },
             }),
           );

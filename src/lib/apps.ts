@@ -7,8 +7,8 @@ import { appShown } from './release';
  * THE APPS THE LANDING TELLS — one manifest for every app section on the
  * landing (AppsShowcase), in vertical scroll order:
  *
- *   1. Sound Shaper     — iOS + Web (`format: 'phone'`, 830 × 1800)
- *   2. Book Highlighter — Web PWA (`format: 'desktop'`, 1440 × 960, 3:2)
+ *   1. Sound Shaper     — iOS + Web (`830 × 1800` phone frame)
+ *   2. Book Highlighter — Web PWA (`830 × 1800` phone frame)
  *
  * Each app is a WELCOME (its pitch: the problem, then the answer) and four
  * cards, in the order the story is told. Slide titles are English in every
@@ -28,7 +28,6 @@ export type AppStory = {
   id: ReleasedApp;
   slug: string;
   name: string;
-  format: 'phone' | 'desktop';
   pitch: UIKey[];
   slides: AppSlide[];
   github?: string;
@@ -54,7 +53,6 @@ export const APPS: AppStory[] = (
       id: 'shaper',
       slug: 'sound-shaper',
       name: 'Sound Shaper',
-      format: 'phone',
       pitch: ['shaper.problem', 'shaper.solution'],
       github: 'https://github.com/juanevillam/sound-shaper',
       slides: shots('shaper', 830, 1800, [
@@ -68,10 +66,9 @@ export const APPS: AppStory[] = (
       id: 'highlighter',
       slug: 'book-highlighter',
       name: 'Book Highlighter',
-      format: 'desktop',
       pitch: ['highlighter.problem', 'highlighter.solution'],
       github: 'https://github.com/juanevillam/book-highlighter',
-      slides: shots('highlighter', 1440, 960, [
+      slides: shots('highlighter', 830, 1800, [
         [
           'desktop-dark-shelf',
           'Shelf',
