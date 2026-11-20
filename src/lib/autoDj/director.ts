@@ -289,7 +289,8 @@ export const createAutoDj = (host: DjHost) => {
     if (Object.keys(patch).length) host.apply(patch);
     if (nextFocus) {
       const cur = status.focus;
-      const nowMs = Date.now();
+      const nowMs =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
       const holdCurrent =
         cur !== null &&
         cur !== nextFocus &&
@@ -527,10 +528,11 @@ export const createAutoDj = (host: DjHost) => {
       const id = ids[host.current()];
       const map = maps.get(id);
       if (!map) return; // read first; `pump` joins when it lands
-      const startFromTop = singleSound || firstJoin;
+      const isEntry = firstJoin;
+      const startFromTop = singleSound || isEntry;
       firstJoin = false;
       const nowPos = host.position();
-      if (startFromTop && nowPos > 0.35) {
+      if (!isEntry && startFromTop && nowPos > 0.35) {
         host.rewind(0);
       }
       const atS = startFromTop ? 0 : nowPos;
