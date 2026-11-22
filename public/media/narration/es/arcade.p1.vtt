@@ -1,201 +1,377 @@
 WEBVTT
 
 1
-00:00:00.000 --> 00:00:02.570
+00:00:00.000 --> 00:00:03.290
 Space Explorer inició como un easter egg para mis
 
 2
-00:00:02.570 --> 00:00:03.640
-aplicaciones.
+00:00:03.290 --> 00:00:06.900
+aplicaciones y en este caso ibas a entrar a una parte
 
 3
-00:00:03.640 --> 00:00:07.110
-En este caso Sound Shaper: ibas a enterrar una parte
+00:00:06.900 --> 00:00:09.330
+específica de Sound Shaper, le ibas a dar una
 
 4
-00:00:07.110 --> 00:00:09.770
-específica de la aplicación, darle unos tabs ahí
+00:00:09.330 --> 00:00:12.700
+combinación de taps en lugares específicos y se iba a
 
 5
-00:00:09.770 --> 00:00:12.980
-secretos en ciertos lugares y iba a enterrar como en
+00:00:12.700 --> 00:00:17.410
+abrir el modo juego con Space Explorer.
 
 6
-00:00:12.980 --> 00:00:16.480
-modo juego y se iba a desplegar un nivel de Sound Shaper
+00:00:17.410 --> 00:00:20.280
+Iba a tener varios niveles, iba a ser un nivel por
 
 7
-00:00:16.480 --> 00:00:17.650
-o dos niveles.
+00:00:20.280 --> 00:00:23.590
+aplicación o por proyecto, iba a tener en tres proyectos
 
 8
-00:00:17.650 --> 00:00:21.150
-Tenía como una historia narrativa completa que se iba a
+00:00:23.590 --> 00:00:27.000
+principales los tres niveles de Space Explorer,
 
 9
-00:00:21.150 --> 00:00:24.650
-unir con el resto de aplicaciones que fuese a sacar.
+00:00:27.000 --> 00:00:29.980
+pero después lo removí porque estaba muy complicado de
 
 10
-00:00:24.650 --> 00:00:27.280
-Pero eso sobrecomplicaba mucho el producto y tal vez era
+00:00:29.980 --> 00:00:30.180
+hacer.
 
 11
-00:00:27.280 --> 00:00:29.650
-muy difícil que lo encontraran porque estaba muy bien.
+00:00:30.000 --> 00:00:35.020
+Otra persona que no fuese yo sin dejar pistas en ningún
 
 12
-00:00:29.650 --> 00:00:33.050
-Estaba súper oculto y literalmente eso lo sabía yo.
+00:00:35.020 --> 00:00:39.070
+otro lugar donde o cómo se accedía a Space Explorer y
 
 13
-00:00:33.050 --> 00:00:36.680
-Entonces, para simplificarlo y dejar Sound Shaper como
+00:00:39.070 --> 00:00:41.590
+sobrecomplicaba mucho el proyecto,
 
 14
-00:00:36.680 --> 00:00:40.650
-Sound Shaper, pues lo removí.
+00:00:41.590 --> 00:00:43.260
+estaba como que raro.
 
 15
-00:00:40.650 --> 00:00:45.080
-Pero justo por horas del destino,
+00:00:43.260 --> 00:00:48.880
+Entonces lo dejé en stand-by y dije bueno ya encontraré
 
 16
-00:00:45.080 --> 00:00:48.830
-no sé, pero pasó muy cercano los tiempos,
+00:00:48.880 --> 00:00:57.450
+la manera de hacerlo y en el mismo time lapse en el que
 
 17
-00:00:48.830 --> 00:00:54.970
-aplicamos una hackathon de Platanus aquí en Venezuela,
+00:00:57.450 --> 00:01:00.040
+estuve haciendo eso, en el que tomé esa decisión,
 
 18
-00:00:54.970 --> 00:00:55.650
-en Caracas.
+00:01:00.040 --> 00:01:04.090
+aplicamos a una hackathon aquí de nuevo en Caracas,
 
 19
-00:00:55.650 --> 00:00:59.700
-Y uno de los retos que había como minijuegos,
+00:01:04.090 --> 00:01:10.380
+plátanos hack en las oficinas de Yumi y como minijuego
 
 20
-00:00:59.700 --> 00:01:03.840
-actividad secundaria, era hacer un juego de arcade.
+00:01:10.380 --> 00:01:13.710
+de la hackathon, fueses o no fueses,
 
 21
-00:01:03.840 --> 00:01:05.680
-Y ya yo tenía la idea trabajada,
+00:01:13.710 --> 00:01:17.370
+quedaras o no seleccionado, habría que hacer un
 
 22
-00:01:05.680 --> 00:01:07.840
-dije: mira, vamos a hacer Space Explorer,
+00:01:17.370 --> 00:01:21.970
+minijuego que se iba a jugar en la máquina de arcade que
 
 23
-00:01:07.840 --> 00:01:09.650
-pero como si fuese un juego de arcade.
+00:01:21.970 --> 00:01:25.330
+ellos tienen física, plátanos que le iban a tener en la
 
 24
-00:01:09.650 --> 00:01:13.150
-Y era un reto bastante interesante porque el juego tenía
+00:01:25.330 --> 00:01:29.960
+oficina de Yumi y yo dije mira aquí está la oportunidad
 
 25
-00:01:13.150 --> 00:01:16.650
-que pesar menos, bueno, máximo 50 kilobytes.
+00:01:29.960 --> 00:01:34.100
+para de verdad ser Space Explorer como un juego propio y
 
 26
-00:01:16.650 --> 00:01:19.680
-O sea, 50KB.
+00:01:34.100 --> 00:01:37.690
+en este caso el reto era un juego de arcade que no
 
 27
-00:01:19.680 --> 00:01:25.820
-Y yo logré hacer que fuese un shooter 3D espacial que
+00:01:37.690 --> 00:01:41.960
+pesara más de 50 kilobytes la versión minimizada.
 
 28
-00:01:25.820 --> 00:01:28.320
-tiene, bueno, el mapa está bastante cool,
+00:01:41.960 --> 00:01:50.260
+la mayoría de juegos que había visto en esta hackathon
 
 29
-00:01:28.320 --> 00:01:32.050
-el estilo es muy simple porque no lo quería hacer muy
+00:01:50.260 --> 00:01:57.000
+ediciones de otras ciudades porque están haciendo este
 
 30
-00:01:32.050 --> 00:01:33.650
-artístico.
+00:01:57.000 --> 00:02:01.900
+año 2026, el año que fui a la hackathon y el año que
 
 31
-00:01:33.650 --> 00:01:36.670
-Porque yo de pixel art prefería hacer algo más técnico
+00:02:01.900 --> 00:02:06.190
+hice Space Explorer, hicieron un tour por Latinoamérica
 
 32
-00:01:36.670 --> 00:01:38.700
-que quedara más chulo incluso.
+00:02:06.190 --> 00:02:08.960
+y habían hecho el evento en Argentina,
 
 33
-00:01:38.700 --> 00:01:41.660
-De hecho, tiene un agujero negro también y funciona
+00:02:08.960 --> 00:02:12.000
+en Colombia, en México.
 
 34
-00:01:41.660 --> 00:01:45.650
-bastante, bastante, bastante cool.
+00:02:12.000 --> 00:02:17.820
+casi ningún juego era 3D y muchos juegos tenían el lado
 
 35
-00:01:45.650 --> 00:01:48.260
-Pues tiene muchas funcionalidades también,
+00:02:17.820 --> 00:02:22.930
+visual de pixel art muy bien trabajado porque si era un
 
 36
-00:01:48.260 --> 00:01:49.700
-la nave cómo se maneja.
+00:02:22.930 --> 00:02:27.120
+juego de arcade y tenía que pesar menos de 50 kilobytes
 
 37
-00:01:49.700 --> 00:01:51.640
-Muy, muy interesante.
+00:02:27.120 --> 00:02:30.610
+como tal tenías que irte por el pixel art pues porque
 
 38
-00:01:51.640 --> 00:01:54.760
-Lo puedes jugar aquí en esta página o en la página web
+00:02:30.610 --> 00:02:33.220
+era lo más seguro, no podías hacer gráficos muy
 
 39
-00:01:54.760 --> 00:01:57.650
-oficial de Platanus, bueno, de la Platanus Hack.
+00:02:33.220 --> 00:02:34.450
+complejos.
 
 40
-00:01:57.650 --> 00:01:59.650
-Y bueno, espero, espero les guste.
+00:02:34.450 --> 00:02:40.760
+además de que dije mira yo en pixel art no es que sea
 
 41
-00:01:59.650 --> 00:02:02.780
-Como tal, en la Hackathon había muy pocos juegos que
+00:02:40.760 --> 00:02:44.960
+muy bueno, no es que sea malo pero es que nunca he hecho
 
 42
-00:02:02.780 --> 00:02:03.850
-eran 3D.
+00:02:44.960 --> 00:02:49.190
+pixel art y si me pusiera a hacer pixel art tal vez me
 
 43
-00:02:03.850 --> 00:02:07.200
-Obvio, había muchos que eran muy chulos,
+00:02:49.190 --> 00:02:52.830
+quedaría bien pero dije no mira yo me quiero ir por otro
 
 44
-00:02:07.200 --> 00:02:09.650
-pero quedó bastante, bastante cool.
+00:02:52.830 --> 00:02:56.730
+lado y hacerlo más técnico y hice un shooter 3D,
 
 45
-00:02:09.650 --> 00:02:11.650
-Este sí, como ya quedó, quedó.
+00:02:56.730 --> 00:03:00.940
+el juego es 3D, es un mundo, el mapa es bastante grande,
 
 46
-00:02:11.650 --> 00:02:14.280
-Ya no le voy a meter más porque la idea es que,
+00:03:00.940 --> 00:03:03.940
+en el espacio está bastante fino porque hay diferentes
 
 47
-00:02:14.280 --> 00:02:17.650
-como quedó para la Hackathon, quedó para siempre.
+00:03:03.940 --> 00:03:05.200
+tipos de enemigos hay diferentes tipos de enemigos hay
 
 48
-00:02:17.650 --> 00:02:22.160
-Ya si hago otro juego, pues es otro juego,
+00:03:05.200 --> 00:03:08.340
+diferentes tipos de enemigos hay diferentes tipos de
 
 49
-00:02:22.160 --> 00:02:24.880
-ya no es Space Explorer.
+00:03:08.340 --> 00:03:10.940
+niveles hay hasta un agujero negro tal cual entonces
 
 50
-00:02:24.880 --> 00:02:26.250
-Y si es Space...
+00:03:10.940 --> 00:03:17.950
+creo que muchos juegos fueron pixel art pero pocos
+
+51
+00:03:17.950 --> 00:03:21.570
+fueron así 3D y bueno así 3D del espacio creo que no
+
+52
+00:03:21.570 --> 00:03:24.470
+hubo ninguno además de que va con la temática esta que
+
+53
+00:03:24.470 --> 00:03:29.590
+me encanta del espacio lo pueden ver más en la sección
+
+54
+00:03:29.590 --> 00:03:33.940
+de más de mí y me encantó cómo queda o sea está muy mío
+
+55
+00:03:33.940 --> 00:03:38.540
+es como si fuese mira tengo sound shaper en este momento
+
+56
+00:03:38.540 --> 00:03:43.860
+space explorer vamos a ver qué otro sale por ahí ya van
+
+57
+00:03:43.860 --> 00:03:46.190
+encontrando incluso patrones de cómo se tienen que
+
+58
+00:03:46.190 --> 00:03:49.680
+llamar qué reglas hay que seguir para los nombres porque
+
+59
+00:03:49.680 --> 00:03:53.630
+claro este website no lo cuento como uno de los
+
+60
+00:03:53.630 --> 00:03:57.290
+proyectos principales porque este tipo el puente que hay
+
+61
+00:03:57.290 --> 00:03:59.940
+para entre esos proyectos y la explicación que estoy
+
+62
+00:03:59.940 --> 00:04:06.220
+dando entonces bueno lo puedes jugar desde aquí así como
+
+63
+00:04:06.220 --> 00:04:08.490
+en la página oficial que se sube de la platinum
+
+64
+00:04:08.490 --> 00:04:11.940
+hackathon y bueno también tiene la musiquita la
+
+65
+00:04:11.940 --> 00:04:14.340
+musiquita esa la musiquita esa fue un chiste porque yo
+
+66
+00:04:14.340 --> 00:04:19.030
+la quería hacer Star Wars y bueno ahorita mismo la
+
+67
+00:04:19.030 --> 00:04:24.070
+inteligencia artificial no te permitía me decían no mira
+
+68
+00:04:24.070 --> 00:04:25.940
+no puede ser Star Wars no mira no puede ser Star Wars no
+
+69
+00:04:25.940 --> 00:04:28.480
+mira no es así entonces me tuve que adaptar yo mismo una
+
+70
+00:04:28.480 --> 00:04:32.380
+melodía que fuese como entretenida movida que tuviese
+
+71
+00:04:32.380 --> 00:04:36.020
+algo espacial aunque no lo creas tal vez pase más tiempo
+
+72
+00:04:36.020 --> 00:04:39.440
+metiéndole a la melodía de la canción que a
+
+73
+00:04:39.440 --> 00:04:43.960
+funcionalidades core del juego pero porque un juego de
+
+74
+00:04:43.960 --> 00:04:47.180
+arcade tiene que tener buena música sí o sí entonces lo
+
+75
+00:04:47.180 --> 00:04:51.000
+pueden jugar también funciona en responsive cuando lo
+
+76
+00:04:51.000 --> 00:04:52.920
+están viendo desde un celular bueno sé que esta
+
+77
+00:04:52.920 --> 00:04:56.720
+explicación tal vez fue muy larga pero ese es el chiste
+
+78
+00:04:56.720 --> 00:04:59.660
+de hacer una página web de que puedes poner lo que tú
+
+79
+00:04:59.660 --> 00:05:03.420
+quieras y si alguien está viendo esto pues puedo hacer
+
+80
+00:05:03.420 --> 00:05:06.240
+el vídeo tan largo como sea posible y bueno este ya que
+
+81
+00:05:06.240 --> 00:05:10.940
+si se fijan en los vídeos anteriores a cambio de setup
+
+82
+00:05:10.940 --> 00:05:15.340
+también el lugar porque para no aburrir y bueno aquí
+
+83
+00:05:15.340 --> 00:05:19.940
+tengo la apreciada bandera gorra de la bandera de
+
+84
+00:05:19.940 --> 00:05:21.580
+venezuela aunque esta no como tal no es la verdadera
+
+85
+00:05:21.580 --> 00:05:28.270
+versión los venezolanos sabrán por qué y la del
+
+86
+00:05:28.270 --> 00:05:32.100
+cardenales de lara mi estado de los guaros como tal creo
+
+87
+00:05:32.100 --> 00:05:35.340
+que se parece inclusive mucho al equipo de eeuu de los
+
+88
+00:05:35.340 --> 00:05:38.390
+cardinals que pueden ser los cardenales pero no son esos
+
+89
+00:05:38.390 --> 00:05:38.940
+cardinales de eeuu son los de los de lara de
+
+90
+00:05:38.940 --> 00:05:47.880
+barquisimeto entonces bueno el chiste es que space
+
+91
+00:05:47.880 --> 00:05:53.110
+explorer es un juego de arcade 3d shooter espacial hay
+
+92
+00:05:53.110 --> 00:05:56.940
+muchos enemigos hay varios niveles es infinito o sea
+
+93
+00:05:56.940 --> 00:06:00.010
+hasta que logres alcanzar la mayor cantidad de puntos y
+
+94
+00:06:00.010 --> 00:06:06.780
+está bastante bastante cool espero les guste también
