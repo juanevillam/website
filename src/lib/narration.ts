@@ -6,22 +6,22 @@ import { versionedMedia } from './mediaVersion';
 import { plainText, type ReadMark, readTokens } from './readAlong';
 
 /**
- * Juan's narration — ONE VOICE, SUBTITLED IN THE PAGE'S LANGUAGE.
+ * Juan's narration — HIS OWN VOICE IN SPANISH AND ENGLISH, SUBTITLED IN THE PAGE'S LANGUAGE.
  *
- * Every paragraph has one clip, in Spanish, found by convention rather
- * than listed anywhere:
+ * Every paragraph's clips are found by convention rather than listed anywhere:
  *
- *   public/media/narration/es/{paragraph key}.m4a
+ *   public/media/narration/{es|en}/{paragraph key}.m4a  (audio)
+ *   public/media/narration/{es|en}/{paragraph key}.mp4  (9:16 video)
  *   e.g. public/media/narration/es/shaper.s1.p1.m4a
  *
  * The hero's personal intro has no paragraph on screen; its clip is
  * simply `hero.m4a`.
  *
- * SPANISH ONLY, BY DECISION (Juan, 2026-10-17): recording the whole page
- * again in English and in Chinese would cost the time the apps need, so
- * a visitor reading in English or Chinese hears the same Spanish voice
- * with subtitles in their language, the way a subtitled film works. The
- * English and Chinese takes recorded before that decision were dropped.
+ * A paragraph with a clip in the page's language plays it, read along word by
+ * word on its own clock (`{key}.words.json` for ES, `{key}.en.words.json` for EN);
+ * one without falls back to Spanish on the Spanish clock, so English can arrive
+ * a section at a time. Chinese plays English once recorded (falling back to
+ * Spanish before that) and reads along sentence by sentence on that clock.
  *
  * Per paragraph so a bad take costs one sentence, not a whole slide, and
  * so the page always knows WHICH paragraph is being spoken.
@@ -29,15 +29,15 @@ import { plainText, type ReadMark, readTokens } from './readAlong';
 // Astro runs with the app as its working directory, in dev and in build.
 const PUBLIC = path.join(process.cwd(), 'public');
 
-/** Spanish voice clip for a narrated paragraph (`public/media/narration/es/{key}.m4a`). */
-export const clipFor = (key: string): string | null => {
-  const url = `/media/narration/es/${key}.m4a`;
+/** Voice clip for a narrated paragraph (`public/media/narration/{lang}/{key}.m4a`). */
+export const clipFor = (key: string, lang: Locale = 'es'): string | null => {
+  const url = `/media/narration/${lang}/${key}.m4a`;
   return fs.existsSync(path.join(PUBLIC, url)) ? versionedMedia(url) : null;
 };
 
-/** Vertical 9:16 video take alongside the Spanish voice clip (`public/media/narration/es/{key}.mp4`). */
-export const videoFor = (key: string): string | null => {
-  const url = `/media/narration/es/${key}.mp4`;
+/** Vertical 9:16 video take alongside the voice clip (`public/media/narration/{lang}/{key}.mp4`). */
+export const videoFor = (key: string, lang: Locale = 'es'): string | null => {
+  const url = `/media/narration/${lang}/${key}.mp4`;
   return fs.existsSync(path.join(PUBLIC, url)) ? versionedMedia(url) : null;
 };
 
@@ -64,8 +64,16 @@ const DATA = path.join(process.cwd(), 'src/data/narration');
 
 type Spoken = { w: string; t: number };
 
-const spokenWords = (key: string): Spoken[] | undefined => {
-  const file = path.join(DATA, `${key}.words.json`);
+/** Spanish keeps its original name; another language's take is
+ *  `{key}.{lang}.words.json` (scripts/narration-recorder). */
+const spokenWords = (
+  key: string,
+  lang: Locale = 'es',
+): Spoken[] | undefined => {
+  const file = path.join(
+    DATA,
+    lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`,
+  );
   return fs.existsSync(file)
     ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Spoken[])
     : undefined;
@@ -165,6 +173,15 @@ export const readTimings = (
   };
 
   const esRef = spansFor('es', spoken);
+  const hasEnAudio = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/en/${key}.m4a`),
+  );
+  const enSpoken = hasEnAudio ? spokenWords(key, 'en') : undefined;
+  const enRef = enSpoken?.length ? spansFor('en', enSpoken) : undefined;
+  const hasZhAudio = fs.existsSync(
+    path.join(PUBLIC, `/media/narration/zh/${key}.m4a`),
+  );
+  const zhSpoken = hasZhAudio ? spokenWords(key, 'zh') : undefined;
 
   const out = {
     es: esRef.tokens.map((t, i) => [t.at, round(esRef.times[i])]),
@@ -172,25 +189,41 @@ export const readTimings = (
   for (const l of locales) {
     if (l === 'es') continue;
     const tokens = readTokens(text(l));
-    // English and Chinese are translated paragraphs read along sentence by
-    // sentence on the Spanish voice clock.
+    // Its own voice: its words on its own clock, like Spanish.
+    const own =
+      l === 'en' && hasEnAudio
+        ? enSpoken
+        : l === 'zh' && hasZhAudio
+          ? zhSpoken
+          : undefined;
+    if (own?.length) {
+      const times = alignTimes(
+        tokens.map(t => t.text),
+        own,
+      );
+      out[l] = tokens.map((t, i) => [t.at, round(times[i])]);
+      continue;
+    }
+    // Chinese plays the English recording when present, so time its sentences
+    // against the English clock (falling back to Spanish before English is recorded).
+    const ref = l === 'zh' && enRef ? enRef : esRef;
     const starts = sentenceStarts(tokens);
     const groups = starts.map((s, i) => {
       const loIdx = Math.min(
-        esRef.spans.length - 1,
-        Math.floor((i * esRef.spans.length) / starts.length),
+        ref.spans.length - 1,
+        Math.floor((i * ref.spans.length) / starts.length),
       );
       const hiIdx = Math.min(
-        esRef.spans.length - 1,
+        ref.spans.length - 1,
         Math.max(
           loIdx,
-          Math.floor(((i + 1) * esRef.spans.length) / starts.length) - 1,
+          Math.floor(((i + 1) * ref.spans.length) / starts.length) - 1,
         ),
       );
       return {
         from: s,
         to: i + 1 < starts.length ? starts[i + 1] : tokens.length,
-        span: [esRef.spans[loIdx][0], esRef.spans[hiIdx][1]],
+        span: [ref.spans[loIdx][0], ref.spans[hiIdx][1]],
       };
     });
     out[l] = [];
@@ -208,13 +241,18 @@ export const readTimings = (
   return out;
 };
 
-/** A narrated paragraph's data attributes — its Spanish clip/video, and when
- *  each of its words is highlighted in every language (scripts/director.ts). */
+/** A narrated paragraph's data attributes — its clip/video in each recorded
+ *  language, and when each of its words is highlighted (scripts/director.ts). */
 export const voiceAttrs = (key: string, textKey: string = key) => {
   const attrs: Record<string, string | undefined> = {
     'data-clip': clipFor(key) ?? undefined,
     'data-video': videoFor(key) ?? undefined,
   };
+  for (const l of locales)
+    if (l !== 'es') {
+      attrs[`data-clip-${l}`] = clipFor(key, l) ?? undefined;
+      attrs[`data-video-${l}`] = videoFor(key, l) ?? undefined;
+    }
   const timings = readTimings(key, textKey);
   for (const l of locales)
     attrs[`data-read-${l}`] = timings ? JSON.stringify(timings[l]) : undefined;

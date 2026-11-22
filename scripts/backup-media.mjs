@@ -42,9 +42,13 @@ mirror(path.join(ROOT, 'narration-takes'), path.join(TO, 'narration/takes'));
 const transcripts = path.join(TO, 'narration/transcripts');
 fs.rmSync(transcripts, { recursive: true, force: true });
 fs.mkdirSync(transcripts, { recursive: true });
-for (const dir of ['public/media/narration/es', 'src/data/narration'])
-  for (const f of fs.readdirSync(path.join(ROOT, dir)))
-    if (/\.(vtt|json)$/.test(f)) fs.copyFileSync(path.join(ROOT, dir, f), path.join(transcripts, f));
+for (const dir of ['public/media/narration/es', 'public/media/narration/en', 'src/data/narration']) {
+  const full = path.join(ROOT, dir);
+  if (!fs.existsSync(full)) continue;
+  const prefix = dir.endsWith('/en') ? 'en.' : '';
+  for (const f of fs.readdirSync(full))
+    if (/\.(vtt|json)$/.test(f)) fs.copyFileSync(path.join(full, f), path.join(transcripts, `${prefix}${f}`));
+}
 
 // ---------- texts ----------
 // The strings and scripts are TypeScript: bundled for Node on the fly.

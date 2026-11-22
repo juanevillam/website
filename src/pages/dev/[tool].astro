@@ -1,20 +1,21 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
-import { SCRIPTS_ES } from '../../lib/scripts';
+import { SCRIPTS_EN, SCRIPTS_ES } from '../../lib/scripts';
 import '../../styles/global.css';
 
 /**
  * DEV ONLY — /dev/teleprompter.
  *
- * Full-take Spanish recording studio for adding new sections (apps, events,
- * projects). Records camera (9:16 vertical crop) + microphone into
- * `public/media/narration/es/{key}.mp4` + `{key}.m4a` and transcribes word
- * timings into `src/data/narration/{key}.words.json` via
+ * Bilingual (ES + EN) full-take recording studio. Records camera (9:16
+ * vertical crop) + microphone into `public/media/narration/{lang}/{key}.mp4`
+ * + `{key}.m4a` and transcribes word timings into
+ * `src/data/narration/{key}.words.json` (ES) / `{key}.en.words.json` (EN) via
  * `scripts/narration-recorder.mjs`.
  *
- * Spanish is the sole recorded voice & video on the site; English and Chinese
- * are translated text in `src/i18n/ui.ts` aligned to the Spanish clock.
+ * Saving an ES take immediately translates the Spanish transcript into English
+ * (`narration-takes/en/{key}.draft.txt`) so Juan can flip to EN (`E`) and
+ * record the matching English take right away, section by section.
  *
  * In a production build this route has no paths, so it does not exist.
  */
@@ -23,20 +24,53 @@ export const getStaticPaths = () =>
 
 const ROOT = process.cwd();
 const hasFile = (rel: string) => fs.existsSync(path.join(ROOT, rel));
+const mtimeOf = (rel: string) => {
+  const full = path.join(ROOT, rel);
+  return fs.existsSync(full) ? fs.statSync(full).mtimeMs : 0;
+};
+const readText = (rel: string) => {
+  const full = path.join(ROOT, rel);
+  return fs.existsSync(full) ? fs.readFileSync(full, 'utf8').trim() : '';
+};
 
-const list = SCRIPTS_ES.map(c => {
-  const hasAudio = hasFile(`public/media/narration/es/${c.key}.m4a`);
-  const hasVideo = hasFile(`public/media/narration/es/${c.key}.mp4`);
-  const hasWords = hasFile(`src/data/narration/${c.key}.words.json`);
-  const status = hasAudio && hasWords ? 'new' : hasAudio ? 'old' : 'none';
+const enByKey = new Map(SCRIPTS_EN.map(c => [c.key, c]));
+
+const langInfo = (key: string, lang: 'es' | 'en', ideas: string[]) => {
+  const hasAudio = hasFile(`public/media/narration/${lang}/${key}.m4a`);
+  const hasVideo = hasFile(`public/media/narration/${lang}/${key}.mp4`);
+  const wordsFile =
+    lang === 'es'
+      ? `src/data/narration/${key}.words.json`
+      : `src/data/narration/${key}.${lang}.words.json`;
+  const hasWords = hasFile(wordsFile);
+  const status: 'new' | 'old' | 'none' =
+    hasAudio && hasWords ? 'new' : hasAudio ? 'old' : 'none';
+  const esVttMtime = mtimeOf(`public/media/narration/es/${key}.vtt`);
+  const enDraftRel = `narration-takes/en/${key}.draft.txt`;
+  const enDraftMtime = mtimeOf(enDraftRel);
   return {
-    ...c,
     status,
     hasVideo,
-    audio: hasAudio ? `/media/narration/es/${c.key}.m4a` : null,
-    video: hasVideo ? `/media/narration/es/${c.key}.mp4` : null,
+    audio: hasAudio ? `/media/narration/${lang}/${key}.m4a` : null,
+    video: hasVideo ? `/media/narration/${lang}/${key}.mp4` : null,
+    ideas,
+    ...(lang === 'en'
+      ? {
+          draftText: readText(enDraftRel),
+          staleDraft: esVttMtime > 0 && esVttMtime > enDraftMtime,
+        }
+      : {}),
   };
-});
+};
+
+const list = SCRIPTS_ES.map(c => ({
+  key: c.key,
+  where: c.where,
+  shot: c.shot,
+  draft: c.draft,
+  es: langInfo(c.key, 'es', c.ideas),
+  en: langInfo(c.key, 'en', enByKey.get(c.key)?.ideas ?? []),
+}));
 ---
 
 <!doctype html>
@@ -45,12 +79,12 @@ const list = SCRIPTS_ES.map(c => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Teleprompter</title>
+    <title>Teleprompter · ES / EN</title>
   </head>
   <body>
     <aside class="list">
       <div class="list-head">
-        <p class="label">Guiones (Español)</p>
+        <p class="label">Guiones (ES · EN)</p>
         <p class="total" data-total></p>
       </div>
 
@@ -58,7 +92,10 @@ const list = SCRIPTS_ES.map(c => {
         {list.map(c => (
           <li>
             <button type="button" data-pick={c.key}>
-              <span class="dot" data-dot data-status={c.status} />
+              <span class="dots" aria-hidden="true">
+                <span class="dot" data-dot="es" data-status={c.es.status} title="Español" />
+                <span class="dot" data-dot="en" data-status={c.en.status} title="English" />
+              </span>
               <span class="row-main">
                 <span class="where">{c.where}</span>
                 <span class="key">{c.key}</span>
@@ -69,7 +106,7 @@ const list = SCRIPTS_ES.map(c => {
       </ol>
 
       <p class="legend">
-        <span><span class="dot" data-status="new" /> grabado</span>
+        <span><span class="dot" data-status="new" /> grabado (izq ES · der EN)</span>
         <span><span class="dot" data-status="none" /> pendiente</span>
       </p>
     </aside>
@@ -77,7 +114,13 @@ const list = SCRIPTS_ES.map(c => {
     <main>
       <header class="top">
         <div class="top-left">
-          <p class="label" data-where></p>
+          <div class="top-title-row">
+            <p class="label" data-where></p>
+            <div class="lang-switch" role="group" aria-label="Idioma de grabación">
+              <button type="button" data-lang-btn="es">ES</button>
+              <button type="button" data-lang-btn="en">EN</button>
+            </div>
+          </div>
           <p class="key" data-key></p>
           <p class="draft" data-draft hidden></p>
         </div>
@@ -93,10 +136,43 @@ const list = SCRIPTS_ES.map(c => {
 
       <div class="stage" data-stage>
         <div class="col">
+          <div class="en-bar" data-en-bar hidden>
+            <span class="label" data-en-source>Guion en inglés</span>
+            <div class="en-bar-actions">
+              <button type="button" class="mini-btn" data-retranslate>
+                Re-traducir desde ES
+              </button>
+            </div>
+          </div>
+
           <div class="lines" data-lines></div>
+
+          <textarea
+            class="en-editor"
+            data-en-editor
+            hidden
+            rows="6"
+            placeholder="Graba primero en español o escribe/edita aquí lo que vas a decir en inglés…"
+          ></textarea>
+
+          <div class="en-preview" data-en-preview hidden>
+            <div class="en-preview-head">
+              <p class="label">Traducción lista para inglés</p>
+              <button type="button" class="mini-btn is-accent" data-go-en>
+                Grabar en inglés → <kbd>E</kbd>
+              </button>
+            </div>
+            <p class="en-preview-text" data-en-preview-text></p>
+          </div>
+
           <div class="said" data-said hidden>
-            <p class="label">Transcripción guardada</p>
+            <p class="label" data-said-label>Transcripción guardada</p>
             <p class="said-text" data-said-text></p>
+          </div>
+
+          <div class="ref-es" data-ref-es hidden>
+            <p class="label">Referencia · última toma en español</p>
+            <p class="said-text" data-ref-es-text></p>
           </div>
         </div>
 
@@ -122,12 +198,19 @@ const list = SCRIPTS_ES.map(c => {
             <button type="button" data-act="current" hidden>
               Escuchar guardado <kbd>L</kbd>
             </button>
+            <button type="button" data-act="flip" hidden>
+              Cambiar a inglés <kbd>E</kbd>
+            </button>
+            <button type="button" data-act="nextClip" hidden>
+              Siguiente sección (ES) <kbd>N</kbd>
+            </button>
           </div>
           <p class="state" data-state></p>
         </div>
         <p class="hint">
-          <kbd>↑</kbd><kbd>↓</kbd> cambiar de guion · narra la toma completa en español ·
-          <kbd>espacio</kbd> termina y guarda · después traduce el texto limpio en <code>src/i18n/ui.ts</code> (EN / ZH)
+          <kbd>↑</kbd><kbd>↓</kbd> sección · <kbd>E</kbd> alternar ES/EN ·
+          <kbd>R</kbd> grabar · <kbd>espacio</kbd> terminar y guardar ·
+          guardar en ES traduce al instante para grabar EN
         </p>
       </footer>
     </main>
@@ -135,16 +218,23 @@ const list = SCRIPTS_ES.map(c => {
     <script is:inline type="application/json" id="clips" set:html={JSON.stringify(list)} />
 
     <script>
-      type Clip = {
-        key: string;
-        where: string;
-        shot?: string;
-        ideas: string[];
-        draft?: string;
+      type Lang = 'es' | 'en';
+      type LangTrack = {
         status: 'new' | 'old' | 'none';
         hasVideo: boolean;
         audio: string | null;
         video: string | null;
+        ideas: string[];
+        draftText?: string;
+        staleDraft?: boolean;
+      };
+      type Clip = {
+        key: string;
+        where: string;
+        shot?: string;
+        draft?: string;
+        es: LangTrack;
+        en: LangTrack;
       };
 
       const clips: Clip[] = JSON.parse(
@@ -167,8 +257,16 @@ const list = SCRIPTS_ES.map(c => {
         document.querySelector<T>(s)!;
       const stageEl = $('[data-stage]');
       const linesEl = $('[data-lines]');
+      const enBar = $('[data-en-bar]');
+      const enSource = $('[data-en-source]');
+      const enEditor = $<HTMLTextAreaElement>('[data-en-editor]');
+      const enPreview = $('[data-en-preview]');
+      const enPreviewText = $('[data-en-preview-text]');
       const saidEl = $('[data-said]');
+      const saidLabel = $('[data-said-label]');
       const saidText = $('[data-said-text]');
+      const refEsEl = $('[data-ref-es]');
+      const refEsText = $('[data-ref-es-text]');
       const stateEl = $('[data-state]');
       const previewWrap = $('[data-preview-wrap]');
       const camView = $<HTMLVideoElement>('[data-cam-view]');
@@ -186,41 +284,70 @@ const list = SCRIPTS_ES.map(c => {
       syncVideoFit();
 
       const secs = (s: string) => (s.length * 1.2) / 14 + 0.5;
-      const clipSecs = (c: Clip) => c.ideas.reduce((t, l) => t + secs(l), 0);
       const fmt = (s: number) =>
         `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
-
-      const total = () => {
-        const done = clips.filter(c => c.status === 'new').length;
-        const est = fmt(clips.reduce((t, c) => t + clipSecs(c), 0));
-        $('[data-total]').textContent = `${done} de ${clips.length} grabados · ~${est}`;
-      };
 
       let index = Math.max(
         0,
         clips.findIndex(c => c.key === read('tp.key')),
       );
+      let lang: Lang = read('tp.lang') === 'en' ? 'en' : 'es';
       let mode: 'idle' | 'count' | 'rec' | 'done' | 'play' | 'saving' = 'idle';
-      let line = 0;
       let take: Blob | null = null;
       let takeUrl: string | null = null;
       let takeHasVideo = false;
       let recorder: MediaRecorder | null = null;
       let camStream: MediaStream | null = null;
       let stream: MediaStream | null = null;
+      let recStartAt = 0;
+      let recTimer = 0;
       const player = new Audio();
 
       const clip = () => clips[index];
+      const track = (c: Clip = clip(), l: Lang = lang) => c[l];
 
-      const showSaid = (lines: string[]) => {
+      const enScriptText = (c: Clip) =>
+        c.en.draftText?.trim() || c.en.ideas.join(' ').trim();
+
+      const activeIdeas = (c: Clip = clip(), l: Lang = lang): string[] => {
+        if (l === 'en') {
+          const t = enScriptText(c);
+          return t ? [t] : [];
+        }
+        return c.es.ideas;
+      };
+
+      const total = () => {
+        const esDone = clips.filter(c => c.es.status === 'new').length;
+        const enDone = clips.filter(c => c.en.status === 'new').length;
+        $('[data-total]').textContent =
+          `ES ${esDone}/${clips.length} · EN ${enDone}/${clips.length}`;
+      };
+
+      const showSaid = (lines: string[], l: Lang = lang) => {
         saidEl.hidden = !lines.length;
+        saidLabel.textContent =
+          l === 'en'
+            ? 'Transcripción guardada (EN)'
+            : 'Transcripción guardada (ES)';
         saidText.textContent = lines.join(' ');
       };
 
-      const readVtt = async (c: Clip): Promise<string[]> => {
-        const res = await fetch(`/media/narration/es/${c.key}.vtt?t=${Date.now()}`).catch(
-          () => null,
-        );
+      const showRefEs = (lines: string[]) => {
+        refEsEl.hidden = lang !== 'en' || !lines.length;
+        refEsText.textContent = lines.join(' ');
+      };
+
+      const showEnPreview = (text: string) => {
+        const clean = text.trim();
+        enPreview.hidden = lang !== 'es' || !clean;
+        enPreviewText.textContent = clean;
+      };
+
+      const readVtt = async (key: string, l: Lang): Promise<string[]> => {
+        const res = await fetch(
+          `/media/narration/${l}/${key}.vtt?t=${Date.now()}`,
+        ).catch(() => null);
         if (!res?.ok) return [];
         const lines: string[] = [];
         for (const block of (await res.text()).split(/\n\n+/)) {
@@ -230,27 +357,66 @@ const list = SCRIPTS_ES.map(c => {
         return lines;
       };
 
-      const renderLines = () => {
-        const ideas = clip().ideas;
+      const autoSizeEditor = () => {
+        enEditor.style.height = 'auto';
+        enEditor.style.height = `${Math.max(120, enEditor.scrollHeight + 4)}px`;
+      };
+
+      const renderScript = () => {
+        const c = clip();
+        const isEn = lang === 'en';
+        enBar.hidden = !isEn;
+        if (isEn) {
+          enSource.textContent = c.en.draftText?.trim()
+            ? 'Guion EN · traducido de tu última toma ES (editable)'
+            : 'Guion EN · texto actual en ui.ts (editable)';
+          if (mode === 'rec' || mode === 'count') {
+            enEditor.hidden = true;
+            linesEl.hidden = false;
+            const ideas = activeIdeas(c, 'en');
+            linesEl.replaceChildren(
+              ...(ideas.length
+                ? ideas
+                : ['(Sin guion EN aún — habla libremente o graba ES primero)']
+              ).map((text, i) => {
+                const p = document.createElement('p');
+                p.textContent = text;
+                p.dataset.i = String(i);
+                return p;
+              }),
+            );
+          } else {
+            linesEl.hidden = true;
+            enEditor.hidden = false;
+            enEditor.value = enScriptText(c);
+            autoSizeEditor();
+          }
+          enPreview.hidden = true;
+          return;
+        }
+
+        enEditor.hidden = true;
+        linesEl.hidden = false;
+        const ideas = c.es.ideas;
         if (!ideas.length) {
           const p = document.createElement('p');
           p.textContent =
             'Sin texto base aún en src/i18n/ui.ts — puedes grabar libremente y usar la transcripción guardada.';
           linesEl.replaceChildren(p);
-          return;
+        } else {
+          linesEl.replaceChildren(
+            ...ideas.map((text, i) => {
+              const p = document.createElement('p');
+              p.textContent = text;
+              p.dataset.i = String(i);
+              return p;
+            }),
+          );
         }
-        linesEl.replaceChildren(
-          ...ideas.map((text, i) => {
-            const p = document.createElement('p');
-            p.textContent = text;
-            p.dataset.i = String(i);
-            return p;
-          }),
-        );
+        showEnPreview(c.en.draftText ?? '');
       };
 
       const mark = (i: number) => {
-        line = i;
         linesEl.querySelectorAll('p').forEach((p, j) => {
           p.classList.toggle('is-past', j < i);
           p.classList.toggle('is-now', j === i);
@@ -259,6 +425,7 @@ const list = SCRIPTS_ES.map(c => {
 
       const updatePreviewPane = () => {
         const c = clip();
+        const tr = track(c);
         if (camStream) {
           previewWrap.hidden = false;
           camView.hidden = false;
@@ -267,7 +434,7 @@ const list = SCRIPTS_ES.map(c => {
           return;
         }
         camView.hidden = true;
-        if (mode === 'play' && ((take && takeHasVideo) || (!take && c.video))) {
+        if (mode === 'play' && ((take && takeHasVideo) || (!take && tr.video))) {
           previewWrap.hidden = false;
           savedVideo.hidden = false;
           shot.hidden = true;
@@ -283,12 +450,49 @@ const list = SCRIPTS_ES.map(c => {
         }
       };
 
-      const select = async (i: number) => {
+      const updateLangButtons = () => {
+        document
+          .querySelectorAll<HTMLButtonElement>('[data-lang-btn]')
+          .forEach(b =>
+            b.classList.toggle('is-active', b.dataset.langBtn === lang),
+          );
+      };
+
+      const updateHeaderMeta = () => {
+        const c = clip();
+        const tr = track(c);
+        const ideas = activeIdeas(c);
+        const est = fmt(ideas.reduce((t, l) => t + secs(l), 0));
+        $('[data-where]').textContent = c.where;
+        $('[data-key]').textContent =
+          `${c.key} · ${lang.toUpperCase()} · ~${est} · ${tr.status === 'new' ? 'grabado ✓' : 'pendiente'}`;
+        const draft = $('[data-draft]');
+        draft.textContent = c.draft ?? '';
+        draft.hidden = !c.draft;
+      };
+
+      const loadTranscripts = async (c: Clip, l: Lang) => {
+        showSaid([], l);
+        showRefEs([]);
+        const tr = track(c, l);
+        if (tr.status === 'new') {
+          const lines = await readVtt(c.key, l);
+          if (clip() === c && lang === l) showSaid(lines, l);
+        }
+        if (l === 'en' && c.es.status === 'new') {
+          const esLines = await readVtt(c.key, 'es');
+          if (clip() === c && lang === 'en') showRefEs(esLines);
+        }
+      };
+
+      const select = async (i: number, nextLang: Lang = lang) => {
         if (mode === 'rec' || mode === 'count' || mode === 'saving') return;
         stopPlayback();
         index = (i + clips.length) % clips.length;
+        lang = nextLang;
         const c = clip();
         keep('tp.key', c.key);
+        keep('tp.lang', lang);
         if (takeUrl) {
           URL.revokeObjectURL(takeUrl);
           takeUrl = null;
@@ -297,62 +501,133 @@ const list = SCRIPTS_ES.map(c => {
         takeHasVideo = false;
         mode = 'idle';
 
-        $('[data-where]').textContent = c.where;
-        $('[data-key]').textContent =
-          `${c.key} · ~${fmt(clipSecs(c))} · ${c.status === 'new' ? 'grabado ✓' : 'pendiente'}`;
-        const draft = $('[data-draft]');
-        draft.textContent = c.draft ?? '';
-        draft.hidden = !c.draft;
+        updateLangButtons();
+        updateHeaderMeta();
 
         document
           .querySelectorAll<HTMLElement>('[data-pick]')
           .forEach(b => b.classList.toggle('is-on', b.dataset.pick === c.key));
         document.querySelector('.is-on')?.scrollIntoView({ block: 'nearest' });
 
-        renderLines();
+        renderScript();
         mark(0);
-        showSaid([]);
         updatePreviewPane();
         sync();
-
-        if (c.status === 'new') {
-          const lines = await readVtt(c);
-          if (clip() === c) showSaid(lines);
+        if (lang === 'en' && c.es.status === 'new' && c.en.staleDraft) {
+          translateFromEs(c);
         }
+        await loadTranscripts(c, lang);
+      };
+
+      const setLang = (nextLang: Lang) => {
+        if (nextLang === lang) return;
+        select(index, nextLang);
+      };
+
+      const flipLang = () => setLang(lang === 'es' ? 'en' : 'es');
+
+      const nextSectionEs = () => select(index + 1, 'es');
+
+      const updateRecTimer = () => {
+        if (mode !== 'rec') return;
+        const elapsed = (performance.now() - recStartAt) / 1000;
+        const prefix = camStream
+          ? `● Grabando ${lang.toUpperCase()} (9:16 + audio)`
+          : `● Grabando ${lang.toUpperCase()} (solo audio)`;
+        stateEl.textContent = `${prefix} · ${fmt(elapsed)}`;
       };
 
       const sync = () => {
         const c = clip();
-        btn('record').hidden =
-          mode === 'rec' || mode === 'count' || mode === 'saving';
-        btn('record').firstChild!.textContent = take ? 'Repetir ' : 'Grabar ';
+        const tr = track(c);
+        const busy = mode === 'rec' || mode === 'count' || mode === 'saving';
+        btn('record').hidden = busy;
+        btn('record').firstChild!.textContent = take
+          ? `Repetir ${lang.toUpperCase()} `
+          : `Grabar ${lang.toUpperCase()} `;
         btn('next').hidden = mode !== 'rec';
-        btn('next').firstChild!.textContent =
-          line + 1 >= Math.max(1, c.ideas.length)
-            ? 'Terminar y guardar '
-            : 'Siguiente idea ';
+        btn('next').firstChild!.textContent = 'Terminar y guardar ';
         btn('stop').hidden = mode !== 'rec' && mode !== 'count';
         btn('take').hidden = !take || mode === 'rec' || mode === 'saving';
         btn('save').hidden = !take || mode === 'rec' || mode === 'saving';
-        btn('current').hidden =
-          !c.audio || mode === 'rec' || mode === 'count' || mode === 'saving';
+        btn('current').hidden = !tr.audio || busy;
+        btn('flip').hidden = busy;
+        btn('flip').firstChild!.textContent =
+          lang === 'es' ? 'Pasar a inglés ' : 'Volver a español ';
+        btn('nextClip').hidden = busy || lang !== 'en';
         linesEl.classList.toggle('is-rec', mode === 'rec');
 
         if (mode === 'idle') {
           stateEl.textContent =
-            c.status === 'new'
-              ? 'Grabado ✓ · L para escuchar o R si algún día quieres regrabar la toma completa'
-              : 'Pendiente · activa cámara y micrófono y pulsa R';
+            tr.status === 'new'
+              ? `${lang.toUpperCase()} grabado ✓ · L para escuchar · R para regrabar`
+              : `${lang.toUpperCase()} pendiente · activa cámara/micrófono y pulsa R`;
         } else if (mode === 'rec') {
-          stateEl.textContent = camStream
-            ? '● Grabando video 9:16 + audio…'
-            : '● Grabando solo audio (cámara apagada)…';
+          updateRecTimer();
         } else if (mode === 'done') {
           stateEl.textContent = 'Toma lista · P para revisar o S para guardar';
         } else if (mode === 'play') {
           stateEl.textContent = 'Reproduciendo… (Espacio para parar)';
         }
       };
+
+      // ---------- EN draft auto-save + re-translate ----------
+      let draftSaveTimer = 0;
+      const persistDraft = async (key: string, text: string) => {
+        await fetch(`/__narration/draft?key=${encodeURIComponent(key)}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ text }),
+        }).catch(() => {});
+      };
+      enEditor.addEventListener('input', () => {
+        autoSizeEditor();
+        const c = clip();
+        c.en.draftText = enEditor.value;
+        enSource.textContent = 'Guion EN · editado (guardado automático)';
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = window.setTimeout(
+          () => persistDraft(c.key, enEditor.value),
+          450,
+        );
+      });
+
+      const translateFromEs = async (c: Clip) => {
+        stateEl.textContent = 'Traduciendo última toma en español…';
+        const res = await fetch('/__narration/translate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ key: c.key }),
+        }).catch(() => null);
+        const out = res?.ok ? await res.json().catch(() => null) : null;
+        if (out?.translation) {
+          c.en.draftText = out.translation;
+          c.en.staleDraft = false;
+          if (clip() === c && lang === 'en') {
+            enEditor.value = out.translation;
+            autoSizeEditor();
+            enSource.textContent =
+              'Guion EN · traducido de tu última toma ES (editable)';
+            stateEl.textContent = 'Traducido ✓ · revisa el texto y pulsa R';
+          }
+        } else if (clip() === c && lang === 'en') {
+          stateEl.textContent =
+            'No se pudo traducir (verifica toma ES guardada o conexión).';
+        }
+      };
+
+      $('[data-retranslate]').addEventListener('click', () =>
+        translateFromEs(clip()),
+      );
+
+      $('[data-go-en]').addEventListener('click', () => setLang('en'));
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-lang-btn]')
+        .forEach(b =>
+          b.addEventListener('click', () =>
+            setLang(b.dataset.langBtn as Lang),
+          ),
+        );
 
       // ---------- Camera (9:16 live mirror) ----------
       const cam = $<HTMLSelectElement>('[data-cam]');
@@ -524,10 +799,11 @@ const list = SCRIPTS_ES.map(c => {
         }
         take = null;
         saveWhenDone = false;
+        renderScript();
         mark(0);
         sync();
         for (const n of [3, 2, 1]) {
-          stateEl.textContent = `Empieza en ${n}…`;
+          stateEl.textContent = `Empieza ${lang.toUpperCase()} en ${n}…`;
           await new Promise(r => setTimeout(r, 600));
           if (mode !== 'count') return;
         }
@@ -556,6 +832,7 @@ const list = SCRIPTS_ES.map(c => {
           if (e.data.size > 0) chunks.push(e.data);
         };
         recorder.onstop = () => {
+          clearInterval(recTimer);
           if (mode === 'idle') return;
           take = new Blob(chunks, {
             type: recorder?.mimeType || (hasVideo ? 'video/mp4' : 'audio/mp4'),
@@ -563,6 +840,7 @@ const list = SCRIPTS_ES.map(c => {
           takeUrl = URL.createObjectURL(take);
           takeHasVideo = hasVideo;
           mode = 'done';
+          renderScript();
           mark(0);
           sync();
           if (saveWhenDone) {
@@ -572,24 +850,24 @@ const list = SCRIPTS_ES.map(c => {
         };
         recorder.start();
         mode = 'rec';
+        recStartAt = performance.now();
+        clearInterval(recTimer);
+        recTimer = window.setInterval(updateRecTimer, 250);
+        renderScript();
         mark(0);
         sync();
       };
 
       const next = () => {
         if (mode !== 'rec') return;
-        if (line + 1 >= Math.max(1, clip().ideas.length)) {
-          saveWhenDone = true;
-          recorder?.stop();
-          return;
-        }
-        mark(line + 1);
-        sync();
+        saveWhenDone = true;
+        recorder?.stop();
       };
 
       const stop = () => {
         if (mode === 'count') {
           mode = 'idle';
+          renderScript();
           sync();
           return;
         }
@@ -626,27 +904,31 @@ const list = SCRIPTS_ES.map(c => {
         sync();
         await Promise.all([
           player.play().catch(() => {}),
-          !camStream && takeHasVideo ? savedVideo.play().catch(() => {}) : Promise.resolve(),
+          !camStream && takeHasVideo
+            ? savedVideo.play().catch(() => {})
+            : Promise.resolve(),
         ]);
       };
 
       const playCurrent = async () => {
-        const c = clip();
-        if (!c.audio || mode === 'rec' || mode === 'count' || mode === 'saving')
+        const tr = track();
+        if (!tr.audio || mode === 'rec' || mode === 'count' || mode === 'saving')
           return;
         stopPlayback();
         const bust = `?t=${Date.now()}`;
-        player.src = `${c.audio}${bust}`;
+        player.src = `${tr.audio}${bust}`;
         mode = 'play';
-        if (!camStream && c.video) {
-          savedVideo.src = `${c.video}${bust}`;
+        if (!camStream && tr.video) {
+          savedVideo.src = `${tr.video}${bust}`;
           savedVideo.currentTime = 0;
         }
         updatePreviewPane();
         sync();
         await Promise.all([
           player.play().catch(() => {}),
-          !camStream && c.video ? savedVideo.play().catch(() => {}) : Promise.resolve(),
+          !camStream && tr.video
+            ? savedVideo.play().catch(() => {})
+            : Promise.resolve(),
         ]);
       };
 
@@ -655,13 +937,21 @@ const list = SCRIPTS_ES.map(c => {
         stopPlayback();
         mode = 'saving';
         btn('save').disabled = true;
-        stateEl.textContent = 'Guardando video/audio y transcribiendo con Whisper…';
         const c = clip();
+        const saveLang = lang;
+        stateEl.textContent =
+          saveLang === 'es'
+            ? 'Guardando ES, transcribiendo con Whisper y traduciendo a inglés…'
+            : 'Guardando EN y transcribiendo con Whisper…';
         const res = await fetch(
-          `/__narration/save?key=${encodeURIComponent(c.key)}`,
+          `/__narration/save?key=${encodeURIComponent(c.key)}&lang=${saveLang}`,
           {
             method: 'POST',
-            headers: { 'x-ideas': encodeURIComponent(JSON.stringify(c.ideas)) },
+            headers: {
+              'x-ideas': encodeURIComponent(
+                JSON.stringify(activeIdeas(c, saveLang)),
+              ),
+            },
             body: take,
           },
         ).catch(() => new Response(null, { status: 503 }));
@@ -670,9 +960,11 @@ const list = SCRIPTS_ES.map(c => {
         let out: {
           error?: string;
           m4a: string;
+          video?: string | null;
           hasVideo?: boolean;
           length: number;
           lines: string[];
+          translation?: string;
         };
         try {
           out = await res.json();
@@ -690,14 +982,25 @@ const list = SCRIPTS_ES.map(c => {
           stateEl.textContent = `No se pudo guardar (${out.error}). La toma sigue aquí: pulsa S otra vez.`;
           return;
         }
-        c.status = 'new';
-        c.audio = out.m4a;
+        const tr = track(c, saveLang);
+        tr.status = 'new';
+        tr.audio = out.m4a;
         if (out.hasVideo) {
-          c.hasVideo = true;
-          c.video = `/media/narration/es/${c.key}.mp4`;
+          tr.hasVideo = true;
+          tr.video = out.video ?? `/media/narration/${saveLang}/${c.key}.mp4`;
+        }
+        if (saveLang === 'es') {
+          if (out.translation) {
+            c.en.draftText = out.translation;
+            c.en.staleDraft = false;
+          } else {
+            c.en.staleDraft = true;
+          }
         }
         document
-          .querySelector(`[data-pick="${CSS.escape(c.key)}"] [data-dot]`)
+          .querySelector(
+            `[data-pick="${CSS.escape(c.key)}"] [data-dot="${saveLang}"]`,
+          )
           ?.setAttribute('data-status', 'new');
         total();
         if (takeUrl) {
@@ -706,10 +1009,19 @@ const list = SCRIPTS_ES.map(c => {
         }
         take = null;
         mode = 'idle';
-        if (clip() === c) showSaid(out.lines);
+        if (clip() === c && lang === saveLang) {
+          showSaid(out.lines, saveLang);
+          if (saveLang === 'es' && out.translation) {
+            showEnPreview(out.translation);
+          }
+          updateHeaderMeta();
+        }
         updatePreviewPane();
         sync();
-        stateEl.textContent = `Guardado ✓ · ${out.length.toFixed(1)} s · L para escuchar`;
+        stateEl.textContent =
+          saveLang === 'es'
+            ? `ES guardado ✓ · ${out.length.toFixed(1)} s · ${out.translation ? 'traducción lista → pulsa E para grabar inglés' : 'L para escuchar'}`
+            : `EN guardado ✓ · ${out.length.toFixed(1)} s · pulsa N para siguiente sección en ES`;
       };
 
       const acts: Record<string, () => unknown> = {
@@ -719,6 +1031,8 @@ const list = SCRIPTS_ES.map(c => {
         take: playTake,
         save,
         current: playCurrent,
+        flip: flipLang,
+        nextClip: nextSectionEs,
       };
       document.querySelectorAll<HTMLButtonElement>('[data-act]').forEach(b =>
         b.addEventListener('click', () => {
@@ -731,8 +1045,15 @@ const list = SCRIPTS_ES.map(c => {
         .forEach((b, i) => b.addEventListener('click', () => select(i)));
 
       document.addEventListener('keydown', e => {
-        if (e.target instanceof HTMLSelectElement || e.metaKey || e.ctrlKey)
+        if (e.metaKey || e.ctrlKey) return;
+        if (
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLInputElement
+        ) {
+          if (e.key === 'Escape') (e.target as HTMLElement).blur();
           return;
+        }
+        if (e.target instanceof HTMLSelectElement) return;
         const k = e.key.toLowerCase();
         const map: Record<string, () => unknown> = {
           ' ': () =>
@@ -749,6 +1070,13 @@ const list = SCRIPTS_ES.map(c => {
           p: playTake,
           s: save,
           l: playCurrent,
+          e: () =>
+            mode !== 'rec' && mode !== 'count' && mode !== 'saving' && flipLang(),
+          n: () =>
+            mode !== 'rec' &&
+            mode !== 'count' &&
+            mode !== 'saving' &&
+            nextSectionEs(),
           arrowdown: () => select(index + 1),
           arrowup: () => select(index - 1),
         };
@@ -759,7 +1087,7 @@ const list = SCRIPTS_ES.map(c => {
       });
 
       total();
-      select(index);
+      select(index, lang);
     </script>
 
     <style is:global>
@@ -820,6 +1148,7 @@ const list = SCRIPTS_ES.map(c => {
         padding-bottom: 0.85rem;
         border-bottom: 1px solid var(--hairline);
         line-height: 1.4;
+        font-variant-numeric: tabular-nums;
       }
       .list ol {
         flex: 1;
@@ -857,6 +1186,11 @@ const list = SCRIPTS_ES.map(c => {
         background: var(--surface);
         color: var(--ink);
       }
+      .dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
       .row-main {
         display: flex;
         flex-direction: column;
@@ -873,8 +1207,8 @@ const list = SCRIPTS_ES.map(c => {
       }
       .dot {
         display: inline-block;
-        width: 0.5rem;
-        height: 0.5rem;
+        width: 0.48rem;
+        height: 0.48rem;
         border-radius: 50%;
         border: 1px solid var(--ink-3);
         vertical-align: middle;
@@ -926,6 +1260,37 @@ const list = SCRIPTS_ES.map(c => {
         flex-direction: column;
         gap: 0.25rem;
         min-width: 0;
+      }
+      .top-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .top-title-row .label {
+        margin: 0;
+      }
+      .lang-switch {
+        display: inline-flex;
+        padding: 0.12rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--surface);
+      }
+      .lang-switch button {
+        padding: 0.18rem 0.62rem;
+        border: 0;
+        border-radius: 999px;
+        background: none;
+        color: var(--ink-3);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+      }
+      .lang-switch button.is-active {
+        background: var(--ink);
+        color: var(--ground);
+        font-weight: 600;
       }
       .draft {
         margin: 0.2rem 0 0;
@@ -995,6 +1360,90 @@ const list = SCRIPTS_ES.map(c => {
         box-sizing: border-box;
         padding: 1.5rem 0.5rem 3rem 0;
       }
+      .en-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.65rem;
+      }
+      .en-bar[hidden] {
+        display: none;
+      }
+      .en-bar .label {
+        margin: 0;
+      }
+      .mini-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        cursor: pointer;
+      }
+      .mini-btn:hover {
+        border-color: var(--ink-3);
+        color: var(--ink);
+      }
+      .mini-btn.is-accent {
+        border-color: var(--ink-2);
+        color: var(--ink);
+      }
+      .en-editor {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.75rem;
+        background: var(--surface);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: clamp(1.15rem, 1.65vw, 1.45rem);
+        line-height: 1.5;
+        letter-spacing: var(--track-heading);
+        resize: vertical;
+        outline: none;
+      }
+      .en-editor:focus {
+        border-color: var(--ink-3);
+      }
+      .en-editor[hidden] {
+        display: none;
+      }
+      .en-preview {
+        margin-top: 1.5rem;
+        padding: 1rem 1.15rem;
+        border: 1px solid var(--hairline);
+        border-radius: 0.75rem;
+        background: var(--surface);
+      }
+      .en-preview[hidden] {
+        display: none;
+      }
+      .en-preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.6rem;
+      }
+      .en-preview-head .label {
+        margin: 0;
+      }
+      .en-preview-text {
+        margin: 0;
+        font-size: 1.05rem;
+        line-height: 1.52;
+        color: var(--ink);
+      }
+      .lines[hidden] {
+        display: none;
+      }
       .lines p {
         margin: 0;
         padding: 0.5rem 0;
@@ -1009,12 +1458,14 @@ const list = SCRIPTS_ES.map(c => {
       .lines.is-rec p.is-now {
         color: var(--ink);
       }
-      .said {
-        margin-top: 1.75rem;
+      .said,
+      .ref-es {
+        margin-top: 1.5rem;
         padding-top: 1rem;
         border-top: 1px solid var(--hairline);
       }
-      .said[hidden] {
+      .said[hidden],
+      .ref-es[hidden] {
         display: none;
       }
       .said-text {
@@ -1116,6 +1567,7 @@ const list = SCRIPTS_ES.map(c => {
       .state {
         margin: 0;
         color: var(--ink-2);
+        font-variant-numeric: tabular-nums;
       }
       .hint {
         margin: 0;

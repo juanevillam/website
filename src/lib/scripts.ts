@@ -1,14 +1,13 @@
 /**
- * THE NARRATION SCRIPTS — what each Spanish clip covers, one entry per clip
- * key (see lib/narration). Read only by the dev teleprompter (pages/dev),
+ * THE NARRATION SCRIPTS — what each clip covers, one entry per clip key
+ * (see lib/narration). Read only by the dev teleprompter (pages/dev),
  * `/dev/todos`, `scripts/narration-status.mjs`, and `scripts/backup-media.mjs`;
  * nothing on the public page imports this file.
  *
- * SPANISH ONLY (Juan, 2026-11-11): audio and 9:16 video are recorded once in
- * Spanish (`public/media/narration/es/`); English and Chinese on the public
- * site are translations in `src/i18n/ui.ts` that read along on the Spanish
- * voice clock. Add an entry here whenever a new app, project, or event
- * section needs a full take recorded in `/dev/teleprompter`.
+ * SPANISH + ENGLISH (Juan, 2026-11-22): audio and 9:16 video are recorded in
+ * Spanish (`public/media/narration/es/`) and English (`public/media/narration/en/`).
+ * Recording a Spanish take in `/dev/teleprompter` translates it immediately so
+ * Juan can record the matching English take right after.
  */
 import { ui } from '../i18n/ui.ts';
 
@@ -88,63 +87,13 @@ const CLIPS: Array<{
     shot: shot('shaper', 'ios-dark-clip'),
   },
 
-  // Book Highlighter
-  { key: 'highlighter.problem', where: 'Book Highlighter · el problema' },
-  { key: 'highlighter.solution', where: 'Book Highlighter · la idea' },
+  // Highlights (Space Explorer + Events)
+  { key: 'arcade.p1', where: 'Destacados · Space Explorer' },
   {
-    key: 'highlighter.s1.p1',
-    where: 'Book Highlighter · Shelf (1)',
-    shot: shot('highlighter', 'desktop-dark-shelf'),
+    key: 'events.platanus.body',
+    where: 'Destacados · Startup Summit & Platanus Hack',
   },
-  {
-    key: 'highlighter.s1.p2',
-    where: 'Book Highlighter · Shelf (2)',
-    shot: shot('highlighter', 'desktop-dark-shelf'),
-  },
-  {
-    key: 'highlighter.s2.p1',
-    where: 'Book Highlighter · Chapters (1)',
-    shot: shot('highlighter', 'desktop-dark-chapters'),
-  },
-  {
-    key: 'highlighter.s2.p2',
-    where: 'Book Highlighter · Chapters (2)',
-    shot: shot('highlighter', 'desktop-dark-chapters'),
-  },
-  {
-    key: 'highlighter.s3.p1',
-    where: 'Book Highlighter · Scanner (1)',
-    shot: shot('highlighter', 'desktop-dark-scanner'),
-  },
-  {
-    key: 'highlighter.s3.p2',
-    where: 'Book Highlighter · Scanner (2)',
-    shot: shot('highlighter', 'desktop-dark-scanner'),
-  },
-  {
-    key: 'highlighter.s4.p1',
-    where: 'Book Highlighter · Reader (1)',
-    shot: shot('highlighter', 'desktop-dark-reader'),
-  },
-  {
-    key: 'highlighter.s4.p2',
-    where: 'Book Highlighter · Reader (2)',
-    shot: shot('highlighter', 'desktop-dark-reader'),
-  },
-
-  // Events
-  { key: 'events.platanus.body', where: 'Eventos · Platanus Hack 26 Caracas' },
-  { key: 'events.summit.body', where: 'Eventos · Startup Venezuela Summit' },
-  { key: 'events.panal.body', where: 'Eventos · El Panal' },
-  { key: 'events.radio.body', where: 'Eventos · Entrevista en OK 101.5' },
-  { key: 'events.ilc.body', where: 'Eventos · Charla con Pedro Vallenilla' },
-  { key: 'events.alegria.body', where: 'Eventos · Hackathon de AlegrIA' },
-
-  // More Work
-  { key: 'arcade.p1', where: 'Más proyectos · Space Explorer' },
-  { key: 'work.salvalo.body', where: 'Más proyectos · Salvalo' },
-  { key: 'work.crol.body', where: 'Más proyectos · Crol ERP Móvil' },
-  { key: 'work.maktub.body', where: 'Más proyectos · Maktub Art Fund' },
+  { key: 'events.alegria.body', where: 'Destacados · AlegrIA Hackathon' },
 
   // More of Me (pages/more-of-me)
   { key: 'likes.cosmos.body', where: 'Más de mí · Cosmos' },
@@ -155,14 +104,17 @@ const CLIPS: Array<{
   { key: 'footer', where: 'Despedida' },
 ];
 
-export const SCRIPTS_ES: ScriptClip[] = CLIPS.map(
-  ({ key, where, shot, draft }) => ({
+const buildScripts = (lang: 'es' | 'en'): ScriptClip[] =>
+  CLIPS.map(({ key, where, shot, draft }) => ({
     key,
     where,
     shot,
     draft,
-    ideas: [clean(ui.es[textKey(key)] ?? '')].filter(Boolean),
-  }),
-);
+    ideas: [clean(ui[lang][textKey(key)] ?? '')].filter(Boolean),
+  }));
 
-export const scriptsFor = (): ScriptClip[] => SCRIPTS_ES;
+export const SCRIPTS_ES: ScriptClip[] = buildScripts('es');
+export const SCRIPTS_EN: ScriptClip[] = buildScripts('en');
+
+export const scriptsFor = (lang: 'es' | 'en' = 'es'): ScriptClip[] =>
+  lang === 'en' ? SCRIPTS_EN : SCRIPTS_ES;

@@ -6,23 +6,40 @@ import { promisify } from 'node:util';
 const run = promisify(execFile);
 
 /**
- * DEV ONLY — the teleprompter's save middleware (pages/dev/[tool].astro).
+ * DEV ONLY — the teleprompter's save & translate middleware (pages/dev/[tool].astro).
  * Exists only under `astro dev` and never in the static build.
  *
- *   POST /__narration/save?key=shaper.s1.p1
+ *   POST /__narration/save?key=shaper.s1.p1&lang=es|en
  *   body: raw browser recording (webm/mp4, audio + optional 9:16 camera video)
  *   header x-ideas: encodeURIComponent(JSON string[]) — prompt names/ideas
  *
- * Writes `public/media/narration/es/{key}.m4a`, `{key}.mp4` (when recorded
- * with camera), `{key}.vtt`, and `src/data/narration/{key}.words.json`
- * (transcribed locally via `whisper-cli`). Raw takes and replaced files are
- * preserved in `narration-takes/es/` (gitignored), never deleted.
+ * Writes `public/media/narration/{lang}/{key}.m4a`, `{key}.mp4` (when recorded
+ * with camera), `{key}.vtt`, and `src/data/narration/{key}.words.json` (for ES)
+ * or `{key}.en.words.json` (for EN), transcribed locally via `whisper-cli`.
+ * Raw takes and replaced files are preserved in `narration-takes/{lang}/`
+ * (gitignored), never deleted.
+ *
+ * When saving an ES take, automatically translates the Spanish transcript to
+ * English and persists it in `narration-takes/en/{key}.draft.txt` so Juan can
+ * immediately switch to English and record the matching take.
+ *
+ *   POST /__narration/translate  — body: `{ text }` or `{ key }` -> `{ translation }`
+ *   POST /__narration/draft?key=... — body: `{ text }` -> saves EN draft text
  */
 const ROOT = process.cwd();
-const PUBLIC_ES = path.join(ROOT, 'public/media/narration/es');
-const TAKES_ES = path.join(ROOT, 'narration-takes/es');
-
 const KEY = /^[a-z0-9.]+$/;
+const LANG = /^(es|en)$/;
+
+const publicDirFor = lang => path.join(ROOT, 'public/media/narration', lang);
+const takesDirFor = lang => path.join(ROOT, 'narration-takes', lang);
+const wordsPathFor = (key, lang) =>
+  path.join(
+    ROOT,
+    'src/data/narration',
+    lang === 'es' ? `${key}.words.json` : `${key}.${lang}.words.json`,
+  );
+const enDraftPath = key =>
+  path.join(takesDirFor('en'), `${key}.draft.txt`);
 
 const body = req =>
   new Promise((resolve, reject) => {
@@ -78,12 +95,34 @@ const MODEL =
   );
 
 const GLOSSARY =
-  'Juan Villa, Sound Shaper, Salvalo, Tripealo, Crol, Conto Pay, Maktub Art Fund, ' +
+  'Juan Villa, Sound Shaper, Book Highlighter, Salvalo, Tripealo, Crol, Conto Pay, Maktub Art Fund, ' +
   'Space Explorer, Platanus Hack, Tridi, El Panal, Manuel Sira, Resty, ' +
   'Cheo Noguera, OK 101.5, Pedro Vallenilla, Cashea, Elías Sayegh, AlegrIA, Yummy, Abrahan, ' +
   'Barquisimeto, Caracas, YouTube Music, Apple Music, PlayStation, Dynamic Island, Horrocrux.';
 
-/** Strip trailing Whisper silence hallucinations. */
+/** Translate Spanish transcript to natural English for immediate EN recording. */
+const translateEsToEn = async text => {
+  const clean = String(text ?? '').trim();
+  if (!clean) return '';
+  try {
+    const res = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=en&dt=t&q=${encodeURIComponent(clean)}`,
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (!res.ok) return '';
+    const data = await res.json();
+    if (!Array.isArray(data?.[0])) return '';
+    return data[0]
+      .map(seg => (Array.isArray(seg) ? String(seg[0] ?? '') : ''))
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+  } catch {
+    return '';
+  }
+};
+
+/** Strip trailing Whisper silence hallucinations (ES + EN). */
 const cleanHallucinations = (list, totalDur) => {
   const out = [...list];
   while (out.length >= 5) {
@@ -104,7 +143,7 @@ const cleanHallucinations = (list, totalDur) => {
     .map(w => w.text)
     .join(' ');
   const phantom =
-    /(gracias por ver( el video)?|subt[íi]tulos realizados|suscr[íi]bete al canal)\.?$/i;
+    /(gracias por ver( el video)?|subt[íi]tulos realizados|suscr[íi]bete al canal|thanks? you? for watching|subtitles? by|subscribe to( the channel)?)\.?$/i;
   if (phantom.test(tailText)) {
     const m = tailText.match(phantom);
     const dropWords = m ? m[0].trim().split(/\s+/).length : 0;
@@ -115,7 +154,7 @@ const cleanHallucinations = (list, totalDur) => {
   return out;
 };
 
-const words = async (file, ideas, totalDur = 0) => {
+const words = async (file, ideas, totalDur = 0, lang = 'es') => {
   const wav = file.replace(/\.[a-z0-9]+$/, '.16k.wav');
   const base = file.replace(/\.[a-z0-9]+$/, '.words');
   await ffmpeg('-i', file, '-ar', '16000', '-ac', '1', wav);
@@ -126,7 +165,7 @@ const words = async (file, ideas, totalDur = 0) => {
         '-m',
         MODEL,
         '-l',
-        'es',
+        lang,
         '-f',
         wav,
         '-np',
@@ -193,11 +232,16 @@ const vtt = (lines, cues, end) =>
 
 const save = async (req, url) => {
   const key = url.searchParams.get('key') ?? '';
+  const lang = url.searchParams.get('lang') ?? 'es';
   if (!KEY.test(key)) throw new Error('bad key');
+  if (!LANG.test(lang)) throw new Error('bad lang');
+
+  const publicDir = publicDirFor(lang);
+  const takesDir = takesDirFor(lang);
 
   const when = new Date().toISOString().replace(/[:.]/g, '-');
-  fs.mkdirSync(path.join(TAKES_ES, 'replaced'), { recursive: true });
-  const raw = path.join(TAKES_ES, `${key}--${when}.webm`);
+  fs.mkdirSync(path.join(takesDir, 'replaced'), { recursive: true });
+  const raw = path.join(takesDir, `${key}--${when}.webm`);
   fs.writeFileSync(raw, await body(req));
 
   let ideas = [];
@@ -208,12 +252,12 @@ const save = async (req, url) => {
   } catch {}
   if (!Array.isArray(ideas)) ideas = [];
 
-  const out = path.join(PUBLIC_ES, `${key}.m4a`);
-  const outMp4 = path.join(PUBLIC_ES, `${key}.mp4`);
-  const subs = path.join(PUBLIC_ES, `${key}.vtt`);
-  const timed = path.join(ROOT, 'src/data/narration', `${key}.words.json`);
+  const out = path.join(publicDir, `${key}.m4a`);
+  const outMp4 = path.join(publicDir, `${key}.mp4`);
+  const subs = path.join(publicDir, `${key}.vtt`);
+  const timed = wordsPathFor(key, lang);
 
-  fs.mkdirSync(PUBLIC_ES, { recursive: true });
+  fs.mkdirSync(publicDir, { recursive: true });
   fs.mkdirSync(path.dirname(timed), { recursive: true });
 
   const { stdout: vStreams } = await run('ffprobe', [
@@ -233,14 +277,14 @@ const save = async (req, url) => {
     if (fs.existsSync(f)) {
       fs.renameSync(
         f,
-        path.join(TAKES_ES, 'replaced', `${when}--${path.basename(f)}`),
+        path.join(takesDir, 'replaced', `${when}--${path.basename(f)}`),
       );
     }
   }
   if (fs.existsSync(timed)) {
     fs.copyFileSync(
       timed,
-      path.join(TAKES_ES, 'replaced', `${when}--${path.basename(timed)}`),
+      path.join(takesDir, 'replaced', `${when}--${path.basename(timed)}`),
     );
   }
 
@@ -346,7 +390,7 @@ const save = async (req, url) => {
   }
 
   const length = await duration(out);
-  const heard = await words(out, ideas, length);
+  const heard = await words(out, ideas, length, lang);
   if (!heard.length) throw new Error('no words heard in the take');
 
   const said = phrases(heard);
@@ -367,13 +411,36 @@ const save = async (req, url) => {
     ),
   );
 
+  const lines = said.map(p => p.text);
+  let translation = '';
+  if (lang === 'es') {
+    translation = await translateEsToEn(lines.join(' '));
+    if (translation) {
+      fs.mkdirSync(takesDirFor('en'), { recursive: true });
+      fs.writeFileSync(enDraftPath(key), translation, 'utf8');
+    }
+  }
+
   return {
-    m4a: `/media/narration/es/${key}.m4a`,
+    lang,
+    m4a: `/media/narration/${lang}/${key}.m4a`,
+    video: fs.existsSync(outMp4) ? `/media/narration/${lang}/${key}.mp4` : null,
     hasVideo: fs.existsSync(outMp4),
     length,
     cues,
-    lines: said.map(p => p.text),
+    lines,
+    ...(translation ? { translation } : {}),
   };
+};
+
+const readVttText = file => {
+  if (!fs.existsSync(file)) return '';
+  const lines = [];
+  for (const block of fs.readFileSync(file, 'utf8').split(/\n\n+/)) {
+    const m = block.match(/(\d+):(\d+):([\d.]+)\s*-->.*\n([\s\S]+)/);
+    if (m) lines.push(m[4].trim());
+  }
+  return lines.join(' ');
 };
 
 export const narrationRecorder = () => ({
@@ -389,6 +456,55 @@ export const narrationRecorder = () => ({
       try {
         const url = new URL(req.url ?? '', 'http://dev');
         res.end(JSON.stringify(await save(req, url)));
+      } catch (e) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: String(e?.message ?? e) }));
+      }
+    });
+
+    server.middlewares.use('/__narration/translate', async (req, res) => {
+      res.setHeader('content-type', 'application/json');
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        return res.end('{}');
+      }
+      try {
+        const raw = (await body(req)).toString('utf8');
+        const payload = JSON.parse(raw || '{}');
+        const key = String(payload.key ?? '');
+        let source = String(payload.text ?? '').trim();
+        if (!source && KEY.test(key)) {
+          source = readVttText(path.join(publicDirFor('es'), `${key}.vtt`));
+        }
+        const translation = await translateEsToEn(source);
+        if (translation && KEY.test(key)) {
+          fs.mkdirSync(takesDirFor('en'), { recursive: true });
+          fs.writeFileSync(enDraftPath(key), translation, 'utf8');
+        }
+        res.end(JSON.stringify({ translation }));
+      } catch (e) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: String(e?.message ?? e) }));
+      }
+    });
+
+    server.middlewares.use('/__narration/draft', async (req, res) => {
+      res.setHeader('content-type', 'application/json');
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        return res.end('{}');
+      }
+      try {
+        const url = new URL(req.url ?? '', 'http://dev');
+        const key = url.searchParams.get('key') ?? '';
+        if (!KEY.test(key)) throw new Error('bad key');
+        const payload = JSON.parse((await body(req)).toString('utf8') || '{}');
+        const text = String(payload.text ?? '').trim();
+        fs.mkdirSync(takesDirFor('en'), { recursive: true });
+        const draftFile = enDraftPath(key);
+        if (text) fs.writeFileSync(draftFile, text, 'utf8');
+        else fs.rmSync(draftFile, { force: true });
+        res.end(JSON.stringify({ ok: true }));
       } catch (e) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: String(e?.message ?? e) }));

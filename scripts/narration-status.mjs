@@ -7,14 +7,14 @@ import { SCRIPTS_ES } from '../src/lib/scripts.ts';
 /**
  * THE RECORDING CHECKLIST — `npm run narration`.
  *
- * Every clip key the site narrates: its Spanish voice + 9:16 video + word
- * timings (the one voice), and its English and Chinese translations in
- * `src/i18n/ui.ts` (which read along sentence by sentence on the Spanish
- * clock). Also flags any narrated key on the page missing from `lib/scripts`.
+ * Every clip key the site narrates: its Spanish and English voice + 9:16
+ * video + word timings, plus English and Chinese copy in `src/i18n/ui.ts`.
+ * Also flags any narrated key on the page missing from `lib/scripts`.
  */
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
 const NARRATION_ES = path.join(ROOT, 'public/media/narration/es');
+const NARRATION_EN = path.join(ROOT, 'public/media/narration/en');
 const DATA_NARRATION = path.join(SRC, 'data/narration');
 
 const used = new Set();
@@ -44,31 +44,37 @@ const textKey = key =>
   key === 'hero' || key === 'footer' ? `${key}.caption` : key;
 
 const keys = SCRIPTS_ES.map(c => c.key);
-const counts = { es: 0, video: 0, en: 0, zh: 0 };
-const cell = (ok, label) => `${ok ? '[x]' : '[ ]'} ${label}`.padEnd(16);
+const counts = { es: 0, esVid: 0, en: 0, enVid: 0, enCopy: 0, zhCopy: 0 };
+const cell = (ok, label) => `${ok ? '[x]' : '[ ]'} ${label}`.padEnd(14);
 
 console.log(
-  `key${' '.repeat(18)}${'es voice'.padEnd(16)}${'9:16 video'.padEnd(16)}${'en copy'.padEnd(16)}zh copy`,
+  `key${' '.repeat(18)}${'es voice'.padEnd(14)}${'es 9:16'.padEnd(14)}${'en voice'.padEnd(14)}${'en 9:16'.padEnd(14)}${'en copy'.padEnd(14)}zh copy`,
 );
 for (const c of SCRIPTS_ES) {
   const tk = textKey(c.key);
-  const voice =
+  const esVoice =
     fs.existsSync(path.join(NARRATION_ES, `${c.key}.m4a`)) &&
     fs.existsSync(path.join(DATA_NARRATION, `${c.key}.words.json`));
-  const video = fs.existsSync(path.join(NARRATION_ES, `${c.key}.mp4`));
-  const en = Boolean(ui.en[tk]?.trim());
-  const zh = Boolean(ui.zh[tk]?.trim());
-  counts.es += Number(voice);
-  counts.video += Number(video);
-  counts.en += Number(en);
-  counts.zh += Number(zh);
+  const esVideo = fs.existsSync(path.join(NARRATION_ES, `${c.key}.mp4`));
+  const enVoice =
+    fs.existsSync(path.join(NARRATION_EN, `${c.key}.m4a`)) &&
+    fs.existsSync(path.join(DATA_NARRATION, `${c.key}.en.words.json`));
+  const enVideo = fs.existsSync(path.join(NARRATION_EN, `${c.key}.mp4`));
+  const enCopy = Boolean(ui.en[tk]?.trim());
+  const zhCopy = Boolean(ui.zh[tk]?.trim());
+  counts.es += Number(esVoice);
+  counts.esVid += Number(esVideo);
+  counts.en += Number(enVoice);
+  counts.enVid += Number(enVideo);
+  counts.enCopy += Number(enCopy);
+  counts.zhCopy += Number(zhCopy);
   console.log(
-    `${c.key.padEnd(21)}${cell(voice, c.draft ? 're-record' : voice ? 'recorded' : 'missing')}${cell(video, video ? 'done' : 'missing')}${cell(en, en ? 'translated' : 'missing')}${cell(zh, zh ? 'translated' : 'missing')}` +
+    `${c.key.padEnd(21)}${cell(esVoice, c.draft ? 're-record' : esVoice ? 'recorded' : 'missing')}${cell(esVideo, esVideo ? 'done' : 'missing')}${cell(enVoice, enVoice ? 'recorded' : 'missing')}${cell(enVideo, enVideo ? 'done' : 'missing')}${cell(enCopy, enCopy ? 'ready' : 'missing')}${cell(zhCopy, zhCopy ? 'ready' : 'missing')}` +
       (used.has(c.key) ? '' : '  (not on the page)'),
   );
 }
 console.log(
-  `\nes voice ${counts.es}/${keys.length} · 9:16 video ${counts.video}/${keys.length} · en copy ${counts.en}/${keys.length} · zh copy ${counts.zh}/${keys.length}`,
+  `\nes voice ${counts.es}/${keys.length} · es 9:16 ${counts.esVid}/${keys.length} · en voice ${counts.en}/${keys.length} · en 9:16 ${counts.enVid}/${keys.length} · en copy ${counts.enCopy}/${keys.length} · zh copy ${counts.zhCopy}/${keys.length}`,
 );
 const unscripted = [...used].filter(k => !keys.includes(k));
 if (unscripted.length) {
@@ -77,8 +83,8 @@ if (unscripted.length) {
 }
 if (
   counts.es < keys.length ||
-  counts.en < keys.length ||
-  counts.zh < keys.length
+  counts.enCopy < keys.length ||
+  counts.zhCopy < keys.length
 ) {
   process.exitCode = 1;
 }
