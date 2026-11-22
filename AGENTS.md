@@ -76,13 +76,15 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
 
 ## What the site is
 
-- **One snapped page**: hero → the apps (`AppsShowcase`, Sound Shaper and
-  Book Highlighter) → More Work (`lib/work.ts`) → Events (`lib/events.ts`, newest
-  first) → footer. More Work's screens are silent recordings of each
-  site being scrolled (~11 s, `public/media/work/*.mp4`, recorded with
-  headless Chromium); only the strongest projects stay — Andreina Aular's
-  was removed on 2026-10-18. Both lists are `PanelDeck`s: one deck, one
-  narrator, the same controls. The phone layout is its own composition below 48rem.
+- **One snapped page**: hero → Sound Shaper (`AppsShowcase`) → Highlights
+  (`EventsDeck` / `PanelDeck`: Space Explorer first, then Startup Summit &
+  Platanus Hack combined with fullscreen event-section tabs in `PhotoViewer`,
+  then AlegrIA Hackathon) → footer. Only Juan's own products and core moments
+  ship on the landing (Crol, Maktub Art Fund, Salvalo, El Panal, OK 101.5 FM,
+  and ILC Talks were removed on 2026-11-22; Book Highlighter is removed from
+  landing and footer while still in internal development). `/more-of-me` ships
+  Cosmos, Songs, and Photos. The phone layout is its own composition below
+  48rem.
 - **Dark only.** Language is an in-place preference (`html[data-lang]`, en / es
   / zh), never a URL; a link may carry `?lang=` for that visit only, and with
   none the browser's language wins over English.
@@ -90,14 +92,14 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
   `/events/{slug}-{yyyy-mm}` — the whole landing with that one thing open as a
   modal from the first paint, with its own preview card. The link glyph beside
   each name copies it. `/work` and `/events` open the landing at their section.
-- **Narration is Juan's voice and video, Spanish only** (`lib/narration.ts`,
-  Juan 2026-11-11): every narrated paragraph has one audio clip and one `9:16`
-  video in `public/media/narration/es/`. There are **no** English or Chinese
-  audio/video recordings and no "coming soon" notice: visitors in English or
-  Chinese watch and hear the Spanish take while the page's translated text
-  (`src/i18n/ui.ts`) reads along sentence by sentence on the Spanish clock, like
-  a subtitled film. Existing Spanish recordings stay as recorded (no lip-sync
-  ADR re-dubbing).
+- **Narration is Juan's voice and video, Spanish + English** (`lib/narration.ts`,
+  Juan 2026-11-22): every narrated paragraph has audio + `9:16` video in
+  `public/media/narration/es/` and `public/media/narration/en/`. Visitors in
+  Spanish or English hear and watch their language's take word-by-word on its
+  own clock (`{key}.words.json` for ES, `{key}.en.words.json` for EN), falling
+  back to Spanish per clip while an English take is not yet recorded. Chinese
+  plays the English take when present (falling back to Spanish before that) and
+  reads along sentence by sentence on that clock. No "coming soon" banner.
   - Takes are kept **exactly as recorded** — only re-wrapped as AAC. No trim,
     levelling, filters or breath softening, ever. Cuts Juan asks for are made
     without re-encoding (`ffmpeg -c copy`). They PLAY at the speed they were
@@ -109,10 +111,12 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
     for sentence). While its clip plays the whole box dims to
     `--ink-waiting` and each word lights up as it is said — two inks only.
     The timings are whisper.cpp's, per word, in
-    `src/data/narration/{key}.words.json`; at build time Spanish is aligned
-    word by word and the translations sentence by sentence (same sentence
-    count, or it falls back to the whole clip) and emitted as
-    `data-read-{lang}`. There are NO subtitles in the narrator any more.
+    `src/data/narration/{key}.words.json` (ES) and
+    `src/data/narration/{key}.en.words.json` (EN); at build time recorded
+    languages are aligned word by word and unrecorded translations sentence by
+    sentence (same sentence count, or it falls back to the whole clip) and
+    emitted as `data-read-{lang}`. There are NO subtitles in the narrator any
+    more.
   - **The hero and the footer read along in a CAPTION** (2026-10-17): their
     clips have no paragraph on screen, so their words (`hero.caption`,
     `footer.caption`) stand under the narrator, three lines at most, the
@@ -133,12 +137,13 @@ with Cloudflare's nameservers. Sound Shaper's legal pages
     of it for a day (2026-10-17) and were removed (Juan): the circle plays
     and pauses, and that is all.
   - `/dev/teleprompter` (`pages/dev/[tool].astro` + `scripts/narration-recorder.mjs`,
-    dev only) is strictly for recording full Spanish camera (`9:16`) + audio
-    takes (`lib/scripts.ts`) when new sections (apps, events, projects) are
-    added. It transcribes each take locally with `whisper-cli` into
-    `src/data/narration/{key}.words.json`; afterwards, write the tidied Spanish
-    copy and its English and Chinese translations in `src/i18n/ui.ts` keeping
-    sentence counts aligned.
+    dev only) records full camera (`9:16`) + audio takes in both Spanish and
+    English (`lib/scripts.ts`). Saving a Spanish take transcribes it locally
+    with `whisper-cli` into `src/data/narration/{key}.words.json` and
+    immediately translates it to English (`narration-takes/en/{key}.draft.txt`)
+    so Juan can flip to English (`E`) and record the matching English take
+    right away (`{key}.en.words.json`). Afterwards, update the tidied copy in
+    `src/i18n/ui.ts` (ES / EN / ZH).
 
 ## Songs
 

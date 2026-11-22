@@ -325,7 +325,7 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     // The landing's game cabinet opens over the page wherever it is; any
     // other page sends you to the landing's More Work, where it lives.
     if (!document.getElementById('arcade-touch'))
-      return void (location.href = '/#more-work');
+      return void (location.href = '/#events');
     document.dispatchEvent(new Event('arcade:open'));
   });
 

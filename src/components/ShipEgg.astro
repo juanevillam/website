@@ -1,7 +1,7 @@
 ---
 import T from './T.astro';
-import { PROJECTS } from '../lib/work';
-import { workPath } from '../lib/links';
+import { EVENTS } from '../lib/events';
+import { eventPath } from '../lib/links';
 
 /**
  * Space Explorer's ship (lib/eggs, lib/ship), in three places:
@@ -21,7 +21,7 @@ import { workPath } from '../lib/links';
  */
 type Props = { place: 'hero' | 'card' | 'foot' };
 const { place } = Astro.props;
-const game = PROJECTS.find(p => p.id === 'space-explorer');
+const game = EVENTS.find(p => p.id === 'space-explorer');
 ---
 
 {
@@ -29,7 +29,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     <div class:list={['egg-ship', `is-${place}`]} data-ship={place}>
       <canvas class="egg-band" data-ship-band hidden aria-hidden="true" />
       {place !== 'card' && (
-        <a class="egg-hit" href={workPath(game)} data-ship-link hidden>
+        <a class="egg-hit" href={eventPath(game)} data-ship-link hidden>
           <span class="sr-only">
             <T k="egg.ship" />
           </span>
@@ -126,7 +126,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
       const hero = egg.dataset.ship === 'hero';
       const panel = egg.closest<HTMLElement>(hero ? 'section' : 'footer');
       if (!panel) continue;
-      toCard(link, 'more-work', 'space-explorer');
+      toCard(link, 'events', 'space-explorer');
       // Soon after the panel settles, so a first visit finds it — once per 24h.
       nowAndThen(
         hero ? 'ship:hero' : 'ship:foot',
@@ -151,7 +151,7 @@ const game = PROJECTS.find(p => p.id === 'space-explorer');
     // each time it plays, in the card's first positioned ancestor that
     // does not hold a fixed canvas to itself (the card's perspective
     // would), so the canvas reaches the screen.
-    const section = document.getElementById('more-work');
+    const section = document.getElementById('events');
     const card = section?.querySelector<HTMLElement>('.card[data-card="space-explorer"]');
     const cabinet = card?.querySelector<HTMLElement>('.screen');
     if (!section || !card || !cabinet) continue;

@@ -5,7 +5,6 @@ import AppsShowcase from './AppsShowcase.astro';
 import NarrationPlayer from './NarrationPlayer.astro';
 import SongDemo from './SongDemo.astro';
 import SiteFooter from './SiteFooter.astro';
-import WorkCarousel from './WorkCarousel.astro';
 import EventsDeck from './EventsDeck.astro';
 import PhotoViewer from './PhotoViewer.astro';
 import T from './T.astro';
@@ -49,11 +48,12 @@ const focus = page?.focus;
     ))
   }
 
-  <!-- Everything else, secondary: one card per project (Space Explorer first). -->
-  <WorkCarousel focus={focus?.section === 'work' ? focus.card : undefined} />
-
-  <!-- Where Juan has been: hackathons, talks, the startup's events. -->
-  <EventsDeck focus={focus?.section === 'events' ? focus.card : undefined} />
+  <!-- Highlights: Space Explorer first, then hackathons and startup events. -->
+  <EventsDeck
+    focus={focus?.section === 'events' || focus?.section === 'work'
+      ? focus.card
+      : undefined}
+  />
 
   <!-- Each app's legal and help pages, and Juan elsewhere. -->
   <SiteFooter panel />

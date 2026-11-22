@@ -1,5 +1,4 @@
 import type { Locale } from '../i18n/ui';
-import { appShown } from './release';
 
 /**
  * The apps whose legal pages are published, and the facts those pages
@@ -47,7 +46,7 @@ export const LEGAL_APPS: {
     contentEs: 'libros',
     contentZh: '书籍',
     web: 'bookhighlighter.juanevillam.com',
-    footer: appShown('highlighter'),
+    footer: false,
   },
 ];
 

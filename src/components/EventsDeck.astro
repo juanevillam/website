@@ -1,10 +1,12 @@
 ---
 import PanelDeck from './PanelDeck.astro';
+import ArcadeCabinet from './ArcadeCabinet.astro';
+import ShipEgg from './ShipEgg.astro';
 import RobotEgg from './RobotEgg.astro';
 
 /**
- * Events — where Juan has been (lib/events holds the list and says how
- * a card is made), newest first.
+ * Highlights — Space Explorer first, followed by Juan's hackathon & startup
+ * moments (lib/events holds the list).
  */
 import { EVENTS } from '../lib/events';
 
@@ -15,8 +17,10 @@ type Props = {
 const { focus } = Astro.props;
 ---
 
-<PanelDeck id="events" title="events.title" items={EVENTS} focus={focus} share="events" />
+<PanelDeck id="events" title="events.title" items={EVENTS} focus={focus} share="events">
+  <ArcadeCabinet slot="arcade" />
+</PanelDeck>
 
-{/* Tridi's robot walks on the Platanus card's photos now and then; its
-    script stands it there. */}
+{/* Space Explorer's chase over its card, and Tridi's robot on Platanus. */}
+<ShipEgg place="card" />
 <RobotEgg />

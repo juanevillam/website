@@ -1,10 +1,11 @@
 # juanevillam.com
 
-My personal site: the apps I build, the work I do, and the events I've been to,
-narrated in my own voice and `9:16` video in Spanish with synchronized read-along
-across English, Spanish, and Chinese. It also hosts the playable Space Explorer
-arcade cabinet, a miniature Sound Shaper player with DJ Juan, 3D canvas easter
-eggs, and the support and legal pages for my apps.
+My personal site: the products I build, the highlights I've lived, and the
+things I love, narrated in my own voice and `9:16` video in both Spanish and
+English with synchronized read-along across English, Spanish, and Chinese. It
+also hosts the playable Space Explorer arcade cabinet, a miniature Sound Shaper
+player with DJ Juan, a personal Photos archive, 3D canvas easter eggs, and the
+support and legal pages for my apps.
 
 Built with [Astro](https://astro.build) as a static site and deployed on
 Cloudflare Pages. Plain CSS and TypeScript, no UI framework.
@@ -15,14 +16,14 @@ Cloudflare Pages. Plain CSS and TypeScript, no UI framework.
 
 | path             | what it is                                                                                                                               |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/pages`      | Astro routes — the landing page, shareable modal routes (`/sound-shaper`, `/work/*`, `/events/*`), app legal pages, `/dev/teleprompter`  |
-| `src/components` | page sections, `PanelDeck`, `NarrationPlayer`, `SongsPlayer`, `ArcadeCabinet`, and media viewers                                         |
-| `src/lib`        | narration alignment, Mini Sound Shaper DSP and DJ Juan (`autoDj/`), 3D Space Explorer scenes (`ship/`), Tridi G1 motion (`robot/`)       |
-| `src/scripts`    | client-side scroll and narration director (`director.ts`)                                                                                |
-| `src/i18n`       | translations (`en`, `es`, `zh`) aligned sentence-for-sentence with the narration takes                                                   |
-| `src/data`       | `whisper.cpp` word-level timing maps (`narration/*.words.json`)                                                                          |
-| `src/styles`     | design tokens, motion grammar, and global styles (`global.css`)                                                                          |
-| `public/`        | static media, narration audio and `9:16` video (`media/narration/es/`), embedded Space Explorer (`arcade/`), Cloudflare Pages `_headers` |
+| `src/pages`      | Astro routes — the landing page, shareable modal routes (`/sound-shaper`, `/events/*`), `/more-of-me/*`, app legal pages, `/dev/teleprompter` |
+| `src/components` | page sections, `PanelDeck`, `NarrationPlayer`, `SongsPlayer`, `PhotosFeed`, `ArcadeCabinet`, and media viewers                                |
+| `src/lib`        | narration alignment, Mini Sound Shaper DSP and DJ Juan (`autoDj/`), 3D Space Explorer scenes (`ship/`), Tridi G1 motion (`robot/`)            |
+| `src/scripts`    | client-side scroll and narration director (`director.ts`)                                                                                     |
+| `src/i18n`       | transcripts and translations (`en`, `es`, `zh`) aligned with the narration takes                                                              |
+| `src/data`       | `whisper.cpp` word-level timing maps (`narration/*.words.json`, `*.en.words.json`)                                                            |
+| `src/styles`     | design tokens, motion grammar, and global styles (`global.css`)                                                                               |
+| `public/`        | static media, narration audio and `9:16` video (`media/narration/{es,en}/`), embedded Space Explorer (`arcade/`), Cloudflare Pages `_headers` |
 | `scripts/`       | teleprompter recorder, narration status, and sync scripts for Space Explorer (`arcade`), Sound Shaper (`songs`), and Tridi (`tridi`)     |
 | `docs/`          | the six `web-*` audit gates ([`docs/audit-playbook.md`](docs/audit-playbook.md))                                                         |
 
@@ -45,12 +46,12 @@ Unitree G1 motion data from `../../tridi/`.
 
 ## Narration and synced surfaces
 
-Every narrated paragraph is a real Spanish voice and `9:16` camera take,
-transcribed locally with `whisper.cpp` into `src/data/narration/{key}.words.json`.
-At build time, Spanish aligns word by word and the English and Chinese
-translations in `src/i18n/ui.ts` align sentence by sentence on the Spanish
-clock, so the paragraph itself lights up as it is spoken without separate
-subtitles.
+Every narrated paragraph is a real voice and `9:16` camera take recorded in
+Spanish and English, transcribed locally with `whisper.cpp` into
+`src/data/narration/{key}.words.json` (ES) and `{key}.en.words.json` (EN). At
+build time, Spanish and English each align word by word on their own clock, and
+Chinese aligns sentence by sentence on the English clock, so the paragraph
+itself lights up as it is spoken without separate subtitles.
 
 The **Songs** card (`SongsPlayer.astro`) runs Sound Shaper's Web Audio graph and
 DJ Juan planner (`src/lib/autoDj/`), and the background 3D scenes (`src/lib/ship/`)
