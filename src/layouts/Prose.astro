@@ -16,9 +16,11 @@ type Props = {
   title: Record<Locale, string>;
   /** The app the document belongs to, shown as the eyebrow. */
   app: string;
+  /** Override last-updated ISO date (defaults to LEGAL_UPDATED). */
+  updated?: string;
 };
 
-const { title, app } = Astro.props;
+const { title, app, updated } = Astro.props;
 // Each document is its own address: without `path`, Base named every one of
 // them `/` in its canonical link and og:url, and a search engine would fold
 // the privacy policy into the home page.
@@ -97,7 +99,7 @@ const NOTE: Partial<Record<Locale, string>> = {
         </h1>
         <p class="label updated">
           <T k="legal.updated" />
-          {locales.map(l => <span class="t" lang={l}> {legalDate(l)}</span>)}
+          {locales.map(l => <span class="t" lang={l}> {legalDate(l, updated)}</span>)}
         </p>
         {
           locales.map(

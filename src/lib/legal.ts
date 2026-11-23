@@ -65,8 +65,8 @@ export const APPLE_EULA_URL =
 /** ISO date; each language formats it its own way (see `legalDate`). */
 export const LEGAL_UPDATED = '2026-11-05';
 
-export const legalDate = (locale: Locale) =>
+export const legalDate = (locale: Locale, iso: string = LEGAL_UPDATED) =>
   new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : locale, {
     dateStyle: 'long',
     timeZone: 'UTC',
-  }).format(new Date(LEGAL_UPDATED));
+  }).format(new Date(iso));

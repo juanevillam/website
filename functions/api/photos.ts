@@ -207,7 +207,13 @@ const parseCookie = (header: string | null, name: string): string | null => {
     const idx = part.indexOf('=');
     if (idx === -1) continue;
     const k = part.slice(0, idx).trim();
-    if (k === name) return decodeURIComponent(part.slice(idx + 1).trim());
+    if (k === name) {
+      try {
+        return decodeURIComponent(part.slice(idx + 1).trim());
+      } catch {
+        return null;
+      }
+    }
   }
   return null;
 };

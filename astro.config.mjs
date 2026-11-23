@@ -26,6 +26,37 @@ const dropUnreleased = {
     'astro:build:done': ({ dir }) => {
       for (const rel of unreleased.media)
         fs.rmSync(new URL(rel, dir), { recursive: true, force: true });
+
+      // Remove unreferenced dev-only asset chunks emitted from src/pages/dev/*
+      // (whose getStaticPaths() returns [] in production).
+      const astroDir = new URL('./_astro/', dir);
+      if (fs.existsSync(astroDir)) {
+        const htmlFiles = [];
+        const walk = u => {
+          for (const entry of fs.readdirSync(u, { withFileTypes: true })) {
+            const next = new URL(
+              entry.isDirectory() ? `${entry.name}/` : entry.name,
+              u,
+            );
+            if (entry.isDirectory()) walk(next);
+            else if (entry.name.endsWith('.html')) htmlFiles.push(next);
+          }
+        };
+        walk(dir);
+        const htmlJoined = htmlFiles
+          .map(f => fs.readFileSync(f, 'utf8'))
+          .join('\n');
+        for (const name of fs.readdirSync(astroDir)) {
+          if (
+            /^(?:devI18n|DevLangPicker|_tool_|_\.\.\.(?:all|set)_)\./.test(
+              name,
+            ) &&
+            !htmlJoined.includes(name)
+          ) {
+            fs.rmSync(new URL(name, astroDir), { force: true });
+          }
+        }
+      }
     },
   },
 };

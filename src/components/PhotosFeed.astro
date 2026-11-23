@@ -139,7 +139,6 @@ const posts = await Promise.all(
         type="button"
         class="circle-btn sign-out-btn"
         data-sign-out
-        aria-label="Sign out"
       >
         <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true">
           <path
@@ -164,7 +163,7 @@ const posts = await Promise.all(
 
   <div class="ig-body">
     <!-- 3-column Instagram grid -->
-    <div class="ig-grid-wrap" data-panel-view="grid">
+    <div class="ig-grid-wrap" data-panel-view="grid" inert>
       <div class="ig-grid">
         {
           posts.map((post, idx) => {
@@ -482,23 +481,6 @@ const posts = await Promise.all(
     color: var(--ink);
   }
 
-  .ig-stats {
-    font-size: 0.75rem;
-    color: var(--ink-2);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  .ig-stats strong {
-    color: var(--ink);
-    font-weight: 600;
-  }
-
-  .ig-dot {
-    margin: 0 0.25rem;
-    color: var(--ink-3);
-  }
-
   .ig-actions {
     display: flex;
     align-items: center;
@@ -552,40 +534,6 @@ const posts = await Promise.all(
 
   .circle-btn:active {
     transform: scale(0.9);
-  }
-
-  .pill-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    height: 2rem;
-    padding: 0 0.875rem;
-    border-radius: 999px;
-    border: 1px solid var(--hairline);
-    background: color-mix(in srgb, var(--surface) 84%, transparent);
-    backdrop-filter: blur(14px) saturate(1.8);
-    -webkit-backdrop-filter: blur(14px) saturate(1.8);
-    box-shadow: inset 0 0.75px 0 rgb(255 255 255 / 0.16);
-    color: var(--ink);
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    transition:
-      border-color var(--hover),
-      background-color var(--hover),
-      transform var(--dur-micro) var(--ease),
-      opacity var(--dur-quick) var(--ease);
-  }
-
-  .pill-btn:hover {
-    border-color: var(--ink-3);
-  }
-
-  .pill-btn:active {
-    transform: scale(0.96);
   }
 
   /* ---------- body & 3-column grid ---------- */
@@ -666,42 +614,13 @@ const posts = await Promise.all(
     transform: scale(1.03);
   }
 
-  .ig-tile:hover .tile-hover,
-  .ig-tile:focus-visible .tile-hover {
-    opacity: 1;
-  }
-
   .tile-badge {
     position: absolute;
     top: 0.55rem;
     right: 0.55rem;
-    color: #fff;
+    color: var(--ink);
     filter: drop-shadow(0 1px 4px rgb(0 0 0 / 0.72));
     pointer-events: none;
-  }
-
-  .tile-hover {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.25rem;
-    background: rgb(0 0 0 / 0.52);
-    color: var(--ink);
-    font-size: 1rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--hover);
-  }
-
-  .tile-stat {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
   }
 
   /* ---------- single-column post detail view ---------- */
@@ -801,39 +720,6 @@ const posts = await Promise.all(
 
   .slide-count.is-shown {
     opacity: 1;
-  }
-
-  /* Subtle "Double-tap to like" glass toast at the bottom of the photo stage */
-  .like-hint {
-    position: absolute;
-    bottom: 0.75rem;
-    left: 50%;
-    z-index: 2;
-    transform: translateX(-50%) translateY(4px);
-    padding: 0.25rem 0.6875rem;
-    border-radius: 999px;
-    border: 1px solid var(--hairline);
-    background: color-mix(in srgb, var(--surface) 84%, transparent);
-    backdrop-filter: blur(14px) saturate(1.8);
-    -webkit-backdrop-filter: blur(14px) saturate(1.8);
-    box-shadow: inset 0 0.75px 0 rgb(255 255 255 / 0.16);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    font-size: 0.71875rem;
-    font-weight: 600;
-    color: var(--ink);
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition:
-      opacity var(--dur-quick) var(--ease),
-      transform var(--dur-quick) var(--ease);
-  }
-
-  .like-hint.is-shown {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
 
   /* Same muted arrow recipe as Events / PanelDeck `.photo-step`:
@@ -1115,11 +1001,6 @@ const posts = await Promise.all(
       line-height: 1.1;
     }
 
-    .ig-stats {
-      font-size: 0.6875rem;
-      line-height: 1.1;
-    }
-
     .ig-grid-wrap {
       padding-bottom: 2.75rem;
     }
@@ -1208,6 +1089,7 @@ const posts = await Promise.all(
     const signOutBtn =
       root.querySelector<HTMLButtonElement>('[data-sign-out]')!;
 
+    const gateEl = root.querySelector<HTMLElement>('[data-gate]')!;
     const googleBtnHost = root.querySelector<HTMLElement>('[data-google-btn]')!;
     const gateError = root.querySelector<HTMLElement>('[data-gate-error]')!;
 
@@ -1260,6 +1142,9 @@ const posts = await Promise.all(
 
     const syncVisitorUI = () => {
       root.classList.toggle('is-locked', !authenticated);
+      gridWrap.toggleAttribute('inert', !authenticated);
+      detailWrap.toggleAttribute('inert', !authenticated);
+      gateEl.toggleAttribute('inert', authenticated);
       if (!authenticated) {
         pauseAllVideos();
       }
@@ -1385,6 +1270,14 @@ const posts = await Promise.all(
     const syncLangStrings = () => {
       const post = posts[activePostIdx];
       if (post) captionEl.textContent = captionOf(post);
+      for (const tile of root.querySelectorAll<HTMLButtonElement>('[data-open-post]')) {
+        const p = posts[Number(tile.dataset.openPost ?? 0)];
+        if (!p) continue;
+        const cap = captionOf(p);
+        tile.setAttribute('aria-label', cap);
+        const img = tile.querySelector('img');
+        if (img) img.alt = cap;
+      }
       if (!authenticated) renderGoogleButton();
     };
 
@@ -1441,13 +1334,14 @@ const posts = await Promise.all(
       const g = (window as unknown as { google?: GoogleAccounts }).google;
       if (!g?.accounts?.id) return;
       googleBtnHost.innerHTML = '';
+      const lang = currentLang();
       g.accounts.id.renderButton(googleBtnHost, {
         type: 'standard',
         theme: 'filled_black',
         size: 'large',
         shape: 'pill',
         text: 'continue_with',
-        locale: currentLang(),
+        locale: lang === 'zh' ? 'zh_CN' : lang,
       });
     };
 
