@@ -1,0 +1,153 @@
+---
+import Prose from '../layouts/Prose.astro';
+import L from '../components/L.astro';
+import { AUTHOR_FULL_NAME, CONTACT_EMAIL } from '../lib/legal';
+---
+
+<Prose
+  title={{
+    en: 'Privacy Policy',
+    es: 'Política de privacidad',
+    zh: '隐私政策',
+  }}
+  app="juanevillam.com"
+>
+  <L>
+    <Fragment slot="en">
+      <p>
+        juanevillam.com is built and operated by {AUTHOR_FULL_NAME} ("I", "me").
+        This policy explains what data this website handles, where it lives, and
+        how you can remove it. The short version: the site shows no ads, runs no
+        analytics or cross-site tracking, and never sells data.
+      </p>
+
+      <h2>What the site collects</h2>
+      <ul>
+        <li>
+          <strong>Browsing the public site.</strong> Nothing. Your language
+          choice and local player preferences stay in your browser's
+          <code>localStorage</code> and never leave your device.
+        </li>
+        <li>
+          <strong>Signing in to Photos.</strong> If you choose to sign in with
+          Google to view the personal Photos section
+          (<code>/more-of-me/photos</code>), the server verifies your Google ID
+          token and records your verified email address, display name, and visit
+          timestamps so I know who views my personal archive.
+        </li>
+        <li>
+          <strong>Session cookie.</strong> After signing in, the site sets a
+          single signed <code>HttpOnly</code> session cookie
+          (<code>jv_photos_session</code>) strictly to keep your Photos session
+          unlocked. It is not used for advertising or tracking and is cleared
+          when you sign out.
+        </li>
+      </ul>
+
+      <h2>Where data lives</h2>
+      <p>
+        The site is hosted on Cloudflare Pages, and the Photos visitor log is
+        stored in Cloudflare D1. Google Sign-In is provided by Google LLC to
+        verify your identity when you click the sign-in button. Visitor emails
+        are never shown publicly or shared with third parties.
+      </p>
+
+      <h2>Deleting your data</h2>
+      <p>
+        You can sign out at any time from the Photos header to clear your
+        session cookie. To delete your visitor record from Cloudflare D1, email{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> from the same
+        address and I will remove it promptly.
+      </p>
+
+      <p>Last updated: November 22, 2026.</p>
+    </Fragment>
+
+    <Fragment slot="es">
+      <p>
+        juanevillam.com es construido y operado por {AUTHOR_FULL_NAME} ("yo").
+        Esta política explica qué datos maneja este sitio, dónde viven y cómo
+        puedes eliminarlos. La versión corta: el sitio no muestra anuncios, no
+        usa analíticas ni rastreo entre sitios y nunca vende datos.
+      </p>
+
+      <h2>Qué recopila el sitio</h2>
+      <ul>
+        <li>
+          <strong>Navegación pública.</strong> Nada. Tu idioma y preferencias
+          locales del reproductor se guardan solo en el{' '}
+          <code>localStorage</code> de tu navegador y nunca salen de tu
+          dispositivo.
+        </li>
+        <li>
+          <strong>Inicio de sesión en Fotos.</strong> Si decides iniciar sesión
+          con Google para ver la sección personal de Fotos
+          (<code>/more-of-me/photos</code>), el servidor verifica tu token de
+          identidad de Google y guarda tu correo verificado, tu nombre y la
+          fecha de visita para saber quién accede a mi archivo personal.
+        </li>
+        <li>
+          <strong>Cookie de sesión.</strong> Al iniciar sesión, el sitio guarda
+          una única cookie firmada <code>HttpOnly</code>
+          (<code>jv_photos_session</code>) solo para mantener desbloqueada la
+          sección de Fotos. No se usa para publicidad ni seguimiento y se borra
+          al cerrar sesión.
+        </li>
+      </ul>
+
+      <h2>Dónde viven los datos</h2>
+      <p>
+        El sitio corre en Cloudflare Pages y el registro de visitas de Fotos se
+        guarda en Cloudflare D1. Google Sign-In es provisto por Google LLC para
+        verificar tu identidad al pulsar el botón de acceso. Los correos nunca
+        se muestran públicamente ni se comparten con terceros.
+      </p>
+
+      <h2>Cómo borrar tus datos</h2>
+      <p>
+        Puedes cerrar sesión en cualquier momento desde el encabezado de Fotos
+        para borrar la cookie de sesión. Para eliminar tu registro de Cloudflare
+        D1, escribe a{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> desde el mismo
+        correo y lo borraré de inmediato.
+      </p>
+
+      <p>Última actualización: 22 de noviembre de 2026.</p>
+    </Fragment>
+
+    <Fragment slot="zh">
+      <p>
+        juanevillam.com 由 {AUTHOR_FULL_NAME}（"我"）开发和运营。本政策说明本网站处理哪些数据、数据存储位置以及如何删除。简而言之：本网站没有广告、不进行数据分析或跨站追踪，也绝不出售数据。
+      </p>
+
+      <h2>网站收集的信息</h2>
+      <ul>
+        <li>
+          <strong>浏览公开页面。</strong> 不收集任何信息。你的语言偏好与本地播放器设置仅保存在浏览器的{' '}
+          <code>localStorage</code> 中，不会离开你的设备。
+        </li>
+        <li>
+          <strong>登录照片区。</strong> 如果你选择使用 Google 登录查看个人照片区
+          (<code>/more-of-me/photos</code>)，服务器会验证你的 Google 身份令牌，并记录你已验证的邮箱、显示名称及访问时间，以便我了解谁查看了我的个人相册。
+        </li>
+        <li>
+          <strong>会话 Cookie。</strong> 登录后，网站仅设置一个经过签名的{' '}
+          <code>HttpOnly</code> 会话 Cookie (<code>jv_photos_session</code>)，用于保持照片区解锁状态。该 Cookie 不用于广告或追踪，退出登录时即会清除。
+        </li>
+      </ul>
+
+      <h2>数据存储位置</h2>
+      <p>
+        本网站托管在 Cloudflare Pages，照片区访客记录存储在 Cloudflare D1。Google 登录由 Google LLC 提供用于身份验证。访客邮箱绝不会公开展示或与第三方共享。
+      </p>
+
+      <h2>删除你的数据</h2>
+      <p>
+        你可以随时在照片区顶部点击退出登录以清除会话 Cookie。如需从 Cloudflare D1 删除你的访问记录，请使用同一邮箱发送邮件至{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>，我会尽快删除。
+      </p>
+
+      <p>最后更新：2026 年 11 月 22 日。</p>
+    </Fragment>
+  </L>
+</Prose>

@@ -16,7 +16,8 @@ import { sceneAttr, sceneOf } from '../lib/scene';
  * at build time so stepping through a post's carousel updates the room light
  * ("el blob") to match the exact photo on screen.
  */
-const isDev = import.meta.env.DEV;
+const GOOGLE_CLIENT_ID =
+  '524645244113-p2agelg1r5javeg9mje2c6cmle86mqbg.apps.googleusercontent.com';
 const posts = await Promise.all(
   PHOTO_POSTS.map(async post => {
     const media = post.media.map(versionedMedia);
@@ -33,15 +34,13 @@ const posts = await Promise.all(
     };
   }),
 );
-
-const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
 ---
 
 <div
-  class:list={['photos', !isDev && 'is-locked']}
+  class="photos is-locked"
   data-photos
   data-view="grid"
-  data-dev={isDev ? 'true' : undefined}
+  data-google-client-id={GOOGLE_CLIENT_ID}
   data-posts={JSON.stringify(posts)}
 >
   <!-- Profile header -->
@@ -59,13 +58,6 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       </div>
       <div class="ig-handle-row">
         <span class="ig-handle">juanevillam</span>
-        <span class="ig-stats">
-          <strong data-total-posts>{posts.length}</strong>
-          <T k="photos.posts" />
-          <span class="ig-dot">·</span>
-          <strong data-total-likes>{totalInitialLikes}</strong>
-          <T k="photos.likes" />
-        </span>
       </div>
     </div>
 
@@ -143,6 +135,31 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
           <span class="sr"><T k="photos.feed" /></span>
         </button>
       </div>
+      <button
+        type="button"
+        class="circle-btn sign-out-btn"
+        data-sign-out
+        aria-label="Sign out"
+      >
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <rect
+            x="4.5"
+            y="10.5"
+            width="15"
+            height="10"
+            rx="2.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"></rect>
+          <path
+            d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"></path>
+        </svg>
+        <span class="sr"><T k="photos.lock" /></span>
+      </button>
     </div>
   </header>
 
@@ -152,7 +169,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       <div class="ig-grid">
         {
           posts.map((post, idx) => {
-            const hasVideo = post.media.some(m => m.endsWith('.mp4'));
+            const hasVideo = post.media.some(m => /\.mp4(\?|$)/.test(m));
             const isMulti = post.media.length > 1;
             return (
               <button
@@ -170,7 +187,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
                 />
                 {(isMulti || hasVideo) && (
                   <span class="tile-badge" aria-hidden="true">
-                    {hasVideo ? (
+                    {!isMulti && hasVideo ? (
                       <svg viewBox="0 0 20 20" width="18" height="18">
                         <path
                           d="M5.5 3.8v12.4a1 1 0 0 0 1.53.85l9.7-6.2a1 1 0 0 0 0-1.7l-9.7-6.2A1 1 0 0 0 5.5 3.8Z"
@@ -196,17 +213,6 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
                     )}
                   </span>
                 )}
-                <span class="tile-hover" aria-hidden="true">
-                  <span class="tile-stat">
-                    <svg viewBox="0 0 20 20" width="18" height="18">
-                      <path
-                        d="M10 17.2s-6.8-4.2-6.8-8.9A4 4 0 0 1 10 5.5a4 4 0 0 1 6.8 2.8c0 4.7-6.8 8.9-6.8 8.9Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <span data-tile-likes={post.id}>{post.initialLikes}</span>
-                  </span>
-                </span>
               </button>
             );
           })
@@ -246,15 +252,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
             ))
           }
 
-          <!-- Floating hearts container (spawns where user double-clicks/taps) -->
-          <div class="hearts-layer" data-hearts-layer aria-hidden="true"></div>
-
           <span class="slide-count" data-slide-count>1/1</span>
-
-          <!-- Subtle toast shown briefly when opening detail view -->
-          <div class="like-hint" data-like-hint aria-hidden="true">
-            <T k="photos.doubleTap" />
-          </div>
 
           <button
             type="button"
@@ -289,129 +287,102 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
             </svg>
           </button>
 
-          <button
-            type="button"
-            class="circle-btn media-mute is-unmuted is-hidden"
-            data-media-mute
-          >
-            <svg
-              class="icon-muted"
-              viewBox="0 0 16 16"
-              width="13"
-              height="13"
-              aria-hidden="true"
-            >
-              <path
-                d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.2 0 3.6 3.6m0-3.6-3.6 3.6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"></path>
-            </svg>
-            <svg
-              class="icon-unmuted"
-              viewBox="0 0 16 16"
-              width="13"
-              height="13"
-              aria-hidden="true"
-            >
-              <path
-                d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.3-.7a3.6 3.6 0 0 1 0 5m1.8-6.8a6 6 0 0 1 0 8.6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"></path>
-            </svg>
-            <span class="sr"><T k="photos.mute" /></span>
-          </button>
-        </div>
+          <!-- Overlay inside media: caption left, mute + post switcher right -->
+          <div class="post-overlay">
+            <span class="post-caption" data-post-caption></span>
 
-        <!-- Single bottom bar: caption on the left, like + post switcher on the right -->
-        <div class="post-bar">
-          <span class="post-caption" data-post-caption></span>
-
-          <div class="post-bar-trail">
-            <button
-              type="button"
-              class="action-stat like-btn"
-              data-like-btn
-              aria-pressed="false"
-            >
-              <span class="circle-glyph">
-                <svg
-                  viewBox="0 0 20 20"
-                  width="15"
-                  height="15"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M10 17.2s-6.8-4.2-6.8-8.9A4 4 0 0 1 10 5.5a4 4 0 0 1 6.8 2.8c0 4.7-6.8 8.9-6.8 8.9Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.65"
-                    stroke-linejoin="round"></path>
-                </svg>
-              </span>
-              <span class="stat-num" data-post-likes>0</span>
-              <span class="sr"><T k="photos.like" /></span>
-            </button>
-
-            <span class="bar-sep" aria-hidden="true"></span>
-
-            <div class="post-nav-pills">
+            <div class="post-overlay-trail">
               <button
                 type="button"
-                class="circle-btn"
-                data-post-step="-1"
+                class="circle-btn media-mute is-unmuted is-hidden"
+                data-media-mute
               >
-                <span class="sr"><T k="deck.prev" /></span>
                 <svg
+                  class="icon-muted"
                   viewBox="0 0 16 16"
-                  width="11"
-                  height="11"
+                  width="13"
+                  height="13"
                   aria-hidden="true"
                 >
                   <path
-                    d="M10 3.2 5.2 8l4.8 4.8"
+                    d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.2 0 3.6 3.6m0-3.6-3.6 3.6"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="1.7"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     stroke-linejoin="round"></path>
                 </svg>
-              </button>
-              <button
-                type="button"
-                class="circle-btn"
-                data-post-step="1"
-              >
-                <span class="sr"><T k="deck.next" /></span>
                 <svg
+                  class="icon-unmuted"
                   viewBox="0 0 16 16"
-                  width="11"
-                  height="11"
+                  width="13"
+                  height="13"
                   aria-hidden="true"
                 >
                   <path
-                    d="M6 3.2 10.8 8 6 12.8"
+                    d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.3-.7a3.6 3.6 0 0 1 0 5m1.8-6.8a6 6 0 0 1 0 8.6"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="1.7"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     stroke-linejoin="round"></path>
                 </svg>
+                <span class="sr"><T k="photos.mute" /></span>
               </button>
+
+              <div class="post-nav-pills">
+                <button
+                  type="button"
+                  class="circle-btn"
+                  data-post-step="-1"
+                >
+                  <span class="sr"><T k="deck.prev" /></span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="11"
+                    height="11"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M10 3.2 5.2 8l4.8 4.8"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="circle-btn"
+                  data-post-step="1"
+                >
+                  <span class="sr"><T k="deck.next" /></span>
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="11"
+                    height="11"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 3.2 10.8 8 6 12.8"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tonal Liquid Glass Gate (Name + Email, production only) -->
+    <!-- Tonal Liquid Glass Gate (Google Sign-In, verified server-side) -->
     <div class="ig-gate" data-gate>
-      <form class="gate-card" data-gate-form novalidate>
+      <div class="gate-card">
         <div class="gate-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20">
             <rect
@@ -434,50 +405,12 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
         <h4 class="gate-title"><T k="photos.gateTitle" /></h4>
         <p class="gate-desc"><T k="photos.gateBody" /></p>
 
-        <!-- Honeypot anti-bot field -->
-        <input
-          type="text"
-          name="website"
-          class="sr"
-          tabindex="-1"
-          autocomplete="off"
-        />
-
-        <div class="gate-fields">
-          <label class="sr" for="photos-gate-name"><T k="photos.gateName" /></label>
-          <input
-            id="photos-gate-name"
-            type="text"
-            name="name"
-            class="gate-input"
-            data-gate-name
-            placeholder="Your name"
-            autocomplete="name"
-            maxlength="80"
-            required
-          />
-          <label class="sr" for="photos-gate-email"><T k="photos.gateEmail" /></label>
-          <input
-            id="photos-gate-email"
-            type="email"
-            name="email"
-            class="gate-input"
-            data-gate-email
-            placeholder="you@email.com"
-            autocomplete="email"
-            maxlength="160"
-            required
-          />
-        </div>
+        <div class="gate-google" data-google-btn></div>
 
         <p class="gate-error is-hidden" data-gate-error>
           <T k="photos.gateError" />
         </p>
-
-        <button type="submit" class="pill-btn gate-submit">
-          <T k="photos.gateContinue" />
-        </button>
-      </form>
+      </div>
     </div>
   </div>
 </div>
@@ -852,6 +785,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     font-size: 0.65rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+    min-width: 4.5ch;
+    text-align: center;
     white-space: nowrap;
     color: var(--ink);
     opacity: 0;
@@ -956,10 +891,11 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
   }
 
   .media-mute {
-    position: absolute;
-    bottom: 0.625rem;
-    right: 0.625rem;
-    z-index: 2;
+    position: relative;
+  }
+
+  .media-mute.is-hidden {
+    display: none;
   }
 
   .media-mute:not(.is-unmuted) .icon-unmuted,
@@ -967,84 +903,25 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     display: none;
   }
 
-  /* Floating monochrome hearts spawned where the user taps/clicks */
-  .hearts-layer {
+  /* ---------- post overlay inside media (caption + post controls) ---------- */
+  .post-overlay {
     position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .hearts-layer :global(.pop-heart) {
-    position: absolute;
-    width: 3.25rem;
-    height: 3.25rem;
-    margin-left: -1.625rem;
-    margin-top: -1.625rem;
-    color: var(--ink);
-    rotate: var(--rot, 0deg);
-    will-change: translate, scale, opacity;
-    filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.65));
-    animation:
-      heart-rise 820ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-      heart-scale 820ms forwards,
-      heart-fade 820ms forwards;
-  }
-
-  @keyframes heart-rise {
-    0% {
-      translate: 0 6px;
-    }
-    100% {
-      translate: var(--dx, 0px) -58px;
-    }
-  }
-
-  @keyframes heart-scale {
-    0% {
-      scale: 0.28;
-      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    24% {
-      scale: 1.1;
-      animation-timing-function: cubic-bezier(0.33, 0, 0.67, 1);
-    }
-    100% {
-      scale: 0.86;
-    }
-  }
-
-  @keyframes heart-fade {
-    0% {
-      opacity: 0;
-      animation-timing-function: ease-out;
-    }
-    14% {
-      opacity: 1;
-    }
-    58% {
-      opacity: 1;
-      animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-
-  /* ---------- single compact post bottom bar ---------- */
-  .post-bar {
-    flex: none;
+    inset: auto 0 0 0;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.5rem 0.875rem;
-    border-top: 1px solid var(--hairline);
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    z-index: 2;
+    padding: 2.75rem 0.875rem 0.625rem;
+    background: linear-gradient(
+      to bottom,
+      rgb(13 13 13 / 0) 0%,
+      rgb(13 13 13 / 0.14) 24%,
+      rgb(13 13 13 / 0.48) 54%,
+      rgb(13 13 13 / 0.82) 82%,
+      rgb(13 13 13 / 0.94) 100%
+    );
+    pointer-events: none;
   }
 
   .post-caption {
@@ -1058,85 +935,17 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     text-overflow: ellipsis;
   }
 
-  .post-bar-trail {
+  .post-overlay-trail {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 0.625rem;
-  }
-
-  .bar-sep {
-    width: 1px;
-    height: 1.125rem;
-    background: var(--hairline);
+    gap: 0.375rem;
+    pointer-events: auto;
   }
 
   .post-nav-pills {
     display: flex;
     gap: 0.25rem;
-  }
-
-  .action-stat {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .circle-glyph {
-    width: 1.875rem;
-    height: 1.875rem;
-    border-radius: 50%;
-    border: 1px solid var(--hairline);
-    background: var(--ground);
-    color: var(--ink-2);
-    display: grid;
-    place-items: center;
-    transition:
-      transform var(--dur-micro) var(--ease),
-      border-color var(--hover),
-      color var(--hover),
-      background-color var(--hover);
-  }
-
-  .action-stat:hover .circle-glyph {
-    color: var(--ink);
-    border-color: var(--ink-3);
-  }
-
-  .action-stat:active .circle-glyph {
-    transform: scale(0.9);
-  }
-
-  /* Monochrome white active like state */
-  .like-btn.is-liked .circle-glyph {
-    color: var(--ink);
-    border-color: var(--ink-2);
-    background: color-mix(in srgb, var(--ink) 14%, var(--ground));
-  }
-
-  .like-btn.is-liked svg path {
-    fill: currentColor;
-  }
-
-  .stat-num {
-    font-size: 0.75rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    min-width: 0.875rem;
-    text-align: left;
-    color: var(--ink-2);
-  }
-
-  .like-btn.is-liked .stat-num {
-    color: var(--ink);
   }
 
   /* ---------- Tonal Liquid Glass Gate ---------- */
@@ -1214,30 +1023,12 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     max-width: 34ch;
   }
 
-  .gate-fields {
-    width: 100%;
+  .gate-google {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.25rem;
-  }
-
-  .gate-input {
-    width: 100%;
-    height: 2.25rem;
-    padding: 0 0.75rem;
-    border-radius: 0.625rem;
-    border: 1px solid var(--hairline);
-    background: var(--ground);
-    color: var(--ink);
-    font: inherit;
-    font-size: 0.8125rem;
-    outline: none;
-    transition: border-color var(--hover);
-  }
-
-  .gate-input:focus {
-    border-color: var(--ink-3);
+    justify-content: center;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: 0.4rem;
   }
 
   .gate-error {
@@ -1250,18 +1041,8 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     display: none;
   }
 
-  .gate-submit {
-    width: 100%;
-    height: 2.25rem;
-    margin-top: 0.25rem;
-    background: var(--ink);
-    color: var(--ground);
-    border-color: var(--ink);
-    font-weight: 700;
-  }
-
-  .gate-submit:hover {
-    opacity: 0.92;
+  .photos.is-locked .sign-out-btn {
+    display: none;
   }
 
   .sr {
@@ -1298,15 +1079,42 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     }
 
     .ig-head {
-      padding: 0.5rem 0.75rem;
+      padding: 0.45rem 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .ig-ident {
+      gap: 0.55rem;
+    }
+
+    .ig-avatar {
+      width: 2.125rem;
+      height: 2.125rem;
+    }
+
+    .ig-handle-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+      line-height: 1.15;
+    }
+
+    .ig-handle {
+      font-size: 0.9375rem;
+      line-height: 1.1;
+    }
+
+    .ig-stats {
+      font-size: 0.6875rem;
+      line-height: 1.1;
     }
 
     .ig-grid-wrap {
-      padding-bottom: 4.5rem;
+      padding-bottom: 2.75rem;
     }
 
-    .post-bar {
-      padding: 0.45rem 0.75rem;
+    .post-overlay {
+      padding: 2.25rem 0.75rem 0.55rem;
     }
   }
 </style>
@@ -1320,15 +1128,51 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     scene?: string;
     scenes?: string[];
   };
-  type Visitor = { name: string; email: string; token: string };
+  type GoogleAccounts = {
+    accounts?: {
+      id?: {
+        initialize: (cfg: {
+          client_id: string;
+          callback: (res: { credential?: string }) => void;
+          auto_select?: boolean;
+          cancel_on_tap_outside?: boolean;
+        }) => void;
+        renderButton: (
+          parent: HTMLElement,
+          opts: {
+            type?: string;
+            theme?: string;
+            size?: string;
+            shape?: string;
+            text?: string;
+            locale?: string;
+          },
+        ) => void;
+        disableAutoSelect?: () => void;
+      };
+    };
+  };
 
-  const VISITOR_KEY = 'jv:photos:visitor';
-  const LOCAL_STATE_KEY = 'jv:photos:state';
-
-  const makeToken = () =>
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  let gsiPromise: Promise<GoogleAccounts['accounts']> | null = null;
+  const loadGsi = () => {
+    if (gsiPromise) return gsiPromise;
+    gsiPromise = new Promise((resolve, reject) => {
+      const existing = (window as unknown as { google?: GoogleAccounts }).google;
+      if (existing?.accounts?.id) return resolve(existing.accounts);
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.defer = true;
+      s.onload = () => {
+        const g = (window as unknown as { google?: GoogleAccounts }).google;
+        if (g?.accounts?.id) resolve(g.accounts);
+        else reject(new Error('gsi_unavailable'));
+      };
+      s.onerror = () => reject(new Error('gsi_load_failed'));
+      document.head.appendChild(s);
+    });
+    return gsiPromise;
+  };
 
   const currentLang = (): Locale => {
     const l = document.documentElement.dataset.lang;
@@ -1339,7 +1183,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     const posts: EnrichedPost[] = JSON.parse(root.dataset.posts ?? '[]');
     if (!posts.length) continue;
 
-    const isDev = root.dataset.dev === 'true';
+    const googleClientId = root.dataset.googleClientId ?? '';
     const cardEl = root.closest<HTMLElement>('.deck-card');
     const gridWrap = root.querySelector<HTMLElement>(
       '[data-panel-view="grid"]',
@@ -1350,12 +1194,10 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     const viewBtns = [
       ...root.querySelectorAll<HTMLButtonElement>('[data-view-btn]'),
     ];
-    const totalLikesEl = root.querySelector<HTMLElement>('[data-total-likes]')!;
+    const signOutBtn =
+      root.querySelector<HTMLButtonElement>('[data-sign-out]')!;
 
-    const gateForm = root.querySelector<HTMLFormElement>('[data-gate-form]')!;
-    const gateName = root.querySelector<HTMLInputElement>('[data-gate-name]')!;
-    const gateEmail =
-      root.querySelector<HTMLInputElement>('[data-gate-email]')!;
+    const googleBtnHost = root.querySelector<HTMLElement>('[data-google-btn]')!;
     const gateError = root.querySelector<HTMLElement>('[data-gate-error]')!;
 
     const mediaStage = root.querySelector<HTMLElement>('[data-post-media]')!;
@@ -1370,76 +1212,21 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     const mediaMuteBtn =
       root.querySelector<HTMLButtonElement>('[data-media-mute]')!;
     const slideCountEl = root.querySelector<HTMLElement>('[data-slide-count]')!;
-    const likeHintEl = root.querySelector<HTMLElement>('[data-like-hint]')!;
     const stepBtns = [
       ...root.querySelectorAll<HTMLButtonElement>('[data-media-step]'),
     ];
     const postStepBtns = [
       ...root.querySelectorAll<HTMLButtonElement>('[data-post-step]'),
     ];
-    const heartsLayer = root.querySelector<HTMLElement>('[data-hearts-layer]')!;
-
     const captionEl = root.querySelector<HTMLElement>('[data-post-caption]')!;
-    const likeBtn = root.querySelector<HTMLButtonElement>('[data-like-btn]')!;
-    const postLikesEl = root.querySelector<HTMLElement>('[data-post-likes]')!;
 
-    let visitor: Visitor | null = isDev
-      ? {
-          name: 'Juan Villa',
-          email: 'juan@juanevillam.com',
-          token: 'dev-owner-token',
-        }
-      : null;
-    try {
-      const saved = localStorage.getItem(VISITOR_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.name && parsed?.email) {
-          visitor = {
-            name: parsed.name,
-            email: parsed.email,
-            token: parsed.token || makeToken(),
-          };
-          localStorage.setItem(VISITOR_KEY, JSON.stringify(visitor));
-        }
-      }
-    } catch {}
-
-    const likeCounts: Record<string, number> = {};
-    const likedByMe: Record<string, boolean> = {};
-    for (const p of posts) {
-      likeCounts[p.id] = p.initialLikes;
-      likedByMe[p.id] = false;
-    }
-
-    try {
-      const cached = JSON.parse(localStorage.getItem(LOCAL_STATE_KEY) ?? '{}');
-      for (const [id, count] of Object.entries(cached.likeCounts ?? {})) {
-        if (typeof count === 'number') likeCounts[id] = count;
-      }
-      for (const [id, liked] of Object.entries(cached.likedByMe ?? {})) {
-        likedByMe[id] = Boolean(liked);
-      }
-    } catch {}
-
-    const saveLocalState = () => {
-      try {
-        localStorage.setItem(
-          LOCAL_STATE_KEY,
-          JSON.stringify({
-            likeCounts,
-            likedByMe,
-          }),
-        );
-      } catch {}
-    };
+    let authenticated = false;
 
     let activePostIdx = 0;
     let activeMediaIdx = 0;
     let frontLayer = 0;
     let mediaTurn = 0;
     let slideCountTimer = 0;
-    let likeHintTimer = 0;
     let videoMuted = false;
 
     const pauseAllVideos = () => {
@@ -1460,36 +1247,9 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       }, 1600);
     };
 
-    const flashLikeHint = () => {
-      likeHintEl.classList.add('is-shown');
-      clearTimeout(likeHintTimer);
-      likeHintTimer = window.setTimeout(() => {
-        likeHintEl.classList.remove('is-shown');
-      }, 2400);
-    };
-
-    const hideLikeHint = () => {
-      clearTimeout(likeHintTimer);
-      likeHintEl.classList.remove('is-shown');
-    };
-
-    const syncTotalsAndTiles = () => {
-      let total = 0;
-      for (const p of posts) {
-        const c = likeCounts[p.id] ?? p.initialLikes;
-        total += c;
-        const tileLikes = root.querySelector<HTMLElement>(
-          `[data-tile-likes="${p.id}"]`,
-        );
-        if (tileLikes) tileLikes.textContent = String(c);
-      }
-      totalLikesEl.textContent = String(total);
-    };
-
     const syncVisitorUI = () => {
-      const unlocked = Boolean(visitor?.name && visitor?.email);
-      root.classList.toggle('is-locked', !unlocked);
-      if (!unlocked) {
+      root.classList.toggle('is-locked', !authenticated);
+      if (!authenticated) {
         pauseAllVideos();
       }
     };
@@ -1587,16 +1347,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       activePostIdx = ((idx % posts.length) + posts.length) % posts.length;
       activeMediaIdx = 0;
       const post = posts[activePostIdx];
-
       captionEl.textContent = captionOf(post);
-
-      const liked = Boolean(likedByMe[post.id]);
-      likeBtn.classList.toggle('is-liked', liked);
-      likeBtn.setAttribute('aria-pressed', String(liked));
-      postLikesEl.textContent = String(
-        likeCounts[post.id] ?? post.initialLikes,
-      );
-
       renderMedia();
     };
 
@@ -1612,32 +1363,86 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       }
       if (isGrid) {
         pauseAllVideos();
-        hideLikeHint();
         if (cardEl && posts[0]?.scene) {
           cardEl.setAttribute('data-scene', posts[0].scene);
         }
       } else {
         renderPost(activePostIdx);
-        flashLikeHint();
       }
     };
 
-    const GATE_PLACEHOLDERS: Record<Locale, [string, string]> = {
-      en: ['Your name', 'you@email.com'],
-      es: ['Tu nombre', 'tu@correo.com'],
-      zh: ['你的姓名', 'your@email.com'],
-    };
     const syncLangStrings = () => {
-      const lang = currentLang();
       const post = posts[activePostIdx];
       if (post) captionEl.textContent = captionOf(post);
-      const [namePh, emailPh] = GATE_PLACEHOLDERS[lang];
-      gateName.placeholder = namePh;
-      gateEmail.placeholder = emailPh;
+      if (!authenticated) renderGoogleButton();
     };
+
+    const mountGoogleAuth = async () => {
+      if (!googleClientId) return;
+      try {
+        const accounts = await loadGsi();
+        if (!accounts?.id) return;
+        accounts.id.initialize({
+          client_id: googleClientId,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          callback: async res => {
+            if (!res.credential) {
+              gateError.classList.remove('is-hidden');
+              return;
+            }
+            gateError.classList.add('is-hidden');
+            try {
+              const r = await fetch('/api/photos', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'google',
+                  credential: res.credential,
+                }),
+              });
+              const data = (await r.json()) as {
+                ok?: boolean;
+                authenticated?: boolean;
+              };
+              if (r.ok && data.authenticated) {
+                authenticated = true;
+                syncVisitorUI();
+                if (new URLSearchParams(location.search).get('view') === 'detail') {
+                  setView('detail');
+                }
+              } else {
+                gateError.classList.remove('is-hidden');
+              }
+            } catch {
+              gateError.classList.remove('is-hidden');
+            }
+          },
+        });
+        renderGoogleButton();
+      } catch {
+        gateError.classList.remove('is-hidden');
+      }
+    };
+
+    const renderGoogleButton = () => {
+      const g = (window as unknown as { google?: GoogleAccounts }).google;
+      if (!g?.accounts?.id) return;
+      googleBtnHost.innerHTML = '';
+      g.accounts.id.renderButton(googleBtnHost, {
+        type: 'standard',
+        theme: 'filled_black',
+        size: 'large',
+        shape: 'pill',
+        text: 'continue_with',
+        locale: currentLang(),
+      });
+    };
+
     syncLangStrings();
 
-    // Keep caption & gate placeholders synced if language switches in-place
+    // Keep caption & Google button locale synced if language switches in-place
     new MutationObserver(syncLangStrings).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-lang'],
@@ -1655,89 +1460,27 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
     });
     document.addEventListener('narr:voice', pauseAllVideos);
 
-    const hydrateFromServer = () => {
-      const params = new URLSearchParams();
-      if (visitor?.email) params.set('email', visitor.email);
-      fetch(`/api/photos?${params.toString()}`)
-        .then(r => r.json())
-        .then(data => {
-          if (!data?.ok) return;
-          for (const p of posts) {
-            const serverLikes = Number(data.likeCounts?.[p.id] ?? 0);
-            likeCounts[p.id] = p.initialLikes + serverLikes;
-            likedByMe[p.id] = Boolean(data.likedByMe?.[p.id]);
-          }
-          saveLocalState();
-          syncTotalsAndTiles();
-          if (!detailWrap.classList.contains('is-hidden')) {
-            renderPost(activePostIdx);
-          }
-        })
-        .catch(() => {});
-    };
-
-    hydrateFromServer();
-
-    // Spawn a floating monochrome heart at (clientX, clientY) inside mediaStage
-    const spawnHeartAt = (clientX?: number, clientY?: number) => {
-      const rect = mediaStage.getBoundingClientRect();
-      const x =
-        clientX !== undefined ? clientX - rect.left : rect.width / 2;
-      const y =
-        clientY !== undefined ? clientY - rect.top : rect.height - 36;
-      const rot = (Math.random() * 32 - 16).toFixed(1);
-      const dx = (Math.random() * 28 - 14).toFixed(1);
-
-      const el = document.createElement('div');
-      el.className = 'pop-heart';
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
-      el.style.setProperty('--rot', `${rot}deg`);
-      el.style.setProperty('--dx', `${dx}px`);
-      el.innerHTML = `<svg viewBox="0 0 24 24" width="52" height="52"><path d="M12 20.5s-8.2-5.1-8.2-10.8A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.2 3.3c0 5.7-8.2 10.8-8.2 10.8Z" fill="currentColor"/></svg>`;
-      heartsLayer.append(el);
-      el.addEventListener('animationend', () => el.remove(), { once: true });
-    };
-
-    // Gate unlock submit
-    gateForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const fd = new FormData(gateForm);
-      const website = String(fd.get('website') ?? '').trim();
-      const name = gateName.value.trim();
-      const email = gateEmail.value.trim().toLowerCase();
-      const valid =
-        name.length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-
-      if (!valid) {
-        gateError.classList.remove('is-hidden');
-        return;
-      }
-      gateError.classList.add('is-hidden');
-      visitor = { name, email, token: visitor?.token || makeToken() };
-      try {
-        localStorage.setItem(VISITOR_KEY, JSON.stringify(visitor));
-      } catch {}
+    signOutBtn.addEventListener('click', async () => {
+      authenticated = false;
+      setView('grid');
       syncVisitorUI();
-
-      fetch('/api/photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'unlock',
-          name,
-          email,
-          token: visitor.token,
-          website,
-        }),
-      })
-        .then(() => hydrateFromServer())
-        .catch(() => {});
+      try {
+        (
+          window as unknown as { google?: GoogleAccounts }
+        ).google?.accounts?.id?.disableAutoSelect?.();
+        await fetch('/api/photos', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'logout' }),
+        });
+      } catch {}
+      mountGoogleAuth();
     });
 
     for (const btn of viewBtns) {
       btn.addEventListener('click', () => {
-        if (!visitor) return;
+        if (!authenticated) return;
         setView(btn.dataset.viewBtn as 'grid' | 'detail');
       });
     }
@@ -1746,10 +1489,7 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       '[data-open-post]',
     )) {
       tile.addEventListener('click', () => {
-        if (!visitor) {
-          gateName.focus();
-          return;
-        }
+        if (!authenticated) return;
         activePostIdx = Number(tile.dataset.openPost ?? 0);
         setView('detail');
       });
@@ -1766,58 +1506,10 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       });
     }
 
-    const triggerLike = (
-      forceLike?: boolean,
-      clientX?: number,
-      clientY?: number,
-    ) => {
-      if (!visitor) {
-        gateName.focus();
-        return;
-      }
-      hideLikeHint();
-      const post = posts[activePostIdx];
-      const currentlyLiked = Boolean(likedByMe[post.id]);
-      const nextLiked = forceLike !== undefined ? forceLike : !currentlyLiked;
-
-      if (nextLiked && !currentlyLiked) {
-        likeCounts[post.id] = (likeCounts[post.id] ?? post.initialLikes) + 1;
-      } else if (!nextLiked && currentlyLiked) {
-        likeCounts[post.id] = Math.max(
-          0,
-          (likeCounts[post.id] ?? post.initialLikes) - 1,
-        );
-      }
-      likedByMe[post.id] = nextLiked;
-
-      likeBtn.classList.toggle('is-liked', nextLiked);
-      likeBtn.setAttribute('aria-pressed', String(nextLiked));
-      postLikesEl.textContent = String(likeCounts[post.id]);
-      saveLocalState();
-      syncTotalsAndTiles();
-
-      if (nextLiked) {
-        spawnHeartAt(clientX, clientY);
-      }
-
-      fetch('/api/photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'like',
-          postId: post.id,
-          liked: nextLiked,
-          name: visitor.name,
-          email: visitor.email,
-        }),
-      }).catch(() => {});
-    };
-
     // Touch swipe inside post media steps the post's carousel without turning
-    // the outer PanelDeck, and double-tap on touch triggers a like.
+    // the outer PanelDeck.
     let touchStartX: number | null = null;
     let touchStartY: number | null = null;
-    let lastTapTime = 0;
     mediaStage.addEventListener(
       'touchstart',
       e => {
@@ -1850,20 +1542,6 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
             ((activeMediaIdx + delta) % post.media.length + post.media.length) %
             post.media.length;
           renderMedia(true);
-          return;
-        }
-        if (
-          Math.abs(dx) < 14 &&
-          Math.abs(dy) < 14 &&
-          !(e.target as HTMLElement).closest('button')
-        ) {
-          const now = Date.now();
-          if (now - lastTapTime < 300) {
-            lastTapTime = 0;
-            triggerLike(true, touch.clientX, touch.clientY);
-          } else {
-            lastTapTime = now;
-          }
         }
       },
       { passive: true },
@@ -1876,6 +1554,26 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       });
     }
 
+    // Open full-screen PhotoViewer on click/tap of the media (desktop + mobile)
+    mediaStage.addEventListener('click', e => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      const post = posts[activePostIdx];
+      if (!post?.media.length) return;
+      pauseAllVideos();
+      document.dispatchEvent(
+        new CustomEvent('viewer:open', {
+          detail: {
+            items: post.media.map(src => ({
+              src,
+              name: captionOf(post),
+              video: /\.mp4(\?|$)/.test(src) || undefined,
+            })),
+            at: activeMediaIdx,
+          },
+        }),
+      );
+    });
+
     mediaMuteBtn.addEventListener('click', () => {
       videoMuted = !videoMuted;
       for (const l of mediaLayers) l.video.muted = videoMuted;
@@ -1885,27 +1583,23 @@ const totalInitialLikes = posts.reduce((sum, p) => sum + p.initialLikes, 0);
       }
     });
 
-    likeBtn.addEventListener('click', () => {
-      const r = mediaStage.getBoundingClientRect();
-      triggerLike(
-        undefined,
-        r.left + r.width * (0.35 + Math.random() * 0.3),
-        r.top + r.height * (0.45 + Math.random() * 0.25),
-      );
-    });
-
-    mediaStage.addEventListener('dblclick', e => {
-      if ((e.target as HTMLElement).closest('button')) return;
-      triggerLike(true, e.clientX, e.clientY);
-    });
-
-    syncTotalsAndTiles();
     syncVisitorUI();
-    if (
-      visitor &&
-      new URLSearchParams(location.search).get('view') === 'detail'
-    ) {
-      setView('detail');
-    }
+    fetch('/api/photos', { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then((data: { authenticated?: boolean }) => {
+        authenticated = Boolean(data.authenticated);
+        syncVisitorUI();
+        if (
+          authenticated &&
+          new URLSearchParams(location.search).get('view') === 'detail'
+        ) {
+          setView('detail');
+        } else if (!authenticated) {
+          mountGoogleAuth();
+        }
+      })
+      .catch(() => {
+        mountGoogleAuth();
+      });
   }
 </script>

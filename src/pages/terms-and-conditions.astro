@@ -1,0 +1,103 @@
+---
+import Prose from '../layouts/Prose.astro';
+import L from '../components/L.astro';
+import { AUTHOR_FULL_NAME, CONTACT_EMAIL } from '../lib/legal';
+---
+
+<Prose
+  title={{
+    en: 'Terms and Conditions',
+    es: 'Términos y condiciones',
+    zh: '条款与条件',
+  }}
+  app="juanevillam.com"
+>
+  <L>
+    <Fragment slot="en">
+      <p>
+        juanevillam.com is the personal website of {AUTHOR_FULL_NAME} ("I",
+        "me"). By browsing the site or signing in to the personal Photos section
+        you agree to these terms.
+      </p>
+
+      <h2>Content and personal archive</h2>
+      <p>
+        All writing, voice narrations, code demos, and personal photos on
+        juanevillam.com belong to me unless otherwise attributed. Signing in
+        with Google to view the Photos section grants you personal viewing
+        access only; please do not redistribute or scrape my personal photos
+        without permission.
+      </p>
+
+      <h2>Availability</h2>
+      <p>
+        The site is provided as-is. I may update content, change features, or
+        revoke access to the personal Photos archive at any time.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about these terms can be sent to{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+
+      <p>Last updated: November 22, 2026.</p>
+    </Fragment>
+
+    <Fragment slot="es">
+      <p>
+        juanevillam.com es el sitio web personal de {AUTHOR_FULL_NAME} ("yo").
+        Al navegar por el sitio o iniciar sesión en la sección personal de Fotos
+        aceptas estos términos.
+      </p>
+
+      <h2>Contenido y archivo personal</h2>
+      <p>
+        Todos los textos, narraciones de voz, demos de código y fotos personales
+        en juanevillam.com me pertenecen salvo que se indique otra autoría.
+        Iniciar sesión con Google para ver Fotos otorga únicamente acceso de
+        visualización personal; por favor no redistribuyas ni descargues de
+        forma automatizada mis fotos personales sin permiso.
+      </p>
+
+      <h2>Disponibilidad</h2>
+      <p>
+        El sitio se ofrece tal cual. Puedo actualizar contenido, cambiar
+        funciones o restringir el acceso al archivo personal de Fotos en
+        cualquier momento.
+      </p>
+
+      <h2>Contacto</h2>
+      <p>
+        Cualquier consulta sobre estos términos puede enviarse a{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+
+      <p>Última actualización: 22 de noviembre de 2026.</p>
+    </Fragment>
+
+    <Fragment slot="zh">
+      <p>
+        juanevillam.com 是 {AUTHOR_FULL_NAME}（"我"）的个人网站。浏览本网站或登录个人照片区即表示你同意以下条款。
+      </p>
+
+      <h2>内容与个人相册</h2>
+      <p>
+        除另有注明外，juanevillam.com 上的所有文字、语音旁白、代码演示和个人照片均归我所有。使用 Google 登录查看照片区仅授予个人浏览权限；未经许可，请勿转载或抓取我的个人照片。
+      </p>
+
+      <h2>可用性</h2>
+      <p>
+        本网站按原样提供。我可能随时更新内容、调整功能或更改个人照片区的访问权限。
+      </p>
+
+      <h2>联系方式</h2>
+      <p>
+        如对本条款有任何疑问，请联系{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>。
+      </p>
+
+      <p>最后更新：2026 年 11 月 22 日。</p>
+    </Fragment>
+  </L>
+</Prose>

@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/ui';
+import { applyOrder, savedPhotoOrder, savedPhotoRemoved } from './mediaOrder';
 
 /**
  * PHOTOS (More of Me → /more-of-me/photos) — Juan's personal photo feed,
@@ -22,13 +23,15 @@ export type PhotoPost = {
   initialLikes: number;
 };
 
-export const PHOTO_POSTS: PhotoPost[] = [
+const RAW_PHOTO_POSTS: PhotoPost[] = [
   {
     id: 'tachira',
     date: '2026-11-17',
     media: [
       '/media/likes/photos/tachira/1.webp',
       '/media/likes/photos/tachira/2.webp',
+      '/media/likes/photos/tachira/3.webp',
+      '/media/likes/photos/tachira/4.webp',
     ],
     caption: {
       en: 'táchira',
@@ -42,9 +45,19 @@ export const PHOTO_POSTS: PhotoPost[] = [
     date: '2026-10-23',
     media: [
       '/media/likes/photos/caracas/1.webp',
-      '/media/likes/photos/caracas/2.webp',
-      '/media/likes/photos/caracas/3.webp',
+      '/media/likes/photos/caracas/5.webp',
+      '/media/likes/photos/caracas/6.webp',
       '/media/likes/photos/caracas/4.webp',
+      '/media/events/startup-venezuela-summit/tripealo-team.jpg',
+      '/media/likes/photos/caracas/3.webp',
+      '/media/events/startup-venezuela-summit/victor-cardenas.jpg',
+      '/media/events/startup-venezuela-summit/innoven-workshop.mp4',
+      '/media/events/platanus-hack-caracas/team-talk.jpg',
+      '/media/events/platanus-hack-caracas/mentor-session.mp4',
+      '/media/events/platanus-hack-caracas/tridi-sketch.jpg',
+      '/media/events/platanus-hack-caracas/pitch.jpg',
+      '/media/events/platanus-hack-caracas/tridi-presentation.jpg',
+      '/media/events/platanus-hack-caracas/group-photo.jpg',
     ],
     caption: {
       en: 'caracas',
@@ -61,6 +74,7 @@ export const PHOTO_POSTS: PhotoPost[] = [
       '/media/likes/photos/andalusia/2.webp',
       '/media/likes/photos/andalusia/3.webp',
       '/media/likes/photos/andalusia/4.webp',
+      '/media/likes/photos/andalusia/5.webp',
     ],
     caption: {
       en: 'andalusia',
@@ -91,6 +105,8 @@ export const PHOTO_POSTS: PhotoPost[] = [
     media: [
       '/media/likes/photos/prague/1.webp',
       '/media/likes/photos/prague/2.webp',
+      '/media/likes/photos/prague/3.webp',
+      '/media/likes/photos/prague/4.webp',
     ],
     caption: {
       en: 'prague',
@@ -132,6 +148,11 @@ export const PHOTO_POSTS: PhotoPost[] = [
     initialLikes: 0,
   },
 ];
+
+export const PHOTO_POSTS: PhotoPost[] = RAW_PHOTO_POSTS.map(post => ({
+  ...post,
+  media: applyOrder(post.media, savedPhotoOrder(post.id), m => m, savedPhotoRemoved(post.id)),
+}));
 
 export const posterOf = (src: string) =>
   /\.mp4(\?|$)/.test(src) ? src.replace(/\.mp4(?=\?|$)/, '.jpg') : src;
