@@ -242,6 +242,7 @@ const posts = await Promise.all(
                 <video
                   class="media-main is-hidden"
                   data-media-video
+                  muted
                   playsinline
                   loop
                   preload="metadata"
@@ -285,49 +286,11 @@ const posts = await Promise.all(
             </svg>
           </button>
 
-          <!-- Overlay inside media: caption left, mute + post switcher right -->
+          <!-- Overlay inside media: caption left, post switcher right -->
           <div class="post-overlay">
             <span class="post-caption" data-post-caption></span>
 
             <div class="post-overlay-trail">
-              <button
-                type="button"
-                class="circle-btn media-mute is-unmuted is-hidden"
-                data-media-mute
-              >
-                <svg
-                  class="icon-muted"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.2 0 3.6 3.6m0-3.6-3.6 3.6"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"></path>
-                </svg>
-                <svg
-                  class="icon-unmuted"
-                  viewBox="0 0 16 16"
-                  width="13"
-                  height="13"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 6.2h2.6l3.4-2.8v9.2l-3.4-2.8H2.5V6.2Zm8.3-.7a3.6 3.6 0 0 1 0 5m1.8-6.8a6 6 0 0 1 0 8.6"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"></path>
-                </svg>
-                <span class="sr"><T k="photos.mute" /></span>
-              </button>
-
               <div class="post-nav-pills">
                 <button
                   type="button"
@@ -775,23 +738,9 @@ const posts = await Promise.all(
   }
 
   .media-step.is-hidden,
-  .slide-count.is-hidden,
-  .media-mute.is-hidden {
+  .slide-count.is-hidden {
     opacity: 0 !important;
     pointer-events: none !important;
-  }
-
-  .media-mute {
-    position: relative;
-  }
-
-  .media-mute.is-hidden {
-    display: none;
-  }
-
-  .media-mute:not(.is-unmuted) .icon-unmuted,
-  .media-mute.is-unmuted .icon-muted {
-    display: none;
   }
 
   /* ---------- post overlay inside media (caption + post controls) ---------- */
@@ -1102,8 +1051,6 @@ const posts = await Promise.all(
       img: el.querySelector<HTMLImageElement>('[data-media-img]')!,
       video: el.querySelector<HTMLVideoElement>('[data-media-video]')!,
     }));
-    const mediaMuteBtn =
-      root.querySelector<HTMLButtonElement>('[data-media-mute]')!;
     const slideCountEl = root.querySelector<HTMLElement>('[data-slide-count]')!;
     const stepBtns = [
       ...root.querySelectorAll<HTMLButtonElement>('[data-media-step]'),
@@ -1120,7 +1067,6 @@ const posts = await Promise.all(
     let frontLayer = 0;
     let mediaTurn = 0;
     let slideCountTimer = 0;
-    let videoMuted = false;
 
     const pauseAllVideos = () => {
       for (const l of mediaLayers) l.video.pause();
@@ -1183,21 +1129,11 @@ const posts = await Promise.all(
         if (back.video.getAttribute('src') !== src) {
           back.video.src = src;
         }
-        back.video.muted = videoMuted;
-        mediaMuteBtn.classList.remove('is-hidden');
-        mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
-        if (!videoMuted) {
-          document.dispatchEvent(new CustomEvent('media:solo'));
-        }
-        back.video.play().catch(() => {
-          back.video.muted = true;
-          mediaMuteBtn.classList.remove('is-unmuted');
-          back.video.play().catch(() => {});
-        });
+        back.video.muted = true;
+        back.video.play().catch(() => {});
       } else {
         back.video.pause();
         back.video.classList.add('is-hidden');
-        mediaMuteBtn.classList.add('is-hidden');
         back.img.onload = null;
         back.img.src = src;
         back.img.alt = `${captionOf(post)} (${activeMediaIdx + 1}/${post.media.length})`;
@@ -1477,15 +1413,6 @@ const posts = await Promise.all(
           },
         }),
       );
-    });
-
-    mediaMuteBtn.addEventListener('click', () => {
-      videoMuted = !videoMuted;
-      for (const l of mediaLayers) l.video.muted = videoMuted;
-      mediaMuteBtn.classList.toggle('is-unmuted', !videoMuted);
-      if (!videoMuted) {
-        document.dispatchEvent(new CustomEvent('media:solo'));
-      }
     });
 
     syncVisitorUI();
