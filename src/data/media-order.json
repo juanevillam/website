@@ -1,0 +1,54 @@
+{
+  "events": {
+    "platanus": [
+      "/media/events/platanus-hack-caracas/team-selfie.jpg",
+      "/media/events/platanus-hack-caracas/team-audience.jpg",
+      "/media/events/platanus-hack-caracas/hackathon-floor.mp4",
+      "/media/events/platanus-hack-caracas/space-explorer.mp4",
+      "/media/events/platanus-hack-caracas/team-desks.jpg",
+      "/media/events/platanus-hack-caracas/night-lounge.mp4"
+    ]
+  },
+  "photos": {
+    "tachira": [
+      "/media/likes/photos/tachira/1.webp",
+      "/media/likes/photos/tachira/4.webp",
+      "/media/likes/photos/tachira/2.webp",
+      "/media/likes/photos/tachira/3.webp"
+    ],
+    "andalusia": [
+      "/media/likes/photos/andalusia/1.webp",
+      "/media/likes/photos/andalusia/2.webp",
+      "/media/likes/photos/andalusia/3.webp",
+      "/media/likes/photos/andalusia/4.webp"
+    ],
+    "caracas": [
+      "/media/likes/photos/caracas/1.webp",
+      "/media/likes/photos/caracas/5.webp",
+      "/media/likes/photos/caracas/6.webp",
+      "/media/likes/photos/caracas/4.webp",
+      "/media/likes/photos/caracas/3.webp",
+      "/media/events/startup-venezuela-summit/innoven-workshop.mp4",
+      "/media/events/platanus-hack-caracas/team-talk.jpg",
+      "/media/events/platanus-hack-caracas/mentor-session.mp4",
+      "/media/events/platanus-hack-caracas/tridi-sketch.jpg",
+      "/media/events/platanus-hack-caracas/pitch.jpg",
+      "/media/events/platanus-hack-caracas/tridi-presentation.jpg",
+      "/media/events/platanus-hack-caracas/group-photo.jpg"
+    ]
+  },
+  "cosmos": [],
+  "removed": {
+    "events": {},
+    "photos": {
+      "andalusia": [
+        "/media/likes/photos/andalusia/5.webp"
+      ],
+      "caracas": [
+        "/media/events/startup-venezuela-summit/victor-cardenas.jpg",
+        "/media/events/startup-venezuela-summit/tripealo-team.jpg"
+      ]
+    },
+    "cosmos": []
+  }
+}

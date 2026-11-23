@@ -1,0 +1,159 @@
+---
+import DevLangPicker from '../../components/dev/DevLangPicker.astro';
+import '../../styles/global.css';
+
+/**
+ * DEV ONLY — /dev hub listing every local development tool.
+ * Emits zero pages in production builds.
+ */
+export const getStaticPaths = () =>
+  import.meta.env.PROD ? [] : [{ params: { hub: undefined } }];
+
+const TOOLS = [
+  {
+    href: '/dev/teleprompter',
+    name: 'Teleprompter',
+    path: '/dev/teleprompter',
+    descKey: 'hub.teleprompter.desc',
+    desc: 'Estudio bilingüe ES/EN para grabar video 9:16 + audio y transcribir.',
+  },
+  {
+    href: '/dev/media',
+    name: 'Media Orderer',
+    path: '/dev/media',
+    descKey: 'hub.media.desc',
+    desc: 'Drag & drop para ordenar o eliminar fotos y videos de Destacados, Fotos y Cosmos.',
+  },
+  {
+    href: '/dev/ranker',
+    name: 'Songs Ranker',
+    path: '/dev/ranker',
+    descKey: 'hub.ranker.desc',
+    desc: 'Elige y ordena tus canciones favoritas de More of Me (Songs).',
+  },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Dev · juanevillam</title>
+  </head>
+  <body>
+    <main class="hub">
+      <header class="hub-head">
+        <div class="hub-bar">
+          <a href="/" class="dev-back" data-i18n="back.site">← juanevillam.com</a>
+          <DevLangPicker />
+        </div>
+        <h1 class="title" data-i18n="hub.title">Dev Tools</h1>
+      </header>
+
+      <ol class="tool-list">
+        {
+          TOOLS.map(t => (
+            <li>
+              <a class="row" href={t.href}>
+                <div class="row-main">
+                  <span class="row-name">{t.name}</span>
+                  <span class="row-desc" data-i18n={t.descKey}>{t.desc}</span>
+                </div>
+                <span class="row-path">{t.path}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </main>
+
+    <style>
+      body {
+        min-height: 100svh;
+        background: var(--ground);
+        color: var(--ink);
+      }
+
+      .hub {
+        width: min(46rem, 100%);
+        margin: 0 auto;
+        padding: 3.5rem clamp(1.25rem, 4vw, 2.5rem) 4rem;
+      }
+
+      .hub-head {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 2.25rem;
+      }
+
+      .hub-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .tool-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-top: 1px solid var(--hairline);
+      }
+
+      .tool-list li {
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 1.125rem 0.75rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: background-color var(--hover);
+      }
+
+      .row:hover {
+        background: var(--surface);
+      }
+
+      .row-main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .row-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .row-desc {
+        font-size: 0.875rem;
+        color: var(--ink-body);
+        line-height: 1.45;
+      }
+
+      .row-path {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--ink-3);
+        white-space: nowrap;
+      }
+
+      @media (max-width: 40rem) {
+        .row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.45rem;
+        }
+      }
+    </style>
+  </body>
+</html>

@@ -1,25 +1,12 @@
 ---
+import DevLangPicker from '../../../components/dev/DevLangPicker.astro';
 import SAVED from '../../../data/likes-order.json';
 import '../../../styles/global.css';
 
 /**
  * DEV ONLY — /dev/ranker. Juan ranks his favorite SONGS, the ones of the
- * More of Me songs card. His library (the songs he loaded into Sound
- * Shaper, iCloud Drive's Life/music) is mostly songs to test the app
- * with; only a handful are his own top. So it goes in two steps:
- *
- * 1. PICK — every song of the folder, each one playable: he marks the
- *    ones that are his top (about 7 or 8).
- * 2. DUELS — two of those side by side, each playable, and he picks the
- *    one he likes more. A binary insertion sort, each comparison one
- *    duel, finds the whole order in about n·log2(n) duels, never asking
- *    the same pair twice.
- *
- * The songs are played straight from the folder by the dev server
- * (scripts/likes-ranker.mjs); nothing is copied. Every answer is kept in
- * the browser (localStorage), so it can be left halfway and the last
- * answer undone. Save writes the order, first to last, into
- * src/data/likes-order.json under `songs`.
+ * More of Me songs card. Merges full Sound Shaper metadata (cover artwork,
+ * title, artist, duration) from `src/data/songs.json` via `scripts/likes-ranker.mjs`.
  *
  * In a production build this route has no paths, so it does not exist.
  */
@@ -33,16 +20,22 @@ export const getStaticPaths = () =>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Ranker · Canciones</title>
+    <title>Songs Ranker · Dev</title>
   </head>
   <body>
     <header class="top">
-      <p class="label">Ranker · Canciones</p>
+      <div class="top-left">
+        <a href="/dev" class="dev-back" data-i18n="back.dev">← Dev</a>
+        <p class="label" data-i18n="ranker.title">Songs Ranker</p>
+      </div>
       <nav class="steps">
-        <button type="button" data-step="pick">1 · Tu top</button>
-        <button type="button" data-step="duel">2 · Duelos</button>
+        <button type="button" data-step="pick" data-i18n="ranker.step.pick">1 · Tu top</button>
+        <button type="button" data-step="duel" data-i18n="ranker.step.duel">2 · Duelos</button>
       </nav>
-      <p class="progress" data-progress></p>
+      <div class="top-right">
+        <p class="progress" data-progress></p>
+        <DevLangPicker />
+      </div>
     </header>
 
     <main>
@@ -50,28 +43,44 @@ export const getStaticPaths = () =>
       <section class="pick-step" data-pick hidden>
         <div class="head">
           <div>
-            <h1>¿Cuáles son tu top?</h1>
-            <p class="hint">Dale play para escucharla y marca las de tu top personal.</p>
+            <h1 data-i18n="ranker.pick.heading">¿Cuáles son tu top?</h1>
+            <p class="hint" data-i18n="ranker.pick.hint">
+              Dale play para escucharla y marca las de tu top personal.
+            </p>
           </div>
-          <button type="button" class="save" data-to-duel>Rankear <span data-count>0</span></button>
+          <button type="button" class="save" data-to-duel>
+            <span data-i18n="ranker.pick.cta">Rankear</span>
+            <span data-count>0</span>
+          </button>
         </div>
         <ul class="songs" data-songs></ul>
       </section>
 
       <!-- 2. THE DUEL: two songs, the one liked more is clicked. -->
       <section class="duel" data-duel hidden>
-        <p class="ask">¿Cuál te gusta más?</p>
+        <p class="ask" data-i18n="ranker.duel.ask">¿Cuál te gusta más?</p>
         <div class="pair">
           {
             [0, 1].map(side => (
               <div class="side" data-side={side}>
-                <button type="button" class="play big" data-play aria-label="Escuchar">
-                  <span class="glyph" />
-                </button>
+                <div class="cover-wrap">
+                  <img class="cover-img" data-cover alt="" />
+                  <button
+                    type="button"
+                    class="play big"
+                    data-play
+                    data-i18n-aria="ranker.listen"
+                    aria-label="Escuchar"
+                  >
+                    <span class="glyph" />
+                  </button>
+                </div>
                 <p class="title" data-title />
                 <p class="artist" data-artist />
+                <p class="dur" data-dur />
                 <button type="button" class="choose" data-choose>
-                  <kbd>{side === 0 ? '←' : '→'}</kbd> Esta
+                  <kbd>{side === 0 ? '←' : '→'}</kbd>
+                  <span data-i18n="ranker.duel.choose">Esta</span>
                 </button>
               </div>
             ))
@@ -81,8 +90,13 @@ export const getStaticPaths = () =>
           <span class="meter"><span class="meter-fill" data-meter></span></span>
         </div>
         <div class="tools">
-          <button type="button" class="tool" data-undo><kbd>Z</kbd> Deshacer</button>
-          <button type="button" class="tool" data-restart>Empezar de nuevo</button>
+          <button type="button" class="tool" data-undo>
+            <kbd>Z</kbd>
+            <span data-i18n="ranker.duel.undo">Deshacer</span>
+          </button>
+          <button type="button" class="tool" data-restart data-i18n="ranker.duel.restart">
+            Empezar de nuevo
+          </button>
         </div>
       </section>
 
@@ -90,20 +104,31 @@ export const getStaticPaths = () =>
       <section class="result" data-result hidden>
         <div class="head">
           <div>
-            <p class="label">Tu orden</p>
-            <h1>Canciones</h1>
+            <p class="label" data-i18n="ranker.result.label">Tu orden</p>
+            <h1 data-i18n="ranker.result.heading">Canciones</h1>
           </div>
           <div class="actions">
             <span class="save-state" data-save-state></span>
-            <button type="button" class="tool" data-undo-last>Deshacer último</button>
-            <button type="button" class="tool" data-restart-result>Empezar de nuevo</button>
-            <button type="button" class="save" data-save>Guardar en el sitio</button>
+            <button type="button" class="tool" data-undo-last data-i18n="ranker.result.undoLast">
+              Deshacer último
+            </button>
+            <button
+              type="button"
+              class="tool"
+              data-restart-result
+              data-i18n="ranker.duel.restart"
+            >
+              Empezar de nuevo
+            </button>
+            <button type="button" class="save" data-save data-i18n="ranker.result.save">
+              Guardar en el sitio
+            </button>
           </div>
         </div>
         <ol class="songs ranked" data-ranked></ol>
       </section>
 
-      <p class="state" data-state>Cargando canciones…</p>
+      <p class="state" data-state data-i18n="ranker.loading">Cargando canciones…</p>
     </main>
 
     <audio data-audio preload="none"></audio>
@@ -111,11 +136,34 @@ export const getStaticPaths = () =>
     <script is:inline type="application/json" id="saved" set:html={JSON.stringify(SAVED)} />
 
     <script>
-      type Song = { id: string; file: string; title: string; artist: string };
-      /** One duel's answer: the pair, then the winner. */
+      import { devT } from '../../../lib/devI18n';
+      import type { Locale } from '../../../i18n/ui';
+
+      type Song = {
+        id: string;
+        file: string;
+        title: string;
+        artist: string;
+        seconds: number;
+        thumb: string | null;
+        cover: string | null;
+      };
       type Answer = [string, string, string];
 
-      const saved = JSON.parse(document.getElementById('saved')!.textContent!) as Record<string, string[]>;
+      const lang = (): Locale =>
+        ((document.documentElement.dataset.lang as Locale) || 'es');
+
+      const fmtDur = (sec: number) => {
+        if (!sec) return '';
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${String(s).padStart(2, '0')}`;
+      };
+
+      const saved = JSON.parse(document.getElementById('saved')!.textContent!) as Record<
+        string,
+        string[]
+      >;
       const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
       const pickStep = $('[data-pick]');
       const duel = $('[data-duel]');
@@ -140,12 +188,12 @@ export const getStaticPaths = () =>
       };
 
       let library: Song[] = [];
-      // The top starts as what was saved, so a re-rank begins from it.
       let top: string[] = store.get('top', saved.songs ?? []);
       let answers: Answer[] = store.get('answers', []);
       let order: Song[] = [];
       let run = 0;
       let pending: ((winner: string) => void) | null = null;
+      let currentView: 'pick' | 'duel' | 'result' = 'pick';
 
       // ---------- playing ----------
       let playing: string | null = null;
@@ -160,13 +208,12 @@ export const getStaticPaths = () =>
           if (playing !== s.id) {
             audio.src = src(s);
             playing = s.id;
-            // The middle of a song says more than its intro.
             audio.addEventListener(
               'loadedmetadata',
               () => {
                 if (audio.duration > 60) audio.currentTime = audio.duration * 0.35;
               },
-              { once: true }
+              { once: true },
             );
           }
           audio.play();
@@ -181,16 +228,43 @@ export const getStaticPaths = () =>
         mark();
       };
 
-      const playButton = (s: Song) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'play';
-        b.dataset.play = '';
-        b.dataset.id = s.id;
-        b.setAttribute('aria-label', `Escuchar ${s.title}`);
-        b.innerHTML = '<span class="glyph"></span>';
-        b.addEventListener('click', () => toggle(s));
-        return b;
+      const thumbPlayButton = (s: Song) => {
+        const wrap = document.createElement('button');
+        wrap.type = 'button';
+        wrap.className = 'thumb-play';
+        wrap.dataset.play = '';
+        wrap.dataset.id = s.id;
+        wrap.setAttribute('aria-label', `${devT(lang(), 'ranker.listen')} ${s.title}`);
+        if (s.thumb) {
+          const img = document.createElement('img');
+          img.src = s.thumb;
+          img.alt = '';
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          wrap.appendChild(img);
+        }
+        const badge = document.createElement('span');
+        badge.className = 'thumb-scrim';
+        badge.innerHTML = '<span class="glyph"></span>';
+        wrap.appendChild(badge);
+        wrap.addEventListener('click', () => toggle(s));
+        return wrap;
+      };
+
+      const updateProgressText = () => {
+        const l = lang();
+        if (currentView === 'pick') {
+          progress.textContent = devT(l, 'ranker.progress.picked', { n: top.length });
+        } else if (currentView === 'duel') {
+          const total = most(items().length);
+          const left = Math.max(1, total - answers.length);
+          progress.textContent = devT(l, 'ranker.progress.duel', {
+            done: answers.length + 1,
+            left,
+          });
+        } else {
+          progress.textContent = devT(l, 'ranker.progress.done', { n: order.length });
+        }
       };
 
       // ---------- 1. pick ----------
@@ -198,44 +272,53 @@ export const getStaticPaths = () =>
         run++;
         pending = null;
         stop();
+        currentView = 'pick';
         pickStep.hidden = false;
         duel.hidden = true;
         result.hidden = true;
-        progress.textContent = `${library.length} canciones`;
         tabs('pick');
         renderPick();
       };
+
       const renderPick = () => {
+        const l = lang();
         $('[data-count]').textContent = String(top.length);
         $<HTMLButtonElement>('[data-to-duel]').disabled = top.length < 2;
+        updateProgressText();
         $('[data-songs]').replaceChildren(
           ...library.map(s => {
             const li = document.createElement('li');
             const on = top.includes(s.id);
             li.className = 'song' + (on ? ' is-top' : '');
-            li.append(playButton(s));
+            li.append(thumbPlayButton(s));
+
             const text = document.createElement('div');
+            text.className = 'song-meta';
             text.innerHTML = '<p class="title"></p><p class="artist"></p>';
             text.querySelector('.title')!.textContent = s.title;
             text.querySelector('.artist')!.textContent = s.artist;
             li.append(text);
+
+            const dur = document.createElement('span');
+            dur.className = 'dur';
+            dur.textContent = fmtDur(s.seconds);
+            li.append(dur);
+
             const box = document.createElement('button');
             box.type = 'button';
             box.className = 'star';
             box.setAttribute('aria-pressed', String(on));
-            box.textContent = on ? '★ En mi top' : '☆ Top';
+            box.textContent = on ? devT(l, 'ranker.pick.inTop') : devT(l, 'ranker.pick.mark');
             box.addEventListener('click', () => {
               top = on ? top.filter(id => id !== s.id) : [...top, s.id];
               store.put('top', top);
-              // A new top is a new tournament: old duels may be of songs
-              // no longer in it, and the insertion order changes.
               answers = answers.filter(([a, b]) => top.includes(a) && top.includes(b));
               store.put('answers', answers);
               renderPick();
             });
             li.append(box);
             return li;
-          })
+          }),
         );
         mark();
       };
@@ -252,7 +335,8 @@ export const getStaticPaths = () =>
         for (let k = 1; k < n; k++) total += Math.ceil(Math.log2(k + 1));
         return total;
       };
-      const items = () => top.map(id => library.find(s => s.id === id)).filter(Boolean) as Song[];
+      const items = () =>
+        top.map(id => library.find(s => s.id === id)).filter(Boolean) as Song[];
 
       const better = (a: Song, b: Song, gen: number): Promise<boolean> => {
         const key = pairKey(a.id, b.id);
@@ -261,12 +345,22 @@ export const getStaticPaths = () =>
         return new Promise(resolve => {
           if (gen !== run) return;
           stop();
+          currentView = 'duel';
           const pair = flip(key) ? [b, a] : [a, b];
           pair.forEach((s, i) => {
             const side = sides[i];
             side.dataset.id = s.id;
             side.querySelector('[data-title]')!.textContent = s.title;
             side.querySelector('[data-artist]')!.textContent = s.artist;
+            side.querySelector('[data-dur]')!.textContent = fmtDur(s.seconds);
+            const cover = side.querySelector<HTMLImageElement>('[data-cover]')!;
+            if (s.cover) {
+              cover.src = s.cover;
+              cover.hidden = false;
+            } else {
+              cover.removeAttribute('src');
+              cover.hidden = true;
+            }
             const play = side.querySelector<HTMLElement>('[data-play]')!;
             play.dataset.id = s.id;
             play.onclick = () => toggle(s);
@@ -276,7 +370,7 @@ export const getStaticPaths = () =>
           duel.hidden = false;
           result.hidden = true;
           const total = most(items().length);
-          progress.textContent = `Duelo ${answers.length + 1} · como mucho ${total}`;
+          updateProgressText();
           $('[data-meter]').style.width = `${Math.min(100, (answers.length / total) * 100)}%`;
           pending = winner => {
             answers.push([a.id, b.id, winner]);
@@ -311,12 +405,13 @@ export const getStaticPaths = () =>
 
       const finish = () => {
         stop();
+        currentView = 'result';
         pickStep.hidden = true;
         duel.hidden = true;
         result.hidden = false;
-        progress.textContent = `${answers.length} duelos · listo`;
+        updateProgressText();
         const same = (saved.songs ?? []).join() === order.map(s => s.id).join();
-        $('[data-save-state]').textContent = same ? 'Guardado en el sitio' : 'Sin guardar';
+        $('[data-save-state]').textContent = same ? devT(lang(), 'ranker.result.saved') : '';
         $<HTMLButtonElement>('[data-save]').disabled = same;
         $('[data-ranked]').replaceChildren(
           ...order.map((s, i) => {
@@ -325,14 +420,19 @@ export const getStaticPaths = () =>
             const n = document.createElement('b');
             n.className = 'rank';
             n.textContent = `#${i + 1}`;
-            li.append(n, playButton(s));
+            li.append(n, thumbPlayButton(s));
             const text = document.createElement('div');
+            text.className = 'song-meta';
             text.innerHTML = '<p class="title"></p><p class="artist"></p>';
             text.querySelector('.title')!.textContent = s.title;
             text.querySelector('.artist')!.textContent = s.artist;
             li.append(text);
+            const dur = document.createElement('span');
+            dur.className = 'dur';
+            dur.textContent = fmtDur(s.seconds);
+            li.append(dur);
             return li;
-          })
+          }),
         );
       };
 
@@ -351,7 +451,6 @@ export const getStaticPaths = () =>
         sort();
       };
       const restart = () => {
-        if (answers.length && !confirm(`¿Borrar los ${answers.length} duelos?`)) return;
         answers = [];
         store.put('answers', answers);
         sort();
@@ -359,7 +458,7 @@ export const getStaticPaths = () =>
       const save = async () => {
         const button = $<HTMLButtonElement>('[data-save]');
         button.disabled = true;
-        $('[data-save-state]').textContent = 'Guardando…';
+        $('[data-save-state]').textContent = devT(lang(), 'ranker.result.saving');
         try {
           const res = await fetch('/__likes/save', {
             method: 'POST',
@@ -369,10 +468,10 @@ export const getStaticPaths = () =>
           const out = await res.json();
           if (!res.ok) throw new Error(out.error);
           saved.songs = order.map(s => s.id);
-          $('[data-save-state]').textContent = 'Guardado en el sitio';
+          $('[data-save-state]').textContent = devT(lang(), 'ranker.result.saved');
         } catch (e) {
           button.disabled = false;
-          $('[data-save-state]').textContent = `No se guardó: ${(e as Error).message}`;
+          $('[data-save-state]').textContent = String((e as Error).message);
         }
       };
 
@@ -383,8 +482,13 @@ export const getStaticPaths = () =>
 
       $('[data-to-duel]').addEventListener('click', sort);
       $<HTMLElement>('[data-step="pick"]').addEventListener('click', showPick);
-      $<HTMLElement>('[data-step="duel"]').addEventListener('click', () => top.length > 1 && sort());
-      sides.forEach((s, i) => s.querySelector('[data-choose]')!.addEventListener('click', () => answer(i)));
+      $<HTMLElement>('[data-step="duel"]').addEventListener(
+        'click',
+        () => top.length > 1 && sort(),
+      );
+      sides.forEach((s, i) =>
+        s.querySelector('[data-choose]')!.addEventListener('click', () => answer(i)),
+      );
       $('[data-undo]').addEventListener('click', undo);
       $('[data-undo-last]').addEventListener('click', undo);
       $('[data-restart]').addEventListener('click', restart);
@@ -397,6 +501,13 @@ export const getStaticPaths = () =>
         else if (e.key === 'z' || e.key === 'Backspace') undo();
       });
 
+      window.addEventListener('dev:lang', () => {
+        if (library.length) {
+          if (currentView === 'pick') renderPick();
+          else updateProgressText();
+        }
+      });
+
       fetch('/__songs/list')
         .then(r => r.json())
         .then((list: Song[]) => {
@@ -405,7 +516,7 @@ export const getStaticPaths = () =>
           $('[data-state]').remove();
           showPick();
         })
-        .catch(e => ($('[data-state]').textContent = `No se pudieron cargar: ${e.message}`));
+        .catch(e => ($('[data-state]').textContent = String(e.message)));
     </script>
 
     <style is:global>
@@ -425,7 +536,8 @@ export const getStaticPaths = () =>
       .hint,
       .state,
       .artist,
-      .rank {
+      .rank,
+      .dur {
         font-family: var(--font-mono);
         font-size: 0.75rem;
         letter-spacing: 0.02em;
@@ -454,23 +566,56 @@ export const getStaticPaths = () =>
       }
 
       .top {
+        position: sticky;
+        top: 0;
+        z-index: 20;
         display: flex;
         align-items: center;
-        gap: 1.5rem;
-        padding: 1rem 1.5rem;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        padding: 0.85rem 1.5rem;
         border-bottom: 1px solid var(--hairline);
+        background: color-mix(in srgb, var(--ground) 88%, transparent);
+        backdrop-filter: blur(12px);
+      }
+      .top-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .top-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
       }
       .steps {
         display: flex;
         gap: 0.5rem;
       }
       .steps button {
-        padding: 0.45rem 0.85rem;
+        min-height: 2.25rem;
+        padding: 0 0.95rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
-        background: none;
+        background: transparent;
         color: var(--ink-2);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
         cursor: pointer;
+        white-space: nowrap;
+        transition:
+          color var(--hover),
+          border-color var(--hover),
+          background var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .steps button:hover {
+        color: var(--ink);
+        border-color: var(--ink-3);
+      }
+      .steps button:active {
+        transform: scale(0.96);
       }
       .steps button[aria-selected='true'] {
         border-color: var(--ink-3);
@@ -478,7 +623,7 @@ export const getStaticPaths = () =>
         color: var(--ink);
       }
       .progress {
-        margin-left: auto;
+        font-variant-numeric: tabular-nums;
       }
 
       main {
@@ -508,6 +653,7 @@ export const getStaticPaths = () =>
         gap: 0.5rem;
       }
 
+      /* ── Song rows with Sound Shaper square artwork ── */
       .songs {
         margin: 0;
         padding: 0;
@@ -516,69 +662,133 @@ export const getStaticPaths = () =>
       }
       .song {
         display: grid;
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: auto 1fr auto auto;
         align-items: center;
-        gap: 0.875rem;
-        padding: 0.75rem 0;
+        gap: 0.9rem;
+        padding: 0.65rem 0.5rem;
         border-bottom: 1px solid var(--hairline);
+        transition: background var(--hover);
+      }
+      .song:hover {
+        background: rgb(255 255 255 / 0.025);
       }
       .ranked .song {
-        grid-template-columns: 2.5rem auto 1fr;
+        grid-template-columns: 2.25rem auto 1fr auto;
       }
       .song.is-top .title {
         font-weight: 700;
       }
+      .song-meta {
+        min-width: 0;
+      }
       .title {
         font-size: 0.9375rem;
-        line-height: 1.35;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .artist {
         margin-top: 0.15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dur {
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-3);
       }
       .rank {
         color: var(--ink-2);
         font-size: 0.875rem;
+        font-variant-numeric: tabular-nums;
       }
 
-      .play {
+      .thumb-play {
+        position: relative;
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        border: 1px solid var(--hairline);
+        border-radius: 0.55rem;
+        background: var(--surface);
+        overflow: hidden;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition:
+          border-color var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .thumb-play:hover {
+        border-color: var(--ink-3);
+      }
+      .thumb-play:active {
+        transform: scale(0.93);
+      }
+      .thumb-play img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .thumb-scrim {
+        position: absolute;
+        inset: 0;
         display: grid;
         place-items: center;
-        width: 2.25rem;
-        height: 2.25rem;
-        border: 1px solid var(--hairline);
-        border-radius: 999px;
-        background: var(--surface);
-        cursor: pointer;
+        background: rgb(13 13 13 / 0.45);
+        opacity: 0;
+        transition: opacity var(--dur-micro) var(--ease);
       }
-      .play .glyph {
+      .thumb-play:hover .thumb-scrim,
+      .thumb-play[data-on] .thumb-scrim {
+        opacity: 1;
+      }
+      .thumb-play[data-on] {
+        border-color: var(--ink);
+      }
+
+      .glyph {
         width: 0;
         height: 0;
-        margin-left: 0.15rem;
-        border-left: 0.6rem solid var(--ink);
-        border-top: 0.38rem solid transparent;
-        border-bottom: 0.38rem solid transparent;
+        margin-left: 0.14rem;
+        border-left: 0.58rem solid var(--ink);
+        border-top: 0.36rem solid transparent;
+        border-bottom: 0.36rem solid transparent;
       }
-      .play[data-on] .glyph {
-        width: 0.6rem;
-        height: 0.7rem;
+      [data-on] .glyph {
+        width: 0.58rem;
+        height: 0.68rem;
         margin: 0;
         border: 0;
         border-left: 0.2rem solid var(--ink);
         border-right: 0.2rem solid var(--ink);
         box-sizing: border-box;
       }
-      .play.big {
-        width: 4rem;
-        height: 4rem;
-      }
+
       .star {
-        padding: 0.4rem 0.75rem;
+        min-height: 2.1rem;
+        padding: 0 0.85rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
-        background: none;
+        background: transparent;
         color: var(--ink-2);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
         cursor: pointer;
         white-space: nowrap;
+        transition:
+          color var(--hover),
+          border-color var(--hover),
+          background var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .star:hover {
+        color: var(--ink);
+        border-color: var(--ink-3);
+      }
+      .star:active {
+        transform: scale(0.96);
       }
       .star[aria-pressed='true'] {
         border-color: var(--ink-3);
@@ -586,6 +796,7 @@ export const getStaticPaths = () =>
         color: var(--ink);
       }
 
+      /* ── Duel cards with large Sound Shaper cover art ── */
       .ask {
         margin-bottom: 1.5rem;
         text-align: center;
@@ -596,23 +807,66 @@ export const getStaticPaths = () =>
       .pair {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        gap: 1.1rem;
       }
       .side {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
-        padding: 2rem 1.25rem 1.5rem;
+        gap: 0.4rem;
+        padding: 1.75rem 1.25rem 1.5rem;
         border: 1px solid var(--hairline);
-        border-radius: var(--media-radius-flat);
+        border-radius: 1rem;
         background: var(--surface);
         text-align: center;
-        transition: opacity var(--dur-quick) linear;
+        transition:
+          border-color var(--hover),
+          opacity var(--dur-quick) linear;
+      }
+      .cover-wrap {
+        position: relative;
+        width: 11.5rem;
+        height: 11.5rem;
+        border-radius: 0.85rem;
+        border: 1px solid var(--hairline);
+        background: var(--ground);
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+      }
+      .cover-img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .play.big {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        display: grid;
+        place-items: center;
+        width: 3.5rem;
+        height: 3.5rem;
+        border: 1px solid rgb(255 255 255 / 0.22);
+        border-radius: 50%;
+        background: rgb(13 13 13 / 0.68);
+        backdrop-filter: blur(12px);
+        cursor: pointer;
+        transition:
+          border-color var(--hover),
+          background var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .play.big:hover {
+        border-color: var(--ink);
+        background: rgb(13 13 13 / 0.82);
+      }
+      .play.big:active {
+        transform: scale(0.9);
       }
       .side .title {
-        margin-top: 0.75rem;
-        font-size: 1.125rem;
+        max-width: 100%;
+        font-size: 1.0625rem;
         font-weight: 700;
       }
       .side.is-chosen {
@@ -622,14 +876,29 @@ export const getStaticPaths = () =>
         opacity: 0.4;
       }
       .choose {
-        margin-top: 1rem;
-        padding: 0.6rem 1.25rem;
+        margin-top: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2.35rem;
+        padding: 0 1.25rem;
         border: 0;
         border-radius: 999px;
         background: var(--ink);
         color: var(--ground);
+        font-size: 0.875rem;
         font-weight: 700;
         cursor: pointer;
+        white-space: nowrap;
+        transition:
+          opacity var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .choose:hover {
+        opacity: 0.88;
+      }
+      .choose:active {
+        transform: scale(0.96);
       }
       .choose kbd {
         border-color: currentColor;
@@ -649,6 +918,7 @@ export const getStaticPaths = () =>
         display: block;
         height: 100%;
         background: var(--ink-2);
+        transition: width var(--dur-quick) var(--ease);
       }
       .tools {
         display: flex;
@@ -657,24 +927,59 @@ export const getStaticPaths = () =>
         margin-top: 1rem;
       }
       .tool {
-        padding: 0.5rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-height: 2.25rem;
+        padding: 0 0.95rem;
         border: 1px solid var(--hairline);
         border-radius: 999px;
-        background: none;
+        background: transparent;
         color: var(--ink-2);
+        font-size: 0.8125rem;
         cursor: pointer;
+        white-space: nowrap;
+        transition:
+          color var(--hover),
+          border-color var(--hover),
+          background var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .tool:hover {
+        color: var(--ink);
+        border-color: var(--ink-3);
+        background: var(--surface);
+      }
+      .tool:active {
+        transform: scale(0.96);
       }
       .save {
-        padding: 0.6rem 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2.35rem;
+        padding: 0 1.2rem;
         border: 0;
         border-radius: 999px;
         background: var(--ink);
         color: var(--ground);
+        font-size: 0.875rem;
         font-weight: 700;
+        font-variant-numeric: tabular-nums;
         cursor: pointer;
+        white-space: nowrap;
+        transition:
+          opacity var(--hover),
+          transform var(--dur-micro) var(--ease);
+      }
+      .save:hover:not(:disabled) {
+        opacity: 0.88;
+      }
+      .save:active:not(:disabled) {
+        transform: scale(0.96);
       }
       .save:disabled {
-        opacity: 0.4;
+        opacity: 0.35;
         cursor: default;
       }
       @media (max-width: 640px) {
@@ -687,6 +992,11 @@ export const getStaticPaths = () =>
         }
         .actions {
           flex-wrap: wrap;
+        }
+        .top-right {
+          margin-left: 0;
+          width: 100%;
+          justify-content: space-between;
         }
       }
     </style>

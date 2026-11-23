@@ -16,6 +16,7 @@ import path from 'node:path';
  * set already in the file is taken, and only its own ids.
  */
 const FILE = path.join(process.cwd(), 'src/data/likes-order.json');
+const SONGS_META = path.join(process.cwd(), 'src/data/songs.json');
 const ID = /^[a-z0-9-]+$/;
 
 /**
@@ -64,20 +65,36 @@ const tagsOf = file => {
   }
   return tags.get(file);
 };
-const songs = () =>
-  fs
+const metaMap = () => {
+  try {
+    const list = JSON.parse(fs.readFileSync(SONGS_META, 'utf8'));
+    return new Map(list.map(s => [s.id, s]));
+  } catch {
+    return new Map();
+  }
+};
+
+const songs = () => {
+  const meta = metaMap();
+  return fs
     .readdirSync(SONGS)
     .filter(f => /\.(mp3|m4a|aac|wav|flac)$/i.test(f))
     .sort((a, b) => a.localeCompare(b))
     .map(file => {
-      const t = tagsOf(file);
+      const id = songId(file);
+      const m = meta.get(id);
+      const t = m ? {} : tagsOf(file);
       return {
-        id: songId(file),
+        id,
         file,
-        title: t.title ?? t.TITLE ?? file.replace(/\.[^.]+$/, ''),
-        artist: t.artist ?? t.ARTIST ?? '',
+        title: m?.title ?? t.title ?? t.TITLE ?? file.replace(/\.[^.]+$/, ''),
+        artist: m?.artist ?? t.artist ?? t.ARTIST ?? '',
+        seconds: m?.seconds ?? 0,
+        thumb: m?.cover ? `/media/likes/songs/${id}-thumb.webp` : null,
+        cover: m?.cover ? `/media/likes/songs/${id}.webp` : null,
       };
     });
+};
 
 const body = req =>
   new Promise((resolve, reject) => {
@@ -90,6 +107,16 @@ const body = req =>
 export const likesRanker = () => ({
   name: 'likes-ranker',
   apply: 'serve',
+  handleHotUpdate({ file, server }) {
+    if (path.resolve(file) !== path.resolve(FILE)) return;
+    const mods = server.moduleGraph.getModulesByFile(file);
+    if (mods) {
+      for (const mod of mods) {
+        server.moduleGraph.invalidateModule(mod, new Set(), Date.now(), true);
+      }
+    }
+    return [];
+  },
   configureServer(server) {
     server.middlewares.use('/__songs/list', (req, res) => {
       res.setHeader('content-type', 'application/json');

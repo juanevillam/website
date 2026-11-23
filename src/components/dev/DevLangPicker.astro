@@ -1,0 +1,224 @@
+---
+import { locales, localeCodes, localeNames } from '../../i18n/ui';
+---
+
+<div class="dev-lang">
+  <span class="dev-lang-code" data-dev-lang-code aria-hidden="true">{localeCodes.es}</span>
+  <svg class="dev-lang-chevron" viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
+    <path
+      d="M2.5 4.5 L6 8 L9.5 4.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+  </svg>
+  <select class="dev-lang-select" data-dev-lang-select aria-label="Language">
+    {
+      locales.map(l => (
+        <option value={l} selected={l === 'es'}>
+          {localeNames[l]}
+        </option>
+      ))
+    }
+  </select>
+</div>
+
+<style is:global>
+  /* Shared comfortable back-link pill for all /dev pages */
+  .dev-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.35rem;
+    padding: 0 1rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      color var(--hover),
+      border-color var(--hover),
+      background var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+  .dev-back:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+  .dev-back:active {
+    transform: scale(0.96);
+  }
+
+  /* Shared language pill for all /dev pages */
+  .dev-lang {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.35rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--hover),
+      border-color var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+  .dev-lang:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+  .dev-lang:active {
+    transform: scale(0.96);
+  }
+  .dev-lang-code {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .dev-lang-chevron {
+    color: var(--ink-3);
+  }
+  .dev-lang-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  /* Smooth scroll-edge fade for /dev scrollable lists (vertical & horizontal) */
+  [data-scroll-fade] {
+    --fade-t: 0px;
+    --fade-b: 0px;
+    --fade-l: 0px;
+    --fade-r: 0px;
+    -webkit-mask-image:
+      linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 var(--fade-t),
+        #000 calc(100% - var(--fade-b)),
+        transparent 100%
+      ),
+      linear-gradient(
+        to right,
+        transparent 0,
+        #000 var(--fade-l),
+        #000 calc(100% - var(--fade-r)),
+        transparent 100%
+      );
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 var(--fade-t),
+        #000 calc(100% - var(--fade-b)),
+        transparent 100%
+      ),
+      linear-gradient(
+        to right,
+        transparent 0,
+        #000 var(--fade-l),
+        #000 calc(100% - var(--fade-r)),
+        transparent 100%
+      );
+    mask-composite: intersect;
+  }
+  [data-scroll-fade][data-fade-top] {
+    --fade-t: 1.75rem;
+  }
+  [data-scroll-fade][data-fade-bottom] {
+    --fade-b: 2.25rem;
+  }
+  [data-scroll-fade][data-fade-left] {
+    --fade-l: 1.5rem;
+  }
+  [data-scroll-fade][data-fade-right] {
+    --fade-r: 1.5rem;
+  }
+</style>
+
+<script>
+  import { DEV_I18N } from '../../lib/devI18n';
+  import { localeCodes, locales, type Locale } from '../../i18n/ui';
+
+  const isLocale = (v: string | null): v is Locale =>
+    !!v && (locales as readonly string[]).includes(v);
+
+  const getInitialLang = (): Locale => {
+    const saved = localStorage.getItem('lang');
+    if (isLocale(saved)) return saved;
+    const nav = navigator.language.slice(0, 2);
+    if (isLocale(nav)) return nav;
+    return 'es';
+  };
+
+  const applyDevLang = (lang: Locale) => {
+    document.documentElement.lang = lang;
+    document.documentElement.dataset.lang = lang;
+    const dict = DEV_I18N[lang] ?? DEV_I18N.es;
+
+    document.querySelectorAll<HTMLElement>('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (k && dict[k]) el.textContent = dict[k];
+    });
+    document.querySelectorAll<HTMLElement>('[data-i18n-aria]').forEach(el => {
+      const k = el.dataset.i18nAria;
+      if (k && dict[k]) el.setAttribute('aria-label', dict[k]);
+    });
+    document.querySelectorAll<HTMLElement>('[data-dev-lang-code]').forEach(el => {
+      el.textContent = localeCodes[lang] ?? lang.toUpperCase();
+    });
+    document.querySelectorAll<HTMLSelectElement>('[data-dev-lang-select]').forEach(sel => {
+      sel.value = lang;
+    });
+
+    window.dispatchEvent(new CustomEvent('dev:lang', { detail: lang }));
+  };
+
+  const initial = getInitialLang();
+  applyDevLang(initial);
+
+  document.querySelectorAll<HTMLSelectElement>('[data-dev-lang-select]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const next = isLocale(sel.value) ? sel.value : 'es';
+      localStorage.setItem('lang', next);
+      applyDevLang(next);
+    });
+  });
+
+  // Dynamic scroll-edge fade for any [data-scroll-fade] container
+  const syncFade = (el: HTMLElement) => {
+    const canUp = el.scrollTop > 2;
+    const canDown = el.scrollTop + el.clientHeight < el.scrollHeight - 2;
+    const canLeft = el.scrollLeft > 2;
+    const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+    el.toggleAttribute('data-fade-top', canUp);
+    el.toggleAttribute('data-fade-bottom', canDown);
+    el.toggleAttribute('data-fade-left', canLeft);
+    el.toggleAttribute('data-fade-right', canRight);
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-scroll-fade]').forEach(el => {
+    syncFade(el);
+    el.addEventListener('scroll', () => syncFade(el), { passive: true });
+    new ResizeObserver(() => syncFade(el)).observe(el);
+  });
+</script>

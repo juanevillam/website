@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { defineConfig } from 'astro/config';
 import { narrationRecorder } from './scripts/narration-recorder.mjs';
 import { likesRanker } from './scripts/likes-ranker.mjs';
-import { devTodos } from './scripts/dev-todos.mjs';
+import { mediaOrder } from './scripts/media-order.mjs';
 import { photosApi } from './scripts/photos-api.mjs';
 
 // juanevillam.com — static output, near-zero JS. Deployed on Cloudflare Pages
@@ -51,7 +51,12 @@ export default defineConfig({
   // (pages/dev).
   // `apply: 'serve'` keeps them out of the build.
   vite: {
-    plugins: [narrationRecorder(), likesRanker(), devTodos(), photosApi()],
+    plugins: [
+      narrationRecorder(),
+      likesRanker(),
+      mediaOrder(),
+      photosApi(),
+    ],
     // Vite 8 minifies CSS with Lightning CSS, which folds
     // `backdrop-filter` + `-webkit-backdrop-filter` into the prefixed one
     // alone — Chrome then draws no frost behind a modal. esbuild is the
