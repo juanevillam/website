@@ -37,7 +37,15 @@
 import { EQ_MAX_DB, EQ_MIN_DB, EQ_PRESETS, type EffectLevel } from './dsp';
 
 import { type SongMap } from './analysis';
-import { rng, type AutoDjStyle, type DjMove, type Mix } from './plan';
+import { choreographCustom, customBaseRate } from './custom';
+import {
+  DEFAULT_AUTO_DJ_PROFILE,
+  rng,
+  type AutoDjProfile,
+  type AutoDjStyle,
+  type DjMove,
+  type Mix,
+} from './plan';
 import {
   findSections,
   hotness,
@@ -337,6 +345,8 @@ export function choreograph(opts: {
    * same one twice in a row.
    */
   single?: boolean;
+  /** DJ Juan profile: `classic` (default, untouched) or `custom`. */
+  profile?: AutoDjProfile;
 }): Mix {
   const {
     map,
@@ -349,7 +359,24 @@ export function choreograph(opts: {
     entry,
     exit,
     single = false,
+    profile = DEFAULT_AUTO_DJ_PROFILE,
   } = opts;
+  if (profile.preset === 'custom') {
+    return choreographCustom({
+      map,
+      sections,
+      style,
+      config: profile.custom,
+      seed,
+      startS,
+      endS,
+      rate,
+      entry,
+      exit,
+      openS: opts.openS,
+      single,
+    });
+  }
   const random = rng(seed ^ 0x5bd1e995);
   const pick = <T>(xs: readonly T[]): T => xs[Math.floor(random() * xs.length)];
   const chance = (p: number) => random() < p;
@@ -845,6 +872,19 @@ const MAX_RETURN_S = 44;
 /** The shortest stretch worth bringing a sound in for. */
 const MIN_SEGMENT_S = 24;
 
+const capsFor = (
+  profile: AutoDjProfile,
+): { maxS: number; returnS: number; minS: number } => {
+  if (profile.preset === 'classic') {
+    return { maxS: MAX_SEGMENT_S, returnS: MAX_RETURN_S, minS: MIN_SEGMENT_S };
+  }
+  if (profile.custom.pace === 'calm')
+    return { maxS: 72, returnS: 44, minS: 24 };
+  if (profile.custom.pace === 'lively')
+    return { maxS: 48, returnS: 30, minS: 16 };
+  return { maxS: 60, returnS: 38, minS: 20 };
+};
+
 const barTime = (map: SongMap, bar: number): number =>
   map.firstBarS + bar * (map.bpm > 0 ? map.beatS * 4 : map.blockS);
 
@@ -872,6 +912,7 @@ function chooseEnd(
   from: number,
   random: () => number,
   maxS = MAX_SEGMENT_S,
+  minS = MIN_SEGMENT_S,
 ): { end: number; endsOn: EndsOn } {
   const n = map.bars.length;
   const size = phraseBars(map);
@@ -895,7 +936,7 @@ function chooseEnd(
   // The guard: a peak that runs on past the cap leaves on a phrase line.
   while (!fits(end) && end - size > from) end -= size;
   // Too short to be worth it: a phrase further.
-  while (barTime(map, end) - startS < MIN_SEGMENT_S && end < n) {
+  while (barTime(map, end) - startS < minS && end < n) {
     end = Math.min(n, end + size);
     endsOn = 'fall';
   }
@@ -935,6 +976,7 @@ export function planSegment(opts: {
   /** For `later`: the bar the set left this song on. */
   fromBar?: number;
   finale?: boolean;
+  profile?: AutoDjProfile;
 }): Segment {
   const {
     next,
@@ -944,7 +986,9 @@ export function planSegment(opts: {
     after = 'peak',
     fromBar = 0,
     finale = false,
+    profile = DEFAULT_AUTO_DJ_PROFILE,
   } = opts;
+  const caps = capsFor(profile);
   const random = rng(seed);
   const { map } = next;
   const sections = findSections(map);
@@ -979,7 +1023,15 @@ export function planSegment(opts: {
       end = firstPeak;
       endsOn = 'build';
     } else {
-      ({ end, endsOn } = chooseEnd(map, sections, byPosition[0], from, random));
+      ({ end, endsOn } = chooseEnd(
+        map,
+        sections,
+        byPosition[0],
+        from,
+        random,
+        caps.maxS,
+        caps.minS,
+      ));
     }
   } else {
     // PEAK, or LATER: a peak to aim for — the best of them, or for a return
@@ -1049,11 +1101,16 @@ export function planSegment(opts: {
       run,
       from,
       random,
-      part === 'later' ? MAX_RETURN_S : MAX_SEGMENT_S,
+      part === 'later' ? caps.returnS : caps.maxS,
+      caps.minS,
     ));
   }
 
-  const { rate, matched } = matchRate(setTempo, map.bpm, style);
+  const { rate: matchedRate, matched } = matchRate(setTempo, map.bpm, style);
+  const rate =
+    profile.preset === 'custom'
+      ? customBaseRate(profile.custom, matchedRate)
+      : matchedRate;
   // A tempo that could not be matched is a hard cut, whatever was planned.
   if (!matched && entry === 'walk-in' && openBar !== undefined) {
     from = openBar;
@@ -1102,6 +1159,7 @@ export function planSegment(opts: {
       entry,
       exit,
       openS: openBar === undefined ? undefined : barTime(map, openBar),
+      profile,
     }),
   };
 }
@@ -1118,8 +1176,20 @@ export function joinSegment(opts: {
   atS: number;
   setTempo: number;
   minS?: number;
+  profile?: AutoDjProfile;
 }): Segment {
-  const { sound, style, seed, atS, setTempo, minS = 40 } = opts;
+  const {
+    sound,
+    style,
+    seed,
+    atS,
+    setTempo,
+    profile = DEFAULT_AUTO_DJ_PROFILE,
+    minS = profile.preset === 'custom' && profile.custom.pace === 'lively'
+      ? 26
+      : 40,
+  } = opts;
+  const caps = capsFor(profile);
   const random = rng(seed);
   const { map } = sound;
   const sections = findSections(map);
@@ -1141,6 +1211,8 @@ export function joinSegment(opts: {
       run,
       Math.max(here, sections[run[0]].start),
       random,
+      caps.maxS,
+      caps.minS,
     ));
   } else {
     // No peak left ahead: the next phrase line at least `minS` away.
@@ -1152,7 +1224,11 @@ export function joinSegment(opts: {
     }
   }
 
-  const { rate } = matchRate(setTempo, map.bpm, style);
+  const { rate: matchedRate } = matchRate(setTempo, map.bpm, style);
+  const rate =
+    profile.preset === 'custom'
+      ? customBaseRate(profile.custom, matchedRate)
+      : matchedRate;
   const exit = pickExit(random, endsOn);
   const endS = Math.min(map.durationS, barTime(map, end));
   return {
@@ -1176,6 +1252,7 @@ export function joinSegment(opts: {
       rate,
       entry: 'cut',
       exit,
+      profile,
     }),
   };
 }
@@ -1192,14 +1269,18 @@ export function planSoundSegment(opts: {
   style: AutoDjStyle;
   seed: number;
   atS: number;
+  profile?: AutoDjProfile;
 }): Segment {
-  const { sound, style, seed, atS } = opts;
+  const { sound, style, seed, atS, profile = DEFAULT_AUTO_DJ_PROFILE } = opts;
   const random = rng(seed);
   const { map } = sound;
   const sections = findSections(map);
   const n = map.bars.length;
   const barS = map.bpm > 0 ? map.beatS * 4 : map.blockS;
-  const rate = STYLE_RATE[style];
+  const rate =
+    profile.preset === 'custom'
+      ? customBaseRate(profile.custom, STYLE_RATE[style])
+      : STYLE_RATE[style];
   const exit: Exit = random() < 0.5 ? 'room' : 'sweep';
   const endS = Math.max(atS + barS, Math.min(map.durationS, barTime(map, n)));
   return {
@@ -1223,6 +1304,7 @@ export function planSoundSegment(opts: {
       entry: 'cut',
       exit,
       single: true,
+      profile,
     }),
   };
 }

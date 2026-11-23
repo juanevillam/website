@@ -4,6 +4,12 @@ import { EQ_MAX_DB, EQ_MIN_DB, PRESETS, type Level } from '../shaper';
 
 export { EQ_MAX_DB, EQ_MIN_DB };
 export type EffectLevel = Level;
+export const EFFECT_LEVELS: readonly EffectLevel[] = [
+  'off',
+  'low',
+  'medium',
+  'high',
+];
 export const EQ_PRESETS: { i18nKey: string; gains: number[] }[] = PRESETS.map(p => ({
   i18nKey: p.id,
   gains: [...p.gains],
