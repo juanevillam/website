@@ -139,10 +139,17 @@ const narVideoRates =
 const narRateBtns = narVideo
   ? [...narVideo.querySelectorAll<HTMLButtonElement>('[data-narr-rate]')]
   : [];
+const RATE_KEY = 'jv:narr:rate';
 let activeLayerIdx = 0;
 let videoCollapsed = false;
 let currentVideoSrc = '';
 let playbackRate = 1;
+try {
+  const savedRate = Number(localStorage.getItem(RATE_KEY));
+  if (savedRate === 1 || savedRate === 2 || savedRate === 3) {
+    playbackRate = savedRate;
+  }
+} catch {}
 let videoRateState: -2 | -1 | 0 | 1 | 2 = 0;
 let videoSpinUpUntil = 0;
 let videoLastSeekAt = 0;
@@ -226,6 +233,9 @@ const applyVideoRate = (el: HTMLVideoElement, rate: number) => {
 
 const setPlaybackRate = (rate: number) => {
   playbackRate = rate;
+  try {
+    localStorage.setItem(RATE_KEY, String(rate));
+  } catch {}
   videoRateState = 0;
   applyAudioRate(voice, rate);
   for (const v of narVideoLayers) applyVideoRate(v, rate);
@@ -257,6 +267,12 @@ const setPlaybackRate = (rate: number) => {
   }
 };
 applyAudioRate(voice, playbackRate);
+for (const v of narVideoLayers) applyVideoRate(v, playbackRate);
+for (const btn of narRateBtns) {
+  const active = Number(btn.dataset.narrRate) === playbackRate;
+  btn.classList.toggle('is-active', active);
+  btn.setAttribute('aria-pressed', String(active));
+}
 // Safari / iOS AVPlayer resets rate to 1.0 on -[AVPlayer play]; re-assert the
 // chosen playbackRate immediately whenever audio or video enters play/playing.
 voice.addEventListener('play', () => applyAudioRate(voice, playbackRate));
@@ -1343,8 +1359,8 @@ const placeVideo = (
 ) => {
   if (!narVideo || narVideo.hidden) return;
   const rem = cachedRem;
-  const vw = (phone ? 6 : 7.25) * rem;
-  const vh = (phone ? 10.67 : 12.89) * rem;
+  const vw = (phone ? 7 : 8.75) * rem;
+  const vh = (phone ? 12.44 : 15.56) * rem;
   let vx = nx;
   let vy = ny;
   if (!phone) {
@@ -2157,7 +2173,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('scroll', onScroll, { passive: true });
 window.addEventListener('resize', onScroll, { passive: true });
 
-// Re-render when a `[data-reveal]` block settles so anchor positions are exact.
+// Re-render when a `[data-reveal]` block or `[data-cap]` settles so anchor positions are exact.
 document.addEventListener(
   'transitionend',
   event => {
@@ -2166,6 +2182,7 @@ document.addEventListener(
   },
   { passive: true },
 );
+document.addEventListener('caps:layout', () => render());
 
 render();
 
@@ -2175,11 +2192,21 @@ render();
 document.addEventListener('focus:close', stop);
 document.addEventListener('focus:closed', () => render());
 
-// Transitions switch on only AFTER the first placement, so nothing
-// animates in from nowhere on load.
-if (stepped)
+// Reveal the narrator only AFTER `[data-cap]`, fonts and first placement
+// have settled so it appears cleanly in place without jumping over text;
+// enable stepped transitions one frame later.
+const revealNarrator = () => {
   requestAnimationFrame(() =>
-    requestAnimationFrame(() =>
-      document.documentElement.classList.add('is-stepped'),
-    ),
+    requestAnimationFrame(() => {
+      render();
+      narrator?.classList.remove('is-booting');
+      if (stepped) {
+        requestAnimationFrame(() =>
+          document.documentElement.classList.add('is-stepped'),
+        );
+      }
+    }),
   );
+};
+if (document.fonts?.ready) document.fonts.ready.then(revealNarrator);
+else revealNarrator();

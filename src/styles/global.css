@@ -207,7 +207,7 @@
        (the screen's width less its 1.25rem gutters), which is what More
        Work stood at on every phone before. */
     --screen-ratio-m: 4 / 5;
-    --screen-max-m: max(9rem, calc(100svh - var(--media-top-m) - 22.5rem));
+    --screen-max-m: max(9rem, calc(100svh - var(--media-top-m) - 16.5rem));
   }
 }
 
@@ -581,12 +581,11 @@ html.is-jumping body {
   [data-dock] {
     position: fixed;
     left: clamp(1.25rem, 4vw, 2.5rem);
-    bottom: calc(1rem + env(safe-area-inset-bottom) + var(--narrator-h) / 2);
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
     z-index: 5;
     margin: 0;
     padding: 0;
     width: auto;
-    transform: translateY(50%);
     opacity: 0;
     visibility: hidden;
   }
@@ -730,7 +729,7 @@ html.is-stepped.has-narr-video [data-narrator] {
     top: auto !important;
     left: auto !important;
     right: clamp(1.25rem, 4vw, 2.5rem);
-    bottom: calc(1rem + env(safe-area-inset-bottom));
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
     transform: none !important;
   }
 }
@@ -883,10 +882,10 @@ html.is-desk-safari .site-header > * {
      above it as `--cap-gap`, and the top fade never reaches past it onto
      what stands above — a title, a picture: words scrolled up under a
      title pressed against it — so the step is at least the fade's depth. */
-  --cap-fade: 1.75em;
+  --cap-fade: 1.15em;
   box-sizing: content-box;
-  padding-top: var(--cap-fade);
-  margin-top: max(0px, calc(var(--cap-gap, 0px) - var(--cap-fade)));
+  padding-top: 0.5em;
+  margin-top: var(--cap-gap, 1rem);
   position: relative;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -915,6 +914,7 @@ html.is-desk-safari .site-header > * {
    as close to what follows as its title sits over it. */
 [data-cap].is-overflow {
   padding-bottom: var(--cap-fade);
+  margin-bottom: 0.5rem;
 }
 
 /* Eased, not linear — a straight ramp reads as an edge of its own. */

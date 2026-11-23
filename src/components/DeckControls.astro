@@ -27,12 +27,14 @@ const { names } = Astro.props;
     </svg>
     <span class="sr"><T k="deck.prev" /></span>
   </button>
-  <div class="dots">
-    {
-      names.map(name => (
-        <button class="dot" type="button" data-deck-dot aria-label={name} />
-      ))
-    }
+  <div class:list={['dots-window', { 'is-windowed': names.length > 3 }]}>
+    <div class="dots" data-deck-dots>
+      {
+        names.map(name => (
+          <button class="dot" type="button" data-deck-dot aria-label={name} />
+        ))
+      }
+    </div>
   </div>
   <button class="arrow" type="button" data-deck-next>
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -95,13 +97,21 @@ const { names } = Astro.props;
     inset: -1.125rem -0.125rem;
   }
 
+  .dots-window.is-windowed {
+    width: calc(3 * 1.25rem + 2 * 0.25rem);
+    overflow: hidden;
+  }
+
   .dots {
     display: flex;
     gap: 0.25rem;
+    transform: translateX(calc(var(--dot-offset, 0) * -1.5rem));
+    transition: transform var(--dur-micro) var(--ease);
   }
 
   /* A 7px dot in a 20px target. */
   .dot {
+    flex: none;
     width: 1.25rem;
     height: 1.25rem;
     padding: 0;

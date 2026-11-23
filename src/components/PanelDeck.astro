@@ -75,37 +75,15 @@ const isVideo = (m: Media) => /\.mp4(\?|$)/.test(m);
 const still = (m: Media) =>
   isVideo(m) ? deriveVersionedMedia(m, /\.mp4$/, '.jpg') : versionedMedia(m);
 
-// Which pictures are SIDEWAYS: read off each file at build time (a
-// video by its poster), so a frame can alternate upright and sideways.
 const wide = new Set<Media>();
 for (const p of items)
   if (Array.isArray(p.image))
     for (const m of p.image) if (await isSideways(still(m))) wide.add(m);
 
-// One 3:2 frame per card (Juan, 2026-11-10): just like More Work and Things I
-// Like, so the visitor never watches two event videos plus the narrator at
-// once and laptops decode at most one card video beside the voice. A card
-// lists its videos and its photos each by what matters most — the ones Juan
-// is in longest first (Juan, 2026-10-27). The frame ALTERNATES photo and
-// video (video after video read as a reel; when one kind runs out, the other
-// fills the rest) and upright after sideways where it can, each kind in its
-// own importance order.
-const columns = (p: DeckItem): Media[][] => {
-  const all = p.image as Media[];
-  const photos = all.filter(m => !isVideo(m));
-  const videos = all.filter(isVideo);
-  const out: Media[] = [];
-  const take = (queue: Media[]) => {
-    const last = out.at(-1);
-    const i = last ? queue.findIndex(m => wide.has(m) !== wide.has(last)) : 0;
-    return queue.splice(i < 0 ? 0 : i, 1)[0];
-  };
-  for (let k = 0; photos.length || videos.length; k++) {
-    const mine = k % 2 === 0 ? photos : videos;
-    out.push(take(mine.length ? mine : k % 2 === 0 ? videos : photos));
-  }
-  return [out];
-};
+// One 3:2 frame per card (Juan, 2026-11-10) preserving each card's curated
+// 1..N order so the first item is always the cover on the card and slide 1
+// in PhotoViewer.
+const columns = (p: DeckItem): Media[][] => [p.image as Media[]];
 
 // Screens of their own (the game's), rendered from the named slots.
 const slotted: Record<string, string> = {};
@@ -219,7 +197,7 @@ for (const p of items)
                 data-deck-part="text"
                 style={`--i: ${p.meta.length > 0 ? 3 : 2}`}
                 data-cap
-                data-cap-phone="3"
+                data-cap-phone="fill"
                 data-narr-para
                 {...voiceAttrs(p.clip)}
               >
@@ -819,6 +797,8 @@ for (const p of items)
     font-size: 0.65rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+    min-width: 4.5ch;
+    text-align: center;
     white-space: nowrap;
     color: var(--ink);
     opacity: 0;
@@ -830,26 +810,43 @@ for (const p of items)
     opacity: 1;
   }
 
-  /* A picture's own caption (its name), at the top of the frame — the
-     header's pill recipe, in the label's type; a phone's card caption
-     takes the foot. */
+  /* Photo caption: same bottom gradient overlay as PhotosFeed `.post-overlay`
+     on desktop (no floating chip), and top gradient on mobile so it stays
+     clear of `.screen-caption` at the foot. */
   .photo-cap {
     position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    max-width: calc(100% - 1.5rem);
-    overflow: hidden;
-    padding: 0.3rem 0.75rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(12px);
+    inset: auto 0 0 0;
+    z-index: 2;
+    padding: 2.75rem 0.875rem 0.625rem;
+    background: linear-gradient(
+      to bottom,
+      rgb(13 13 13 / 0) 0%,
+      rgb(13 13 13 / 0.14) 24%,
+      rgb(13 13 13 / 0.48) 54%,
+      rgb(13 13 13 / 0.82) 82%,
+      rgb(13 13 13 / 0.94) 100%
+    );
     color: var(--ink);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
+    pointer-events: none;
+  }
+
+  @media (max-width: 48rem) {
+    .photo-cap {
+      inset: 0 0 auto 0;
+      padding: 0.625rem 0.875rem 2.25rem;
+      background: linear-gradient(
+        to top,
+        rgb(13 13 13 / 0) 0%,
+        rgb(13 13 13 / 0.35) 45%,
+        rgb(13 13 13 / 0.72) 100%
+      );
+    }
   }
 
   /* A site's capture, on a phone: whole, over a blur of its own still,

@@ -59,10 +59,12 @@ export const createDeck = ({
   onChange?: (current: number) => void;
 }): Deck => {
   const n = cards.length;
+  const dotsWrap = controls?.querySelector<HTMLElement>('[data-deck-dots]');
   const dots = [
     ...(controls?.querySelectorAll<HTMLElement>('[data-deck-dot]') ?? []),
   ];
   let current = Math.min(Math.max(start, 0), n - 1);
+  let dotWin = Math.max(0, Math.min(Math.max(0, dots.length - 3), current - 2));
   const leaving = new Map<HTMLElement, ReturnType<typeof setTimeout>>();
 
   const mark = () => {
@@ -73,6 +75,11 @@ export const createDeck = ({
       card.inert = !active;
     });
     dots.forEach((dot, i) => dot.classList.toggle('is-current', i === current));
+    if (dotsWrap && dots.length > 3) {
+      if (current < dotWin) dotWin = current;
+      else if (current >= dotWin + 3) dotWin = current - 2;
+      dotsWrap.style.setProperty('--dot-offset', String(dotWin));
+    }
     onChange?.(current);
   };
 

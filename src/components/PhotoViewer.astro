@@ -44,8 +44,10 @@ import T from './T.astro';
     </div>
   </div>
   <div class="v-foot">
-    <div class="v-groups" data-v-groups hidden role="tablist" aria-label="Event sections"></div>
-    <p class="v-cap"><span data-v-name></span> <span class="v-count" data-v-count></span></p>
+    <p class="v-cap">
+      <span class="v-name" data-v-name></span>
+      <span class="v-count" data-v-count></span>
+    </p>
   </div>
   <button type="button" class="v-btn v-close" data-v-close>
     <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -81,50 +83,10 @@ import T from './T.astro';
   type Layer = (typeof layers)[number];
   const name = dialog.querySelector<HTMLElement>('[data-v-name]')!;
   const count = dialog.querySelector<HTMLElement>('[data-v-count]')!;
-  const groupsEl = dialog.querySelector<HTMLElement>('[data-v-groups]')!;
-  type Group = { label: string; start: number; end: number };
   let items: Item[] = [];
-  let groups: Group[] = [];
   let at = 0;
   let front = 0;
   let turn = 0;
-
-  const computeGroups = (list: Item[]): Group[] => {
-    const out: Group[] = [];
-    for (let i = 0; i < list.length; i++) {
-      const label = (list[i].name ?? '').trim();
-      const prev = out.at(-1);
-      if (prev && prev.label === label) prev.end = i;
-      else out.push({ label, start: i, end: i });
-    }
-    const distinct = new Set(out.map(g => g.label).filter(Boolean));
-    // Only show section dividers when a single card merges 2+ named events
-    // (contiguous blocks of 2+ photos each, not per-photo unique captions like Cosmos).
-    return distinct.size >= 2 && out.length === distinct.size && out.every(g => g.end > g.start)
-      ? out
-      : [];
-  };
-
-  const renderGroups = () => {
-    if (!groups.length) {
-      groupsEl.hidden = true;
-      groupsEl.replaceChildren();
-      return;
-    }
-    groupsEl.hidden = false;
-    groupsEl.replaceChildren(
-      ...groups.map((g, gi) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'v-group';
-        b.role = 'tab';
-        b.dataset.groupIdx = String(gi);
-        b.textContent = g.label;
-        b.addEventListener('click', () => show(g.start));
-        return b;
-      }),
-    );
-  };
 
   const poster = (item: Item) => item.src.replace(/\.mp4(?=\?|$)/, '.jpg');
   const warm = (i: number) => {
@@ -187,20 +149,7 @@ import T from './T.astro';
       setTimeout(reveal, 1200);
     }
     name.textContent = item.name ?? '';
-    if (groups.length) {
-      const gi = groups.findIndex(g => at >= g.start && at <= g.end);
-      const g = groups[gi];
-      groupsEl.querySelectorAll<HTMLButtonElement>('.v-group').forEach((b, idx) => {
-        const active = idx === gi;
-        b.classList.toggle('is-active', active);
-        b.setAttribute('aria-selected', String(active));
-      });
-      const inGroup = g ? at - g.start + 1 : at + 1;
-      const groupLen = g ? g.end - g.start + 1 : items.length;
-      count.textContent = `${inGroup} / ${groupLen}`;
-    } else {
-      count.textContent = items.length > 1 ? `${at + 1} / ${items.length}` : '';
-    }
+    count.textContent = items.length > 1 ? `${at + 1} / ${items.length}` : '';
     warm(at + 1);
     warm(at - 1);
   };
@@ -212,8 +161,8 @@ import T from './T.astro';
       phone?: boolean;
     }>;
     items = detail.items;
-    groups = computeGroups(items);
-    renderGroups();
+    const digits = String(items.length).length;
+    count.style.setProperty('--count-w', `${digits * 2 + 3}ch`);
     dialog.classList.toggle('is-single', items.length < 2);
     dialog.classList.toggle('is-phone', Boolean(detail.phone));
     show(detail.at);
@@ -430,67 +379,37 @@ import T from './T.astro';
     padding: 0.9rem 1.5rem 0;
   }
 
-  .v-groups {
-    display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.35rem;
-    margin-bottom: 0.55rem;
-    padding: 0.2rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 84%, transparent);
-  }
-
-  .v-groups[hidden] {
-    display: none;
-  }
-
-  .v-group {
-    padding: 0.28rem 0.78rem;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--ink-2);
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    cursor: pointer;
-    transition:
-      background var(--hover),
-      color var(--hover);
-  }
-
-  .v-group:hover {
-    color: var(--ink);
-  }
-
-  .v-group.is-active {
-    background: var(--ink);
-    color: var(--ground);
-  }
-
   .v-cap {
-    box-sizing: content-box;
-    height: 2.8em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    width: 100%;
+    height: 2.85em;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
     text-align: center;
     font-size: 0.9375rem;
     font-weight: 600;
-    line-height: 1.4;
-    text-wrap: balance;
+    line-height: 1.35;
+  }
+
+  .v-name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .v-count {
-    margin-left: 0.5rem;
+    display: block;
+    min-width: var(--count-w, 5ch);
+    height: 1.3em;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
     color: var(--ink-3);
     font-weight: 400;
@@ -500,6 +419,7 @@ import T from './T.astro';
      circle. */
   .v-btn {
     position: absolute;
+    z-index: 2;
     display: grid;
     place-items: center;
     width: var(--float-h);
@@ -508,6 +428,8 @@ import T from './T.astro';
     border: 1px solid var(--hairline);
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--ink);
     cursor: pointer;
     transition: border-color var(--hover);
@@ -569,22 +491,13 @@ import T from './T.astro';
     background: transparent;
   }
 
-  .viewer.is-phone .room {
-    grid-row: 1 / -1;
-    padding: 0 6rem;
-  }
-
-  .viewer.is-phone .v-foot {
-    display: none;
-  }
-
   .viewer.is-phone .fill {
     display: none;
   }
 
   .viewer.is-phone .stage {
     --demo-ratio: calc(2556 / 1179);
-    --demo-h: calc(100svh - (var(--stage-top) - 1.5rem) - var(--stage-bottom) - 5rem);
+    --demo-h: min(100cqh, calc(100cqw * var(--demo-ratio)));
     --demo-r: calc(var(--demo-h) / var(--demo-ratio) * 0.14);
     height: var(--demo-h);
     width: calc(var(--demo-h) / var(--demo-ratio));
@@ -619,27 +532,8 @@ import T from './T.astro';
       aspect-ratio: auto;
     }
 
-    .viewer.is-phone .room {
-      padding: calc(var(--float-gap) * 2 + var(--float-h)) 1rem 5rem;
-    }
-
-    .viewer.is-phone .stage {
-      --demo-h: min(
-        calc((100vw - 2rem) * var(--demo-ratio)),
-        calc(100svh - var(--float-gap) * 2 - var(--float-h) - 6rem)
-      );
-      height: var(--demo-h);
-      width: calc(var(--demo-h) / var(--demo-ratio));
-      aspect-ratio: 1179 / 2556;
-    }
-
     .v-foot {
       padding: 0.75rem 1rem 0;
-    }
-
-    .v-group {
-      font-size: 0.6875rem;
-      padding: 0.25rem 0.65rem;
     }
 
     .v-prev,

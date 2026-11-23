@@ -479,8 +479,8 @@ const groups = [
     --track: rgb(120 120 128 / 0.36);
     --switch-on: #30d158;
     --accent: rgb(10 132 255);
-    --edge-bg: rgb(8 8 8 / 0.95);
-    --edge-line: rgb(255 255 255 / 0.16);
+    --edge-bg: rgb(36 36 38 / 0.86);
+    --edge-line: rgb(255 255 255 / 0.14);
     --spring: cubic-bezier(0.22, 1, 0.36, 1);
     --ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
     --phosphor-ink: var(--ink);
@@ -1158,6 +1158,8 @@ const groups = [
     padding: 0 0.5rem 5.25rem;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     scrollbar-width: thin;
     scrollbar-color: rgb(255 255 255 / 0.18) transparent;
   }
@@ -1547,6 +1549,8 @@ const groups = [
     padding: 0.25rem 0.875rem 1rem;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     scrollbar-width: thin;
     scrollbar-color: rgb(255 255 255 / 0.18) transparent;
   }
@@ -2544,8 +2548,13 @@ const groups = [
 
   .songs[data-full][data-narrow] .sheet,
   .songs[data-full][data-narrow] .side {
-    top: var(--lift-top, 0.625rem);
+    top: 0;
     bottom: var(--lift-bottom, 0);
+  }
+
+  .songs[data-full][data-narrow] .form,
+  .songs[data-full][data-narrow] .list {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
   }
 
   /* ---------- the full player on a desk: three columns ---------- */
@@ -3483,20 +3492,20 @@ const groups = [
     full.addEventListener('click', e => {
       if ((e.target === full || e.target === room) && meantToClose(e, full)) shutFull();
     });
-    // A phone's sheets stand from just under the close button (its 1rem
-    // and 2.5rem, and 1rem of air) to the screen's foot: offsets from the
-    // player's own box, which is where they are placed.
+    // A phone's sheets start at the exact top of the fullscreen frame
+    // (matching PhotoViewer / Cosmos) and extend cleanly to the screen's foot.
     const lift = () => {
       if (!root.hasAttribute('data-full') || !root.hasAttribute('data-narrow')) {
-        root.style.removeProperty('--lift-top');
         root.style.removeProperty('--lift-bottom');
         return;
       }
       const r = root.getBoundingClientRect();
-      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-      root.style.setProperty('--lift-top', `${4.5 * rem - r.top}px`);
-      root.style.setProperty('--lift-bottom', `${r.bottom - full.clientHeight}px`);
+      root.style.setProperty(
+        '--lift-bottom',
+        `${Math.min(0, r.bottom - full.clientHeight)}px`,
+      );
     };
+    room.addEventListener('transitionend', lift, { passive: true });
     const lifting = new ResizeObserver(lift);
     lifting.observe(full);
     lifting.observe(root);

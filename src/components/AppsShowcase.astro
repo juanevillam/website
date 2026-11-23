@@ -95,7 +95,7 @@ const focusPath =
       data-viewer-items={JSON.stringify(
         app.slides.map(s => ({
           src: s.src,
-          name: `${app.name} — ${s.title}`,
+          name: app.name,
         })),
       )}
       tabindex="0"
@@ -544,7 +544,7 @@ const focusPath =
   /* ---------- phones ---------- */
   @media (max-width: 48rem) {
     .apps {
-      --shot-h: min(104vw, calc(100svh - var(--stage-top) - 22.5rem));
+      --shot-h: min(130vw, calc(100svh - var(--stage-top) - 16rem));
     }
 
     .decks {
@@ -604,6 +604,10 @@ const focusPath =
       --cap-gap: 1.25rem;
     }
 
+    .is-slide .desc {
+      --cap-gap: 0.75rem;
+    }
+
     .words .body {
       font-size: 1rem;
       line-height: 1.5;
@@ -626,9 +630,12 @@ const focusPath =
   }
 
   @media (max-width: 48rem) and (max-height: 46rem) {
-    .card,
     .is-welcome {
       gap: 1rem;
+    }
+
+    .is-slide {
+      gap: 0.25rem;
     }
 
     .lockup.big {

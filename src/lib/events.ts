@@ -1,4 +1,5 @@
 import type { DeckItem } from './deck-items';
+import { applyOrder, savedEventOrder, savedEventRemoved } from './mediaOrder';
 import { eventShown } from './release';
 
 /**
@@ -44,50 +45,23 @@ const LINKS = {
   wink: 'https://usawink.com/',
 };
 
-const SUMMIT_MEDIA: string[] = [
-  '/media/events/startup-venezuela-summit/introduction.mp4',
-  '/media/events/startup-venezuela-summit/founders-wall.mp4',
-  '/media/events/startup-venezuela-summit/innoven-workshop.mp4',
-  '/media/events/startup-venezuela-summit/pitch-session.mp4',
-  '/media/events/startup-venezuela-summit/auditorium.mp4',
-  '/media/events/startup-venezuela-summit/meeting-lights.mp4',
-  '/media/events/startup-venezuela-summit/tripealo-team.jpg',
-  '/media/events/startup-venezuela-summit/new-friend.jpg',
-  '/media/events/startup-venezuela-summit/summit-logo.jpg',
-  '/media/events/startup-venezuela-summit/opening-remarks.jpg',
-  '/media/events/startup-venezuela-summit/victor-cardenas.jpg',
-  '/media/events/startup-venezuela-summit/caracas-campus.jpg',
-];
-
 const PLATANUS_MEDIA: string[] = [
-  '/media/events/platanus-hack-caracas/demo-clip.mp4',
-  '/media/events/platanus-hack-caracas/mentor-session.mp4',
-  '/media/events/platanus-hack-caracas/hackathon-floor.mp4',
-  '/media/events/platanus-hack-caracas/team-vibing.mp4',
-  '/media/events/platanus-hack-caracas/tridi-demo.mp4',
-  '/media/events/platanus-hack-caracas/space-explorer.mp4',
-  '/media/events/platanus-hack-caracas/night-lounge.mp4',
-  '/media/events/platanus-hack-caracas/group-photo.jpg',
-  '/media/events/platanus-hack-caracas/tridi-presentation.jpg',
-  '/media/events/platanus-hack-caracas/team-talk.jpg',
   '/media/events/platanus-hack-caracas/team-desks.jpg',
   '/media/events/platanus-hack-caracas/team-audience.jpg',
-  '/media/events/platanus-hack-caracas/pitch.jpg',
-  '/media/events/platanus-hack-caracas/team-with-rial.jpg',
-  '/media/events/platanus-hack-caracas/team-mentor.jpg',
   '/media/events/platanus-hack-caracas/team-selfie.jpg',
-  '/media/events/platanus-hack-caracas/dinner.jpg',
-  '/media/events/platanus-hack-caracas/tridi-sketch.jpg',
+  '/media/events/platanus-hack-caracas/hackathon-floor.mp4',
+  '/media/events/platanus-hack-caracas/space-explorer.mp4',
+  '/media/events/platanus-hack-caracas/night-lounge.mp4',
 ];
 
-// Highlights — Space Explorer first, then the Caracas startup & hackathon
-// moments, newest first.
+// Highlights — Space Explorer first, then the Caracas hackathon moments,
+// newest first.
 const ALL_EVENTS: DeckItem[] = [
   {
     id: 'space-explorer',
     slug: 'space-explorer',
     name: 'Space Explorer',
-    meta: [['Platanus Hack'], ['2026']],
+    meta: [[{ k: 'events.arcade' }], [{ k: 'events.arcade.when' }]],
     body: { k: 'arcade.p1', links: LINKS },
     clip: 'arcade.p1',
     image: { slot: 'arcade' },
@@ -98,19 +72,15 @@ const ALL_EVENTS: DeckItem[] = [
     id: 'platanus',
     slug: 'platanus-hack-caracas',
     date: '2026-10',
-    name: 'Startup Summit & Platanus Hack',
+    name: 'Platanus Hack',
     meta: [
-      [{ k: 'events.summit' }, { k: 'events.hackathon' }],
+      [{ k: 'events.hackathon' }],
       ['Caracas'],
       [{ k: 'events.platanus.when' }],
     ],
     body: { k: 'events.platanus.body', links: LINKS },
     clip: 'events.platanus.body',
-    image: [...SUMMIT_MEDIA, ...PLATANUS_MEDIA],
-    captions: [
-      ...SUMMIT_MEDIA.map(() => 'Startup Venezuela Summit'),
-      ...PLATANUS_MEDIA.map(() => 'Platanus Hack 26 Caracas'),
-    ],
+    image: PLATANUS_MEDIA,
     links: [],
   },
   {
@@ -125,20 +95,13 @@ const ALL_EVENTS: DeckItem[] = [
     ],
     body: { k: 'events.alegria.body', links: LINKS },
     clip: 'events.alegria.body',
-    // Ordered by what matters most (Juan, 2026-10-27): the videos first —
-    // the team on film, then the founder call with Pedro Vallenilla — then
-    // the photos with Juan in them, dealt across the two frames.
     image: [
-      // Juan filming the team.
-      '/media/events/alegria-hackathon/team-record.mp4',
-      // The founder call with Pedro Vallenilla (Cashea).
-      '/media/events/alegria-hackathon/founder-call.mp4',
-      // Juan at the photo stand in Yummy's offices, the purple motorcycle.
       '/media/events/alegria-hackathon/yummy-hq.jpg',
+      '/media/events/alegria-hackathon/team-record.mp4',
       '/media/events/alegria-hackathon/team-selfie.jpg',
       '/media/events/alegria-hackathon/team-coding.jpg',
-      // Víctor Cárdenas's founder talk (Slash).
       '/media/events/alegria-hackathon/talk.jpg',
+      '/media/events/alegria-hackathon/founder-call.mp4',
     ],
     links: [],
   },
@@ -146,4 +109,11 @@ const ALL_EVENTS: DeckItem[] = [
 
 /** The events on the site: every one but those not released yet
  *  (lib/release), which only `astro dev` shows. */
-export const EVENTS = ALL_EVENTS.filter(e => eventShown(e.id));
+export const EVENTS = ALL_EVENTS.filter(e => eventShown(e.id)).map(e =>
+  Array.isArray(e.image)
+    ? {
+        ...e,
+        image: applyOrder(e.image, savedEventOrder(e.id), m => m, savedEventRemoved(e.id)),
+      }
+    : e,
+);

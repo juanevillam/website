@@ -1,5 +1,6 @@
 ---
 import BrandMark from './BrandMark.astro';
+import T from './T.astro';
 import { locales, localeCodes, localeNames } from '../i18n/ui';
 ---
 
@@ -53,6 +54,10 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     </select>
   </div>
 </header>
+
+<div class="zh-toast" role="status" aria-live="polite" data-zh-toast>
+  <T k="lang.zhNotice" />
+</div>
 
 <style>
   /* NOT a bar: two floating controls at the top corners, and nothing
@@ -169,6 +174,78 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     background: transparent;
     font: inherit;
     cursor: pointer;
+  }
+
+  /* Compact floating chrome on phones so content below breathes without
+     moving down; ::before keeps >= 44pt touch target. */
+  @media (max-width: 48rem) {
+    .site-header {
+      padding: 0.75rem clamp(1.25rem, 4vw, 2.5rem) 0;
+    }
+
+    .site-header > * {
+      position: relative;
+      height: 2rem;
+      padding: 0 0.65rem;
+    }
+
+    .site-header > *::before {
+      content: '';
+      position: absolute;
+      inset: -0.4rem;
+      border-radius: 999px;
+    }
+
+    .mark-link :global(svg) {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .lang {
+      gap: 0.3rem;
+    }
+
+    .lang-code {
+      font-size: 0.71875rem;
+    }
+  }
+
+  .zh-toast {
+    position: fixed;
+    top: calc(var(--banner-offset) + var(--float-gap));
+    left: 50%;
+    z-index: 15;
+    transform: translate(-50%, -0.5rem);
+    max-width: calc(100vw - 2.5rem);
+    padding: 0.45rem 0.95rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--ink-body);
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--dur-quick) var(--ease),
+      transform var(--dur-quick) var(--ease);
+  }
+
+  .zh-toast.is-open {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  @media (max-width: 48rem) {
+    .zh-toast {
+      top: calc(var(--banner-offset) + 3.25rem);
+      font-size: 0.75rem;
+    }
   }
 </style>
 
@@ -329,11 +406,36 @@ import { locales, localeCodes, localeNames } from '../i18n/ui';
     document.dispatchEvent(new Event('arcade:open'));
   });
 
+  const zhToast = document.querySelector<HTMLElement>('[data-zh-toast]');
+  let zhTimer = 0;
+  const showZhToast = () => {
+    if (!zhToast) return;
+    clearTimeout(zhTimer);
+    zhToast.classList.add('is-open');
+    zhTimer = window.setTimeout(() => zhToast.classList.remove('is-open'), 4500);
+  };
+  zhToast?.addEventListener('click', () => {
+    clearTimeout(zhTimer);
+    zhToast.classList.remove('is-open');
+  });
+
+  if (picker.value === 'zh' && !sessionStorage.getItem('jv:zh:noticed')) {
+    sessionStorage.setItem('jv:zh:noticed', '1');
+    requestAnimationFrame(showZhToast);
+  }
+
   picker.addEventListener('change', () => {
     const next = picker.value;
     localStorage.setItem('lang', next);
     document.documentElement.lang = next;
     document.documentElement.dataset.lang = next;
     show(next);
+    if (next === 'zh') {
+      sessionStorage.setItem('jv:zh:noticed', '1');
+      showZhToast();
+    } else {
+      clearTimeout(zhTimer);
+      zhToast?.classList.remove('is-open');
+    }
   });
 </script>

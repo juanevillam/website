@@ -121,7 +121,7 @@ export const LIKES: DeckItem[] = [
     image: COSMOS.map(p => thumbOf(cosmosSrc(p))),
     captions: COSMOS.map(p => p.name),
     wide: true,
-    shuffle: true,
+    shuffle: false,
     links: [],
   },
   // A screen of its own: the player (SongsPlayer, the `songs` slot in

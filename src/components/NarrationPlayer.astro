@@ -29,7 +29,7 @@ import T from './T.astro';
 <canvas class="nar-field" aria-hidden="true"></canvas>
 
 <button
-  class="narrator"
+  class="narrator is-booting"
   type="button"
   data-narrator
   hidden
@@ -163,6 +163,13 @@ import T from './T.astro';
     display: none;
   }
 
+  .narrator.is-booting {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none !important;
+    transition: none !important;
+  }
+
   .narrator:hover,
   .narrator.is-playing {
     color: var(--ink);
@@ -234,8 +241,8 @@ import T from './T.astro';
     top: 0;
     left: 0;
     z-index: 40;
-    width: var(--nar-video-w, 7.25rem);
-    height: var(--nar-video-h, 12.89rem);
+    width: var(--nar-video-w, 8.75rem);
+    height: var(--nar-video-h, 15.56rem);
     border: 1px solid var(--hairline);
     border-radius: var(--nar-video-r);
     background: color-mix(in srgb, var(--surface) 82%, transparent);
@@ -293,8 +300,8 @@ import T from './T.astro';
 
   @media (max-width: 48rem) {
     .nar-video {
-      --nar-video-w: 6rem;
-      --nar-video-h: 10.67rem;
+      --nar-video-w: 7rem;
+      --nar-video-h: 12.44rem;
       --nar-video-r: 0.625rem;
     }
   }
@@ -303,8 +310,8 @@ import T from './T.astro';
     position: absolute;
     top: 50%;
     left: 50%;
-    width: var(--nar-video-w, 7.25rem);
-    height: var(--nar-video-h, 12.89rem);
+    width: var(--nar-video-w, 8.75rem);
+    height: var(--nar-video-h, 15.56rem);
     translate: -50% -50%;
     object-fit: cover;
     display: block;

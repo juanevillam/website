@@ -36,7 +36,7 @@ const clip = clipFor('hero');
       class="body hero-body"
       data-reveal
       data-cap="2"
-      data-cap-phone="2"
+      data-cap-phone="4"
       data-narr-para
       {...voiceAttrs('hero', 'hero.caption')}
     >
@@ -66,9 +66,10 @@ const clip = clipFor('hero');
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
-    padding: 12svh clamp(1.25rem, 4vw, 2.5rem) 0;
+    padding: clamp(13.5rem, 30svh, 18rem) clamp(1.25rem, 4vw, 2.5rem)
+      var(--stage-bottom);
   }
 
   .narr-hold {
@@ -92,7 +93,7 @@ const clip = clipFor('hero');
 
   @media (max-width: 48rem) {
     .hero {
-      padding-top: 8svh;
+      padding-top: clamp(9.25rem, 22svh, 12.5rem);
     }
 
     .hero-body {

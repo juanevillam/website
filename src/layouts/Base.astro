@@ -254,18 +254,18 @@ const personLd =
       // controls (an app's welcome, which shows no picture on a phone).
       const LINES = 6;
       const phoneQuery = matchMedia('(max-width: 48rem)');
-      // The docked corner's height (the 9:16 narration video on the right,
-      // the tallest thing in it), its 1rem off the screen's foot, and a
-      // step of air above it so neither the text nor the store row ever
-      // reaches down into the video's zone.
+      // The docked bar's height (the narrator circle on the right), its
+      // 1.25rem off the screen's foot, and a step of air above it so the
+      // store row stays clear of the bottom controls (video can overlap
+      // scrollable transcripts).
       const probe = document.createElement('div');
       probe.style.cssText =
-        'position:absolute;visibility:hidden;height:var(--nar-video-h,10.67rem)';
+        'position:absolute;visibility:hidden;height:var(--narrator-h,3.625rem)';
       const dockReserve = () => {
         document.body.append(probe);
         const h = probe.offsetHeight;
         probe.remove();
-        return h + 16 + 24;
+        return h + 20 + 16;
       };
       const capTo = (box: HTMLElement) => {
         const ref =
@@ -283,7 +283,7 @@ const personLd =
           : box.dataset.cap;
         const cs = getComputedStyle(box);
         const padTop = parseFloat(cs.paddingTop);
-        const fade = padTop;
+        const fade = parseFloat(cs.paddingBottom) || lh * 1.15;
         let lines = want && want !== 'fill' ? Number(want) : LINES;
         if (want === 'fill') {
           const section = box.closest('section');
@@ -296,14 +296,19 @@ const personLd =
           const below = after.length ? Math.max(...after) - r.bottom : 0;
           const top = r.top - (section?.getBoundingClientRect().top ?? 0);
           const room = innerHeight - dockReserve() - top - padTop - fade - below;
-          lines = Math.min(LINES, Math.max(3, Math.floor(room / lh)));
+          const baseLines = box.dataset.cap ? Number(box.dataset.cap) : LINES;
+          const maxLines = phoneQuery.matches ? baseLines * 2 : baseLines;
+          lines = Math.min(maxLines, Math.max(3, Math.floor(room / lh)));
         }
-        box.style.maxHeight = `${lead + lh * lines}px`;
+        const nextMax = `${lead + lh * lines}px`;
+        const changed = box.style.maxHeight !== nextMax;
+        box.style.maxHeight = nextMax;
         // Words hidden past the box: only then does it keep a fade's depth
         // under them — a box that shows everything ends at its last line.
         const words = box.scrollHeight - padTop - parseFloat(cs.paddingBottom);
         box.classList.toggle('is-overflow', words > lead + lh * lines + 1);
         more(box);
+        if (changed) document.dispatchEvent(new CustomEvent('caps:layout'));
       };
       // Which edges have words behind them, for their fades.
       const more = (box: HTMLElement) => {
@@ -315,6 +320,7 @@ const personLd =
         for (const e of entries) capTo(e.target as HTMLElement);
       });
       caps.forEach(box => {
+        capTo(box);
         recap.observe(box);
         box.addEventListener('scroll', () => more(box), { passive: true });
       });
