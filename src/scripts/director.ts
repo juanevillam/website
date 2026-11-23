@@ -1247,15 +1247,10 @@ const keepInView = (span: HTMLElement) => {
   if (caption) {
     const b = caption.getBoundingClientRect();
     const r = span.getBoundingClientRect();
-    const by =
-      r.bottom > b.bottom + 1
-        ? r.bottom - b.bottom
-        : r.top < b.top - 1
-          ? r.top - b.top
-          : 0;
-    if (by)
+    const by = r.top + r.height / 2 - (b.top + b.height / 2);
+    if (Math.abs(by) > r.height * 0.4)
       caption.scrollTo({
-        top: caption.scrollTop + by,
+        top: Math.max(0, caption.scrollTop + by),
         behavior: reduceMotion ? 'auto' : 'smooth',
       });
     return;
@@ -1317,11 +1312,14 @@ const updateRead = () => {
 /** The anchors in play and how much of the page each one owns. */
 let parks: { anchor: HTMLElement; w: number }[] = [];
 
-// The hero's anchor: on a phone the narrator parks under the wordmark
-// there, as it does on a desk, instead of in its corner (Juan, 2026-10-13).
+// The hero's and footer's anchors: on a phone the narrator parks under the
+// wordmark there, as it does on a desk, instead of in its corner.
 const heroBox = document.getElementById('top');
 const heroAnchor =
   heroBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
+const footerBox = document.querySelector<HTMLElement>('.site-footer');
+const footerAnchor =
+  footerBox?.querySelector<HTMLElement>('[data-narr-anchor]') ?? null;
 const heroInner = document.querySelector<HTMLElement>('[data-hero-inner]');
 
 let lastVideoTx = '';
@@ -1367,7 +1365,7 @@ const placeVideo = (
     vx = nx + centerShare * ((nw - vw) / 2);
     vy = ny - 1.75 * rem;
   } else if (narrator?.classList.contains('is-parked')) {
-    vx = nx + (nw - vw) / 2;
+    vx = nx + centerShare * ((nw - vw) / 2);
     vy = ny;
   } else {
     vx = nx + nw - vw;
@@ -1459,12 +1457,55 @@ const placeNarrator = () => {
       placeVideo(px, py, narrator.offsetWidth, narrator.offsetHeight, 1);
       return;
     }
+    const foot = footerBox?.getBoundingClientRect();
+    if (footerAnchor && foot && foot.top < innerHeight / 2 && !focusOpen()) {
+      const r = footerAnchor.getBoundingClientRect();
+      const px = r.left;
+      const py = r.top;
+      if (!lastNarrParked) {
+        lastNarrParked = true;
+        narrator.classList.add('is-parked');
+      }
+      const pxStr = `${px.toFixed(1)}px`;
+      if (pxStr !== lastParkX) {
+        lastParkX = pxStr;
+        narrator.style.setProperty('--park-x', pxStr);
+      }
+      const pyStr = `${py.toFixed(1)}px`;
+      if (pyStr !== lastParkY) {
+        lastParkY = pyStr;
+        narrator.style.setProperty('--park-y', pyStr);
+      }
+      const own = Math.min(
+        1,
+        (innerHeight / 2 - foot.top) / (innerHeight / 4),
+      );
+      setNarrStyle(own < 0.999 ? own.toFixed(3) : '', own < 0.6 ? 'none' : '');
+      placeVideo(px, py, narrator.offsetWidth, narrator.offsetHeight, 0);
+      return;
+    }
     if (lastNarrParked) {
       lastNarrParked = false;
       narrator.classList.remove('is-parked');
     }
     const has = !!showing && firstVoiced(showing) >= 0;
-    setNarrStyle(has ? '' : '0', has ? '' : 'none');
+    let cornerOwn = has ? 1 : 0;
+    if (cornerOwn > 0 && hero && heroAnchor) {
+      cornerOwn = Math.min(
+        cornerOwn,
+        clamp((innerHeight / 2 - hero.bottom) / (innerHeight / 4), 0, 1),
+      );
+    }
+    if (cornerOwn > 0 && foot) {
+      cornerOwn = Math.min(
+        cornerOwn,
+        clamp((foot.top - innerHeight / 2) / (innerHeight / 4), 0, 1),
+      );
+    }
+    setNarrStyle(
+      cornerOwn < 0.999 ? cornerOwn.toFixed(3) : '',
+      cornerOwn < 0.6 ? 'none' : '',
+    );
     const nr = narrator.getBoundingClientRect();
     placeVideo(nr.left, nr.top, nr.width, nr.height, 0);
     return;

@@ -351,9 +351,11 @@ const save = async (req, url) => {
           ? rawDur
           : 60,
     );
-    // Keep every clip safely under Cloudflare Pages' 25 MiB static file limit.
-    const maxKbps = Math.min(1800, Math.floor((23.5 * 8192) / estDur));
-    const scale = estDur <= 160 ? '720:1280' : '540:960';
+    // 432x768 (>3x Retina for the 140px/112px card), 1s keyframes (-g 30),
+    // zero B-frames (-bf 0), and <=550k bitrate so 3x playback on iOS Chrome
+    // never stalls on mobile networks or VideoToolbox seeks.
+    const maxKbps = Math.min(550, Math.floor((23.5 * 8192) / estDur));
+    const scale = '432:768';
     await ffmpeg(
       ...trimArgs,
       '-i',
@@ -367,13 +369,13 @@ const save = async (req, url) => {
       '-preset',
       'slow',
       '-profile:v',
-      'high',
+      'main',
       '-crf',
-      '19',
+      '23',
       '-g',
-      '120',
+      '30',
       '-bf',
-      '3',
+      '0',
       '-aq-mode',
       '2',
       '-maxrate',

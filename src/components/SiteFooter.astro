@@ -9,10 +9,10 @@ import { NAME_SCENE } from '../lib/scene';
 import ShipEgg from './ShipEgg.astro';
 
 /**
- * The page's foot: Sound Shaper's legal and help pages, More of Me, and
- * where to find Juan elsewhere. The stores ask for these URLs in their own
- * consoles, and the apps link to them from Settings — this is where a PERSON
- * finds them on the site.
+ * The page's foot — Hero-level minimalism at rest: wordmark + goodbye
+ * narration at the top, open space for the sound waves, and only the copyright
+ * + a single Links trigger at the bottom. Clicking Links opens a centered
+ * Liquid Glass modal holding Legal, More of Me, Sound Shaper, and Social.
  */
 const PAGES: { key: UIKey; page: string }[] = [
   { key: 'legal.terms', page: 'terms-and-conditions' },
@@ -22,30 +22,30 @@ const PAGES: { key: UIKey; page: string }[] = [
 ];
 
 type Props = {
-  /** The landing's last panel: snapped like every section above it, and
-   *  narrated. Everywhere else the foot is the SAME composition — the
-   *  name, the profiles, the apps' pages, the name's light — so a
-   *  document page closes the way the landing does (Juan, 2026-10-16:
-   *  its old short strip stacked two columns flush against each other
-   *  under a measure-wide article and read as a different site). */
   panel?: boolean;
 };
 
 const { panel = false } = Astro.props;
 
-// The landing's goodbye: like the hero's hello, the wordmark carries a
-// clip with no paragraph on screen (`footer.m4a`, see lib/narration), and
-// the narrator parks under it — the page opens and closes on the same
-// name, the same voice, the same place.
 const clip = panel ? clipFor('footer') : null;
 
-// Public profiles only. The apps' code is private, but the GitHub profile
-// is public and is where the game and the profile README live.
 const SOCIAL = [
-  { name: 'GitHub', href: 'https://github.com/juanevillam' },
-  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/juanevillam' },
-  { name: 'Instagram', href: 'https://www.instagram.com/juanevillam' },
-];
+  {
+    id: 'github',
+    name: 'GitHub',
+    href: 'https://github.com/juanevillam',
+  },
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    href: 'https://www.linkedin.com/in/juanevillam',
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    href: 'https://www.instagram.com/juanevillam',
+  },
+] as const;
 ---
 
 <footer
@@ -55,19 +55,8 @@ const SOCIAL = [
   data-narr-panel={clip ? '' : null}
 >
   <div class="inner">
-    {/* The foot takes a section's composition: the name and where to find
-        Juan in the words' column, More of Me where a section puts its
-        screen. */}
     <div class="lead" data-scene-at="0.2">
       <h2 class="title"><a href="/" class="footer-home-link">juanevillam</a></h2>
-      <ul class="social">
-        <li>
-          <a href="/privacy-policy"><T k="legal.privacy" /></a>
-        </li>
-        <li>
-          <a href="/terms-and-conditions"><T k="legal.terms" /></a>
-        </li>
-      </ul>
       {clip && (
         <>
           <span
@@ -82,203 +71,180 @@ const SOCIAL = [
         </>
       )}
     </div>
-    <nav class="columns" aria-label="Footer">
-      {/* Standardized vertical accordion stack (desktop + mobile): More of Me
-          first, followed by Sound Shaper's legal/support pages. Reserves exact
-          height for all closed rows + tallest open drawer so nothing shifts. */}
-      <div class="column apps-group">
-        <div class="app-pages" data-app-accordion>
-          <button
-            type="button"
-            class="label app-toggle"
-            aria-expanded="false"
-            data-app-toggle
-          >
-            <span><T k="footer.social" /></span>
-            <svg
-              class="chevron"
-              viewBox="0 0 12 12"
-              width="10"
-              height="10"
-              aria-hidden="true"
-            >
-              <path
-                d="M2.5 4.5 L6 8 L9.5 4.5"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <div class="app-drawer" aria-hidden="true" inert>
-            <div class="app-drawer-inner">
+
+    <div class="foot-bottom">
+      <p class="label legal-name">© 2026 Juan Villa</p>
+      <button
+        type="button"
+        class="footer-links-trigger"
+        data-footer-open
+        aria-haspopup="dialog"
+      >
+        <T k="footer.links" />
+      </button>
+    </div>
+  </div>
+
+  <dialog class="footer-modal" data-footer-modal aria-label="Footer links">
+    <div class="footer-modal-card">
+      <div class="footer-modal-head">
+        <span class="footer-modal-brand">juanevillam</span>
+        <button
+          type="button"
+          class="footer-modal-close"
+          data-footer-close
+          aria-label="Close"
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <path
+              d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="footer-modal-grid" aria-label="Footer">
+        {
+          likesShown && (
+            <div class="column">
+              <p class="label"><T k="likes.title" /></p>
               <ul>
-                {SOCIAL.map(({ name, href }) => (
+                {LIKES.map(card => (
                   <li>
-                    <a href={href} target="_blank" rel="noopener noreferrer">
-                      {name}
+                    <a href={`/more-of-me/${card.slug}`}>
+                      {typeof card.name === 'string' ? (
+                        card.name
+                      ) : (
+                        <T k={card.name.k} />
+                      )}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
-        </div>
-        {
-          likesShown && (
-            <div class="app-pages" data-app-accordion>
-              <button
-                type="button"
-                class="label app-toggle"
-                aria-expanded="false"
-                data-app-toggle
-              >
-                <span>
-                  <T k="likes.title" />
-                </span>
-                <svg
-                  class="chevron"
-                  viewBox="0 0 12 12"
-                  width="10"
-                  height="10"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 4.5 L6 8 L9.5 4.5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-              <div class="app-drawer" aria-hidden="true" inert>
-                <div class="app-drawer-inner">
-                  <ul>
-                    {LIKES.map(card => (
-                      <li>
-                        <a href={`/more-of-me/${card.slug}`}>
-                          {typeof card.name === 'string' ? (
-                            card.name
-                          ) : (
-                            <T k={card.name.k} />
-                          )}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
           )
         }
+
         {
           FOOTER_APPS.map(app => (
-            <div class="app-pages" data-app-accordion>
-              <button
-                type="button"
-                class="label app-toggle"
-                aria-expanded="false"
-                data-app-toggle
-              >
-                <span>{app.name}</span>
-                <svg
-                  class="chevron"
-                  viewBox="0 0 12 12"
-                  width="10"
-                  height="10"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 4.5 L6 8 L9.5 4.5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-              <div class="app-drawer" aria-hidden="true" inert>
-                <div class="app-drawer-inner">
-                  <ul>
-                    {PAGES.map(({ key, page }) => (
-                      <li>
-                        <a href={`/${app.slug}/${page}`}>
-                          <T k={key} />
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+            <div class="column">
+              <p class="label">{app.name}</p>
+              <ul>
+                {PAGES.map(({ key, page }) => (
+                  <li>
+                    <a href={`/${app.slug}/${page}`}>
+                      <T k={key} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))
         }
-      </div>
-    </nav>
 
-    <p class="label legal-name">© 2026 Juan Villa</p>
-  </div>
-  {/* Space Explorer's ship takes on the destroyer, now and then, behind
-      the foot's words. */}
+        <div class="column">
+          <p class="label"><T k="footer.legal" /></p>
+          <ul>
+            <li>
+              <a href="/privacy-policy"><T k="legal.privacy" /></a>
+            </li>
+            <li>
+              <a href="/terms-and-conditions"><T k="legal.terms" /></a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="footer-modal-social">
+        <ul class="social-icons" aria-label="Profiles">
+          {SOCIAL.map(({ id, name, href }) => (
+            <li>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="social-icon-link"
+                aria-label={name}
+                title={name}
+              >
+                {id === 'github' && (
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z"
+                    />
+                  </svg>
+                )}
+                {id === 'linkedin' && (
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77Z"
+                    />
+                  </svg>
+                )}
+                {id === 'instagram' && (
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069ZM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0Zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881Z"
+                    />
+                  </svg>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </dialog>
+
   {panel && <ShipEgg place="foot" />}
 </footer>
 
 <script>
-  const groups = document.querySelectorAll<HTMLElement>('.site-footer .apps-group');
-  for (const group of groups) {
-    const items = [...group.querySelectorAll<HTMLElement>('[data-app-accordion]')];
-    const setOpen = (target: HTMLElement, open: boolean) => {
-      target.classList.toggle('is-open', open);
-      const btn = target.querySelector<HTMLButtonElement>('[data-app-toggle]');
-      const drawer = target.querySelector<HTMLElement>('.app-drawer');
-      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (drawer) {
-        drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
-        drawer.toggleAttribute('inert', !open);
+  for (const footer of document.querySelectorAll<HTMLElement>('.site-footer')) {
+    const openBtn = footer.querySelector<HTMLButtonElement>('[data-footer-open]');
+    const modal = footer.querySelector<HTMLDialogElement>('[data-footer-modal]');
+    const closeBtn = footer.querySelector<HTMLButtonElement>('[data-footer-close]');
+    if (!openBtn || !modal) continue;
+
+    const closeModal = () => {
+      if (!modal.open || modal.classList.contains('is-closing')) return;
+      modal.classList.add('is-closing');
+      const finish = () => {
+        modal.classList.remove('is-closing');
+        modal.close();
+      };
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        finish();
+      } else {
+        setTimeout(finish, 260);
       }
     };
 
-    items.forEach(item => {
-      const btn = item.querySelector<HTMLButtonElement>('[data-app-toggle]');
-      btn?.addEventListener('click', () => {
-        const nextOpen = !item.classList.contains('is-open');
-        items.forEach(other => {
-          if (other !== item) setOpen(other, false);
-        });
-        setOpen(item, nextOpen);
-      });
+    openBtn.addEventListener('click', () => {
+      if (!modal.open) modal.showModal();
+    });
+
+    closeBtn?.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) closeModal();
+    });
+
+    modal.addEventListener('cancel', e => {
+      e.preventDefault();
+      closeModal();
     });
   }
-
-  const reserve = () => {
-    for (const group of document.querySelectorAll<HTMLElement>('.site-footer .apps-group')) {
-      const items = [...group.querySelectorAll<HTMLElement>('[data-app-accordion]')];
-      if (items.length === 0) continue;
-      let closedH = 0;
-      let tallestDrawerH = 0;
-      for (const item of items) {
-        const btn = item.querySelector<HTMLElement>('[data-app-toggle]');
-        const list = item.querySelector<HTMLElement>('.app-drawer ul');
-        closedH += (btn?.offsetHeight ?? 42) + 1;
-        tallestDrawerH = Math.max(tallestDrawerH, list?.offsetHeight ?? 0);
-      }
-      group.style.minHeight = `${closedH + tallestDrawerH + 2}px`;
-    }
-  };
-  reserve();
-  document.fonts?.ready.then(reserve);
-  addEventListener('resize', reserve);
 </script>
 
 <style>
-  /* A panel like every section: the stories' own inset at the top, the
-     copyright at the foot of the screen, no rule — a panel is set off by
-     being a panel. Only the landing's snaps (`is-snap`). */
   .site-footer {
     min-height: 100svh;
     display: flex;
@@ -289,68 +255,24 @@ const SOCIAL = [
   .site-footer.is-snap {
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    /* The ship's scene is placed in the foot (ShipEgg). */
     position: relative;
   }
 
   .inner {
-    max-width: var(--content-max);
-    margin: 0 auto;
-  }
-
-  /* The section grid: words column | the rest, the copyright across the
-     foot. The first row starts a 2rem eyebrow box plus a 1.5rem step
-     down — exactly where every section's title line is. */
-  .site-footer .inner {
     flex: 1;
     width: 100%;
-    display: grid;
-    grid-template-columns: var(--screen-cols);
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      'lead columns'
-      '. .'
-      'name name';
-    column-gap: var(--space-4);
-    padding-top: 0;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  /* The name and its links, beside the apps' rows. The links follow the
-     name rather than sitting at the column's foot: the rows beside them
-     open and close, and the profiles must not move with them. */
-  /* Its own height, not the row's: stretched to the rows beside it, the
-     narrator hung from its foot moved as an app opened (2026-10-13). */
   .lead {
-    grid-area: lead;
-    align-self: start;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .site-footer .columns {
-    grid-area: columns;
-    align-content: start;
-    /* Align the first accordion vertically with the social links column. */
-    padding-top: 3.55rem;
-  }
-
-  .site-footer .legal-name {
-    grid-area: name;
-    margin-top: 0;
-    padding-top: var(--space-4);
-  }
-
-  /* Same size and pitch as the legal links, so the rows line up — set
-     apart by ink alone: full ink where the legal links are muted. The
-     underline is the hover, as on every link here. */
-  .social {
-    margin-top: 1.25rem;
-    padding-top: 0;
-  }
-
-  .social a {
-    color: var(--ink);
   }
 
   .title .footer-home-link {
@@ -365,26 +287,17 @@ const SOCIAL = [
     opacity: 0.72;
   }
 
-  /* The narrator closes the name's block, one step under Instagram,
-     without taking a row of the column: the profiles stay level with the
-     apps' last three links. (Under the name itself, as the hero
-     has it, it stood on LinkedIn.) */
-  .lead {
-    position: relative;
-  }
-
   .lead .narr-anchor {
     position: absolute;
     top: calc(100% + 1.5rem);
     margin-top: 1.5rem;
   }
 
-  /* The goodbye's words stand beside the video/narrator on the right, out
-     of the flow, so the video never covers them (Juan, 2026-11-10). */
   .lead .narr-caption {
     left: calc(8.75rem + 1.75rem);
-    top: calc(100% + 3rem);
-    width: min(32rem, calc(100vw - 14.5rem));
+    top: calc(100% + 9.03rem);
+    transform: translateY(-50%);
+    width: min(34rem, calc(100vw - 14.5rem));
     transition:
       left var(--dur-quick) var(--ease),
       opacity var(--dur-quick) var(--ease);
@@ -392,92 +305,199 @@ const SOCIAL = [
 
   :global(html:not(.has-narr-video)) .lead .narr-caption {
     left: calc(var(--narrator-w) + 1.25rem);
+    top: calc(100% + 3rem);
+    transform: none;
   }
 
-  /* A phone's narrator stays in its corner; the anchor takes no room, and
-     the read-along caption sits at the foot beside the video/narrator. */
-  @media (max-width: 48rem) {
-    .site-footer {
-      padding-top: clamp(9.25rem, 22svh, 12.5rem);
-    }
-
-    .lead .narr-anchor {
-      display: none;
-    }
-
-    .lead .narr-caption {
-      position: fixed;
-      top: auto;
-      left: clamp(1.25rem, 4vw, 2.5rem);
-      bottom: calc(1.25rem + env(safe-area-inset-bottom) + 3.25rem);
-      width: calc(100vw - clamp(1.25rem, 4vw, 2.5rem) * 2 - 7rem - 1rem);
-      z-index: 5;
-    }
-
-    :global(html:not(.has-narr-video)) .lead .narr-caption {
-      left: clamp(1.25rem, 4vw, 2.5rem);
-      width: calc(
-        100vw - clamp(1.25rem, 4vw, 2.5rem) * 2 - var(--narrator-w) - 1rem
-      );
-    }
+  .foot-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    transition: opacity var(--dur-settle) var(--ease);
   }
 
-  @media (max-width: 48rem) {
-    .site-footer .inner {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto 1fr auto;
-      grid-template-areas:
-        'lead'
-        'columns'
-        '.'
-        'name';
-      padding-top: 0;
-    }
-
-    /* Accordions sit in the middle below the social links, leaving the lower
-       viewport open for the docked video and read-along caption above the
-       copyright line. */
-    .site-footer .columns {
-      align-content: start;
-      margin-top: 3.5rem;
-      padding-top: 0;
-    }
-
-    .site-footer .legal-name {
-      padding-top: 1.5rem;
-    }
-
-    .social {
-      margin-top: 1rem;
-      padding-top: 0;
-    }
-  }
-
-  /* Desktop: More of Me on the left, the apps' accordion column on the right. */
-  .columns {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    column-gap: var(--space-9);
-    align-items: start;
-    translate: 0 0;
-    transition:
-      opacity var(--dur-settle) var(--ease),
-      translate var(--dur-turn) var(--ease);
-  }
-
-  /* While the destroyer plays over the foot (ShipEgg) its words step
-     back, so the scene is what you look at (Juan, 2026-11-03). */
-  .site-footer.is-show .columns {
+  .site-footer.is-show .foot-bottom {
     opacity: 0.2;
+  }
+
+  .legal-name {
+    margin: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .footer-links-trigger {
+    padding: 0.25rem 0;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.25em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--hover),
+      text-decoration-color var(--hover),
+      opacity var(--dur-micro) var(--ease);
+  }
+
+  .footer-links-trigger:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink-3);
+  }
+
+  .footer-links-trigger:active {
+    opacity: 0.7;
+  }
+
+  /* Liquid Glass modal for Legal, More of Me, Sound Shaper & Social */
+  .footer-modal {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    width: min(36rem, calc(100vw - 2rem));
+    max-width: none;
+    max-height: calc(100svh - 2.5rem);
+    overflow: visible;
+    margin: auto;
+  }
+
+  .footer-modal::backdrop {
+    background: rgb(0 0 0 / 0.56);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: footer-fade-in var(--dur-quick) var(--ease) both;
+  }
+
+  .footer-modal.is-closing::backdrop {
+    animation: footer-fade-out 260ms var(--ease) both;
+  }
+
+  .footer-modal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding: 1.5rem 1.75rem 1.75rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background: rgb(18 18 18 / 0.88);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow:
+      inset 0 0.75px 0 rgb(255 255 255 / 0.18),
+      0 24px 64px rgb(0 0 0 / 0.55);
+    max-height: calc(100svh - 2.5rem);
+    overflow-y: auto;
+    animation: footer-modal-in var(--dur-turn) var(--ease) both;
+  }
+
+  .footer-modal.is-closing .footer-modal-card {
+    animation: footer-modal-out 260ms var(--ease) both;
+  }
+
+  @keyframes footer-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes footer-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes footer-modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes footer-modal-out {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.97) translateY(6px);
+    }
+  }
+
+  .footer-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .footer-modal-brand {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+
+  .footer-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      color var(--hover),
+      border-color var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .footer-modal-close:hover {
+    color: var(--ink);
+    border-color: var(--ink-3);
+  }
+
+  .footer-modal-close:active {
+    transform: scale(0.9);
+  }
+
+  .footer-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 1.5rem 2rem;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .column .label,
+  .footer-modal-social .label {
+    margin: 0;
   }
 
   ul {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
-    margin-top: 0.875rem;
+    gap: 0.55rem;
+    margin: 0.75rem 0 0;
     padding: 0;
     list-style: none;
   }
@@ -496,100 +516,85 @@ const SOCIAL = [
     text-decoration-color: var(--ink-3);
   }
 
-  .legal-name {
-    margin-top: var(--space-4);
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
-  /* Single column of app legal disclosures (to the right of More of Me on
-     desktop, below More of Me on mobile). Reserves the exact height of all
-     rows closed + 1 open drawer (15rem) so opening/closing an app never
-     causes CLS in the footer or copyright line. */
-  .apps-group {
+  .footer-modal-social {
     display: flex;
-    flex-direction: column;
-    width: 14rem;
-    min-height: 15rem;
-  }
-
-  .app-pages {
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  .app-pages:first-child {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--hairline);
   }
 
-  .app-toggle {
-    display: flex;
+  .social-icons {
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    width: 100%;
-    min-height: 2.625rem;
-    padding: 0;
-    border: 0;
-    background: none;
-    cursor: pointer;
-    user-select: none;
-    text-align: start;
-    transition: color var(--hover);
+    gap: 0.625rem;
+    margin: 0;
   }
 
-  .app-toggle:hover,
-  .app-pages.is-open .app-toggle {
+  .social-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    color: var(--ink-2);
+    text-decoration: none;
+    transition:
+      color var(--hover),
+      border-color var(--hover),
+      background-color var(--hover),
+      transform var(--dur-micro) var(--ease);
+  }
+
+  .social-icon-link:hover {
     color: var(--ink);
+    border-color: var(--ink-3);
+    background: color-mix(in srgb, var(--surface) 70%, var(--ink) 8%);
   }
 
-  .chevron {
+  .social-icon-link:active {
+    transform: scale(0.9);
+  }
+
+  .social-icon-link svg {
+    display: block;
     flex: none;
-    transition: transform var(--dur-quick) var(--ease);
-  }
-
-  .app-pages.is-open .chevron {
-    transform: rotate(180deg);
-  }
-
-  .app-drawer {
-    display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transition:
-      grid-template-rows var(--dur-quick) var(--ease),
-      opacity var(--dur-micro) var(--ease);
-  }
-
-  .app-pages.is-open .app-drawer {
-    grid-template-rows: 1fr;
-    opacity: 1;
-    transition:
-      grid-template-rows var(--dur-turn) var(--ease),
-      opacity var(--dur-quick) var(--ease);
-  }
-
-  .app-drawer-inner {
-    overflow: hidden;
-  }
-
-  .app-drawer ul {
-    margin-top: 0;
-    padding-top: 0.25rem;
-    padding-bottom: 0.875rem;
   }
 
   @media (max-width: 48rem) {
-    .columns {
-      grid-auto-flow: row;
-      grid-auto-columns: 1fr;
-      row-gap: var(--space-4);
-      width: 100%;
+    .site-footer {
+      padding-top: clamp(9.25rem, 22svh, 12.5rem);
     }
 
-    .apps-group {
-      width: 100%;
-      justify-content: flex-start;
+    /* On phone, director.ts parks the narrator directly under juanevillam
+       (matching Hero and desktop), so the read-along caption stands beside
+       the parked video and the bottom bar keeps copyright left + Links right. */
+    .lead .narr-caption {
+      left: calc(7rem + 1rem);
+      top: calc(100% + 9.22rem);
+      transform: translateY(-50%);
+      width: calc(100vw - clamp(1.25rem, 4vw, 2.5rem) * 2 - 7rem - 1rem);
+    }
+
+    :global(html:not(.has-narr-video)) .lead .narr-caption {
+      left: calc(var(--narrator-w) + 1rem);
+      top: calc(100% + 3rem);
+      transform: none;
+      width: calc(
+        100vw - clamp(1.25rem, 4vw, 2.5rem) * 2 - var(--narrator-w) - 1rem
+      );
+    }
+
+    .footer-modal-card {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+
+    .footer-modal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem 1.5rem;
     }
   }
-
 </style>

@@ -48,6 +48,8 @@ const en = {
   'hero.caption':
     "Hi, I am Juan Esteban Villa Mendoza and I love making software. I like to do it the way I like to play video games, and that is going for the platinum. I also think it is the closest thing you have to magic because if you can imagine something and find a way to create it, you can create literally anything. And if you combine that software with any hardware, you can create even cooler things. This is my website, and I hope you like it. I only set one challenge for myself while making it, and that was not to follow any references, zero, because I wanted to make it my own. The best way I found for that was to literally record myself and narrate every section. Here you will find projects, events I have been to, the things I like, and more things that I would like to share with you in the future. I hope you like it. Welcome.",
   'footer.social': 'Social',
+  'footer.legal': 'Legal',
+  'footer.links': 'Links',
   'footer.caption':
     "Thank you very much for visiting my website. I was really happy to build it. I hope you find it really fun to hear me, to see me, to experience this whole website. I will continue building things and trying to get the beloved platinum. I also forgot to say I am really sorry for my English. I think my pronunciation is okay sometimes, but my grammar has many errors, that's just the way I speak English right now. I am pretty sure I will improve, since I am a Spanish speaker and English is the second language I want to bring to a native level. So right now, the way you hear me is the worst you will ever hear me speaking English, because in the future it will be way better. Thank you, and that's it.",
   'song.listen': 'Watch the Demo',
@@ -240,6 +242,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.caption':
       'Hola, yo soy Juan Esteban Villa Mendoza y me encanta hacer software. Me gusta hacerlo como me gusta jugar videojuegos, y eso es yendo por el platino. Además, creo que es de las cosas más cercanas que hay a la magia, porque si te imaginas algo y encuentras la manera de hacerlo, puedes crear cosas muy cool. Y si ese software lo unes incluso con un hardware que hayas creado, puedes lograr cosas aún más geniales. Como dato curioso de esta página, la tenía pensada hacer desde hace mucho tiempo y solo tenía un reto: que fuese muy mía, muy personal, y la mejor manera de hacer eso es literalmente grabarla. Además, no vi ni una sola referencia porque quería hacerla muy mía. Tiene un estilo muy mío, todo está grabado y todas las secciones están narradas por mí. Aquí les voy a mostrar proyectos, eventos a los que he ido, mis gustos y otras cosas que seguramente quiera compartirles en el futuro. Espero que les guste. Bienvenidos.',
     'footer.social': 'Social',
+    'footer.legal': 'Legal',
+    'footer.links': 'Enlaces',
     'footer.caption':
       'Bueno, muchas gracias por llegar hasta acá. La verdad estuvo bastante fino construir esta página. Espero que también haya sido fino para ustedes verla y experimentarla. Yo seguiré construyendo y tratando de llegar al platino.',
     'song.listen': 'Ver el demo',
@@ -419,6 +423,8 @@ export const ui: Record<Locale, Record<UIKey, string>> = {
     'hero.caption':
       '嗨，我是 Juan Esteban Villa Mendoza，我热爱做软件。我喜欢像打电子游戏那样做软件，也就是冲着白金奖杯去。我觉得软件是最接近魔法的东西，因为只要你能想象出来并找到实现的方法，就能创造出几乎任何东西。如果再把软件和硬件结合起来，还能创造出更酷的东西。这是我的网站，希望你们喜欢。做这个网站时我只给自己定了一个挑战：不看任何参考，零参考，因为我想把它做成完全属于我自己的作品。为此我找到的最好方式就是亲自出镜，为每一个板块录制旁白。在这里你会看到我的项目、参加过的活动、喜欢的事物，以及未来想和你们分享的更多内容。希望你们喜欢。欢迎。',
     'footer.social': '社交',
+    'footer.legal': '法律信息',
+    'footer.links': '链接',
     'footer.caption':
       '非常感谢你访问我的网站。做出这个网站我真的非常开心。希望你在这里听我讲、看我的视频、体验整个网站的过程中玩得开心。我会继续创造，继续向着心爱的白金奖杯前进。差点忘了说，非常抱歉我的英语不太好。我觉得我的发音有时还行，但语法有很多错误，这就是我现在说英语的真实水平。我肯定会不断进步的，因为我的母语是西班牙语，而英语是我想练到母语水平的第二语言。所以现在你听到的，会是我这辈子说英语最差的样子，因为以后只会越来越好。谢谢，就这样啦。',
     'song.listen': '观看示例',

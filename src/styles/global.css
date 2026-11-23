@@ -517,13 +517,25 @@ html.is-focus {
   top: calc(100% + 1rem);
   width: min(34rem, calc(100vw - 2.5rem));
   margin: 0;
+  padding: 1.5em 0;
   font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
   line-height: 1.5;
-  max-height: calc(3 * 1.5em);
+  max-height: calc(3 * 1.5em + 1.5em);
   overflow: hidden;
   color: var(--ink-waiting);
   opacity: 0;
   pointer-events: none;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgb(0 0 0 / 0.14) 0.55em,
+    rgb(0 0 0 / 0.55) 1.05em,
+    #000 1.5em,
+    #000 calc(100% - 1.5em),
+    rgb(0 0 0 / 0.55) calc(100% - 1.05em),
+    rgb(0 0 0 / 0.14) calc(100% - 0.55em),
+    transparent 100%
+  );
   transition: opacity var(--dur-quick) var(--ease);
 }
 
