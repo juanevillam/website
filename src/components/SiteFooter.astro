@@ -87,6 +87,45 @@ const SOCIAL = [
           first, followed by Sound Shaper's legal/support pages. Reserves exact
           height for all closed rows + tallest open drawer so nothing shifts. */}
       <div class="column apps-group">
+        <div class="app-pages" data-app-accordion>
+          <button
+            type="button"
+            class="label app-toggle"
+            aria-expanded="false"
+            data-app-toggle
+          >
+            <span><T k="footer.social" /></span>
+            <svg
+              class="chevron"
+              viewBox="0 0 12 12"
+              width="10"
+              height="10"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.5 4.5 L6 8 L9.5 4.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div class="app-drawer" aria-hidden="true" inert>
+            <div class="app-drawer-inner">
+              <ul>
+                {SOCIAL.map(({ name, href }) => (
+                  <li>
+                    <a href={href} target="_blank" rel="noopener noreferrer">
+                      {name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
         {
           likesShown && (
             <div class="app-pages" data-app-accordion>
@@ -179,45 +218,6 @@ const SOCIAL = [
             </div>
           ))
         }
-        <div class="app-pages" data-app-accordion>
-          <button
-            type="button"
-            class="label app-toggle"
-            aria-expanded="false"
-            data-app-toggle
-          >
-            <span><T k="footer.social" /></span>
-            <svg
-              class="chevron"
-              viewBox="0 0 12 12"
-              width="10"
-              height="10"
-              aria-hidden="true"
-            >
-              <path
-                d="M2.5 4.5 L6 8 L9.5 4.5"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <div class="app-drawer" aria-hidden="true" inert>
-            <div class="app-drawer-inner">
-              <ul>
-                {SOCIAL.map(({ name, href }) => (
-                  <li>
-                    <a href={href} target="_blank" rel="noopener noreferrer">
-                      {name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </nav>
 
