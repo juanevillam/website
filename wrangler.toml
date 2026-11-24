@@ -1,0 +1,8 @@
+name = "juanevillam"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-17"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "juanevillam-photos"
+database_id = "b87d9be7-e319-432f-b0f7-c29dd37b8c09"

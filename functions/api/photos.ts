@@ -77,6 +77,7 @@ type GoogleClaims = {
   email: string;
   email_verified: boolean;
   name?: string;
+  picture?: string;
   aud: string;
   iss: string;
   exp: number;
@@ -146,6 +147,7 @@ type SessionPayload = {
   sub: string;
   email: string;
   name: string;
+  picture?: string;
   exp: number;
 };
 
@@ -224,10 +226,31 @@ const ensureSchema = async (db: D1Database) => {
       `CREATE TABLE IF NOT EXISTS photos_visitors (
         email TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        picture TEXT NOT NULL DEFAULT '',
+        visits INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         last_seen_at TEXT NOT NULL
       )`,
     )
+    .run();
+};
+
+const recordVisitor = async (
+  db: D1Database,
+  visitor: { email: string; name: string; picture: string; now: string },
+) => {
+  await ensureSchema(db);
+  await db
+    .prepare(
+      `INSERT INTO photos_visitors (email, name, picture, visits, created_at, last_seen_at)
+       VALUES (?1, ?2, ?3, 1, ?4, ?4)
+       ON CONFLICT(email) DO UPDATE SET
+         name = excluded.name,
+         picture = CASE WHEN excluded.picture != '' THEN excluded.picture ELSE photos_visitors.picture END,
+         visits = photos_visitors.visits + 1,
+         last_seen_at = excluded.last_seen_at`,
+    )
+    .bind(visitor.email, visitor.name, visitor.picture, visitor.now)
     .run();
 };
 
@@ -252,6 +275,18 @@ export const onRequestGet = async ({
       JSON.stringify({ ok: true, authenticated: false }),
       { headers: JSON_HEADERS },
     );
+  }
+  if (env.DB && session.email) {
+    try {
+      await recordVisitor(env.DB, {
+        email: session.email.trim().toLowerCase(),
+        name: (session.name || session.email.split('@')[0]).trim().slice(0, 80),
+        picture: typeof session.picture === 'string' ? session.picture.trim().slice(0, 500) : '',
+        now: new Date().toISOString(),
+      });
+    } catch {
+      // Best-effort visitor log on returning session checks.
+    }
   }
   return new Response(
     JSON.stringify({
@@ -301,17 +336,12 @@ export const onRequestPost = async ({
     const claims = await verifyGoogleIdToken(body.credential, clientId);
     const email = claims.email.trim().toLowerCase();
     const name = (claims.name || email.split('@')[0]).trim().slice(0, 80);
+    const picture =
+      typeof claims.picture === 'string' ? claims.picture.trim().slice(0, 500) : '';
     const now = new Date().toISOString();
 
     if (env.DB) {
-      await ensureSchema(env.DB);
-      await env.DB.prepare(
-        `INSERT INTO photos_visitors (email, name, created_at, last_seen_at)
-         VALUES (?1, ?2, ?3, ?3)
-         ON CONFLICT(email) DO UPDATE SET name = excluded.name, last_seen_at = excluded.last_seen_at`,
-      )
-        .bind(email, name, now)
-        .run();
+      await recordVisitor(env.DB, { email, name, picture, now });
     }
 
     const sessionVal = await signSession(
@@ -319,6 +349,7 @@ export const onRequestPost = async ({
         sub: claims.sub,
         email,
         name,
+        picture,
         exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
       },
       secret,

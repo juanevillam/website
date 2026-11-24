@@ -178,6 +178,28 @@ const parseCookie = (header, name) => {
   return null;
 };
 
+const recordLocalVisitor = ({ email, name, picture, now }) => {
+  const store = readStore();
+  store.visitors ??= [];
+  const existing = store.visitors.find(v => v.email === email);
+  if (existing) {
+    existing.name = name;
+    if (picture) existing.picture = picture;
+    existing.visits = (existing.visits ?? 1) + 1;
+    existing.lastSeenAt = now;
+  } else {
+    store.visitors.push({
+      name,
+      email,
+      picture: picture || '',
+      visits: 1,
+      createdAt: now,
+      lastSeenAt: now,
+    });
+  }
+  writeStore(store);
+};
+
 /**
  * Dev-server middleware for `/api/photos` — mirrors Cloudflare Pages Function
  * with real Google JWKS RSA-256 verification and HttpOnly session cookie.
@@ -196,6 +218,19 @@ export const photosApi = () => ({
         if (!session) {
           res.end(JSON.stringify({ ok: true, authenticated: false }));
           return;
+        }
+        if (session.email) {
+          recordLocalVisitor({
+            email: session.email.trim().toLowerCase(),
+            name: (session.name || session.email.split('@')[0])
+              .trim()
+              .slice(0, 80),
+            picture:
+              typeof session.picture === 'string'
+                ? session.picture.trim().slice(0, 500)
+                : '',
+            now: new Date().toISOString(),
+          });
         }
         res.end(
           JSON.stringify({
@@ -233,23 +268,19 @@ export const photosApi = () => ({
         const claims = await verifyGoogleIdToken(body.credential);
         const email = claims.email.trim().toLowerCase();
         const name = (claims.name || email.split('@')[0]).trim().slice(0, 80);
+        const picture =
+          typeof claims.picture === 'string'
+            ? claims.picture.trim().slice(0, 500)
+            : '';
         const now = new Date().toISOString();
 
-        const store = readStore();
-        store.visitors ??= [];
-        const existing = store.visitors.find(v => v.email === email);
-        if (existing) {
-          existing.name = name;
-          existing.lastSeenAt = now;
-        } else {
-          store.visitors.push({ name, email, createdAt: now, lastSeenAt: now });
-        }
-        writeStore(store);
+        recordLocalVisitor({ email, name, picture, now });
 
         const sessionVal = signSession({
           sub: claims.sub,
           email,
           name,
+          picture,
           exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
         });
 
