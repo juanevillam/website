@@ -30,10 +30,27 @@ const TO =
 const mirror = (from, to) => {
   if (!fs.existsSync(from)) return;
   fs.mkdirSync(to, { recursive: true });
-  // rsync: only what changed, and --delete keeps the copy an exact mirror.
-  execFileSync('rsync', ['-a', '--delete', '--exclude', '.DS_Store', `${from}/`, `${to}/`], {
-    stdio: 'inherit',
-  });
+  // FAT32-safe incremental rsync: 2s mtime window + no Unix perms/owner/group
+  // so unchanged videos/narrations on the pendrive are skipped instead of re-copied.
+  execFileSync(
+    'rsync',
+    [
+      '-rlt',
+      '--modify-window=2',
+      '--no-perms',
+      '--no-owner',
+      '--no-group',
+      '--omit-dir-times',
+      '--delete',
+      '--exclude',
+      '.DS_Store',
+      '--exclude',
+      '._*',
+      `${from}/`,
+      `${to}/`,
+    ],
+    { stdio: 'inherit' },
+  );
 };
 
 // ---------- media and narration ----------
